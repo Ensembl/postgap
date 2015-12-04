@@ -17,8 +17,8 @@ my $http = HTTP::Tiny->new();
       'Request' => {
 	'ParameterSet' => {
 	  'Tool' => 'none',
+	  'GeneSymbol' => 'csf1r',
 	  'TaxonomyID' => '9606',
-	  'MeSHDescriptor' => 'diabetes',
 	  'Limit' => '1000',
 	  'Email' => 'anonymous'
 	},
@@ -29,45 +29,48 @@ my $http = HTTP::Tiny->new();
 	  'Result' => [
 	    {
 	      'FisherExact' => {
-		'content' => '0',
+		'content' => '1.8531319238671E-230',
 		'type' => 'p-value'
 	      },
-	      'ChiSquare' => '10267.441327824',
-	      'Fover' => '41.772344933059',
+	      'ChiSquare' => '112213.6506462',
+	      'Fover' => '1498.1813411401',
 	      'MeSH' => {
 		'Qualifier' => {
-		  'Name' => 'genetics'
+		  'Name' => 'metabolism'
 		},
 		'Descriptor' => {
 		  'TreeNumber' => [
-		    'C18.452.394.750.124',
-		    'C19.246.267',
-		    'C20.111.327'
+		    'D08.811.913.696.620.682.725.400.500',
+		    'D12.776.543.750.060.492',
+		    'D12.776.543.750.705.852.150.150',
+		    'D12.776.543.750.750.400.200.200',
+		    'D12.776.624.664.700.800',
+		    'D23.050.301.264.035.597',
+		    'D23.101.100.110.597'
 		  ],
-		  'Identifier' => 'D003922',
-		  'Name' => 'Diabetes Mellitus, Type 1',
+		  'Identifier' => 'D016186',
+		  'Name' => 'Receptor, Macrophage Colony-Stimulating Factor',
 		  'UMLSID' => {}
 		}
 	      },
 	      'DocumentSet' => {
 		'type' => 'pubmed',
 		'PMID' => [
-		  '2187469',
 		]
 	      },
 	      'Gene' => {
 		'Taxonomy' => {
 		  'Identifier' => '9606'
 		},
-		'Identifier' => '3119',
+		'Identifier' => '1436',
 		'type' => 'Entrez',
-		'Description' => 'major histocompatibility complex, class II, DQ beta 1',
-		'Symbol' => 'HLA-DQB1'
+		'Description' => 'colony stimulating factor 1 receptor',
+		'Symbol' => 'CSF1R'
 	      }
 	    },
 	  ],
 	  'sort' => 'FisherExact',
-	  'count' => '800',
+	  'count' => '94',
 	  'order' => 'ascending'
 	},
 	'Copyright' => {
@@ -86,8 +89,8 @@ my $http = HTTP::Tiny->new();
 
 =cut 
 
-my $server = "http://gene2mesh.ncibi.org/";
-my $ext = "fetch?mesh=diabetes&taxid=9606";
+my $server = "http://gene2mesh.ncibi.org";
+my $ext = "/fetch?genesymbol=csf1r&taxid=9606";
 my $response = $http->get($server.$ext);
 die "Failed!\n" unless $response->{success};
 

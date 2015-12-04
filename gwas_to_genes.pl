@@ -39,30 +39,40 @@ our $registry = 'Bio::EnsEMBL::Registry';
 our $SPECIES = 'Human';
 our $DEBUG = 1;
 our $DATABASES_DIR = "databases";
+
 our %phenotype_cache = ();
+our $VEP_impact_to_score = {
+  HIGH => 4,
+  MEDIUM => 3,
+  LOW => 2,
+  MODIFIER => 1,
+}
 
 main();
 
 =begin comment
 
-  Datasets to integrate:
-    Cis-regulatory annotations:
+  Development TODO list:
+
+  A. Datasets to integrate:
+    -Cis-regulatory annotations:
       Regulome (STOPGAP Scoring: 1-2: +2, 3: +1, 4: +0)
       PCHIC (STOPGAP Scoring: Single cell line: +1, multiple cell lines: +2)
       DHS associations (FPR 0-0.6: +2, 0.6-0.85: +1,0.85-1: +0)
       PhyloP (STOPGAP Scoring: FPR 0-0.6: +2, 0.6-0.85: +1,0.85-1: +0)
 
-    Epigenetic activity:
+    -Epigenetic activity:
       DHS
       Fantom5
 
-  Missing details:
-    DHScor FDR % distance
+  B. Code improvements:
+    Ontological search for phenotypes / tissues (use EFO)
+    Pathways analysis (Downstream)
+    Take into account population composition in LD calcs
 
-  Improvements:
-    Ontological search for phenotypes? EFO?
-    Replace PICS
+  C. Model improvements:
     Epigenetic priors
+    Replace PICS
 
 =cut 
 
@@ -169,9 +179,10 @@ sub diseases_to_genes {
   my ($diseases, $population_weights, $tissues) = @_;
   my $res = gwas_snps_to_genes(diseases_to_gwas_snps($diseases), $population_weights, $tissues);
 
-  # Add some gene/disease external annotations
-  map { $_->{MeSH} = disease_to_MeSH($diseases) } @$res;
-  map { $_->{gene_phenotype_association} = gene_to_phenotypes($_->{gene})  } @$res;
+  foreach my $candidate (@$res) {
+    $candidate->{MeSH} = gene_to_MeSH($candidate->{gene});
+    $candidate->{gene_phenotype_association} = gene_to_phenotypes($candidate->{gene});
+  }
 
   return $res;
 }
@@ -900,7 +911,7 @@ sub gwas_snp_to_precluster {
   # Get all LD values around SNP
   my $ld_feature_container = $hits->{snp}->get_all_LD_values;
 
-  # TODO Configurable filter on population 
+  # Configurable filter on population 
   my @filtered_ls_r_squared_values = grep { $_->{population} == $ld_feature_container->{'_default_population'} } @{$ld_feature_container->get_all_r_square_values};
 
   # Filter on R2 value
@@ -1294,14 +1305,115 @@ sub ld_snps_to_genes {
               ]
 
 =cut
-
+ 
 sub GTEx {
-  my ($ld_snp, $tissues) = @_
+  my ($ld_snps, $tissues, $gene_adaptor) = @_
   
-  # TODO
+  # Find all genes with 1Mb
+  my @starts = sort { $a <=> $b } map { $_->seq_region_start } @$ld_snps;
+  my @ends = sort { $a <=> $b } map { $_->seq_region_end } @$ld_snps;
+  my $slice = $ld_snps->slice;
+  $slice->seq_region_start($starts->[0] - 1000000);
+  $slice->seq_region_end($ends->[0] + 1000000);
+  my $genes = $gene_adaptor->fetch_all_by_Slice($slice);
+
+  my %snp_hash = map { $_->name => $_ } @$ld_snps;
+  my @res = map { @$_ } map { GTEx_gene($gene, $tissues, \%snp_hash) };
+
+  return \@res;
+}
+
+=head2 GTEx_gene
+
+  Returns all SNPs associated to a gene in GTEx 
+  Args:
+  * [ Bio::EnsEMBL::Variation::VariationFeature ]
+  * [ string ] (tissues)
+  * { $rsID => Bio::EnsEMBL::Variation::VariationFeature }
+  Returntype: [
+                {
+                  snp => Bio::EnsEMBL::Variation::VariationFeature,
+                  gene => Bio::EnsEMBL::Gene,
+                  tissue => tissue,
+                  score => scalar,
+                  source => "GTEx"
+                  study => string,
+                }
+              ]
+
+=cut
+
+sub GTEx_gene {
+  my ($gene, $tissues, $snp_hash) = @_
+  
+  my @res = map { @$_ } map { GTEx_gene_tissue($gene, $tissue) } @$tissues;
 
   if (our $DEBUG) {
-    printf "Found ".scalar @res." genes associated to SNP '.$ld_snp->name.' in GTEx\n";
+    printf "Found ".scalar @res." genes associated to SNP '.$gene->external_name.' in GTEx\n";
+  } 
+
+  return \@res;
+}
+
+=head2 GTEx_gene_tissue
+
+  Returns all SNPs associated to a gene in GTEx in a given tissue
+  Args:
+  * [ Bio::EnsEMBL::Variation::VariationFeature ]
+  * [ string ] (tissues)
+  * { $rsID => Bio::EnsEMBL::Variation::VariationFeature }
+  Returntype: [
+                {
+                  snp => Bio::EnsEMBL::Variation::VariationFeature,
+                  gene => Bio::EnsEMBL::Gene,
+                  tissue => tissue,
+                  score => scalar,
+                  source => "GTEx"
+                  study => string,
+                }
+              ]
+
+=cut
+
+=begin comment
+
+  Example return object:
+  [
+    {
+      'value' => '0.804108648395327',
+      'snp' => 'rs142557973'
+    },
+  ]
+
+=cut 
+
+sub GTEx_gene_tissue {
+  my ($gene, $tissue, $snp_hash) = @_
+  
+  my $server = "http://193.62.54.30:5555";
+  my $ext = "/eqtl/id/homo_sapiens/ENSG00000227232?content-type=application/json;statistic=p-value;tissue=Whole_Blood"; 
+  my $response = $http->get($server.$ext);
+  die "Failed!\n" unless $response->{success};
+
+  if(length $response->{content}) {
+    my $list = decode_json($response->{content});
+    my @res = ();
+    foreach my $hit (@$list) {
+      if (exists $snp_hash->{$hit->{snp}}) {
+        push @res, {
+	  snp => $snp_hash->{$hit->{snp}}, 
+	  gene => $gene,
+	  tissue => $tissue,
+	  score => $hit->{value},
+	  source => "GTEx",
+	  study => undef,
+        };
+      }
+    }
+  }
+
+  if (our $DEBUG) {
+    printf "Found ".scalar @res." genes associated to SNP $gene->external_name in tissue $tissue in GTEx\n";
   } 
 
   return \@res;
@@ -1327,12 +1439,120 @@ sub GTEx {
 =cut
 
 sub VEP {
-  my ($ld_snp, $tissues) = @_
+  my ($ld_snps, $tissues) = @_
 
-  # TODO
+  my @res = map { @$_ } map { VEP_snp($snp, $tissues, $gene_adaptor) } @$ld_snps;
 
   if (our $DEBUG) {
-    printf "Found ".scalar @res." genes associated to SNP '.$ld_snp->name.' in VEP\n";
+    printf "Found ".scalar @res." genes associated in cluster in VEP\n";
+  } 
+
+  return \@res;
+}
+
+=head2 VEP_snp
+
+  Returns all genes associated to a SNP in VEP 
+  Args:
+  * Bio::EnsEMBL::Variation::VariationFeature
+  * [ string ] (tissues)
+  Returntype: [
+                {
+                  snp => Bio::EnsEMBL::Variation::VariationFeature,
+                  gene => Bio::EnsEMBL::Gene,
+                  tissue => tissue,
+                  score => scalar,
+                  source => "VEP"
+                  study => string,
+                }
+              ]
+
+=cut
+
+=begin comment
+
+  Example output from VEP:
+  [
+    {
+      'colocated_variants' => [
+	{
+	  'phenotype_or_disease' => 1,
+	  'seq_region_name' => '9',
+	  'eas_allele' => 'C',
+	  'amr_maf' => '0.4553',
+	  'strand' => 1,
+	  'sas_allele' => 'C',
+	  'id' => 'rs1333049',
+	  'allele_string' => 'G/C',
+	  'sas_maf' => '0.4908',
+	  'amr_allele' => 'C',
+	  'minor_allele_freq' => '0.4181',
+	  'afr_allele' => 'C',
+	  'eas_maf' => '0.5367',
+	  'afr_maf' => '0.2133',
+	  'end' => 22125504,
+	  'eur_maf' => '0.4722',
+	  'eur_allele' => 'C',
+	  'minor_allele' => 'C',
+	  'pubmed' => [
+	    24262325,
+	  ],
+	  'start' => 22125504
+	}
+      ],
+      'assembly_name' => 'GRCh38',
+      'end' => 22125504,
+      'seq_region_name' => '9',
+      'transcript_consequences' => [
+	{
+	  'gene_id' => 'ENSG00000240498',
+	  'variant_allele' => 'C',
+	  'distance' => 4932,
+	  'biotype' => 'antisense',
+	  'gene_symbol_source' => 'HGNC',
+	  'consequence_terms' => [
+	    'downstream_gene_variant'
+	  ],
+	  'strand' => 1,
+	  'hgnc_id' => 'HGNC:34341',
+	  'gene_symbol' => 'CDKN2B-AS1',
+	  'transcript_id' => 'ENST00000584020',
+	  'impact' => 'MODIFIER'
+	},
+      ],
+      'strand' => 1,
+      'id' => 'rs1333049',
+      'most_severe_consequence' => 'downstream_gene_variant',
+      'allele_string' => 'G/C',
+      'start' => 22125504
+    }
+  ]
+
+=cut
+
+sub VEP_snp {
+  my ($ld_snp, $tissues, $gene_adaptor) = @_
+  our $VEP_impact_to_score;
+
+  my $server = "http://rest.ensembl.org";
+  my $ext = "/vep/human/id/$ld_snp->name?content-type=application/json";
+  my $response = $http->get($server.$ext);
+  die "Failed!\n" unless $response->{success};
+  
+  my $list = decode_json($response->{content});
+  my @res = map {
+    {
+      snp => $ld_snp,
+      gene => $gene_adaptor->fetch_by_stable_id($_->{gene_id}),
+      tissue => undef,
+      score => $VEP_impact_to_score->{$_->{impact}},
+      source => "VEP"
+      study => undef,
+    }
+  } @{$list->{transcript_consequences}};
+
+  if (our $DEBUG) {
+    printf "Found ".scalar @res." genes associated to SNP $ld_snp->name in cluster in VEP\n";
   } 
 
   return \@res;
@@ -1429,35 +1649,132 @@ sub Fantom5 {
   return \@res;
 }
 
-=head2 disease_to_MeSH
+=head2 genes_to_MeSH
 
-  Look up MeSH annotations for diseases
+  Look up MeSH annotations for genes
   Args:
-  * [ string ] (disease names)
+  * [ string ] (gene names)
   Return type: [ string ] (annotations)
 
 =cut
 
-sub disease_to_MeSH {
-  my ($diseases) = @_;
+sub genes_to_MeSH {
+  my ($genes) = @_;
  
-  my @res = ();
-  my $server = "http://gene2mesh.ncibi.org/";
+  my @res = map { @$_ } map { gene_to_MeSH } @$genes;
 
-  foreach my $disease (@$diseases) {
-    my $ext = "fetch?mesh="$disease;
-    my $response = $http->get($server.$ext);
-    die "Failed!\n" unless $response->{success};
-    if(length $response->{content}) {
-      my $hash = XMLin([$response->{content}]); # TODO Probably incorrect
-      my $results = $hash->{NCIBI}{Gene2MeSH}{Response}{ResultSet};
-      foreach my $result (@$results) {
-        push @res, $result->{MeSH}{Descriptor}{Identifier};
+  return \@res; 
+}
+
+=head2 gene_to_MeSH
+
+  Look up MeSH annotations for gene
+  Args:
+  * [ string ] (gene names)
+  Return type: [ string ] (annotations)
+
+=cut
+
+=begin comment
+
+ Example MeSH output:
+  {
+    'Gene2MeSH' => {
+      'Request' => {
+	'ParameterSet' => {
+	  'Tool' => 'none',
+	  'GeneSymbol' => 'csf1r',
+	  'TaxonomyID' => '9606',
+	  'Limit' => '1000',
+	  'Email' => 'anonymous'
+	},
+	'type' => 'fetch'
+      },
+      'Response' => {
+	'ResultSet' => {
+	  'Result' => [
+	    {
+	      'FisherExact' => {
+		'content' => '1.8531319238671E-230',
+		'type' => 'p-value'
+	      },
+	      'ChiSquare' => '112213.6506462',
+	      'Fover' => '1498.1813411401',
+	      'MeSH' => {
+		'Qualifier' => {
+		  'Name' => 'metabolism'
+		},
+		'Descriptor' => {
+		  'TreeNumber' => [
+		    'D08.811.913.696.620.682.725.400.500',
+		    'D12.776.543.750.060.492',
+		    'D12.776.543.750.705.852.150.150',
+		    'D12.776.543.750.750.400.200.200',
+		    'D12.776.624.664.700.800',
+		    'D23.050.301.264.035.597',
+		    'D23.101.100.110.597'
+		  ],
+		  'Identifier' => 'D016186',
+		  'Name' => 'Receptor, Macrophage Colony-Stimulating Factor',
+		  'UMLSID' => {}
+		}
+	      },
+	      'DocumentSet' => {
+		'type' => 'pubmed',
+		'PMID' => [
+		]
+	      },
+	      'Gene' => {
+		'Taxonomy' => {
+		  'Identifier' => '9606'
+		},
+		'Identifier' => '1436',
+		'type' => 'Entrez',
+		'Description' => 'colony stimulating factor 1 receptor',
+		'Symbol' => 'CSF1R'
+	      }
+	    },
+	  ],
+	  'sort' => 'FisherExact',
+	  'count' => '94',
+	  'order' => 'ascending'
+	},
+	'Copyright' => {
+	  'Details' => 'http://nlp.ncibi.org/Copyright.txt',
+	  'Year' => '2009',
+	  'Statement' => 'Copyright 2009 by the Regents of the University of Michigan'
+	},
+	'Support' => {
+	  'Details' => 'http://www.ncibi.org',
+	  'GrantNumber' => 'U54 DA021519',
+	  'Statement' => 'Supported by the National Institutes of Health as part of the NIH\\\'s National Center for Integrative Biomedical Informatics (NCIBI)'
+	}
       }
     }
   }
 
-  return \@res; 
+=cut 
+
+sub gene_to_MeSH {
+  my ($gene) = @_;
+
+  my %NCBI_Taxon_ID = (
+    'Human' => 9606;
+  );
+ 
+  my $server = "http://gene2mesh.ncibi.org";
+  my $ext = "/fetch?genesymbol=$gene->external_name&taxid=$NCBI_Taxon_ID{$SPECIES}";
+  my $response = $http->get($server.$ext);
+  die "Failed!\n" unless $response->{success};
+
+  if(length $response->{content}) {
+    my $hash = XMLin($response->{content});
+    my $hits = $hash->{Response}{ResultSet}{Result};
+    my @res = map { $_->{MeSH}{Descriptor}{Name} } @$hits;
+    return \@res;
+  } else {
+    return;
+  }
 }
 
 =head2 gene_to_phenotypes
