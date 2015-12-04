@@ -1297,15 +1297,8 @@ sub ld_snps_to_genes {
 
 sub GTEx {
   my ($ld_snp, $tissues) = @_
-  my $server = "http://rest.ensembl.org";
-  my $ext = "eqtl?"; # TODO
-  my $response = $http->get($server.$ext, {headers => { 'Content-type' => 'application/json' }});
-  die "Failed!\n" unless $response->{success};
-  if(length $response->{content}) {
-    my $hash = decode_json($response->{content});
-    # TODO STOP GAP Scoring Single report: +2, multiple reports: +3, multi-tissue †report: +3
-    # TODO Filter out non-significant p-values (cutoff?)
-  }
+  
+  # TODO
 
   if (our $DEBUG) {
     printf "Found ".scalar @res." genes associated to SNP '.$ld_snp->name.' in GTEx\n";
@@ -1335,15 +1328,8 @@ sub GTEx {
 
 sub VEP {
   my ($ld_snp, $tissues) = @_
-  my $server = "http://rest.ensembl.org";
-  my $ext = "eqtl?"; # TODO
-  my $response = $http->get($server.$ext, {headers => { 'Content-type' => 'application/json' }});
-  die "Failed!\n" unless $response->{success};
-  if(length $response->{content}) {
-    my $hash = decode_json($response->{content});
-    # TODO STOPGAP Scoring Severity 1-5: +4, 6-10 (inc. NS): +3**, 11-17: +2, 18-33: +1, 34+: 0
-  }
- 
+
+  # TODO
 
   if (our $DEBUG) {
     printf "Found ".scalar @res." genes associated to SNP '.$ld_snp->name.' in VEP\n";
