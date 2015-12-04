@@ -7,7 +7,6 @@ Build
 !Build/
 Build.bat
 .last_cover_stats
-/Makefile
 /Makefile.old
 /MANIFEST.bak
 /META.yml
@@ -18,3 +17,5 @@ nytprof.out
 *.o
 *.bs
 /_eumm/
+/misc/
+databases
