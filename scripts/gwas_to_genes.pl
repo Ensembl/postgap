@@ -40,6 +40,10 @@ our $SPECIES = 'Human';
 our $DEBUG = 1;
 our $DATABASES_DIR = "databases";
 
+our @database_functions = (\&GWASCatalog, \&GRASP, \&GWAS_DB, \&Phewas_Catalog);
+our @ld_snp_to_gene_functions = (\&GTEx, \&Fantom5, \&VEP);
+our @snp_regulatory_functions = (\&GERP, \&Regulome);
+
 our %phenotype_cache = ();
 our $VEP_impact_to_score = {
   HIGH => 4,
@@ -56,23 +60,21 @@ main();
 
   A. Datasets to integrate:
     -Cis-regulatory annotations:
-      Regulome (STOPGAP Scoring: 1-2: +2, 3: +1, 4: +0)
       PCHIC (STOPGAP Scoring: Single cell line: +1, multiple cell lines: +2)
-      DHS associations (FPR 0-0.6: +2, 0.6-0.85: +1,0.85-1: +0)
-      PhyloP (STOPGAP Scoring: FPR 0-0.6: +2, 0.6-0.85: +1,0.85-1: +0)
 
     -Epigenetic activity:
+      PhyloP (STOPGAP Scoring: FPR 0-0.6: +2, 0.6-0.85: +1,0.85-1: +0)
       DHS
       Fantom5
 
   B. Code improvements:
-    Ontological search for phenotypes / tissues (use EFO)
     Pathways analysis (Downstream)
     Take into account population composition in LD calcs
 
   C. Model improvements:
-    Epigenetic priors
-    Replace PICS
+    Replace PICS with Bayesian model
+    Fine mapping of summary data
+    Tissue selection
 
 =cut 
 
@@ -84,7 +86,7 @@ main();
 
 sub main {
   my $options = get_options();
-  print encode_json(diseases_to_genes($options->{diseases}, $options->{population_weights}, $options->{tissues}));
+  print encode_json(diseases_to_genes($options->{diseases}, $options->{efos}, $options->{populations}, $options->{tissues}));
 }
 
 =head2 get_options
@@ -92,7 +94,7 @@ sub main {
   Reads commandline parameters
   Returntype: {
                 diseases => [ string ],
-                population_weights => [ Bio::EnsEMBL::Variation::Population ],
+                populations => [ Bio::EnsEMBL::Variation::Population ],
                 tissues => [ string ],
               }
 
@@ -101,10 +103,10 @@ sub main {
 sub get_options {
   my %options = ();
 
-  GetOptions(\%options, "help=s", "disease|d=s@", "population|p=s@", "tissue|t=s@", "databases|D=s", "host=s", "user=s", "port=s", "species=s", "debug|g");
+  GetOptions(\%options, "help=s", "efo|o=s@", "disease|d=s@", "population|p=s@", "tissue|t=s@", "databases|D=s", "host=s", "user=s", "port=s", "species=s", "debug|g");
 
   $options{diseases} = $options{disease};
-  $options{population_weights} = map { $population_adaptor->fetch_by_name($_) } @$options{population};
+  $options{populations} = map { $population_adaptor->fetch_by_name($_) } @$options{population};
   $options{tissues} = $options{tissue};
   
   # Connecting to Ensembl registry
@@ -125,17 +127,190 @@ sub get_options {
     our $SPECIES = $options->{species};
   }
 
-  if (defined $options->{$debug}) {
-    our $DEBUG = 1;
+  our $DEBUG ||= defined $options->{$debug});
+
+  if (!defined $options->{efo}) {
+    my @efos = grep { defined $_ } map { efo_suggest($_) } @{$options->{diseases}};
+    $options->{efo} = \@efos;
   }
 
+  # Expand list of EFOs to children, concatenate, remove duplicates
+  my $options->{efos} = keys map { $_ => $_ } map { @$_ } map(efo_children, @{$options->{efo}});
+
   return \%options;
+}
+
+=head2 efo_suggest
+  
+  Find most appropriate EFO term for arbitrary string
+  Arg:
+  * string
+  Returntype: string (EFO ID)
+
+=cut
+
+=begin comment
+
+  Example search result:
+  {
+    status: "/api/status/ok",
+    result: [
+      {
+	'mid' => '3804279AF8462F3A01EAEE2589C94781F248F9D7',
+	'notable' => {
+	  'name' => 'disease; EFO_0000311',
+	  'id' => 'summary_from_disease_to_EFO_0000311'
+	},
+	'name' => 'cancer',
+	'score' => '86.11212'
+      }
+    ]  
+  }
+
+=cut
+
+=begin comment
+
+  See info in preprocessing./EFO_suggest.pl
+
+=cut
+
+sub efo_suggest {
+  my ($term) = shift;
+  my $server = 'http://www.ebi.ac.uk/spot/zooma/v2/api';
+  my $url_term = $term;
+  $url_term =~ s/ /%20/g;
+  my $ext = "/summaries/search?query=$url_term";
+  my $response = $http->get($server.$ext);
+   
+  die "Failed!\n" unless $response->{success};
+
+  if(length $response->{content}) {
+    my $hash = decode_json($response->{content});
+    my $result = $hash->{result};
+    my @hits = sort { $b->{score} <=> $a->{score} } grep { $_->{notable}{name} =~ /EFO_[0-9]+/ } @$result;
+    my $selection = $hits[0]{notable}{name};
+    if (!defined $selection) {
+      return;
+    }
+    $selection =~ s/.*(EFO_[0-9]*)$/$1/;
+    return $selection;
+  } else {
+    return;
+  }
+}
+
+=head2 efo_children
+
+  Return list of children EFO IDs
+  Arg:
+  * string (EFO ID)
+  Returntype: [ string ] (EFI IDs)
+
+=cut
+
+=begin comment
+
+  OWL Output format:
+  {
+    "_links" : {
+      "first" : {
+	"href" : "http://www.ebi.ac.uk/ols/beta/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_0001071/descendants?page=0&size=10"
+      },
+      "prev" : {
+	"href" : "http://www.ebi.ac.uk/ols/beta/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_0001071/descendants?page=0&size=10"
+      },
+      "self" : {
+	"href" : "http://www.ebi.ac.uk/ols/beta/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_0001071/descendants?page=1&size=10"
+      },
+      "last" : {
+	"href" : "http://www.ebi.ac.uk/ols/beta/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_0001071/descendants?page=1&size=10"
+      }
+    },
+    "_embedded" : {
+      "terms" : [ {
+	"iri" : "http://www.ebi.ac.uk/efo/EFO_1000333",
+	"label" : "Lung Inflammatory Myofibroblastic Tumor",
+	"description" : [ "An intermediate fibroblastic neoplasm arising from the lung. It is characterized by the presence of spindle-shaped fibroblasts and myofibroblasts, and a chronic inflammatory infiltrate composed of eosinophils, lymphocytes and plasma cells." ],
+	"annotation" : {
+	  "NCI_Thesaurus_definition_citation" : [ "NCIt:C39740" ]
+	},
+	"synonyms" : null,
+	"ontology_name" : "efo",
+	"ontology_prefix" : "EFO",
+	"ontology_iri" : "http://www.ebi.ac.uk/efo",
+	"is_obsolete" : false,
+	"is_defining_ontology" : true,
+	"has_children" : false,
+	"is_root" : false,
+	"short_form" : "EFO_1000333",
+	"obo_id" : "EFO:1000333",
+	"_links" : {
+	  "self" : {
+	    "href" : "http://www.ebi.ac.uk/ols/beta/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_1000333"
+	  },
+	  "parents" : {
+	    "href" : "http://www.ebi.ac.uk/ols/beta/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_1000333/parents"
+	  },
+	  "ancestors" : {
+	    "href" : "http://www.ebi.ac.uk/ols/beta/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_1000333/ancestors"
+	  },
+	  "jstree" : {
+	    "href" : "http://www.ebi.ac.uk/ols/beta/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_1000333/jstree"
+	  },
+	  "graph" : {
+	    "href" : "http://www.ebi.ac.uk/ols/beta/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_1000333/graph"
+	  }
+	}
+      } ]
+    },
+    "page" : {
+      "size" : 10,
+      "totalElements" : 20,
+      "totalPages" : 2,
+      "number" : 1
+    }
+  }
+
+=cut
+
+sub efo_children {
+  my ($efo) = @_;
+
+  my ($term) = shift;
+  my $server = 'http://www.ebi.ac.uk';
+  my $page = 1;
+  my @res = ($efo);
+
+  while (1) {
+    my $ext = "/ols/beta/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252F$efo/descendants?page$page&size=10";
+    my $response = $http->get($server.$ext);
+     
+    die "Failed!\n" unless $response->{success};
+
+    if(length $response->{content}) {
+      my $hash = decode_json($response->{content});
+      my $results = $hash->{_embedded}{terms};
+      push @res, map { $_->{short_form} } @$results;
+      if ($page > $hash->{page}{totalPages}) {
+        last;
+      }
+    } 
+
+    $page++;
+  }
+  
+  return \@res;
 }
 
 =head2 diseases_to_genes
 
   Associates genes from a list of diseases
-  Args: [ string ] 
+  Args: 
+  * [ string ] (trait descriptions - free strings)
+  * [ string ] (trait EFO identifiers)
+  * [ string ] (population names)
+  * [ string ] (tissue names)
   Returntype: [  
                 {
                   gene => Bio::EnsEMBL::Gene,
@@ -150,6 +325,7 @@ sub get_options {
                         {
                           pvalue => scalar,
                           disease => string,
+                          efo => string,
                           source => string,
                           study => string,
                         }
@@ -160,7 +336,16 @@ sub get_options {
                     {
                       snp => Bio::EnsEMBL::Variation::VariationFeature,
                       score => scalar, # aka v2g.score
-                      evidence => [
+                      cis_regulatory_evidence => [
+                        {
+                          tissue => tissue,
+                          score => scalar,
+                          source => string,
+                          study => string,
+                        }
+                      ],
+
+                      regulatory_evidence => [
                         {
                           tissue => tissue,
                           score => scalar,
@@ -176,8 +361,8 @@ sub get_options {
 =cut
 
 sub diseases_to_genes {
-  my ($diseases, $population_weights, $tissues) = @_;
-  my $res = gwas_snps_to_genes(diseases_to_gwas_snps($diseases), $population_weights, $tissues);
+  my ($diseases, $efos, $populations, $tissues) = @_;
+  my $res = gwas_snps_to_genes(diseases_to_gwas_snps($diseases, $efos), $populations, $tissues);
 
   foreach my $candidate (@$res) {
     $candidate->{MeSH} = gene_to_MeSH($candidate->{gene});
@@ -190,7 +375,9 @@ sub diseases_to_genes {
 =head2 diseases_to_gwas_snps
 
   Associates gwas_snps from a list of diseases
-  Args: [ string ]
+  Args: 
+  * [ string ] (trait descriptions - free strings )
+  * [ string ] (trait EFO identifiers)
   Returntype: [
                 {
                   snp => Bio::EnsEMBL::Variation::Variation,
@@ -199,6 +386,7 @@ sub diseases_to_genes {
                     {
                       pvalue => scalar,
                       disease => string,
+                      efo => string,
                       source => string,
                       study => string,
                     }
@@ -209,10 +397,10 @@ sub diseases_to_genes {
 =cut
 
 sub diseases_to_gwas_snps {
-  my ($diseases) = @_;
+  my ($diseases, $efos) = @_;
 
   # Extract crude data
-  my $gwas_snps = scan_disease_databases($diseases);
+  my $gwas_snps = scan_disease_databases($diseases, $efos);
 
   # Filter by p-value
   @filtered_gwas_snps = grep { $_->{pvalue} < $PVALUE_CUTOFF } @$gwas_snps;
@@ -223,7 +411,9 @@ sub diseases_to_gwas_snps {
 =head2 scan_disease_databases 
 
   Associates gwas_snps from a list of diseases
-  Args: [ Bio::EnsEMBL::Variation::Phenotype ]
+  Args: 
+  * [ string ] (trait descriptions)
+  * [ string ] (trait EFO identifiers)
   Returntype: [
                 {
                   snp => Bio::EnsEMBL::Variation::Variation,
@@ -232,6 +422,7 @@ sub diseases_to_gwas_snps {
                     {
                       pvalue => scalar,
                       disease => string,
+                      efo => string,
                       source => string,
                       study => string,
                     }
@@ -242,9 +433,13 @@ sub diseases_to_gwas_snps {
 =cut
 
 sub scan_disease_databases {
-  my ($diseases) = @_;
+  my ($diseases, $efos) = @_;
 
-  my @hits = map { @$_ } map( scan_disease_databases_2, @$diseases)
+  our $registry;
+  our $SPECIES;
+  my $variation_adaptor = $registry->get_adaptor($SPECIES, 'Variation', 'Variation');
+
+  my @hits = map { @$_ } map { $_->($diseases, $efos, $variation_adaptor) } @database_functions;
 
   my %hash = ();
   foreach my $hit (@hits) {
@@ -272,69 +467,18 @@ sub scan_disease_databases {
   return \@res;
 }
 
-=head2 scan_disease_databases_2
-
-  Associates gwas_snps from a disease
-  Args: string 
-  Returntype: [
-                {
-                  snp => Bio::EnsEMBL::Variation::Variation,
-                  pvalue => scalar, (min of pvalues - could be improved)
-                  evidence => [
-                    {
-                      pvalue => scalar,
-                      disease => string,
-                      source => string,
-                      study => string,
-                    }
-                  ]
-                }
-              ]
-
-=cut
-
-my @database_functions = (\&GWASCatalog, \&GRASP, \&GWAS_DB, \&Phewas_Catalog);
-
-sub scan_disease_databases_2 {
-  my ($disease) = @_;
-
-  our $registry;
-  our $SPECIES;
-  my $variation_adaptor = $registry->get_adaptor($SPECIES, 'Variation', 'Variation');
-
-  my @hits = map { @$_ } map { $_->($disease, $variation_adaptor) } @database_functions;
-
-  my %hash = ();
-  foreach my $hit (@hits) {
-    if (exists $hash{$hits->{snp}->name}) {
-      my $record = $hash{$hits->{snp}->name};
-      push @{$record->{evidence}}, $hit;
-      if ($record->{pvalue} > $hit->{pvalue}) {
-        $record->{pvalue} = $hit->{pvalue};
-      }
-    } else {
-       $hash{$hits->{snp}->name}->{evidence} = {
-         snp => $hit->{snp},
-         pvalue => $hit->{pvalue},
-         evidence => [ $hit ],
-       }
-    }
-  }
-  
-  my @res = values %hash;
-    
-  return \@res;
-}
-
 =head2 GWASCatalog
 
   Returns all gwas_snps associated to a disease in GWAS Catalog
-  Arg: Trait name or EFO ID (string)
+  Args:
+  * [ string ] (trait descriptions)
+  * [ string ] (trait EFO identifiers)
   Returntype: [ 
                 {
                   pvalue => scalar,
                   snp => Bio::EnsEMBL::Variation::Variation,
                   disease => string,
+                  efo => string,
                   source => "GWAS Catalog",
                   study => string,
                 }
@@ -384,7 +528,7 @@ sub scan_disease_databases_2 {
 =cut
 
 sub GWASCatalog {
-  my ($disease, $variation_adaptor) = @_
+  my ($diseases, $efos, $variation_adaptor) = @_
   our $DATABASES_DIR;
   open my $fh, "<", $DATABASES_DIR."/GWASCatalog.txt";
   my @res = ();
@@ -392,12 +536,13 @@ sub GWASCatalog {
   while (<$fh>) {
     chomp;
     my @items = split;
-    if ($items[7] == $disease) {
+    if (grep(/^$items[7]$/, @$diseases) || grep( /http:\/\/www.ebi.ac.uk\/efo\/$items[33]$/, @$efos)) {
       foreach my $snp (split /,/, $items[21]) {
         push @res, (
           pvalue => $items[26],
           snp => $variation_adaptor->fetch_by_name($snp),
-          disease => $disease,
+          disease => $items[7],
+	  efo => $items[34],
           source => 'GWAS Catalog',
         )
       }
@@ -414,12 +559,15 @@ sub GWASCatalog {
 =head2 GRASP
 
   Returns all gwas_snps associated to a disease in GRASP
-  Arg: Trait name or EFO ID (string)
+  Args:
+  * [ string ] (trait descriptions)
+  * [ string ] (trait EFO identifiers)
   Returntype: [ 
                 {
                   pvalue => scalar,
                   snp => Bio::EnsEMBL::Variation::Variation,
                   disease => string,
+                  efo => string,
                   source => "GRASP",
                   study => string,
                 }
@@ -500,11 +648,12 @@ sub GWASCatalog {
   68. LS-SNP
   69. UniProt
   70. EqtlMethMetabStudy
+  71. EFO string 
 
 =cut
 
 sub GRASP {
-  my ($disease, $variation_adaptor) = @_
+  my ($diseases, $efos, $variation_adaptor) = @_
   our $DATABASES_DIR;
   open my $fh, "<", $DATABASES_DIR."/GRASP.txt";
   my @res = ();
@@ -513,10 +662,12 @@ sub GRASP {
     chomp;
     my @items = split;
     if ($items[11] eq $disease) {
+    if (grep(/^$items[11]$/, @$diseases) || grep(/^$items[70]$/, @$efos)) {
       push @res, {
         pvalue => $items[10],
         snp => $variation_adaptor->fetch_by_name($items[4]),
-        disease => $disease,
+        disease => $items[11],
+	efo => $items[70],
         source => "GRASP",
         study => $items[7],
       }
@@ -533,12 +684,15 @@ sub GRASP {
 =head2 PhewasCatalog
 
   Returns all gwas_snps associated to a disease in PhewasCatalog
-  Arg: Trait name or EFO ID (string)
+  Args:
+  * [ string ] (trait descriptions)
+  * [ string ] (trait EFO identifiers)
   Returntype: [ 
                 {
                   pvalue => scalar,
                   snp => Bio::EnsEMBL::Variation::Variation,
                   disease => string,
+                  efo => string,
                   source => "Phewas Catalog",
                   study => string,
                 }
@@ -558,11 +712,12 @@ sub GRASP {
   7. gene_name
   8. phewas code
   9. gwas-associations
+  10. [Inserte] EFO identifier (or N/A)
   
 =cut
 
 sub PhewasCatalog {
-  my ($disease, $variation_adaptor) = @_
+  my ($diseases, $efos, $variation_adaptor) = @_
   our $DATABASES_DIR;
   open my $fh, "<", $DATABASES_DIR."/PhewasCatalog.txt";
   my @res = ();
@@ -570,11 +725,12 @@ sub PhewasCatalog {
   while (<$fh>) {
     chomp;
     my @items = split;
-    if ($items[2] eq $disease) {
+    if (grep(/^$items[2]$/, @$diseases) || grep(/^$items[9]$/, @$efos)) {
       push @res, {
           pvalue => $items[4],
           snp => $variation_adaptor->fetch_by_name($items[1]),
-          disease => $disease,
+          disease => $items[3],
+	  snp => $items[9],
           source => "Phewas Catalog",
           study => undef,
       }
@@ -591,12 +747,15 @@ sub PhewasCatalog {
 =head2 GWAS_DB
 
   Returns all gwas_snps associated to a disease in GWAS_DB
-  Arg: Trait name or EFO ID (string)
+  Args:
+  * [ string ] (trait descriptions)
+  * [ string ] (trait EFO identifiers)
   Returntype: [ 
                 {
                   pvalue => scalar,
                   snp => Bio::EnsEMBL::Variation::Variation,
                   disease => string,
+                  efo => string,
                   source => "GWAS DB",
                   study => string,
                 }
@@ -641,19 +800,23 @@ sub PhewasCatalog {
 =cut 
 
 sub GWAS_DB {
-  my ($disease, $variation_adaptor) = @_
+  my ($diseases, $efos, $variation_adaptor) = @_
   our $DATABASES_DIR;
   open my $fh, "<", $DATABASES_DIR."/GWAS_DB.txt";
-  my @res = ();
 
+  # Note the format of the EFO strings is modified in this file format, so we need to change the queries
+  my @efos2 = map { (my $v = $_) =~ s/_/ID:/; $v} @$efos;
+
+  my @res = ();
   while (<$fh>) {
     chomp;
     my @items = split;
-    if ($items[14] eq $disease) {
+    if (grep(/^$items[14]$/, @$diseases) || grep(/^$items[21]$/, @efos2)) {
       push @res, {
         pvalue => $items[7],
         snp => $variation_adaptor->fetch_by_name($items[2]),
-        disease => $disease,
+        disease => $items[14],
+	efo => $items[21],
         source => "GWAS DB",
         study => $items[6],
       }
@@ -667,8 +830,6 @@ sub GWAS_DB {
   return \@res;
 }
 
-
-
 =head2 gwas_snps_to_genes
 
   Associates Genes to gwas_snps of interest
@@ -681,6 +842,7 @@ sub GWAS_DB {
           {
             pvalue => scalar,
             disease => string,
+            efo => string,
             source => string,
             study => string,
           }
@@ -698,6 +860,7 @@ sub GWAS_DB {
                       pvalue => scalar,
                       snp => Bio::EnsEMBL::Variation::Variation,
                       disease => string,
+                      efo => string,
                       source => string,
                       study => string,
                     }
@@ -706,7 +869,15 @@ sub GWAS_DB {
                     {
                       snp => Bio::EnsEMBL::Variation::VariationFeature,
                       score => scalar, # aka v2g.score
-                      evidence => [
+                      cis_regulatory_evidence => [
+                        {
+                          tissue => tissue,
+                          score => scalar,
+                          source => string,
+                          study => string,
+                        }
+                      ]
+                      regulatory_evidence => [
                         {
                           tissue => tissue,
                           score => scalar,
@@ -730,7 +901,7 @@ sub gwas_snps_to_genes {
   }
 
   my $clusters = cluster_gwas_snps(\@gwas_snp_locations, $populations);
-  my @res = map { @$_ } map { cluster_to_genes($_, $tissue_weights, $population_weights) } @$clusters;
+  my @res = map { @$_ } map { cluster_to_genes($_, $tissue_weights, $populations) } @$clusters;
 
   if (our $DEBUG) {
     printf "Found ".scalar @res." genes associated to all gwas_snps\n";
@@ -753,6 +924,7 @@ sub gwas_snps_to_genes {
           {
             pvalue => scalar,
             disease => string,
+            efo => string,
             source => string,
             study => string,
           }
@@ -780,6 +952,7 @@ sub gwas_snps_to_tissue_weights {
           {
             pvalue => scalar,
             disease => string,
+            efo => string,
             source => string,
             study => string,
           }
@@ -797,6 +970,7 @@ sub gwas_snps_to_tissue_weights {
                         {
                           pvalue => scalar,
                           disease => string,
+                          efo => string,
                           source => string,
                           study => string,
                         }
@@ -831,6 +1005,7 @@ sub cluster_gwas_snps {
         {
           pvalue => scalar,
           disease => string,
+          efo => string,
           source => string,
           study => string,
         }
@@ -844,6 +1019,7 @@ sub cluster_gwas_snps {
                     {
                       pvalue => scalar,
                       disease => string,
+                      efo => string,
                       source => string,
                       study => string,
                     }
@@ -879,6 +1055,7 @@ sub gwas_snp_to_locations {
         {
           pvalue => scalar,
           disease => string,
+          efo => string,
           source => string,
           study => string,
         }
@@ -894,6 +1071,7 @@ sub gwas_snp_to_locations {
                       {
                         pvalue => scalar,
                         disease => string,
+                        efo => string,
                         source => string,
                         study => string,
                       }
@@ -946,6 +1124,7 @@ sub gwas_snp_to_precluster {
               {
                 pvalue => scalar,
                 disease => string,
+                efo => string,
                 source => string,
                 study => string,
               }
@@ -1016,6 +1195,7 @@ sub unique_variation_features {
             pvalue => scalar,
             snp => Bio::EnsEMBL::Variation::VariationFeature,
             disease => string,
+            efo => string,
             source => string,
             study => string,
           }
@@ -1034,6 +1214,7 @@ sub unique_variation_features {
                       pvalue => scalar
                       snp => Bio::EnsEMBL::Variation::VariationFeature
                       disease => string 
+                      efo => string,
                       source => string
                       study => string,
                     }
@@ -1042,7 +1223,15 @@ sub unique_variation_features {
                     {
                       snp => Bio::EnsEMBL::Variation::VariationFeature,
                       score => scalar, # aka v2g.score
-                      evidence => [ 
+                      cis_regulatory_evidence => [ 
+                        {
+                          tissue => tissue,
+                          score => scalar,
+                          source => string,
+                          study => string,
+                        }
+                      ]
+                      regulatory_evidence => [ 
                         {
                           tissue => tissue,
                           score => scalar,
@@ -1058,7 +1247,7 @@ sub unique_variation_features {
 =cut
 
 sub cluster_to_genes {
-  my ($cluster, $tissues, $population_weights) = @_;
+  my ($cluster, $tissues, $populations) = @_;
 
   # Obtain interaction data from LD snps
   my $hits = ld_snps_to_genes($cluster->{ld_snps}, $tissues);
@@ -1109,6 +1298,7 @@ sub cluster_to_genes {
             pvalue => scalar,
             snp => Bio::EnsEMBL::Variation::VariationFeature,
             disease => string,
+            efo => string,
             source => string,
             study => string,
           }
@@ -1120,6 +1310,7 @@ sub cluster_to_genes {
                 pvalue => scalar,
                 snp => Bio::EnsEMBL::Variation::VariationFeature,
                 disease => string,
+                efo => string,
                 source => string,
                 study => string,
               }
@@ -1146,9 +1337,9 @@ sub get_top_gwas_snp {
 =cut 
 
 sub get_lds_from_top_gwas {
-  my ($ld_snps, $gwas_snp, $population_weights) = @_;
+  my ($ld_snps, $gwas_snp, $populations) = @_;
   my $ld_container = $gwas_snp->get_all_r_square_values;
-  my %hash = map { $_->name => $ld_container->get_r_square($_, $gwas_snp, $population_weights) } @$ld_snps;
+  my %hash = map { $_->name => $ld_container->get_r_square($_, $gwas_snp, $populations) } @$ld_snps;
   return \%hash; 
 }
 
@@ -1247,7 +1438,15 @@ sub total_score {
                   snp => Bio::EnsEMBL::Variation::VariationFeature,
                   gene => Bio::EnsEMBL::Gene,
                   score => scalar, # aka v2g.score
-                  evidence => [
+                  cis_regulatory_evidence => [
+                    {
+                      tissue => tissue,
+                      score => scalar,
+                      source => string,
+                      study => string,
+                    }
+                  ]
+                  regulatory_evidence => [
                     {
                       tissue => tissue,
                       score => scalar,
@@ -1260,30 +1459,45 @@ sub total_score {
 
 =cut
 
-my @ld_snp_to_gene_functions = (\&GTEx, \&Fantom5, \&VEP);
-
 sub ld_snps_to_genes {
   my ($ld_snps, $tissues) = @_;
   our $registry;
   our $SPECIES;
-  my $variation_adaptor = $registry->get_adaptor($SPECIES, 'Core', 'Gene');
+  my $gene_adaptor = $registry->get_adaptor($SPECIES, 'Core', 'Gene');
   my @evidence = map { @$_ } map { $_->($ld_snps, $tissues, $gene_adaptor) } @ld_snp_to_gene_functions;
 
-  my %hash = ();
+  # Group by (gene,snp) pair:
   foreach my $record (@evidence) {
     if ( !($record->{gene}->biotype eq "protein_coding")) { 
       next;
     }
+
     my $gene_name = $record->{gene}->name;
-    $hash{$gene_name}{snp} = $ld_snp;
-    $hash{$gene_name}{gene} = $gene;
-    $hash{$gene_name}{score} += $record->{score};
+    my $rsID = $hit->{snp}->name;
+
+    # Basic info
+    $hash{$gene_name}{$rsID}{snp} = $hit->{snp};
+    $hash{$gene_name}{$rsID}{gene} = $hit->{gene};
+
+    # Integrate cis-interaction data
+    $hash{$gene_name}{$rsID}{score} += $record->{score};
+    push @{$hash{$gene}{$rsID}{cis_regulatory_evidence}}, $record;
     delete $record{gene};
     delete $record{snp};
-    push @{$hash{$gene}{evidence}}, $record;
   }
 
-  my @res = values %hash;
+  # Collapse these hashrefs of hashrefs into a single list
+  my @res = map { values %$_ } values %hash;
+
+  # Integrate SNP specific info
+  my %selected_snp_hash = map { $_->{snp}->name => $_->{snp} } @res;
+  my @selected_snps = values %selected_snp_hash; 
+  my %regulatory_evidence_hash = regulatory_annotation_at_snps(\@selected_snps, $tissues);
+  foreach my $record (@res) {
+    $record->{regulatory_evidence} = $regulatory_evidence_hash->{$snp->name}; 
+    map { $record->{score} += $_->{score} } @{$record->{regulatory_evidence}};
+  }
+
   return \@res;
 }
 
@@ -1311,7 +1525,7 @@ sub GTEx {
   
   # Find all genes with 1Mb
   my @starts = sort { $a <=> $b } map { $_->seq_region_start } @$ld_snps;
-  my @ends = sort { $a <=> $b } map { $_->seq_region_end } @$ld_snps;
+  my @ends = sort { $b <=> $a } map { $_->seq_region_end } @$ld_snps;
   my $slice = $ld_snps->slice;
   $slice->seq_region_start($starts->[0] - 1000000);
   $slice->seq_region_end($ends->[0] + 1000000);
@@ -1391,7 +1605,7 @@ sub GTEx_gene_tissue {
   my ($gene, $tissue, $snp_hash) = @_
   
   my $server = "http://193.62.54.30:5555";
-  my $ext = "/eqtl/id/homo_sapiens/ENSG00000227232?content-type=application/json;statistic=p-value;tissue=Whole_Blood"; 
+  my $ext = "/eqtl/id/homo_sapiens/$gene->stable_id?content-type=application/json;statistic=p-value;tissue=$tissue"; 
   my $response = $http->get($server.$ext);
   die "Failed!\n" unless $response->{success};
 
@@ -1441,6 +1655,7 @@ sub GTEx_gene_tissue {
 sub VEP {
   my ($ld_snps, $tissues) = @_
 
+  # TODO Batch requests to the REST server
   my @res = map { @$_ } map { VEP_snp($snp, $tissues, $gene_adaptor) } @$ld_snps;
 
   if (our $DEBUG) {
@@ -1598,7 +1813,6 @@ sub VEP_snp {
   11.  blockSizes
   12.  chromStarts
 
-
 =cut
 
 sub Fantom5 {
@@ -1618,25 +1832,28 @@ sub Fantom5 {
   our $DATABASES_DIR;
   system "bedtools intersect -wa -wb -a $DATABASES_DIR/Fantom5.txt $filename > $filename2 ";
 
+  my $fdr_model = retrieve("$DATABASES_DIR/Fantom5.fdrs");
+
   # Parse output: first 12 columns are from Fantom5 file, the next 4 are LD SNP coords
   while (<$fh2>) {
     chomp;
     my @items = split;
     my @association_data = split /;/, $items[3];
-    my $new = {
-      snp => $ld_hash{$items[15]},
-      gene => $gene_adaptor->fetch_all_by_name($association_data[2])[0];
-      tissue => undef,
-      source => "Fantom5",
+
+    my $gene = $gene_adaptor->fetch_all_by_name($association_data[2])[0];
+    my $snp = $ld_hash{$items[15]};
+    my $score = STOPGAP_FDR($snp, $gene, $fdr_model);
+
+    if ($score == 0) {
+      next;
     }
 
-    my @FDR = split(":", $association_data[4]); # Do we really need to re-do FDR calcs???
-    if ($FDR[1] < .6) {
-      $new->{score} = 2;
-    } elsif ($FDR[1] < .85) {
-      $new->{score} = 1;
-    } else {
-      $new->{score} = 0;
+    my $new = {
+      snp => $snp,
+      gene => $gene,
+      tissue => undef,
+      source => "Fantom5",
+      score => $score,
     }
 
     push @res, $new;
@@ -1649,21 +1866,293 @@ sub Fantom5 {
   return \@res;
 }
 
-=head2 genes_to_MeSH
+=head2 DHS
 
-  Look up MeSH annotations for genes
+  Returns all genes associated to a set of SNPs in DHS 
   Args:
-  * [ string ] (gene names)
-  Return type: [ string ] (annotations)
+  * [ Bio::EnsEMBL::Variation::VariationFeature ]
+  * [ string ] (tissues)
+  Returntype: [
+                {
+                  snp => Bio::EnsEMBL::Variation::VariationFeature,
+                  gene => Bio::EnsEMBL::Gene,
+                  tissue => tissue,
+                  score => scalar,
+                  source => "DHS"
+                  study => string,
+                }
+              ]
 
 =cut
 
-sub genes_to_MeSH {
-  my ($genes) = @_;
- 
-  my @res = map { @$_ } map { gene_to_MeSH } @$genes;
+=begin comment
 
-  return \@res; 
+  Format of DHS correlation files:
+  1. chrom
+  2. chromStart
+  3. chromEnd
+  4. HGNC
+  5. Correlation
+
+=cut
+
+sub DHS {
+  my ($ld_snps, $tissues, $gene_adaptor) = @_;
+
+  # Store rsID -> VariationFeature hash
+  my %ld_hash = map { $_->name => $_ } @$ld_snps;
+
+  # Dump LD SNP coords in temporary BED file
+  my ($fh, $filename) = tempfile;
+  foreach my $ld_snp (@$ld_snps) {
+    print $fh join("\t", ())."\n";
+  }    
+
+  # Search for overlaps using bedtools
+  my ($fh2, $filename2) = tempfile;
+  our $DATABASES_DIR;
+  system "bedtools intersect -wa -wb -a $DATABASES_DIR/DHS.txt $filename > $filename2 ";
+
+  my $fdr_model = retrieve("$DATABASES_DIR/DHS.fdrs");
+
+  # Parse output: first 5 columns are from DHS file, the next 4 are LD SNP coords
+  while (<$fh2>) {
+    chomp;
+    my @items = split;
+
+    my $gene = $gene_adaptor->fetch_all_by_name($items[3])[0];
+    my $snp = $ld_hash{$items[8]};
+    my $score = STOPGAP_FDR($snp, $gene, $fdr_model);
+
+    if ($score == 0) {
+      next;
+    }
+
+    my $new = {
+      snp => $snp,
+      gene => $gene,
+      tissue => undef,
+      source => "DHS",
+      score => $score,
+    }
+
+    push @res, $new;
+  }
+
+  if (our $DEBUG) {
+    printf "Found ".scalar @res." gene associations in DHS\n";
+  } 
+
+  return \@res;
+}
+
+=head2 STOPGAP_FDR
+
+  Special function for cis-regulatory interactions 
+  Args:
+  * Bio::EnsEMBL::Variation::VariationFeature
+  * Bio::EnsEMBL::Gene
+  * 
+
+  Returntype: scalar
+
+=cut
+
+sub STOPGAP_FDR {
+  my ($snp, $gene, $fdr_model) = @_;
+
+  if (! ($gene->seq_region_name eq $snp->seq_region_name)) {
+    return 0;
+  }
+
+  my $pos = ($start + $end) / 2;
+
+  my $tss;
+  if ($gene->strand) {
+    $tss = $gene->seq_region_start;
+  } else {
+    $tss = $gene->seq_region_end;
+  }
+
+  my $distance = abs($pos - $tss);
+
+  if ($distance > $fdr_model->MAX_DISTANCE) {
+    return 0;
+  }
+
+  my $FDR = $fdr_model->FDR[int($distance / $FDR->BIN_WIDTH)];
+
+  if (!defined $FDR) {
+    return 0;
+  }
+
+  my $score;
+  if ($FDR < .6) {
+    return 2;
+  } elsif ($FDR < .85) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+=head2 regulatory_annotation_at_snps
+
+  Extract regulatory evidence linked to SNPs and stores them in a hash
+  * [ Bio::EnsEMBL::Variation::VariationFeature ]
+  * [ string ]
+  Returntype: {
+                $dbID => [
+		  {
+		    tissue => tissue,
+		    score => scalar,
+		    source => string,
+		    study => string,
+		  }
+		]
+              } 
+
+=cut 
+
+sub regulatory_annotation_at_snps {
+  my ($snp, $tissues) = @_;
+
+  my @res = map { @$_ } map { $_->($snps, $tissues) } @snp_regulatory_functions;
+
+  # Group by SNP
+  my %hash = ();
+  foreach my $hit (@res) {
+    push @{$hash{$hit->{snp}->name}}, $hit;
+    delete $hit->{snp};
+  }
+
+  return \%hash;
+}
+
+=head2 GERP
+
+  Extract GERP score at position
+  Args:
+  * [ Bio::EnsEMBL::Variation::VariationFeature ] 
+  Returntype: [
+                {
+		  snp => Bio::EnsEMBL::Variation::VariationFeature,
+                  tissue => undef,
+                  score => scalar,
+                  source => 'GERP',
+                  study => undef,
+                }
+              ]
+
+=cut 
+
+sub GERP {
+  my ($snps, $tissues) = @_;
+
+  my %hash = map { 
+    {
+      snp => $snp,
+      tissue => undef,
+      score => GERP_at_snp($_),
+      source => 'GERP',
+      study => undef,
+    }
+  } @$snps;
+
+  return \%hash;
+}
+
+=head2 GERP_at_snp
+
+  Extract GERP score at position
+  Args:
+  * Bio::EnsEMBL::Variation::VariationFeature
+  Returntype: scalar 
+=cut 
+
+sub GERP {
+  my ($snp) = @_;
+
+  my $server = "http://rest.ensembl.org";
+  my $ext = "/vep/human/id/$ld_snp->name?content-type=application/json;Conservation=1";
+  my $response = $http->get($server.$ext);
+  die "Failed!\n" unless $response->{success};
+  
+  my $hash = decode_json($response->{content});
+
+  return \%hash;
+}
+
+=head2 Regulome
+
+  Extract Regulome score at sns of interest 
+  Args:
+  * Bio::EnsEMBL::Variation::VariationFeature
+  Returntype: [
+                {
+                  tissue => undef,
+                  score => scalar,
+                  source => 'Regulome',
+                  study => undef,
+                }
+              ]
+
+=cut 
+
+=begin comment
+
+  Regulome file format:
+  1. chrom
+  2. start
+  3. end
+  4. category
+
+=cut
+
+sub Regulome {
+  my ($snps, $tissues) = @_;
+
+  # Store rsID -> VariationFeature hash
+  my %hash = map { $_->name => $_ } @$snps;
+
+  # Dump LD SNP coords in temporary BED file
+  my ($fh, $filename) = tempfile;
+  foreach my $snp (@$snps) {
+    print $fh join("\t", ($snp->seq_region_name, $snp->seq_region_start, $snp->seq_region_end, $snp->name))."\n";
+  }    
+
+  # Search for overlaps using bedtools
+  my ($fh2, $filename2) = tempfile;
+  our $DATABASES_DIR;
+  system "bedtools intersect -wa -wb -a $DATABASES_DIR/Regulome.txt $filename > $filename2 ";
+
+  my $fdr_model = retrieve("$DATABASES_DIR/Regulome.fdrs");
+
+  # Parse output: first 4 columns are from Regulome file, the next 4 are LD SNP coords
+  my @res = ();
+  while (<$fh2>) {
+    chomp;
+    my @items = split;
+
+    my $snp = $hash{$items[7]};
+    my $category = $hash{$items[3]};
+
+    my $score;
+    if ($category =~ /^1/ || $category =~ /^2/) {
+      $score = 2;
+    } else {
+      $score = 1;
+    }
+
+    push @res, {
+      snp => $snp,
+      tissue => undef,
+      source => "DHS",
+      score => $score,
+    }
+  }
+
+  return \@res;
 }
 
 =head2 gene_to_MeSH
