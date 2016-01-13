@@ -648,7 +648,7 @@ sub GWASCatalog {
   68. LS-SNP
   69. UniProt
   70. EqtlMethMetabStudy
-  71. EFO string 
+  71. [Inserted] EFO string 
 
 =cut
 
