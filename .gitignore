@@ -19,3 +19,4 @@ nytprof.out
 /_eumm/
 /misc/
 databases
+*.pyc

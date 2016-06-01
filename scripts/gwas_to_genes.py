@@ -38,6 +38,7 @@ import pybedtools
 import math
 import json
 import cPickle as pickle
+import time
 
 # Class definitions
 SNP = collections.namedtuple("SNP", ['rsID', 'chrom', 'pos'])
@@ -54,6 +55,7 @@ FDR_Model = collections.namedtuple('FDR_Model', ['FDR','BIN_WIDTH','MAX_DISTANCE
 
 # Bit and bobs
 phenotype_cache = ()
+known_genes = {}
 VEP_impact_to_score = {
 	'HIGH': 4,
 	'MEDIUM': 3,
@@ -102,7 +104,9 @@ def main():
 
 	"""
 	options = get_options()
-	print json.dumps(diseases_to_genes(options.diseases, options.efos, options.populations, options.tissues))
+	res = diseases_to_genes(options.diseases, options.efos, options.populations, options.tissues)
+	for association in res:
+		print association.cluster.gwas_snps[0].efo, association.gene.name, association.gene.id, association.cluster.gwas_snps[0].snp.rsID, association.evidence[0].snp.rsID, association.score
 
 def get_options():
 	"""
@@ -299,13 +303,7 @@ def diseases_to_genes(diseases, efos, populations, tissues):
 		Returntype: [ GeneCluster_Association ]
 
 	"""
-	res = gwas_snps_to_genes(diseases_to_gwas_snps(diseases, efos), populations, tissues)
-
-	for candidate in res:
-		candidate['MeSH'] = gene_to_MeSH(candidate.gene)
-		candidate['gene_phenotype_association'] = gene_to_phenotypes(candidate.gene)
-
-	return res
+	return gwas_snps_to_genes(diseases_to_gwas_snps(diseases, efos), populations, tissues)
 
 def diseases_to_gwas_snps(diseases, efos):
 	"""
@@ -338,7 +336,6 @@ def scan_disease_databases(diseases, efos):
 		print "Searching for GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (", ".join(diseases), ", ".join(efos))
 
 	hits = concatenate(function(diseases, efos) for function in database_functions)
-
 	associations_by_snp = dict()
 	for hit in hits:
 		if hit.snp in associations_by_snp:
@@ -378,79 +375,166 @@ def GWASCatalog(diseases, efos):
 		Returntype: [ GWAS_Association ]
 
 	"""
-	file = open(DATABASES_DIR+"/GWAS_Catalog.txt")
-	res = concatenate(get_gwas_catalog_association(line, diseases, efos) for line in file)
+	if efos is not None and len(efos) > 0:
+		res = concatenate(query_gwas_catalog(query) for query in efos)
+	else:
+		res = concatenate(query_gwas_catalog(query) for query in diseases)
 
 	if DEBUG:
 		print "\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GWAS Catalog" % (len(res), ", ".join(diseases), ", ".join(efos))
 
 	return res
 
-def get_gwas_catalog_association(line, diseases, efos):
-	'''
+def query_gwas_catalog(term):
+	server = 'http://www.ebi.ac.uk'
+	url_term = re.sub(" ", "%20", term)
+	ext1 = '/gwas/api/search/moreresults?q="%s"&max=0&facet=association&pvalfilter=&orfilter=&betafilter=&datefilter=&sort=' % (url_term)
+	hash = get_rest_json(server, ext1)
+	try:
+		count = int(hash['response']['numFound'])
+	except:
+		print "Failed on %s%s" % (server, ext1)
+	ext2 = '/gwas/api/search/moreresults?q="%s"&max=%i&facet=association&pvalfilter=&orfilter=&betafilter=&datefilter=&sort=' % (url_term, count)
+	hash = get_rest_json(server, ext2)
+	"""
+		{
+		  "_version_": 1526208365253886000,
+		  "resourcename": "association",
+		  "id": "association:21946",
+		  "parent": [
+		    "disposition",
+		  ],
+		  "efoLink": [
+		    "type II diabetes mellitus|EFO_0001360|http://www.ebi.ac.uk/efo/EFO_0001360"
+		  ],
+		  "synonym_autosuggest_e": [
+		    "T2DM - Type 2 Diabetes mellitus",
+		  ],
+		  "synonym_autosuggest_ws": [
+		    "T2DM - Type 2 Diabetes mellitus",
+		  ],
+		  "synonym_autosuggest": [
+		    "T2DM - Type 2 Diabetes mellitus",
+		  ],
+		  "synonym": [
+		    "T2DM - Type 2 Diabetes mellitus",
+		  ],
+		  "label_autosuggest_e": [
+		    "type II diabetes mellitus"
+		  ],
+		  "label_autosuggest_ws": [
+		    "type II diabetes mellitus"
+		  ],
+		  "label_autosuggest": [
+		    "type II diabetes mellitus"
+		  ],
+		  "label": [
+		    "type II diabetes mellitus"
+		  ],
+		  "shortform_autosuggest": [
+		    "EFO_0001360"
+		  ],
+		  "shortForm": [
+		    "EFO_0001360"
+		  ],
+		  "traitUri": [
+		    "http://www.ebi.ac.uk/efo/EFO_0001360"
+		  ],
+		  "mappedUri": [
+		    "http://www.ebi.ac.uk/efo/EFO_0001360"
+		  ],
+		  "mappedLabel": [
+		    "type ii diabetes mellitus"
+		  ],
+		  "traitName_s": "Type 2 diabetes",
+		  "traitName": [
+		    "Type 2 diabetes"
+		  ],
+		  "ancestryLinks": [
+		    "initial|NR|NR|60647",
+		  ],
+		  "chromosomeName": [
+		    "6"
+		  ],
+		  "studyId": "6787",
+		  "reportedGene": [
+		    "HLA-DQA2"
+		  ],
+		  "mappedGeneLinks": [
+		    "LOC102725019|102725019"
+		  ],
+		  "mappedGene": [
+		    "LOC102725019"
+		  ],
+		  "region": [
+		    "6p21.32"
+		  ],
+		  "context": [
+		    "nearGene-5"
+		  ],
+		  "strongestAllele": [
+		    "rs3916765-A"
+		  ],
+		  "riskFrequency": "0.12",
+		  "qualifier": [
+		    "(Lean)"
+		  ],
+		  "pValueMantissa": 1,
+		  "pValueExponent": -6,
+		  "orPerCopyNum": 1.21,
+		  "orPerCopyRange": "[1.12-1.31]",
+		  "orType": true,
+		  "rsId": [
+		    "rs3916765"
+		  ],
+		  "chromosomePosition": [
+		    32717773
+		  ],
+		  "locusDescription": "Single variant",
+		  "pubmedId": "22693455",
+		  "title": "Stratifying type 2 diabetes cases by BMI identifies genetic risk variants in LAMA1 and enrichment for risk variants in lean compared to obese cases.",
+		  "author": [
+		    "Perry JR"
+		  ],
+		  "author_s": "Perry JR",
+		  "publication": "PLoS Genet",
+		  "publicationDate": "2012-05-30T23:00:00Z",
+		  "catalogPublishDate": "2012-08-07T04:10:19Z",
+		  "publicationLink": [
+		    "Perry JR|2012|22693455"
+		  ],
+		  "platform": "NR",
+		  "initialSampleDescription": "2,112 lean type 2 diabetes cases, 4,123 obese type 2 diabetes cases, 54,412 controls",
+		  "replicateSampleDescription": "2,881 lean type 2 diabetes cases, 8,702 obese type 2 diabetes cases, 18,957 controls",
+		  "ancestralGroups": [
+		    "NR"
+		  ],
+		  "countriesOfRecruitment": [
+		    "NR"
+		  ],
+		  "numberOfIndividuals": [
+		    60647,
+		    30540
+		  ]
+		}
 
-		GWAS Catalog flat file format (waiting for REST API...)
-
-		1.	DATE ADDED TO CATALOG: Date added to catalog
-		2.	PUBMEDID: PubMed identification number
-		3.	FIRST AUTHOR: Last name of first author
-		4.	DATE: Publication date (online (epub) date if available)
-		5.	JOURNAL: Abbreviated journal name
-		6.	LINK: PubMed URL
-		7.	STUDY: Title of paper (linked to PubMed abstract)
-		8.	DISEASE/TRAIT: Disease or trait examined in study
-		9.	INITIAL SAMPLE DESCRIPTION: Sample size for Stage 1 of GWAS
-		10.	REPLICATION SAMPLE DESCRIPTION: Sample size for subsequent replication(s)
-		11.	REGION: Cytogenetic region associated with rs number (NCBI)
-		12.	CHR_ID: Chromosome number associated with rs number (NCBI)
-		13.	CHR_POS: Chromosomal position associated with rs number (dbSNP Build 144, Genome Assembly GRCh38.p2, NCBI)
-		14.	REPORTED GENE (S): Gene(s) reported by author
-		15.	MAPPED GENE(S): Gene(s) mapped to the strongest SNP (NCBI). If the SNP is located within a gene, that gene is listed. If the SNP is intergenic, the upstream and downstream genes are listed, separated by a hyphen.
-		16.	UPSTREAM_GENE_ID: Entrez Gene ID for nearest upstream gene to rs number, if not within gene (NCBI)
-		17.	DOWNSTREAM_GENE_ID: Entrez Gene ID for nearest downstream gene to rs number, if not within gene (NCBI)
-		18.	SNP_GENE_IDS: Entrez Gene ID, if rs number within gene; multiple genes denotes overlapping transcripts (NCBI)
-		19.	UPSTREAM_GENE_DISTANCE: distance in kb for nearest upstream gene to rs number, if not within gene (NCBI)
-		20.	DOWNSTREAM_GENE_DISTANCE: distance in kb for nearest downstream gene to rs number, if not within gene (NCBI)
-		21.	STRONGEST SNP-RISK ALLELE: SNP(s) most strongly associated with trait + risk allele (? for unknown risk allele). May also refer to a haplotype.
-		22.	SNPS: Strongest SNP; if a haplotype is reported above, may include more than one rs number (multiple SNPs comprising the haplotype)
-		23.	MERGED: denotes whether the SNP has been merged into a subsequent rs record (0 = no; 1 = yes; NCBI) SNP_ID_CURRENT: current rs number (will differ from strongest SNP when merged = 1)
-		24.	[Inserted] SNP_ID_CURRENT
-		25.	CONTEXT: SNP functional class (NCBI)
-		26.	INTERGENIC: denotes whether SNP is in intergenic region (0 = no; 1 = yes; NCBI)
-		27.	RISK ALLELE FREQUENCY: Reported risk allele frequency associated with strongest SNP
-		28.	P-VALUE: Reported p-value for strongest SNP risk allele (linked to dbGaP Association Browser)
-		29.	PVALUE_MLOG: -log(p-value)
-		30.	P-VALUE (TEXT): Information describing context of p-value (e.g. females, smokers). Note that p-values are rounded to 1 significant digit (for example, a published pvalue of 4.8 x 10-7 is rounded to 5 x 10-7).
-		31.	OR or BETA: Reported odds ratio or beta-coefficient associated with strongest SNP risk allele
-		32.	95% CI (TEXT): Reported 95% confidence interval associated with strongest SNP risk allele
-		33.	PLATFORM (SNPS PASSING QC): Genotyping platform manufacturer used in Stage 1; also includes notation of pooled DNA study design or imputation of SNPs, where applicable
-		34.	[Inserted] CNV
-		35.	[Deleted] MAPPED_TRAIT: Mapped Experimental Factor Ontology trait for this study
-		36.	MAPPED_TRAIT_URI: URI of the EFO trait
-
-	'''
-	items = line.rstrip().split('\t')
-	if len(items) != 36:
-		print line
-		for elem in enumerate(items):
-			print "\t".join(map(str, elem))
-		assert False, line
-
-	my_efos = re.sub("http://www.ebi.ac.uk/efo/", "", items[35]).split(", ")
-	if items[7] in diseases or any(my_efo in efos for my_efo in my_efos):
-		return [ 
+			
+	"""
+	try:
+		hits = hash['response']['docs']
+		return [
 			GWAS_Association(
-				pvalue = float(items[27]),
-				snp = snp,
-				disease = items[7],
-				efo = items[35],
-				source = 'GWAS Catalog',
-				study = None
+				pvalue = float(hit['pValueMantissa']) * 10**float(hit['pValueExponent']),
+				snp = hit['rsId'][0].strip(),
+				disease = hit['traitName_s'],
+				efo = hit['shortForm'],
+				source = "GWAS Catalog",
+				study = "PMID" + hit['pubmedId']
 			)
-			for snp in items[21].split(',')
+			for hit in hits
 		]
-	else:
-		return []
+	except:
+		print "Failed on %s%s" % (server, ext)
 
 def GRASP(diseases, efos):
 	"""
@@ -725,7 +809,7 @@ def cluster_gwas_snps(gwas_snps, populations):
 		Returntype: [ GWAS_Cluster ]
 
 	"""
-	gwas_snp_locations = concatenate(get_gwas_snp_locations(snp) for snp in gwas_snps)
+	gwas_snp_locations = get_gwas_snp_locations(gwas_snps)
 
 	if DEBUG:
 		"Found %i locations from %i GWAS SNPs" % (len(gwas_snp_locations), len(gwas_snps))
@@ -751,8 +835,8 @@ def gwas_snp_to_precluster(gwas_snp, populations):
 	"""
 	# Get all LD values around SNP
 	rsID = gwas_snp.snp.rsID
-	server = 'http://rest.ensembl.org'
-	ext = '/ld/%s/%s?content-type=application/json;population_name=%s;r2=%f' % (SPECIES, rsID, populations[0], 0.5) # TODO Mixed population model
+	server = 'http://grch37.rest.ensembl.org'
+	ext = '/ld/%s/%s?content-type=application/json;population_name=%s;r2=%f;window_size=500' % (SPECIES, rsID, populations[0], 0.5) # TODO Mixed population model
 	try:
 		lds = get_rest_json(server, ext)
 	except:
@@ -779,7 +863,7 @@ def gwas_snp_to_precluster(gwas_snp, populations):
 	        + [ ld['variation1'] for ld in lds if ld['variation2'] == rsID ]
 
 	# Get locations
-	mapped_ld_snps = concatenate(get_snp_locations(snp) for snp in ld_snps) + [ gwas_snp.snp ]
+	mapped_ld_snps = get_snp_locations(ld_snps) + [ gwas_snp.snp ]
 
 	# Note: Ensembl REST server imposes a 25kb limit, whereas STOPGAP imposes a looser 500kb limit
 	
@@ -788,7 +872,7 @@ def gwas_snp_to_precluster(gwas_snp, populations):
 		ld_snps = mapped_ld_snps
 	)
 
-def get_gwas_snp_locations(gwas_snp):
+def get_gwas_snp_locations(gwas_snps):
 	"""
 
 		Extract locations of GWAS SNP:
@@ -797,17 +881,18 @@ def get_gwas_snp_locations(gwas_snp):
 		Returntype: [ GWAS_SNP ]
 
 	"""
+	original_gwas_snp = dict((gwas_snp.snp, gwas_snp) for gwas_snp in gwas_snps)
+	mapped_snps = get_snp_locations(original_gwas_snp.keys())
 	return [ 
 		GWAS_SNP(
 			snp = mapped_snp,
-			disease = gwas_snp.disease,
-			efo = gwas_snp.efo,
-			pvalue = gwas_snp.pvalue,
-			evidence = gwas_snp.evidence
+			disease = original_gwas_snp[mapped_snp.rsID].disease,
+			efo = original_gwas_snp[mapped_snp.rsID].efo,
+			pvalue = original_gwas_snp[mapped_snp.rsID].pvalue,
+			evidence = original_gwas_snp[mapped_snp.rsID].evidence
 		) 
-		for mapped_snp in get_snp_locations(gwas_snp.snp)
+		for mapped_snp in mapped_snps
 	]
-
 
 def merge_preclusters(preclusters):
 	"""
@@ -890,13 +975,13 @@ def cluster_to_genes(cluster, tissues, populations):
 			gene = gene,
 			score = total_score(pics[snp], gene_scores[(gene, snp)][1]), 
 			cluster = cluster,
-			evidence = gene_scores[(gene, snp)][0]
+			evidence = gene_scores[(gene, snp)][:1] # This is a [ GeneSNP_Association ] 
 		)
 		for (gene, snp) in gene_scores if snp in pics
 	]
 
 	if DEBUG:
-		print "\tFound %i genes associated around gwas_snp %s" % (len(res), top_gwas_hit.snp)
+		print "\tFound %i genes associated around GWAS SNP %s" % (len(res), top_gwas_hit.snp.rsID)
 
 	# Pick the association with the highest score
 	return [ sorted(res, key=lambda X: X.score)[-1] ]
@@ -911,7 +996,7 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, populations):
 		Returntype: { rsId: scalar (ld) }
 
 	"""
-	server = "http://rest.ensembl.org"
+	server = "http://grch37.rest.ensembl.org"
 	ext = "/ld/%s/%s?type=application/json;population_name=%s;r2=%f;" % (SPECIES, gwas_snp.rsID, populations[0], 0.5) # TODO mixed-population model
 
 	try:
@@ -1063,8 +1148,8 @@ def GTEx(ld_snps, tissues):
 	end = max(snp.pos for snp in ld_snps)
 	chrom = ld_snps[0].chrom
 
-	server = 'http://rest.ensembl.org'
-	ext = '/overlap/region/%s/%s:%i-%i?feature=gene;content-type=application/json' % (SPECIES, chrom, start - 1e6, end + 1e6)
+	server = 'http://grch37.rest.ensembl.org'
+	ext = '/overlap/region/%s/%s:%i-%i?feature=gene;content-type=application/json' % (SPECIES, chrom, max(0, start - 1e6), min(5000000, end + 1e6))
 	genes = [ Gene(
 			name = gene['external_name'],
 			id = gene['id'],
@@ -1157,7 +1242,7 @@ def VEP(ld_snps, tissues):
 		Returntype: [ Regulatory_Evidence ]
 
 	"""
-	server = "http://rest.ensembl.org"
+	server = "http://grch37.rest.ensembl.org"
 	ext = "/vep/%s/id" % (SPECIES)
 	list = get_rest_json(server, ext, data = {"ids" : [snp.rsID for snp in ld_snps]})
 	'''
@@ -1250,10 +1335,15 @@ def Fantom5(ld_snps, tissues):
 		Returntype: [ Regulatory_Evidence ]
 
 	"""
-	intersection = overlap_snps_to_bed(ld_snps, DATABASES_DIR + "/Fantom5.txt")
+	intersection = overlap_snps_to_bed(ld_snps, DATABASES_DIR + "/Fantom5.bed")
 	fdr_model = pickle.load(open(DATABASES_DIR + "/Fantom5.fdrs"))
 	snp_hash = dict( (snp.rsID, snp) for snp in ld_snps)
-	res = filter (lambda X: X.score, (get_fantom5_evidence(feature, fdr_model, snp_hash) for feature in intersection))
+	hits  = filter(lambda X: X is not None, map(lambda X: get_fantom5_evidence(X, fdr_model, snp_hash), intersection))
+
+	if DEBUG:
+		print "\tFound %i overlaps with %i SNPs to Fantom5" % (len(hits), len(ld_snps))
+
+	res = filter(lambda X: X.score, hits)
 
 	if DEBUG:
 		print "\tFound %i interactions in Fantom5" % (len(res))
@@ -1263,44 +1353,31 @@ def Fantom5(ld_snps, tissues):
 def get_fantom5_evidence(feature, fdr_model, snp_hash):
 	'''
 		Parse output: first 12 columns are from Fantom5 file, the next 4 are LD SNP coords
-		1.	chrom
-		2.	chromStart
-		3.	chromEnd
-		4.	name ";" separated: 
-			1. chrom:start-end
-			2. Refseq
-			3. HGNC
-			4. R:r2
-			5. FDR:fdr
-		5.	score
-		6.	strand
-		7.	thickStart
-		8.	thickEnd
-		9.	itemRgb
-		10.	blockCount
-		11.	blockSizes
-		12.	chromStarts
+		1. chrom
+		2. chromStart
+		3. chromEnd
+		4. HGNC
+		5. FDR:fdr
 
 		6. chrom
 		7. start
 		8. end
 		9. rsID
 	'''
-	association_data = feature[3].split(";")
-
-	gene = get_gene(association_data[2])
-	snp = snp_hash[feature[15]]
+	gene = get_gene(feature[3])
+	if gene is None:
+		return None
+	snp = snp_hash[feature[8]]
 	score = STOPGAP_FDR(snp, gene, fdr_model)
 
-	return [
-			Cisregulatory_Evidence(
-				snp = snp,
-				gene = gene,
-				source = "Fantom5",
-				score = score
-			)
-			for feature in intersection
-		]
+	return Cisregulatory_Evidence(
+			snp = snp,
+			gene = gene,
+			source = "Fantom5",
+			score = score,
+			study = None,
+			tissue = None
+		)
 
 def DHS(ld_snps, tissues):
 	"""
@@ -1315,7 +1392,7 @@ def DHS(ld_snps, tissues):
 	intersection = overlap_snps_to_bed(ld_snps, DATABASES_DIR + "/DHS.txt")
 	fdr_model = pickle.load(open(DATABASES_DIR+"/DHS.fdrs"))
 	snp_hash = dict( (snp.rsID, snp) for snp in ld_snps)
-	res = filter (lambda X: X.score, (get_dhs_evidence(line, fdr_model, snp_hash) for feature in intersectionr))
+	res = filter (lambda X: X is not None and X.score, (get_dhs_evidence(feature, fdr_model, snp_hash) for feature in intersection))
 
 	if DEBUG:
 		print "\tFound %i gene associations in DHS" % len(res)
@@ -1348,14 +1425,18 @@ def get_dhs_evidence(feature, fdr_model, snp_hash):
 
 	'''
 	gene = get_gene(feature[3])
+	if gene is None:
+		return None
 	snp = snp_hash[feature[8]]
 	score = STOPGAP_FDR(snp, gene, fdr_model)
 
-	return Regulatory_Evidence(
+	return Cisregulatory_Evidence(
 		snp = snp,
 		gene = gene,
-		source = "DHS",
 		score = score,
+		source = "DHS",
+		study = None,
+		tissue = None
 	)
 
 def STOPGAP_FDR(snp, gene, fdr_model):
@@ -1402,18 +1483,11 @@ def get_gene(gene_name):
 		Returntype: Gene
 
 	"""
-	server = "http://rest.ensembl.org"
-	ext = "/lookup/symbol/%s/%s?content-type=application/json;expand=1" % (SPECIES, gene_name)
-	hash = get_rest_json(server, ext)
-	return Gene(
-		name = gene_name,
-		id = hash['id'],
-		chrom = hash['seq_region_name'],
-		tss = int(hash['start']) if hash['strand'] > 0 else int(hash['end']),
-		biotype = hash['biotype']
-		)
+	if gene_name not in known_genes:
+		known_genes[gene_name] = fetch_gene(gene_name)
+	return known_genes[gene_name]
 
-def get_ensembl_gene(gene_name):
+def fetch_gene(gene_name):
 	"""
 
 		Get gene details from name
@@ -1421,18 +1495,53 @@ def get_ensembl_gene(gene_name):
 		Returntype: Gene
 
 	"""
-	server = "http://rest.ensembl.org"
-	ext = "/lookup/id/%s?content-type=application/json;expand=1" % (gene_name)
+	server = "http://grch37.rest.ensembl.org"
+	ext = "/lookup/symbol/%s/%s?content-type=application/json;expand=1" % (SPECIES, gene_name)
+	try:
+		hash = get_rest_json(server, ext)
+		return Gene(
+			name = gene_name,
+			id = hash['id'],
+			chrom = hash['seq_region_name'],
+			tss = int(hash['start']) if hash['strand'] > 0 else int(hash['end']),
+			biotype = hash['biotype']
+			)
+	except:
+		return None
+
+
+def get_ensembl_gene(ensembl_id):
+	"""
+
+		Get gene details from name
+		* string
+		Returntype: Gene
+
+	"""
+	if ensembl_id not in known_genes:
+		known_genes[ensembl_id] = fetch_ensembl_gene(ensembl_id)
+	return known_genes[ensembl_id]
+
+def fetch_ensembl_gene(ensembl_id):
+	"""
+
+		Get gene details from name
+		* string
+		Returntype: Gene
+
+	"""
+	server = "http://grch37.rest.ensembl.org"
+	ext = "/lookup/id/%s?content-type=application/json;expand=1" % (ensembl_id)
 	hash = get_rest_json(server, ext)
 	return Gene(
-		name = gene_name,
-		id = hash['id'],
+		name = hash['display_name'],
+		id = ensembl_id,
 		chrom = hash['seq_region_name'],
 		tss = int(hash['start']) if hash['strand'] > 0 else int(hash['end']),
 		biotype = hash['biotype']
 		)
 
-def get_snp_locations(rsID):
+def get_snp_locations(rsIDs):
 	"""
 
 		Get SNP details from rsID 
@@ -1441,42 +1550,43 @@ def get_snp_locations(rsID):
 
 	"""
 
-	server = "http://rest.ensembl.org"
-	ext = "/variation/%s/%s?content-type=application/json" % (SPECIES, rsID)
-	hash = get_rest_json(server, ext)
+	server = "http://grch37.rest.ensembl.org"
+	ext = "/variation/%s?content-type=application/json" % (SPECIES)
+	hash = get_rest_json(server, ext, data={'ids':rsIDs})
 
 	'''
 		Example response:
 		{
-			'mappings': [
-				{
-					'assembly_name': 'GRCh38', 
-					'end': 130656773, 
-					'start': 130656773, 
-					'coord_system': 'chromosome', 
-					'allele_string': 'C/T', 
-					'seq_region_name': '9', 
-					'location': '9:130656773-130656773', 
-					'strand': 1
-				}
-			], 
-			'var_class': 'SNP', 
-			'minor_allele': 'T', 
-			'evidence': [
-				'Multiple_observations', 
-				'Frequency', 
-				'HapMap', 
-				'1000Genomes'
-			], 
-			'source': 'Variants (including SNPs and indels) imported from dbSNP', 
-			'synonyms': [
-				'rs60356236'
-			], 
-			'ambiguity': 'Y', 
-			'MAF': '0.148962', 
-			'ancestral_allele': 'T', 
-			'most_severe_consequence': 'downstream_gene_variant', 
-			'name': 'rs7028896'
+			"rs56116432": {
+				"source": "Variants (including SNPs and indels) imported from dbSNP",
+				"mappings": [
+					{
+						"location": "9:133256042-133256042",
+						"assembly_name": "GRCh38",
+						"end": 133256042,
+						"seq_region_name": "9",
+						"strand": 1,
+						"coord_system": "chromosome",
+						"allele_string": "C/T",
+						"start": 133256042
+					},
+				],
+				"name": "rs56116432",
+				"MAF": "0.00259585",
+				"ambiguity": "Y",
+				"var_class": "SNP",
+				"synonyms": [],
+				"evidence": [
+					"Multiple_observations",
+					"Frequency",
+					"1000Genomes",
+					"ESP",
+					"ExAC"
+				],
+				"ancestral_allele": "C",
+				"minor_allele": "T",
+				"most_severe_consequence": "missense_variant"
+			}
 		}
 	'''
 	return [
@@ -1485,7 +1595,8 @@ def get_snp_locations(rsID):
 			chrom = mapping['seq_region_name'],
 			pos = (int(mapping['start']) + int(mapping['end'])) / 2
 		)
-		for mapping in hash['mappings']
+		for rsID in hash
+		for mapping in hash[rsID]['mappings']
 	]
 
 def regulatory_evidence(snps, tissues):
@@ -1531,7 +1642,7 @@ def GERP_at_snp(snp):
 		* rsID
 		Returntype: Regulatory_Evidence
 	"""
-	server = "http://rest.ensembl.org"
+	server = "http://grch37.rest.ensembl.org"
 	ext = "/vep/human/id/%s?content-type=application/json;Conservation=1" % snp.rsID
 	obj = get_rest_json(server, ext)
 	return Regulatory_Evidence( 
@@ -1551,8 +1662,8 @@ def Regulome(ld_snps, tissues):
 
 	"""
 	snp_hash = dict( (snp.rsID, snp) for snp in ld_snps)
-	intersection = overlap_snps_to_bed(ld_snps, DATABASES_DIR + "/Regulome.txt")
-	res = filter (lambda X: X.score, get_regulome_evidence(intersection, snp_hash))
+	intersection = overlap_snps_to_bed(ld_snps, DATABASES_DIR + "/Regulome.bed")
+	res = filter (lambda X: X.score, (get_regulome_evidence(feature, snp_hash) for feature in intersection))
 
 	if DEBUG:
 		print "\tFound %i regulatory variants in Regulome" % (len(res))
@@ -1573,9 +1684,9 @@ def overlap_snps_to_bed(ld_snps, bed):
 	)
 	SNP_bt = pybedtools.BedTool(SNP_string, from_string=True)
 	Annotation_bt = pybedtools.BedTool(bed)
-	return SNP_bt.intersect(Annotation_bt, stream=True, wab=True)
+	return Annotation_bt.intersect(SNP_bt, wa=True, wb=True)
 
-def get_regulome_evidence(intersection, snp_hash):
+def get_regulome_evidence(feature, snp_hash):
 	"""
 
 		Extract Regulome score from bedtools output 
@@ -1591,22 +1702,22 @@ def get_regulome_evidence(intersection, snp_hash):
 	1. chrom
 	2. start
 	3. end
-	4. category
+	4. Stuff
+	5. category
 
 	LD SNP coords:
-	5. chrom
-	6. start
-	7. end
-	8. rsID
+	6. chrom
+	7. start
+	8. end
+	9. rsID
 	'''
-	return [
-		Regulatory_Evidence(
-			snp = snp_hash[feature[7]],
-			source = "DHS",
-			score = 2 if feature[3][0] == '1' or feature[3][0] == '2' else 1
+	return Regulatory_Evidence(
+			snp = snp_hash[feature[8]],
+			source = "Regulome",
+			score = 2 if feature[3][0] == '1' or feature[3][0] == '2' else 1,
+			study = None,
+			tissue = None
 		)
-		for feature in intersection
-	]
 
 def gene_to_MeSH(gene):
 	"""
@@ -1618,13 +1729,16 @@ def gene_to_MeSH(gene):
 	"""
 	server = "http://gene2mesh.ncibi.org"
 	ext = "/fetch?genesymbol=%s&taxid=%s" % (gene.name, NCBI_Taxon_ID[SPECIES])
+	print '>>>>>>>>>>>>>>>>>>'
+	print str(server)+str(ext)
+	print '>>>>>>>>>>>>>>>>>>'
 	response = requests.get(str(server)+str(ext))
 
 	if not response.ok:
 		sys.stderr.write("Failed to get proper response to query %s%s\n" % (server, ext) ) 
 		sys.stderr.write(response.content + "\n")
 		response.raise_for_status()
-		sys.exit()
+		print repr(response)
 
 	'''
 	Example MeSH output:
@@ -1640,49 +1754,49 @@ def gene_to_MeSH(gene):
 					'Email': 'anonymous'
 				},
 				'type': 'fetch'
-						},
-						'Response': {
+			},
+			'Response': {
 				'ResultSet': {
 					'Result': [
 						{
 							'FisherExact': {
-					'content': '1.8531319238671E-230',
-					'type': 'p-value'
+								'content': '1.8531319238671E-230',
+								'type': 'p-value'
 							},
 							'ChiSquare': '112213.6506462',
 							'Fover': '1498.1813411401',
 							'MeSH': {
-					'Qualifier': {
-						'Name': 'metabolism'
-					},
-					'Descriptor': {
-						'TreeNumber': [
-							'D08.811.913.696.620.682.725.400.500',
-							'D12.776.543.750.060.492',
-							'D12.776.543.750.705.852.150.150',
-							'D12.776.543.750.750.400.200.200',
-							'D12.776.624.664.700.800',
-							'D23.050.301.264.035.597',
-							'D23.101.100.110.597'
-						],
-						'Identifier': 'D016186',
-						'Name': 'Receptor, Macrophage Colony-Stimulating Factor',
-						'UMLSID': {}
-					}
+								'Qualifier': {
+									'Name': 'metabolism'
+								},
+								'Descriptor': {
+									'TreeNumber': [
+										'D08.811.913.696.620.682.725.400.500',
+										'D12.776.543.750.060.492',
+										'D12.776.543.750.705.852.150.150',
+										'D12.776.543.750.750.400.200.200',
+										'D12.776.624.664.700.800',
+										'D23.050.301.264.035.597',
+										'D23.101.100.110.597'
+									],
+									'Identifier': 'D016186',
+									'Name': 'Receptor, Macrophage Colony-Stimulating Factor',
+									'UMLSID': {}
+								}
 							},
 							'DocumentSet': {
-					'type': 'pubmed',
-					'PMID': [
-					]
+								'type': 'pubmed',
+								'PMID': [
+								]
 							},
 							'Gene': {
-					'Taxonomy': {
-						'Identifier': '9606'
-					},
-					'Identifier': '1436',
-					'type': 'Entrez',
-					'Description': 'colony stimulating factor 1 receptor',
-					'Symbol': 'CSF1R'
+								'Taxonomy': {
+									'Identifier': '9606'
+								},
+								'Identifier': '1436',
+								'type': 'Entrez',
+								'Description': 'colony stimulating factor 1 receptor',
+								'Symbol': 'CSF1R'
 							}
 						},
 					],
@@ -1705,10 +1819,20 @@ def gene_to_MeSH(gene):
 	}
 	'''
 
+	print response.content
 	if len(response.content):
-		hash = xmltodict(response.content)
-		hits = hash['Response']['ResultSet']['Result']
-		return [hit['MeSH']['Descriptor']['Name'] for hit in hits]
+		try:
+			hash = xmltodict.parse(response.content)
+			print repr(hash)
+			hits = hash['Gene2MeSH']['Request']['ResultSet']['Result']
+			# XML subtletly: if a tag is repeated, a list of objects is produced, 
+			# else a single object. Careful when unpacking!
+			if hits is list:
+				return [hit['MeSH']['Descriptor']['Name'] for hit in hits]
+			else:
+				return [hits['MeSH']['Descriptor']['Name']]
+		except:
+			return []
 	else:
 		return []
 
@@ -1735,20 +1859,39 @@ def get_rest_json(server, ext, data=None):
 		Return type: JSON object
 
 	"""
-	if data is None:
-		headers = { "Content-Type" : "application/json" }
-		r = requests.get(str(server)+str(ext), headers = headers)
-	else:
-		headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
-		r = requests.post(str(server)+str(ext), headers = headers, data = json.dumps(data))
+	retries = 0
 
-	if not r.ok:
-		sys.stderr.write("Failed to get proper response to query %s%s\n" % (server, ext) ) 
-		sys.stderr.write(r.content + "\n")
-		r.raise_for_status()
-		sys.exit()
-	else:
-		return r.json()
+	while True:
+		if data is None:
+			headers = { "Content-Type" : "application/json" }
+			r = requests.get(str(server)+str(ext), headers = headers)
+		else:
+			headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+			r = requests.post(str(server)+str(ext), headers = headers, data = json.dumps(data))
+
+		if DEBUG:
+			sys.stderr.write("REST JSON Query: %s%s\n" % (server, ext))
+
+		if not r.ok:
+			sys.stderr.write("Failed to get proper response to query %s%s\n" % (server, ext) ) 
+			sys.stderr.write("With headers:\n" + repr(headers) + "\n")
+			if data is not None:
+				sys.stderr.write("With data:\n" + repr(data) + "\n")
+			if 'retry-after' in r.headers:
+				time.sleep(int(r.headers['retry-after']))
+				retries += 1
+				continue
+			r.raise_for_status()
+			sys.exit()
+
+		try:
+			return r.json()
+		except:
+			sys.stderr.write("Failed to get proper response to query %s%s\n" % (server, ext) ) 
+			raise
+
+	# Failed too many times
+	sys.exit()
 
 def concatenate(list):
 	"""
@@ -1761,8 +1904,10 @@ def concatenate(list):
 	return sum(filter(lambda elem: elem is not None, list), [])
 
 # List of databases used
-database_functions = [GWASCatalog, GWAS_DB, Phewas_Catalog] # Removed GRASP for fast test
-ld_snp_to_gene_functions = [GTEx, Fantom5, VEP]
+database_functions = [GWASCatalog, GWAS_DB, Phewas_Catalog, GRASP]
+ld_snp_to_gene_functions = [GTEx, Fantom5, VEP, DHS]
 snp_regulatory_functions = [Regulome] # TODO Implement and insert GERP code
 
-main()
+
+if __name__ == "__main__":
+	main()

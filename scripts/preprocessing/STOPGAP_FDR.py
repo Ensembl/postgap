@@ -80,7 +80,7 @@ def process_line(distribution, line):
 	return distribution
 
 def get_gene_tss(gene):
-	server = "http://rest.ensembl.org"
+	server = "http://grch37.rest.ensembl.org"
 	ext = "/lookup/symbol/%s/%s?expand=1" % (SPECIES, gene)
 	 
 	r = requests.get(server+ext, headers={ "Content-Type" : "application/json"})

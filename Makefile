@@ -1,11 +1,11 @@
 DEST_DIR=~/lustre2/CTTV24/databases
 
-default: GRASP Phewas_Catalog GWAS_Catalog GWAS_DB Fantom5 DHS Regulome Phenotypes
+default: GRASP Phewas_Catalog GWAS_DB Fantom5 DHS Regulome Phenotypes
 
 GRASP: ${DEST_DIR}/GRASP.txt
 Phewas_Catalog: ${DEST_DIR}/Phewas_Catalog.txt
 GWAS_DB: ${DEST_DIR}/GWAS_DB.txt
-GWAS_Catalog: ${DEST_DIR}/GWAS_Catalog.txt
+#GWAS_Catalog: ${DEST_DIR}/GWAS_Catalog.txt
 Fantom5: ${DEST_DIR}/Fantom5.txt
 DHS: ${DEST_DIR}/DHS.txt
 Regulome: ${DEST_DIR}/Regulome.txt
@@ -22,12 +22,13 @@ ${DEST_DIR}/GWAS_DB.txt: ${DEST_DIR}
 	wget http://jjwanglab.org:8080/gwasdb/GWASdb_ld_snp_v4.zip -O ${DEST_DIR}/GWAS_DB.zip
 	unzip -c ${DEST_DIR}/GWAS_DB.zip > ${DEST_DIR}/GWAS_DB.txt
 
-${DEST_DIR}/GWAS_Catalog.txt: ${DEST_DIR}
-	wget https://www.ebi.ac.uk/gwas/api/search/downloads/alternative -O ${DEST_DIR}/GWAS_Catalog.txt
+#${DEST_DIR}/GWAS_Catalog.txt: ${DEST_DIR}
+#	wget https://www.ebi.ac.uk/gwas/api/search/downloads/alternative -O ${DEST_DIR}/GWAS_Catalog.txt
 
 ${DEST_DIR}/Fantom5.txt: ${DEST_DIR}
 	wget http://enhancer.binf.ku.dk/presets/enhancer_tss_associations.bed -O ${DEST_DIR}/Fantom5.txt
-	cat ${DEST_DIR}/Fantom5.txt | perl STOPGAP_FDR.pl | sed -e 's/^chr//' > ${DEST_DIR}/Fantom5.fdrs
+	cat ${DEST_DIR}/Fantom5.txt | cut -f4 | tr ';' '\t' | cut -f1,3,5 | grep 'FDR:' | sed -e 's/FDR://' -e 's/^chr//' -e 's/-/\t/' -e 's/:/\t/' | awk '$5 < 1' > ${DEST_DIR}/Fantom5.bed
+	cat ${DEST_DIR}/Fantom5.bed | perl STOPGAP_FDR.pl > ${DEST_DIR}/Fantom5.fdrs
 
 ${DEST_DIR}/DHS.txt: ${DEST_DIR}
 	wget ftp://ftp.ebi.ac.uk/pub/${DEST_DIR}/ensembl/encode/integration_data_jan2011/byDataType/openchrom/jan2011/dhs_gene_connectivity/genomewideCorrs_above0.7_promoterPlusMinus500kb_withGeneNames_32celltypeCategories.bed8.gz -qO- | gzip -dc | awk 'BEGIN {OFS="\t"} {print $5,$6,$7,$4,$8}' | sed -e 's/^chr//' > ${DEST_DIR}/DHS.txt

@@ -60,7 +60,7 @@ def efo_suggest(term):
 	server = 'http://www.ebi.ac.uk/spot/zooma/v2/api'
 	url_term = re.sub("%", "", term)
 	url_term = re.sub(" ", "%20", url_term)
-	ext = "/summaries/search?query=%s" % url_term
+	ext = "/summaries?query=%s" % url_term
 	r = requests.get(server+ext, headers={ "Content-Type" : "application/json"})
 	 
 	if not r.ok:
@@ -69,32 +69,42 @@ def efo_suggest(term):
 		r.raise_for_status()
 		sys.exit()
 
-	decoded = r.json()
-	 
-	'''
-		Example search result:
-		{
-			status: "/api/status/ok",
-			result: [
+	try:
+		'''
+			Example search result:
+			[
 				{
-					'mid' => '3804279AF8462F3A01EAEE2589C94781F248F9D7',
-					'notable' => {
-						'name' => 'disease; EFO_0000311',
-						'id' => 'summary_from_disease_to_EFO_0000311'
-					},
-					'name' => 'cancer',
-					'score' => '86.11212'
+					"id":"00ECD0E64DA2908961D228BF60BB8960C1778F1F",
+					"semanticTags":["http://www.ebi.ac.uk/efo/EFO_0000400"],
+					"annotationURIs":["http://rdf.ebi.ac.uk/resource/zooma/efo/ABF4EFC8B5BF4598775DC1F6F3532B5B"],
+					"annotationSourceURIs":["http://www.ebi.ac.uk/efo/efo.owl"],
+					"annotatedPropertyType":"disease",
+					"annotatedPropertyValue":"Diabetes",
+					"annotatedPropertyUri":"http://rdf.ebi.ac.uk/resource/zooma/5220510DE1D1CF8EEC186E4735AE9BE0",
+					"annotationSummaryTypeName":"disease; EFO_0000400",
+					"quality":72.803116,
+					"uri":"http://rdf.ebi.ac.uk/resource/zooma/annotation_summary/00ECD0E64DA2908961D228BF60BB8960C1778F1F"
 				}
-			]	
-		}
-	'''
-	
-	hits = decoded['result']
-	filtered_hits = filter(lambda X: re.search('EFO_\d+', X['notable']['name']) is not None, hits)
-	if len(filtered_hits) == 0:
-		return None
-	sorted_hits = sorted(filtered_hits, key = lambda X: X['score']) 
-	selected_hit = sorted_hits[-1]
-	return re.sub(r'^.*(EFO_[0-9]*)$', r'\1', selected_hit['notable']['name'])
+			]
+		'''
+		
+		hits = r.json()
+		filtered_hits = filter(lambda X: 
+					'annotatedPropertyType' in X 
+					and X['annotatedPropertyType'] is not None 
+					and re.search('disease', X['annotatedPropertyType']) is not None 
+					and 'annotationSummaryTypeName' in X 
+					and X['annotationSummaryTypeName'] is not None 
+					and re.search('EFO', X['annotationSummaryTypeName']) is not None, 
+				hits)
+		if len(filtered_hits) == 0:
+			return None
+		sorted_hits = sorted(filtered_hits, key = lambda X: X['quality']) 
+		selected_hit = sorted_hits[-1]
+		return re.sub(r'^.*(EFO_[0-9]*).*$', r'\1', selected_hit['annotationSummaryTypeName'])
+	except:
+		sys.stderr.write(repr(r) + "\n")
+		sys.stderr.write("Failure searching for term " + term + " with query " + server + ext + "\n")
+		raise
 
 main()
