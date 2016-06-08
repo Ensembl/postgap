@@ -107,6 +107,7 @@ def main():
 	res = diseases_to_genes(options.diseases, options.efos, options.populations, options.tissues)
 	for association in res:
 		print association.cluster.gwas_snps[0].efo, association.gene.name, association.gene.id, association.cluster.gwas_snps[0].snp.rsID, association.evidence[0].snp.rsID, association.score
+		print json.dumps(association.evidence)
 
 def get_options():
 	"""
@@ -315,6 +316,25 @@ def diseases_to_gwas_snps(diseases, efos):
 		Returntype: [ Association_SNP ]
 
 	"""
+	# DEBUG:
+	return [
+		GWAS_SNP(
+			snp = 'rs11209026',
+			pvalue = 1e-10,
+			disease = 'Inflammatory bowel diseases',
+			efo = 'EFO_0000384',
+			evidence = [
+				GWAS_Association(
+					pvalue = 1e-10,
+					snp = 'rs11209026',
+					disease = 'Inflammatory bowel diseases',
+					efo = 'EFO_0000384',
+					source = "GWAS Catalog",
+					study = "PMID00001"
+				)
+			]
+		)
+	]
 	res = filter(lambda X: X.pvalue < PVALUE_CUTOFF, scan_disease_databases(diseases, efos))
 
 	if DEBUG:
@@ -787,7 +807,12 @@ def gwas_snps_to_genes(gwas_snps, populations, tissue_weights):
 	if DEBUG:
 		print "\tFound %i genes associated to all clusters" % (len(res))
 
-	return [ sorted(res, key=lambda X: X.score)[-1] ]
+	if len(res) == 0:
+		return []
+	else:
+		# DEBUG
+		# return [ sorted(res, key=lambda X: X.score)[-1] ]
+		return sorted(res, key=lambda X: X.score)
 
 def gwas_snps_to_tissue_weights(gwas_snps):
 	"""
@@ -984,7 +1009,9 @@ def cluster_to_genes(cluster, tissues, populations):
 		print "\tFound %i genes associated around GWAS SNP %s" % (len(res), top_gwas_hit.snp.rsID)
 
 	# Pick the association with the highest score
-	return [ sorted(res, key=lambda X: X.score)[-1] ]
+	# DEBUG 
+	#return [ sorted(res, key=lambda X: X.score)[-1] ]
+	return sorted(res, key=lambda X: X.score)
 
 def get_lds_from_top_gwas(gwas_snp, ld_snps, populations):
 	"""
@@ -1121,12 +1148,12 @@ def cisregulatory_evidence(ld_snps, tissues):
 		print "Searching for cis-regulatory data on %i SNPs in all databases" % (len(ld_snps))
 	evidence = concatenate(function(ld_snps, tissues) for function in ld_snp_to_gene_functions)
 
-	filtered_evidence = filter(lambda association: association.gene.biotype != "protein_coding", evidence)
+	filtered_evidence = filter(lambda association: association.gene.biotype == "protein_coding", evidence)
 
 	# Group by (gene,snp) pair:
 	res = collections.defaultdict(list)
 	for association in filtered_evidence:
-		res[(association.gene, association.snp)] += evidence
+		res[(association.gene, association.snp)].append(association)
 
 	if DEBUG:
 		print "Found %i cis-regulatory interactions in all databases" % (len(res))
@@ -1149,7 +1176,7 @@ def GTEx(ld_snps, tissues):
 	chrom = ld_snps[0].chrom
 
 	server = 'http://grch37.rest.ensembl.org'
-	ext = '/overlap/region/%s/%s:%i-%i?feature=gene;content-type=application/json' % (SPECIES, chrom, max(0, start - 1e6), min(5000000, end + 1e6))
+	ext = '/overlap/region/%s/%s:%i-%i?feature=gene;content-type=application/json' % (SPECIES, chrom, max(0, start - 1e6), end + 1e6)
 	genes = [ Gene(
 			name = gene['external_name'],
 			id = gene['id'],
@@ -1232,6 +1259,10 @@ def GTEx_gene_tissue(gene, tissue, snp_hash):
 	except:
 		return None
 
+def chunks(l, n):
+	for i in range(0, len(l), n):
+		yield l[i:i+n]
+
 def VEP(ld_snps, tissues):
 	"""
 
@@ -1244,7 +1275,7 @@ def VEP(ld_snps, tissues):
 	"""
 	server = "http://grch37.rest.ensembl.org"
 	ext = "/vep/%s/id" % (SPECIES)
-	list = get_rest_json(server, ext, data = {"ids" : [snp.rsID for snp in ld_snps]})
+	list = concatenate(get_rest_json(server, ext, data = {"ids" : [snp.rsID for snp in chunk]}) for chunk in chunks(ld_snps, 999))
 	'''
 
 		Example output from VEP:
@@ -1552,7 +1583,7 @@ def get_snp_locations(rsIDs):
 
 	server = "http://grch37.rest.ensembl.org"
 	ext = "/variation/%s?content-type=application/json" % (SPECIES)
-	hash = get_rest_json(server, ext, data={'ids':rsIDs})
+	hash = concatenate_hashes(get_rest_json(server, ext, data={'ids':chunk}) for chunk in chunks(rsIDs, 999))
 
 	'''
 		Example response:
@@ -1877,8 +1908,8 @@ def get_rest_json(server, ext, data=None):
 			sys.stderr.write("With headers:\n" + repr(headers) + "\n")
 			if data is not None:
 				sys.stderr.write("With data:\n" + repr(data) + "\n")
-			if 'retry-after' in r.headers:
-				time.sleep(int(r.headers['retry-after']))
+			if 'Retry-After' in r.headers:
+				time.sleep(int(r.headers['Retry-After']))
 				retries += 1
 				continue
 			r.raise_for_status()
@@ -1902,6 +1933,16 @@ def concatenate(list):
 
 	"""
 	return sum(filter(lambda elem: elem is not None, list), [])
+
+def concatenate_hashes(list):
+	"""
+
+		Shorthand to concatenate a list of lists
+		Args: [[]]
+		Returntype: []
+
+	"""
+	return dict(sum(map(lambda X: X.items(), filter(lambda elem: elem is not None, list)), []))
 
 # List of databases used
 database_functions = [GWASCatalog, GWAS_DB, Phewas_Catalog, GRASP]
