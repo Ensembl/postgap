@@ -1,6 +1,8 @@
 CTTV 24 Project
 ===============
 
+Copyright holder: [EMBL-European Bioinformatics Institute](http://www.ebi.ac.uk) (Apache 2 License)
+
 This script is designed to automatically finemap and highlight the causal variants behind GWAS results by cross-examining GWAS, population genetic, epigenetic and cis-regulatory datasets.
 
 Its original design was based on [STOPGAP](). 
