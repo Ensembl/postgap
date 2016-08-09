@@ -13,13 +13,13 @@ Phenotypes: ${DEST_DIR}/Phenotypes.txt
 
 ${DEST_DIR}/GRASP.txt: ${DEST_DIR}
 	wget https://s3.amazonaws.com/NHLBI_Public/GRASP/GraspFullDataset2.zip -O ${DEST_DIR}/GRASP.zip
-	unzip -c ${DEST_DIR}/GRASP.zip | python scripts/preprocessing.py 12 > ${DEST_DIR}/GRASP.txt
+	unzip -c ${DEST_DIR}/GRASP.zip | python scripts/preprocessing/column.py 12 > ${DEST_DIR}/GRASP.txt
 
 ${DEST_DIR}/Phewas_Catalog.txt: ${DEST_DIR}
-	wget http://phewas.mc.vanderbilt.edu/phewas-catalog.csv -qO- | python csvToTsv > ${DEST_DIR}/Phewas_Catalog.txt
+	wget http://phewas.mc.vanderbilt.edu/phewas-catalog.csv -qO- | python scripts/preprocessing/csvToTsv.py > ${DEST_DIR}/Phewas_Catalog.txt
 
 ${DEST_DIR}/GWAS_DB.txt: ${DEST_DIR}
-	wget http://jjwanglab.org:8080/gwasdb/GWASdb_ld_snp_v4.zip -O ${DEST_DIR}/GWAS_DB.zip
+	wget ftp://jjwanglab.org/GWASdb/old_release/GWASdb_snp_v4.zip -O ${DEST_DIR}/GWAS_DB.zip
 	unzip -c ${DEST_DIR}/GWAS_DB.zip > ${DEST_DIR}/GWAS_DB.txt
 
 #${DEST_DIR}/GWAS_Catalog.txt: ${DEST_DIR}
@@ -27,12 +27,12 @@ ${DEST_DIR}/GWAS_DB.txt: ${DEST_DIR}
 
 ${DEST_DIR}/Fantom5.txt: ${DEST_DIR}
 	wget http://enhancer.binf.ku.dk/presets/enhancer_tss_associations.bed -O ${DEST_DIR}/Fantom5.txt
-	cat ${DEST_DIR}/Fantom5.txt | cut -f4 | tr ';' '\t' | cut -f1,3,5 | grep 'FDR:' | sed -e 's/FDR://' -e 's/^chr//' -e 's/-/\t/' -e 's/:/\t/' | awk '$5 < 1' > ${DEST_DIR}/Fantom5.bed
-	cat ${DEST_DIR}/Fantom5.bed | perl STOPGAP_FDR.pl > ${DEST_DIR}/Fantom5.fdrs
+	cat ${DEST_DIR}/Fantom5.txt | cut -f4 | tr ';' '\t' | cut -f1,3,5 | grep 'FDR:' | sed -e 's/FDR://' -e 's/^chr//' -e 's/-/\t/' -e 's/:/\t/' > ${DEST_DIR}/Fantom5.bed
+	cat ${DEST_DIR}/Fantom5.bed | python scripts/preprocessing/STOPGAP_FDR.py > ${DEST_DIR}/Fantom5.fdrs
 
 ${DEST_DIR}/DHS.txt: ${DEST_DIR}
 	wget ftp://ftp.ebi.ac.uk/pub/${DEST_DIR}/ensembl/encode/integration_data_jan2011/byDataType/openchrom/jan2011/dhs_gene_connectivity/genomewideCorrs_above0.7_promoterPlusMinus500kb_withGeneNames_32celltypeCategories.bed8.gz -qO- | gzip -dc | awk 'BEGIN {OFS="\t"} {print $5,$6,$7,$4,$8}' | sed -e 's/^chr//' > ${DEST_DIR}/DHS.txt
-	cat ${DEST_DIR}/DHS.txt | perl STOPGAP_FDR.pl > ${DEST_DIR}/DHS.fdrs
+	cat ${DEST_DIR}/DHS.txt | perl scripts/preprocessing/STOPGAP_FDR.py > ${DEST_DIR}/DHS.fdrs
 
 ${DEST_DIR}/Regulome.txt: ${DEST_DIR}
 	wget http://regulomedb.org/downloads/RegulomeDB.dbSNP132.Category1.txt.gz -qO- | gzip -dc > ${DEST_DIR}/regulome.tmp
@@ -40,7 +40,7 @@ ${DEST_DIR}/Regulome.txt: ${DEST_DIR}
 	wget http://regulomedb.org/downloads/RegulomeDB.dbSNP132.Category3.txt.gz -qO- | gzip -dc >> ${DEST_DIR}/regulome.tmp
 	awk 'BEGIN {FS="\t"} { print $1,$2,$2 + 1,$4 }' ${DEST_DIR}/regulome.tmp | sed -e 's/^chr//' > ${DEST_DIR}/Regulome.txt
 
-${DEST_DIR}/Phenotypes.txt: ${DEST_DIR}:
+${DEST_DIR}/Phenotypes.txt: ${DEST_DIR}
 
 ${DEST_DIR}:
 	mkdir -p ${DEST_DIR}
