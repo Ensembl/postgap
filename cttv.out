@@ -1,0 +1,40 @@
+Sender: LSF System <lsf@hh-yoda-03-10.ebi.ac.uk>
+Subject: Job 3797260: <cttv> in cluster <YODA> Done
+
+Job <cttv> was submitted from host <hh-yoda-08-01.ebi.ac.uk> by user <willj> in cluster <YODA>.
+Job was executed on host(s) <hh-yoda-03-10.ebi.ac.uk>, in queue <standard>, as user <willj> in cluster <YODA>.
+</homes/willj> was used as the home directory.
+</hps/nobackup/stegle/users/horta/dataset/1000G/cttv024> was used as the working directory.
+Started at Tue Aug  9 16:23:37 2016
+Results reported on Tue Aug  9 17:26:15 2016
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+cat ~/lustre2/CTTV24/databases/DHS.txt | python scripts/preprocessing/STOPGAP_FDR.py > ~/lustre2/CTTV24/databases/DHS.fdrs
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   165.71 sec.
+    Max Memory :                                 93 MB
+    Average Memory :                             62.85 MB
+    Total Requested Memory :                     -
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                5
+    Run time :                                   3757 sec.
+    Turnaround time :                            3758 sec.
+
+The output (if any) follows:
+
+
+
+PS:
+
+Read file <cttv.err> for stderr output of this job.
+

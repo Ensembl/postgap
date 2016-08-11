@@ -39,6 +39,8 @@ import math
 import json
 import cPickle as pickle
 import time
+import pdb
+import subprocess
 
 # Class definitions
 SNP = collections.namedtuple("SNP", ['rsID', 'chrom', 'pos'])
@@ -113,7 +115,7 @@ def get_options():
 	"""
 
 		Reads commandline parameters
-		Returntype: 
+		Returntype:
 			{
 				diseases: [ string ],
 				populations: [ string ],
@@ -154,7 +156,7 @@ def get_options():
 
 def efo_suggest(term):
 	"""
-		
+
 		Find most appropriate EFO term for arbitrary string
 		Arg:
 		* string
@@ -163,8 +165,8 @@ def efo_suggest(term):
 	"""
 	server = 'http://www.ebi.ac.uk/spot/zooma/v2/api'
 	url_term = re.sub(" ", "%20", term)
-	ext = "/summaries/search?query=%s" % (url_term)
-	hash = get_rest_json(server, ext)
+	ext = "/summaries?query=%s" % (url_term)
+	result = get_rest_json(server, ext)
 	'''
 
 		Example search result:
@@ -180,15 +182,15 @@ def efo_suggest(term):
 					'name': 'cancer',
 					'score': '86.11212'
 				}
-			]	
+			]
 		}
 
 	'''
-	result = hash['result']
-	hits = filter(lambda X: re.search('EFO_\d+' , X['notable']['name']), result)
-	sorted_hits = sorted(hits, key = lambda X: X['score'])
+
+	hits = filter(lambda X: re.search('EFO_\d+' , X['annotationSummaryTypeName']), result)
+	sorted_hits = sorted(hits, key = lambda X: X['quality'])
 	if len(hits):
-		selection = sorted_hits[-1]['notable']['name']
+		selection = sorted_hits[-1]['annotationSummaryTypeName']
 		efo = re.sub('.*\(EFO_[0-9]*\)$', '\1', selection)
 		if DEBUG:
 			print "Suggested EFO %s" % efo
@@ -287,7 +289,7 @@ def efo_children(efo):
 			break
 
 		page += 1
-	
+
 	if DEBUG:
 		print "EFO children: " + "\t".join(res)
 	return res
@@ -296,7 +298,7 @@ def diseases_to_genes(diseases, efos, populations, tissues):
 	"""
 
 		Associates genes from a list of diseases
-		Args: 
+		Args:
 		* [ string ] (trait descriptions - free strings)
 		* [ string ] (trait EFO identifiers)
 		* [ string ] (population names)
@@ -310,7 +312,7 @@ def diseases_to_gwas_snps(diseases, efos):
 	"""
 
 		Associates gwas_snps from a list of diseases
-		Args: 
+		Args:
 		* [ string ] (trait descriptions - free strings )
 		* [ string ] (trait EFO identifiers)
 		Returntype: [ Association_SNP ]
@@ -346,7 +348,7 @@ def scan_disease_databases(diseases, efos):
 	"""
 
 		Associates gwas_snps from a list of diseases
-		Args: 
+		Args:
 		* [ string ] (trait descriptions)
 		* [ string ] (trait EFO identifiers)
 		Returntype: [ GWAS_SNP ]
@@ -538,7 +540,7 @@ def query_gwas_catalog(term):
 		  ]
 		}
 
-			
+
 	"""
 	try:
 		hits = hash['response']['docs']
@@ -649,7 +651,7 @@ def get_grasp_association(line, diseases, efos):
 		XX68. LS-SNP
 		XX69. UniProt
 		XX70. EqtlMethMetabStudy
-		71. EFO string 
+		71. EFO string
 
 	'''
 	items = line.rstrip().split('\t')
@@ -700,7 +702,7 @@ def get_phewas_catalog_association(line, diseases, efos):
 		8. phewas code
 		9. gwas-associations
 		10. [Inserte] EFO identifier (or N/A)
-		
+
 	'''
 	items = line.rstrip().split('\t')
 	if items[2] in diseases or items[9] in efos:
@@ -790,7 +792,7 @@ def gwas_snps_to_genes(gwas_snps, populations, tissue_weights):
 	"""
 
 		Associates Genes to gwas_snps of interest
-		Args: 
+		Args:
 		* [ GWAS_Association ]
 		* { population_name: scalar (weight) }
 		* { tissue_name: scalar (weight) }
@@ -818,7 +820,7 @@ def gwas_snps_to_tissue_weights(gwas_snps):
 	"""
 
 		Associates list of tissues to list of gwas_snps
-		Args: 
+		Args:
 		* [ GWAS_SNP ]
 		Returntype: [ string ]
 
@@ -856,7 +858,7 @@ def gwas_snp_to_precluster(gwas_snp, populations):
 		* [ GWAS_SNP ]
 		* [ string ] (populations)
 		Returntype: GWAS_Cluster
-		
+
 	"""
 	# Get all LD values around SNP
 	rsID = gwas_snp.snp.rsID
@@ -886,12 +888,11 @@ def gwas_snp_to_precluster(gwas_snp, populations):
 	# Reduce to list of linked SNPs
 	ld_snps = [ ld['variation2'] for ld in lds if ld['variation1'] == rsID ] \
 	        + [ ld['variation1'] for ld in lds if ld['variation2'] == rsID ]
-
 	# Get locations
 	mapped_ld_snps = get_snp_locations(ld_snps) + [ gwas_snp.snp ]
 
 	# Note: Ensembl REST server imposes a 25kb limit, whereas STOPGAP imposes a looser 500kb limit
-	
+
 	return GWAS_Cluster(
 		gwas_snps = [ gwas_snp ],
 		ld_snps = mapped_ld_snps
@@ -908,14 +909,14 @@ def get_gwas_snp_locations(gwas_snps):
 	"""
 	original_gwas_snp = dict((gwas_snp.snp, gwas_snp) for gwas_snp in gwas_snps)
 	mapped_snps = get_snp_locations(original_gwas_snp.keys())
-	return [ 
+	return [
 		GWAS_SNP(
 			snp = mapped_snp,
 			disease = original_gwas_snp[mapped_snp.rsID].disease,
 			efo = original_gwas_snp[mapped_snp.rsID].efo,
 			pvalue = original_gwas_snp[mapped_snp.rsID].pvalue,
 			evidence = original_gwas_snp[mapped_snp.rsID].evidence
-		) 
+		)
 		for mapped_snp in mapped_snps
 	]
 
@@ -952,7 +953,7 @@ def merge_preclusters(preclusters):
 				break
 			else:
 				snp_owner[ld_snp] = cluster
- 
+
 	res = filter(lambda cluster: cluster not in kill_list, preclusters)
 
 	if DEBUG:
@@ -965,7 +966,7 @@ def cluster_to_genes(cluster, tissues, populations):
 	"""
 
 		Associated Genes to a cluster of gwas_snps
-		Args: 
+		Args:
 		* [ Cluster ]
 		* { tissue_name: scalar (weights) }
 		* { population_name: scalar (weight) }
@@ -976,18 +977,18 @@ def cluster_to_genes(cluster, tissues, populations):
 	associations = ld_snps_to_genes(cluster.ld_snps, tissues)
 
 	# Compute LD based scores
-	top_gwas_hit = sorted(cluster.gwas_snps, key=lambda X: X.pvalue)[-1] 
+	top_gwas_hit = sorted(cluster.gwas_snps, key=lambda X: X.pvalue)[-1]
 	ld = get_lds_from_top_gwas(top_gwas_hit.snp, cluster.ld_snps, populations)
 	pics = PICS(ld, top_gwas_hit.pvalue)
 
 	gene_scores = dict(
-		((association.gene, association.snp), (association, association.score * ld[association.snp])) 
+		((association.gene, association.snp), (association, association.score * ld[association.snp]))
 		for association in associations if association.snp in ld
 	)
 
 	if len(gene_scores) == 0:
 		return []
-	
+
 	# OMIM exception
 	max_score = max(X[1] for X in gene_scores.values())
 	for gene, snp in gene_scores:
@@ -998,9 +999,9 @@ def cluster_to_genes(cluster, tissues, populations):
 	res = [
 		GeneCluster_Association(
 			gene = gene,
-			score = total_score(pics[snp], gene_scores[(gene, snp)][1]), 
+			score = total_score(pics[snp], gene_scores[(gene, snp)][1]),
 			cluster = cluster,
-			evidence = gene_scores[(gene, snp)][:1] # This is a [ GeneSNP_Association ] 
+			evidence = gene_scores[(gene, snp)][:1] # This is a [ GeneSNP_Association ]
 		)
 		for (gene, snp) in gene_scores if snp in pics
 	]
@@ -1009,73 +1010,127 @@ def cluster_to_genes(cluster, tissues, populations):
 		print "\tFound %i genes associated around GWAS SNP %s" % (len(res), top_gwas_hit.snp.rsID)
 
 	# Pick the association with the highest score
-	# DEBUG 
+	# DEBUG
 	#return [ sorted(res, key=lambda X: X.score)[-1] ]
 	return sorted(res, key=lambda X: X.score)
 
-def get_lds_from_top_gwas(gwas_snp, ld_snps, populations):
-	"""
+def get_lds_from_top_gwas(gwas_snp, ld_snps, populations, region=None,db=0, cutoff=0.5):
+    """
+    For large numbers of SNPs, best to specify SNP region with chrom:to-from, e.g. 1:7654947-8155562
+    For small numbers (<10), regions are extracted from ENSEMBL REST API.
+    SNPs can be inputted in a list or from a file with one SNP id per line.
+    """
 
-		Compute LD between top GWAS hit and all LD snps in list.
-		Args:
-		* SNP
-		* [ SNP ]
-		Returntype: { rsId: scalar (ld) }
 
-	"""
-	server = "http://grch37.rest.ensembl.org"
-	ext = "/ld/%s/%s?type=application/json;population_name=%s;r2=%f;" % (SPECIES, gwas_snp.rsID, populations[0], 0.5) # TODO mixed-population model
+    if gwas_snp.rsID not in [x.rsID for x in ld_snps]:
+        ld_snps.append(gwas_snp)
 
-	try:
-		lds = get_rest_json(server, ext)
-	except:
-		return dict()
+    SNP_ids = [x.rsID for x in ld_snps]
 
-	rsID_to_SNPs = dict( (snp.rsID, snp) for snp in ld_snps)
-	return dict(
-		(rsID_to_SNPs[ld['variation1']], float(ld['r2'])) 
-		for ld in lds if ld['variation1'] in rsID_to_SNPs
-	)
+    snp_position_map = {}
+    for s in ld_snps:
+        snp_position_map[s.rsID] = s.pos
+
+
+
+    assert [x.chrom for x in ld_snps] == ([ld_snps[0].chrom] * len(ld_snps))
+    positions = [x.pos for x in ld_snps]
+    region = '{}:{}-{}'.format(ld_snps[0].chrom, min(positions), max(positions))
+
+    chromosome = ld_snps[0].chrom
+    population_filepath = '/hps/nobackup/stegle/users/horta/dataset/1000G/LD_calculator/data/processed/CEPH.chr{}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.nodup.bcf.gz'.format(chromosome)
+
+
+    SNPs_filepath = 'snp_rsIDs.txt'
+    h = open('snp_rsIDs.txt', 'w')
+    for x in ld_snps:
+        h.write('{}\n'.format(str(x.rsID)))
+    h.close()
+
+
+    ### Extract the required region from the VCF
+
+    extract_region_comm = "bcftools view -r {} {} -O z -o region.vcf.gz".format(region,population_filepath)
+    subprocess.call(extract_region_comm.split(" "))
+    region_file = "region.vcf.gz"
+
+
+    ### Extract the list of SNP ids from this region
+    vcfcomm = "vcftools --gzvcf {} --snps {} --recode --stdout".format(region_file, SNPs_filepath)
+    vcf = subprocess.check_output(vcfcomm.split(" "))
+
+
+    ### Remove intermediate region VCF file
+
+
+    f = open('snps.vcf', 'w')
+    f.write(vcf)
+    f.close()
+
+    ### Extract out the order of SNPs
+    SNPs_order = re.findall('rs[0-9]+', vcf)
+
+
+    ### Use plink2 to calculate pairwise LD between these SNPs.
+    plinkcomm = "plink2 --vcf snps.vcf --r2 square --out LD"
+    plinkcomm_list = plinkcomm.split(" ")
+    subprocess.call(plinkcomm_list)
+
+
+
+    ### Read from the generated results file and output an array.
+    LD_file = open('LD.ld','r')
+    g = LD_file.read()
+    LD_array = [x.split('\t') for x in g.splitlines()]
+    LD_file.close
+
+
+    snp_index = SNPs_order.index(gwas_snp.rsID)
+    ld_vector = LD_array[snp_index]
+
+
+    SNPs = [SNP(snp_id, chromosome, snp_position_map[snp_id]) for snp_id in SNPs_order]
+    ld_scores = [(SNPs[i],float(ld_vector[i])) for i in range(len(ld_vector))]
+    ld_scores_cutoff = dict([x for x in ld_scores if x[1] > cutoff])
+
+    ### Remove intermediate files
+    if db != 1:
+        subprocess.call(['rm', 'LD.ld', 'LD.log', 'LD.nosex', 'out.log'])
+        subprocess.call(['rm', 'snps.vcf'])
+        subprocess.call(['rm', 'region.vcf.gz'])
+        subprocess.call(['rm', 'snp_rsIDs.txt'])
+
+    return ld_scores_cutoff
+
+
 
 def PICS(ld, pvalue):
-	"""
+    minus_log_pvalue = - math.log(pvalue) / math.log(10);
+    SD = dict()
+    Mean = dict()
+    prob = dict()
+    sum = 0
 
-		PICS score presented in http://pubs.broadinstitute.org/pubs/finemapping/
-		Args: 
-		* { SNP: scalar } (LD)
-		* scalar (pvalue)
-		Returntype: { rsID: scalar } (PICS score)
+    for snp in ld.keys():
+        if snp in ld:
+            SD[snp] = math.sqrt(1 - math.sqrt(ld[snp]) ** 6.4) * math.sqrt(minus_log_pvalue) / 2;
+            Mean[snp] = ld[snp] * minus_log_pvalue;
+        else:
+            # Defaults for remote SNPs
+            SD[snp] = 0
+            Mean[snp] = 1 + minus_log_pvalue
 
-	"""
-	minus_log_pvalue = - math.log(pvalue) / math.log(10); 
-	SD = dict()
-	Mean = dict()
-	prob = dict()
-	sum = 0
+        # Calculate the probability of each SNP
+        if SD[snp]:
+            prob[snp] = 1 - pnorm(minus_log_pvalue, Mean[snp], SD[snp])
+        else:
+            prob[snp] = 1
 
-	for snp in ld.keys():
-		if snp in ld:
-			# Calculate the standard deviation of the association signal at the SNP 
-			SD[snp] = math.sqrt(1 - math.sqrt(ld[snp]) ** 6.4) * math.sqrt(minus_log_pvalue) / 2; 
+        # Normalisation sum
+        sum += prob[snp]
 
-			# calculate the expected mean of the association signal at the SNP 
-			Mean[snp] = ld[snp] * minus_log_pvalue; 
-		else:
-			# Defaults for remote SNPs
-			SD[snp] = 0
-			Mean[snp] = 1 + minus_log_pvalue
-
-		# Calculate the probability of each SNP
-		if SD[snp]:
-			prob[snp] = 1 - pnorm(minus_log_pvalue, Mean[snp], SD[snp])
-		else:
-			prob[snp] = 1
-
-		# Normalisation sum
-		sum += prob[snp]
-
-	# Normalize the probabilies so that their sum is 1.
-	return dict((snp, prob[snp] / sum) for snp in prob.keys())
+    # Normalize the probabilies so that their sum is 1.
+    return dict((snp, prob[snp] / sum) for snp in prob.keys())
 
 def pnorm(x, mu, sd):
 	"""
@@ -1094,7 +1149,7 @@ def total_score(pics, gene_score):
 	"""
 
 		Computes a weird mean function from ld_snp PICs score and Gene/SNP association score
-		Args: 
+		Args:
 		* PICS: scalar
 		* gene_score: scalar
 		Returntype: scalar
@@ -1108,10 +1163,10 @@ def ld_snps_to_genes(ld_snps, tissues):
 	"""
 
 		Associates genes to LD linked SNP
-		Args: 
+		Args:
 		* [ SNP ]
 		* [ string ] (tissues)
-		Returntype: [ GeneSNP_Association ] 
+		Returntype: [ GeneSNP_Association ]
 
 	"""
 	# Search for SNP-Gene pairs:
@@ -1138,10 +1193,10 @@ def cisregulatory_evidence(ld_snps, tissues):
 	"""
 
 		Associates genes to LD linked SNP
-		Args: 
+		Args:
 		* [ SNP ]
 		* [ string ] (tissues)
-		Returntype: { (Gene, SNP): Cisregulatory_Evidence } 
+		Returntype: { (Gene, SNP): Cisregulatory_Evidence }
 
 	"""
 	if DEBUG:
@@ -1159,11 +1214,11 @@ def cisregulatory_evidence(ld_snps, tissues):
 		print "Found %i cis-regulatory interactions in all databases" % (len(res))
 
 	return res
- 
+
 def GTEx(ld_snps, tissues):
 	"""
 
-		Returns all genes associated to a set of SNPs in GTEx 
+		Returns all genes associated to a set of SNPs in GTEx
 		Args:
 		* [ SNP ]
 		* [ string ] (tissues)
@@ -1197,7 +1252,7 @@ def GTEx(ld_snps, tissues):
 def GTEx_gene(gene, tissues, snp_hash):
 	"""
 
-		Returns all SNPs associated to a gene in GTEx 
+		Returns all SNPs associated to a gene in GTEx
 		Args:
 		* [ SNP ]
 		* [ string ] (tissues)
@@ -1224,11 +1279,11 @@ def GTEx_gene_tissue(gene, tissue, snp_hash):
 
 	"""
 
-	
+
 	server = "http://193.62.54.30:5555"
-	ext = "/eqtl/id/%s/%s?content-type=application/json;statistic=p-value;tissue=%s" % ('homo_sapiens', gene.id, tissue); 
+	ext = "/eqtl/id/%s/%s?content-type=application/json;statistic=p-value;tissue=%s" % ('homo_sapiens', gene.id, tissue);
 	try:
-		eQTLs = get_rest_json(server, ext) 
+		eQTLs = get_rest_json(server, ext)
 
 		'''
 			Example return object:
@@ -1266,7 +1321,7 @@ def chunks(l, n):
 def VEP(ld_snps, tissues):
 	"""
 
-		Returns all genes associated to a set of SNPs in VEP 
+		Returns all genes associated to a set of SNPs in VEP
 		Args:
 		* [ SNP ]
 		* [ string ] (tissues)
@@ -1348,7 +1403,7 @@ def VEP(ld_snps, tissues):
 			study = None,
 			tissue = None
 		)
-		for hit in transcript_consequences for consequence in hit['transcript_consequences'] 
+		for hit in transcript_consequences for consequence in hit['transcript_consequences']
 	]
 
 	if DEBUG:
@@ -1359,7 +1414,7 @@ def VEP(ld_snps, tissues):
 def Fantom5(ld_snps, tissues):
 	"""
 
-		Returns all genes associated to a set of SNPs in Fantom5 
+		Returns all genes associated to a set of SNPs in Fantom5
 		Args:
 		* [ SNP ]
 		* [ string ] (tissues)
@@ -1413,7 +1468,7 @@ def get_fantom5_evidence(feature, fdr_model, snp_hash):
 def DHS(ld_snps, tissues):
 	"""
 
-		Returns all genes associated to a set of SNPs in DHS 
+		Returns all genes associated to a set of SNPs in DHS
 		Args:
 		* [ SNP ]
 		* [ string ] (tissues)
@@ -1473,11 +1528,11 @@ def get_dhs_evidence(feature, fdr_model, snp_hash):
 def STOPGAP_FDR(snp, gene, fdr_model):
 	"""
 
-		Special function for cis-regulatory interactions 
+		Special function for cis-regulatory interactions
 		Args:
 		* rsID
 		* ENSG stable ID
-		* 
+		*
 		Returntype: scalar
 
 	"""
@@ -1575,7 +1630,7 @@ def fetch_ensembl_gene(ensembl_id):
 def get_snp_locations(rsIDs):
 	"""
 
-		Get SNP details from rsID 
+		Get SNP details from rsID
 		* string
 		Returntype: SNP
 
@@ -1659,7 +1714,7 @@ def GERP(snps, tissues):
 
 		Extract GERP score at position
 		Args:
-		* [ SNP ] 
+		* [ SNP ]
 		Returntype: [ Regulatory_Evidence ]
 
 	"""
@@ -1676,7 +1731,7 @@ def GERP_at_snp(snp):
 	server = "http://grch37.rest.ensembl.org"
 	ext = "/vep/human/id/%s?content-type=application/json;Conservation=1" % snp.rsID
 	obj = get_rest_json(server, ext)
-	return Regulatory_Evidence( 
+	return Regulatory_Evidence(
 			snp = snp,
 			score = float(obj['Conservation']), # TODO: score on FDR?
 			source = 'GERP'
@@ -1685,7 +1740,7 @@ def GERP_at_snp(snp):
 def Regulome(ld_snps, tissues):
 	"""
 
-		Extract Regulome score at sns of interest 
+		Extract Regulome score at sns of interest
 		Args:
 		* [ SNP ]
 		* [ string ]
@@ -1720,7 +1775,7 @@ def overlap_snps_to_bed(ld_snps, bed):
 def get_regulome_evidence(feature, snp_hash):
 	"""
 
-		Extract Regulome score from bedtools output 
+		Extract Regulome score from bedtools output
 		Args:
 		* string
 		Returntype: Regulatory_Evidence
@@ -1766,7 +1821,7 @@ def gene_to_MeSH(gene):
 	response = requests.get(str(server)+str(ext))
 
 	if not response.ok:
-		sys.stderr.write("Failed to get proper response to query %s%s\n" % (server, ext) ) 
+		sys.stderr.write("Failed to get proper response to query %s%s\n" % (server, ext) )
 		sys.stderr.write(response.content + "\n")
 		response.raise_for_status()
 		print repr(response)
@@ -1856,7 +1911,7 @@ def gene_to_MeSH(gene):
 			hash = xmltodict.parse(response.content)
 			print repr(hash)
 			hits = hash['Gene2MeSH']['Request']['ResultSet']['Result']
-			# XML subtletly: if a tag is repeated, a list of objects is produced, 
+			# XML subtletly: if a tag is repeated, a list of objects is produced,
 			# else a single object. Careful when unpacking!
 			if hits is list:
 				return [hit['MeSH']['Descriptor']['Name'] for hit in hits]
@@ -1904,7 +1959,7 @@ def get_rest_json(server, ext, data=None):
 			sys.stderr.write("REST JSON Query: %s%s\n" % (server, ext))
 
 		if not r.ok:
-			sys.stderr.write("Failed to get proper response to query %s%s\n" % (server, ext) ) 
+			sys.stderr.write("Failed to get proper response to query %s%s\n" % (server, ext) )
 			sys.stderr.write("With headers:\n" + repr(headers) + "\n")
 			if data is not None:
 				sys.stderr.write("With data:\n" + repr(data) + "\n")
@@ -1918,7 +1973,7 @@ def get_rest_json(server, ext, data=None):
 		try:
 			return r.json()
 		except:
-			sys.stderr.write("Failed to get proper response to query %s%s\n" % (server, ext) ) 
+			sys.stderr.write("Failed to get proper response to query %s%s\n" % (server, ext) )
 			raise
 
 	# Failed too many times
@@ -1943,6 +1998,8 @@ def concatenate_hashes(list):
 
 	"""
 	return dict(sum(map(lambda X: X.items(), filter(lambda elem: elem is not None, list)), []))
+
+
 
 # List of databases used
 database_functions = [GWASCatalog, GWAS_DB, Phewas_Catalog, GRASP]
