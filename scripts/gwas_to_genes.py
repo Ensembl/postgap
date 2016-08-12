@@ -112,47 +112,50 @@ def main():
 		print json.dumps(association.evidence)
 
 def get_options():
-	"""
+    """
 
-		Reads commandline parameters
-		Returntype:
-			{
-				diseases: [ string ],
-				populations: [ string ],
-				tissues: [ string ],
-			}
+        Reads commandline parameters
+        Returntype:
+            {
+                diseases: [ string ],
+                populations: [ string ],
+                tissues: [ string ],
+            }
 
-	"""
-	parser = argparse.ArgumentParser(description='Search GWAS/Regulatory/Cis-regulatory databases for causal genes')
-	parser.add_argument('--efos', nargs='*')
-	parser.add_argument('--diseases', nargs='*')
-	parser.add_argument('--populations', nargs='*', default=['1000GENOMES:phase_3:GBR'])
-	parser.add_argument('--tissues', nargs='*')
-	parser.add_argument('--species', nargs='*', default = 'Human')
-	parser.add_argument('--database_dir', dest = 'databases', default = 'databases')
-	parser.add_argument('--debug', '-g', action = 'store_true')
-	options = parser.parse_args()
+    """
+    parser = argparse.ArgumentParser(description='Search GWAS/Regulatory/Cis-regulatory databases for causal genes')
+    parser.add_argument('--efos', nargs='*')
+    parser.add_argument('--diseases', nargs='*')
+    parser.add_argument('--populations', nargs='*', default=['1000GENOMES:phase_3:GBR'])
+    parser.add_argument('--tissues', nargs='*')
+    parser.add_argument('--species', nargs='*', default = 'Human')
+    parser.add_argument('--database_dir', dest = 'databases', default = 'databases')
+    parser.add_argument('--debug', '-g', action = 'store_true')
+    parser.add_argument('--populations_dir', dest = 'populations', default = 'specify_me')
+    options = parser.parse_args()
 
-	global DATABASES_DIR
-	DATABASES_DIR = options.databases
-	global SPECIES
-	SPECIES = options.species
-	global DEBUG
-	DEBUG = DEBUG or options.debug
+    global DATABASES_DIR
+    DATABASES_DIR = options.databases
+    global SPECIES
+    SPECIES = options.species
+    global DEBUG
+    DEBUG = DEBUG or options.debug
+    global POPULATIONS_DIR
+    POPULATIONS_DIR = options.populations
 
-	assert DATABASES_DIR is not None
-	assert options.efos is not None or options.diseases is not None
+    assert DATABASES_DIR is not None
+    assert options.efos is not None or options.diseases is not None
 
-	if options.diseases is None:
-		options.diseases = []
+    if options.diseases is None:
+        options.diseases = []
 
-	if options.efos is None:
-		options.efos = filter(lambda X: X is not None, (efo_suggest(disease) for disease in options.diseases))
+    if options.efos is None:
+        options.efos = filter(lambda X: X is not None, (efo_suggest(disease) for disease in options.diseases))
 
-	# Expand list of EFOs to children, concatenate, remove duplicates
-	options.efos = concatenate(map(efo_children, options.efos))
+    # Expand list of EFOs to children, concatenate, remove duplicates
+    options.efos = concatenate(map(efo_children, options.efos))
 
-	return options
+    return options
 
 def efo_suggest(term):
 	"""
@@ -866,11 +869,12 @@ def calculate_LD_window(snp, window_len=500000,populations='GBR',cutoff=0.5,db=0
     chromosome = snp.chrom
     region = '{}:{}-{}'.format(chromosome,from_pos,to_pos)
 
-    population_filepath = '/hps/nobackup/stegle/users/horta/dataset/1000G/LD_calculator/data/processed/CEPH.chr{}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.nodup.bcf.gz'.format(chromosome)
+    chrom_file = 'CEPH.chr{}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.nodup.bcf.gz'.format(chromosome)
+
 
 
     ### Extract this region out from the 1000 genomes BCF
-    extract_region_comm = "bcftools view -r {} {} -O v -o region.vcf".format(region, population_filepath)
+    extract_region_comm = "bcftools view -r {} {} -O v -o region.vcf".format(region, POPULATIONS_DIR + chrom_file)
 
     subprocess.call(extract_region_comm.split(" "))
     region_file = open('region.vcf','r')
@@ -885,7 +889,11 @@ def calculate_LD_window(snp, window_len=500000,populations='GBR',cutoff=0.5,db=0
     plinkcomm = "plink2 --vcf region.vcf --r2 --ld-snp {} --inter-chr --out LDwindow".format(SNP_id)
     plinkcomm_list = plinkcomm.split(" ")
 
-    subprocess.call(plinkcomm_list)
+    try:
+        subprocess.call(plinkcomm_list)
+    except:
+        raise Exception("Plink2 needs to be installed")
+        sys.exit()
 
     ### Remove intermediate region VCF file
 
@@ -931,44 +939,7 @@ def gwas_snp_to_precluster(gwas_snp, populations):
     snp = gwas_snp.snp
     mapped_ld_snps_dict = calculate_LD_window(snp)
     mapped_ld_snps = mapped_ld_snps_dict.keys()
-
-    # rsID = gwas_snp.snp.rsID
-    # server = 'http://grch37.rest.ensembl.org'
-    # ext = '/ld/%s/%s?content-type=application/json;population_name=%s;r2=%f;window_size=500' % (SPECIES, rsID, populations[0], 0.5) # TODO Mixed population model
-    # try:
-        # lds = get_rest_json(server, ext)
-    # except:
-        # return None
-
-    # '''
-
-        # Example format:
-
-        # [
-            # {
-                # "variation1": "rs3774356",
-                # "population_name": "1000GENOMES:phase_3:KHV",
-                # "variation2": "rs1042779",
-                # "r2": "0.153806",
-                # "d_prime": "0.881692"
-            # }
-        # ]
-
-    # '''
-
-    # # Reduce to list of linked SNPs
-    # ld_snps = [ ld['variation2'] for ld in lds if ld['variation1'] == rsID ] \
-            # + [ ld['variation1'] for ld in lds if ld['variation2'] == rsID ]
-    # # Get locations
-    # mapped_ld_snps = get_snp_locations(ld_snps) + [ gwas_snp.snp ]
-
-    # # Note: Ensembl REST server imposes a 25kb limit, whereas STOPGAP imposes a looser 500kb limit
-    # pdb.set_trace()
-
-    return GWAS_Cluster(
-        gwas_snps = [ gwas_snp ],
-        ld_snps = mapped_ld_snps
-    )
+    return GWAS_Cluster(gwas_snps = [ gwas_snp ],ld_snps = mapped_ld_snps)
 
 def get_gwas_snp_locations(gwas_snps):
 	"""
@@ -1086,7 +1057,7 @@ def cluster_to_genes(cluster, tissues, populations):
 	#return [ sorted(res, key=lambda X: X.score)[-1] ]
 	return sorted(res, key=lambda X: X.score)
 
-def get_lds_from_top_gwas(gwas_snp, ld_snps, populations, region=None,db=0, cutoff=0.5):
+def get_lds_from_top_gwas(gwas_snp, ld_snps, populations, region=None,db=0, cutoff=0.5, population_filepath = POPULATION_DIR):
     """
     For large numbers of SNPs, best to specify SNP region with chrom:to-from, e.g. 1:7654947-8155562
     For small numbers (<10), regions are extracted from ENSEMBL REST API.
@@ -1109,7 +1080,6 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, populations, region=None,db=0, cuto
     region = '{}:{}-{}'.format(ld_snps[0].chrom, min(positions), max(positions))
 
     chromosome = ld_snps[0].chrom
-    population_filepath = '/hps/nobackup/stegle/users/horta/dataset/1000G/LD_calculator/data/processed/CEPH.chr{}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.nodup.bcf.gz'.format(chromosome)
 
 
     SNPs_filepath = 'snp_rsIDs.txt'

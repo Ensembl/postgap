@@ -35,10 +35,10 @@ ${DEST_DIR}/DHS.txt: ${DEST_DIR}
 	cat ${DEST_DIR}/DHS.txt | python scripts/preprocessing/STOPGAP_FDR.py > ${DEST_DIR}/DHS.fdrs
 
 ${DEST_DIR}/Regulome.txt: ${DEST_DIR}
-	wget http://regulomedb.org/downloads/RegulomeDB.dbSNP132.Category1.txt.gz -qO- | gzip -dc > ${DEST_DIR}/regulome.tmp
-	wget http://regulomedb.org/downloads/RegulomeDB.dbSNP132.Category2.txt.gz -qO- | gzip -dc >> ${DEST_DIR}/regulome.tmp
-	wget http://regulomedb.org/downloads/RegulomeDB.dbSNP132.Category3.txt.gz -qO- | gzip -dc >> ${DEST_DIR}/regulome.tmp
-	awk 'BEGIN {FS="\t"} { print $1,$2,$2 + 1,$4 }' ${DEST_DIR}/regulome.tmp | sed -e 's/^chr//' > ${DEST_DIR}/Regulome.bed
+	#wget http://regulomedb.org/downloads/RegulomeDB.dbSNP132.Category1.txt.gz -qO- | gzip -dc > ${DEST_DIR}/regulome.tmp
+	#wget http://regulomedb.org/downloads/RegulomeDB.dbSNP132.Category2.txt.gz -qO- | gzip -dc >> ${DEST_DIR}/regulome.tmp
+	#wget http://regulomedb.org/downloads/RegulomeDB.dbSNP132.Category3.txt.gz -qO- | gzip -dc >> ${DEST_DIR}/regulome.tmp
+	awk 'BEGIN {FS="\t"} { print $$1,$$2,$$2 + 1,$$4 }' ${DEST_DIR}/regulome.tmp | sed -e 's/^chr//' > ${DEST_DIR}/Regulome.bed
 	python scripts/preprocessing/regulome_tidy.py ${DEST_DIR}
 
 ${DEST_DIR}/Phenotypes.txt: ${DEST_DIR}

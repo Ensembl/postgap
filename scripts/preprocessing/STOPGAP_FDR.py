@@ -3,6 +3,7 @@ import re
 import requests
 import cPickle as pickle
 import collections
+import pdb
 
 BIN_WIDTH = 10000;
 MAX_DISTANCE = 500000
@@ -21,37 +22,40 @@ def main():
 	pickle.dump(res, sys.stdout)
 
 def process_line(distribution, line):
-	columns = line.strip().split()
-	chr = columns[0]
-	if chr[0] == '#':
-		return distribution
-	chr = re.sub('^chr','', chr)
-	start = int(columns[1])
-	end = int(columns[2])
-	gene = columns[3]
-	if gene not in TSS_cache:
-		TSS_cache[gene] = get_gene_tss(gene)
-	coords = TSS_cache[gene]
-	if coords is None:
-		return distribution
-	pos = (start + end) / 2
-	if coords[0] != chr:
-		return distribution
-	distance = abs(pos - coords[1])
-	if distance > MAX_DISTANCE:
-		return distribution
-	distribution[int(distance / BIN_WIDTH)] += 1
-	return distribution
+    columns = line.split()[0].split('t') + line.split()[1:]
+    chr = columns[0]
+
+    if chr[0] == '#':
+        return distribution
+
+    chr = re.sub('^chr','', chr)
+    start = int(columns[1])
+    end = int(columns[2])
+    gene = columns[3]
+
+    if gene not in TSS_cache:
+        TSS_cache[gene] = get_gene_tss(gene)
+    coords = TSS_cache[gene]
+    if coords is None:
+        return distribution
+    pos = (start + end) / 2
+    if coords[0] != chr:
+        return distribution
+    distance = abs(pos - coords[1])
+    if distance > MAX_DISTANCE:
+        return distribution
+    distribution[int(distance / BIN_WIDTH)] += 1
+    return distribution
 
 def get_gene_tss(gene):
 	server = "http://grch37.rest.ensembl.org"
 	ext = "/lookup/symbol/%s/%s?expand=1" % (SPECIES, gene)
-	 
+
 	r = requests.get(server+ext, headers={ "Content-Type" : "application/json"})
-	
+
 	if not r.ok:
 		return None
-		 
+
 	gene = r.json()
 	if gene['strand']:
 		return (gene['seq_region_name'], gene['start'])

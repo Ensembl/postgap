@@ -1,6 +1,6 @@
 import sys
 
-DATABASE_DIR= sys.argv(1)
+DATABASE_DIR= sys.argv[1]
 
 f = open(DATABASE_DIR + '/Regulome.bed','r')
 g = f.read().splitlines()
