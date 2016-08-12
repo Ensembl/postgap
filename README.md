@@ -17,10 +17,12 @@ This will create a "databases" directory which you can move anywhere. Save the l
 Running
 -------
 
+Must specify 1000 Genomes population to calcuate LD from. Must be indexed bcfs
 By default, run with the command: 
 
 '''
-python gwas_to_genes.python --disease $disease_name
+python gwas_to_genes.py --disease autism --database_dir ~/lustre2/CTTV24/databases --populations_dir /hps/nobackup/stegle/users/horta/dataset/1000G/LD_calculator/data/processed
+
 '''
 
 Multiple disease names can be provided.
