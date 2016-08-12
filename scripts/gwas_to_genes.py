@@ -27,7 +27,7 @@ limitations under the License.
 	<http://www.ensembl.org/Help/Contact>.
 
 """
-
+import os
 import sys
 import argparse
 import re
@@ -850,53 +850,125 @@ def cluster_gwas_snps(gwas_snps, populations):
 	return clusters
 
 
+def calculate_LD_window(snp, window_len=500000,populations='GBR',cutoff=0.5,db=0):
+
+    """
+    Given a SNP id, calculate the pairwise LD between all SNPs within window_size base pairs.
+    """
+
+    SNP_id = snp.rsID
+    ### Get the SNP location from ENSEMBL
+    position = int(snp.pos)
+
+    ### Define the necessary region.
+    from_pos = position - (window_len / 2)
+    to_pos = position + (window_len / 2)
+    chromosome = snp.chrom
+    region = '{}:{}-{}'.format(chromosome,from_pos,to_pos)
+
+    population_filepath = '/hps/nobackup/stegle/users/horta/dataset/1000G/LD_calculator/data/processed/CEPH.chr{}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.nodup.bcf.gz'.format(chromosome)
+
+
+    ### Extract this region out from the 1000 genomes BCF
+    extract_region_comm = "bcftools view -r {} {} -O v -o region.vcf".format(region, population_filepath)
+
+    subprocess.call(extract_region_comm.split(" "))
+    region_file = open('region.vcf','r')
+    region_vcf = region_file.read()
+
+
+    ### Find the order of SNPs in the VCF
+    SNPs_order = re.findall('rs[0-9]+', region_vcf)
+
+
+    ### Calculate the pairwise LD using plink2
+    plinkcomm = "plink2 --vcf region.vcf --r2 --ld-snp {} --inter-chr --out LDwindow".format(SNP_id)
+    plinkcomm_list = plinkcomm.split(" ")
+
+    subprocess.call(plinkcomm_list)
+
+    ### Remove intermediate region VCF file
+
+
+
+
+
+
+    ### Remove intermediate LD file
+
+
+    f = open('LDwindow.ld','r')
+    g = f.read().splitlines()
+
+    r2_dict = {}
+    for s in [l.split() for l in g][1:]:
+        ld = s[-1]
+        the_snp = SNP(s[-2].split(';')[0], s[-4], int(s[-3]))
+        r2_dict[the_snp] = float(ld)
+
+
+    pruned_ld_snps = dict([x for x in r2_dict.items() if x[1] > cutoff])
+
+    if db != 1:
+        subprocess.call(['rm', 'region.vcf'])
+    if db != 1:
+        subprocess.call(['rm', 'LDwindow.ld', 'LDwindow.log', 'LDwindow.nosex', 'out.log'])
+
+    return pruned_ld_snps
+
+
 def gwas_snp_to_precluster(gwas_snp, populations):
-	"""
+    """
 
-		Extract neighbourhood of GWAS snp
-		Args:
-		* [ GWAS_SNP ]
-		* [ string ] (populations)
-		Returntype: GWAS_Cluster
+        Extract neighbourhood of GWAS snp
+        Args:
+        * [ GWAS_SNP ]
+        * [ string ] (populations)
+        Returntype: GWAS_Cluster
 
-	"""
-	# Get all LD values around SNP
-	rsID = gwas_snp.snp.rsID
-	server = 'http://grch37.rest.ensembl.org'
-	ext = '/ld/%s/%s?content-type=application/json;population_name=%s;r2=%f;window_size=500' % (SPECIES, rsID, populations[0], 0.5) # TODO Mixed population model
-	try:
-		lds = get_rest_json(server, ext)
-	except:
-		return None
+    """
+    # Get all LD values around SNP
+    snp = gwas_snp.snp
+    mapped_ld_snps_dict = calculate_LD_window(snp)
+    mapped_ld_snps = mapped_ld_snps_dict.keys()
 
-	'''
+    # rsID = gwas_snp.snp.rsID
+    # server = 'http://grch37.rest.ensembl.org'
+    # ext = '/ld/%s/%s?content-type=application/json;population_name=%s;r2=%f;window_size=500' % (SPECIES, rsID, populations[0], 0.5) # TODO Mixed population model
+    # try:
+        # lds = get_rest_json(server, ext)
+    # except:
+        # return None
 
-		Example format:
+    # '''
 
-		[
-			{
-				"variation1": "rs3774356",
-				"population_name": "1000GENOMES:phase_3:KHV",
-				"variation2": "rs1042779",
-				"r2": "0.153806",
-				"d_prime": "0.881692"
-			}
-		]
+        # Example format:
 
-	'''
+        # [
+            # {
+                # "variation1": "rs3774356",
+                # "population_name": "1000GENOMES:phase_3:KHV",
+                # "variation2": "rs1042779",
+                # "r2": "0.153806",
+                # "d_prime": "0.881692"
+            # }
+        # ]
 
-	# Reduce to list of linked SNPs
-	ld_snps = [ ld['variation2'] for ld in lds if ld['variation1'] == rsID ] \
-	        + [ ld['variation1'] for ld in lds if ld['variation2'] == rsID ]
-	# Get locations
-	mapped_ld_snps = get_snp_locations(ld_snps) + [ gwas_snp.snp ]
+    # '''
 
-	# Note: Ensembl REST server imposes a 25kb limit, whereas STOPGAP imposes a looser 500kb limit
+    # # Reduce to list of linked SNPs
+    # ld_snps = [ ld['variation2'] for ld in lds if ld['variation1'] == rsID ] \
+            # + [ ld['variation1'] for ld in lds if ld['variation2'] == rsID ]
+    # # Get locations
+    # mapped_ld_snps = get_snp_locations(ld_snps) + [ gwas_snp.snp ]
 
-	return GWAS_Cluster(
-		gwas_snps = [ gwas_snp ],
-		ld_snps = mapped_ld_snps
-	)
+    # # Note: Ensembl REST server imposes a 25kb limit, whereas STOPGAP imposes a looser 500kb limit
+    # pdb.set_trace()
+
+    return GWAS_Cluster(
+        gwas_snps = [ gwas_snp ],
+        ld_snps = mapped_ld_snps
+    )
 
 def get_gwas_snp_locations(gwas_snps):
 	"""
@@ -1025,7 +1097,6 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, populations, region=None,db=0, cuto
     if gwas_snp.rsID not in [x.rsID for x in ld_snps]:
         ld_snps.append(gwas_snp)
 
-    SNP_ids = [x.rsID for x in ld_snps]
 
     snp_position_map = {}
     for s in ld_snps:
@@ -1748,7 +1819,7 @@ def Regulome(ld_snps, tissues):
 
 	"""
 	snp_hash = dict( (snp.rsID, snp) for snp in ld_snps)
-	intersection = overlap_snps_to_bed(ld_snps, DATABASES_DIR + "/Regulome.bed")
+	intersection = overlap_snps_to_bed(ld_snps, DATABASES_DIR + "/Regulome_new.bed")
 	res = filter (lambda X: X.score, (get_regulome_evidence(feature, snp_hash) for feature in intersection))
 
 	if DEBUG:
@@ -1757,20 +1828,29 @@ def Regulome(ld_snps, tissues):
 	return res
 
 def overlap_snps_to_bed(ld_snps, bed):
-	'''
-		Find overlaps between SNP elements and annotated Bed file
-		Args:
-		* [ SNP ]
-		* string (location of bed file)
-		Returntype: pybedtools Interval iterator
+    '''
+        Find overlaps between SNP elements and annotated Bed file
+        Args:
+        * [ SNP ]
+        * string (location of bed file)
+        Returntype: pybedtools Interval iterator
 
-	'''
-	SNP_string = "\n".join(
-		( "\t".join((snp.chrom, str(snp.pos), str(snp.pos+1), snp.rsID)) for snp in ld_snps )
-	)
-	SNP_bt = pybedtools.BedTool(SNP_string, from_string=True)
-	Annotation_bt = pybedtools.BedTool(bed)
-	return Annotation_bt.intersect(SNP_bt, wa=True, wb=True)
+    '''
+    ld_snps = list(ld_snps)
+    SNP_string = "\n".join(( "\t".join((snp.chrom, str(snp.pos), str(snp.pos+1), snp.rsID)) for snp in ld_snps ))
+    SNP_bt = pybedtools.BedTool(SNP_string, from_string=True)
+    max_pos = max([x.pos for x in ld_snps])
+    min_pos = min([x.pos for x in ld_snps])
+    chrom = ld_snps[0].chrom
+
+    if not os.path.isfile(bed + '.gz') or not os.path.isfile(bed + '.gz.tbi'):
+        Annotation_bt = pybedtools.BedTool(bed)
+        Annotation_bt_indexed = Annotation_bt.tabix()
+    else:
+        Annotation_bt_indexed = pybedtools.BedTool(bed + '.gz')
+
+    intersection = Annotation_bt_indexed.tabix_intervals('{}:{}-{}'.format(chrom,min_pos,max_pos)).intersect(SNP_bt, wa=True, wb=True)
+    return intersection
 
 def get_regulome_evidence(feature, snp_hash):
 	"""
