@@ -20,7 +20,7 @@ Running
 By default, run with the command: 
 
 '''
-perl gwas_to_genes.pl --disease $disease_name
+python gwas_to_genes.python --disease $disease_name
 '''
 
 Multiple disease names can be provided.
