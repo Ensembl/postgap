@@ -72,6 +72,7 @@ NCBI_Taxon_ID = {
 
 # Globals
 DATABASES_DIR = None
+POPULATIONS_DIR = None
 SPECIES = None
 DEBUG = True
 PVALUE_CUTOFF = 1e-4
@@ -874,7 +875,7 @@ def calculate_LD_window(snp, window_len=500000,populations='GBR',cutoff=0.5,db=0
 
 
     ### Extract this region out from the 1000 genomes BCF
-    extract_region_comm = "bcftools view -r {} {} -O v -o region.vcf".format(region, POPULATIONS_DIR + chrom_file)
+    extract_region_comm = "bcftools view -r {} {} -O v -o region.vcf".format(region, POPULATIONS_DIR + '/' + chrom_file)
 
     subprocess.call(extract_region_comm.split(" "))
     region_file = open('region.vcf','r')
@@ -1006,58 +1007,58 @@ def merge_preclusters(preclusters):
 
 
 def cluster_to_genes(cluster, tissues, populations):
-	"""
+    """
 
-		Associated Genes to a cluster of gwas_snps
-		Args:
-		* [ Cluster ]
-		* { tissue_name: scalar (weights) }
-		* { population_name: scalar (weight) }
-		Returntype: [ GeneCluster_Association ]
+        Associated Genes to a cluster of gwas_snps
+        Args:
+        * [ Cluster ]
+        * { tissue_name: scalar (weights) }
+        * { population_name: scalar (weight) }
+        Returntype: [ GeneCluster_Association ]
 
-	"""
-	# Obtain interaction data from LD snps
-	associations = ld_snps_to_genes(cluster.ld_snps, tissues)
+    """
+    # Obtain interaction data from LD snps
+    associations = ld_snps_to_genes(cluster.ld_snps, tissues)
 
-	# Compute LD based scores
-	top_gwas_hit = sorted(cluster.gwas_snps, key=lambda X: X.pvalue)[-1]
-	ld = get_lds_from_top_gwas(top_gwas_hit.snp, cluster.ld_snps, populations)
-	pics = PICS(ld, top_gwas_hit.pvalue)
+    # Compute LD based scores
+    top_gwas_hit = sorted(cluster.gwas_snps, key=lambda X: X.pvalue)[-1]
+    ld = get_lds_from_top_gwas(top_gwas_hit.snp, cluster.ld_snps, populations)
+    pics = PICS(ld, top_gwas_hit.pvalue)
 
-	gene_scores = dict(
-		((association.gene, association.snp), (association, association.score * ld[association.snp]))
-		for association in associations if association.snp in ld
-	)
+    gene_scores = dict(
+        ((association.gene, association.snp), (association, association.score * ld[association.snp]))
+        for association in associations if association.snp in ld
+    )
 
-	if len(gene_scores) == 0:
-		return []
+    if len(gene_scores) == 0:
+        return []
 
-	# OMIM exception
-	max_score = max(X[1] for X in gene_scores.values())
-	for gene, snp in gene_scores:
-		if len(gene_to_phenotypes(gene)):
-			gene_scores[(gene, snp)][1] = max_score
+    # OMIM exception
+    max_score = max(X[1] for X in gene_scores.values())
+    for gene, snp in gene_scores:
+        if len(gene_to_phenotypes(gene)):
+            gene_scores[(gene, snp)][1] = max_score
 
 
-	res = [
-		GeneCluster_Association(
-			gene = gene,
-			score = total_score(pics[snp], gene_scores[(gene, snp)][1]),
-			cluster = cluster,
-			evidence = gene_scores[(gene, snp)][:1] # This is a [ GeneSNP_Association ]
-		)
-		for (gene, snp) in gene_scores if snp in pics
-	]
+    res = [
+        GeneCluster_Association(
+            gene = gene,
+            score = total_score(pics[snp], gene_scores[(gene, snp)][1]),
+            cluster = cluster,
+            evidence = gene_scores[(gene, snp)][:1] # This is a [ GeneSNP_Association ]
+        )
+        for (gene, snp) in gene_scores if snp in pics
+    ]
 
-	if DEBUG:
-		print "\tFound %i genes associated around GWAS SNP %s" % (len(res), top_gwas_hit.snp.rsID)
+    if DEBUG:
+        print "\tFound %i genes associated around GWAS SNP %s" % (len(res), top_gwas_hit.snp.rsID)
 
-	# Pick the association with the highest score
-	# DEBUG
-	#return [ sorted(res, key=lambda X: X.score)[-1] ]
-	return sorted(res, key=lambda X: X.score)
+    # Pick the association with the highest score
+    # DEBUG
+    #return [ sorted(res, key=lambda X: X.score)[-1] ]
+    return sorted(res, key=lambda X: X.score)
 
-def get_lds_from_top_gwas(gwas_snp, ld_snps, populations, region=None,db=0, cutoff=0.5, population_filepath = POPULATION_DIR):
+def get_lds_from_top_gwas(gwas_snp, ld_snps, populations, region=None,db=0, cutoff=0.5, population_filepath = POPULATIONS_DIR):
     """
     For large numbers of SNPs, best to specify SNP region with chrom:to-from, e.g. 1:7654947-8155562
     For small numbers (<10), regions are extracted from ENSEMBL REST API.
@@ -1090,8 +1091,9 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, populations, region=None,db=0, cuto
 
 
     ### Extract the required region from the VCF
+    chrom_file = 'CEPH.chr{}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.nodup.bcf.gz'.format(chromosome)
 
-    extract_region_comm = "bcftools view -r {} {} -O z -o region.vcf.gz".format(region,population_filepath)
+    extract_region_comm = "bcftools view -r {} {} -O z -o region.vcf.gz".format(region, POPULATIONS_DIR + '/' + chrom_file)
     subprocess.call(extract_region_comm.split(" "))
     region_file = "region.vcf.gz"
 
