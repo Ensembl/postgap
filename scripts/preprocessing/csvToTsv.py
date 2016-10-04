@@ -1,6 +1,6 @@
 import csv
 import sys
 
-reader = csv.reader(sys.stdin)
+reader = csv.reader(sys.argv[1])
 for row in reader:
 	print "\t".join(row)

@@ -142,7 +142,7 @@ def get_options():
     global DEBUG
     DEBUG = DEBUG or options.debug
     global POPULATIONS_DIR
-    POPULATIONS_DIR = options.populations
+    POPULATIONS_DIR = options.populations[0]
 
     assert DATABASES_DIR is not None
     assert options.efos is not None or options.diseases is not None
@@ -875,6 +875,8 @@ def calculate_LD_window(snp, window_len=500000,populations='GBR',cutoff=0.5,db=0
 
 
     ### Extract this region out from the 1000 genomes BCF
+
+    pdb.set_trace()
     extract_region_comm = "bcftools view -r {} {} -O v -o region.vcf".format(region, POPULATIONS_DIR + '/' + chrom_file)
 
     subprocess.call(extract_region_comm.split(" "))
@@ -1093,6 +1095,7 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, populations, region=None,db=0, cuto
     ### Extract the required region from the VCF
     chrom_file = 'CEPH.chr{}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.nodup.bcf.gz'.format(chromosome)
 
+    pdb.set_trace()
     extract_region_comm = "bcftools view -r {} {} -O z -o region.vcf.gz".format(region, POPULATIONS_DIR + '/' + chrom_file)
     subprocess.call(extract_region_comm.split(" "))
     region_file = "region.vcf.gz"

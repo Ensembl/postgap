@@ -3,7 +3,7 @@ import re
 import requests
 import cPickle as pickle
 import collections
-import pdb
+import rpdb
 
 BIN_WIDTH = 10000;
 MAX_DISTANCE = 500000
@@ -13,22 +13,25 @@ SPECIES = 'Human'
 FDR_Model = collections.namedtuple('FDR_Model', ['FDR','BIN_WIDTH','MAX_DISTANCE'])
 
 def main():
-	distribution = reduce(process_line, sys.stdin, collections.defaultdict(lambda:  0))
-	res = FDR_Model(
-		FDR = dict((bin_num, distribution[MAX_BIN] * .99 / distribution[bin_num]) for bin_num in distribution.keys()),
-		MAX_DISTANCE = MAX_DISTANCE,
-		BIN_WIDTH = BIN_WIDTH
-	)
-	pickle.dump(res, sys.stdout)
+    
+    distribution = reduce(process_line, sys.stdin.readlines(), collections.defaultdict(lambda:  0))
+
+
+    res = FDR_Model(
+            FDR = dict((bin_num, distribution[MAX_BIN] * .99 / distribution[bin_num]) for bin_num in distribution.keys()),
+            MAX_DISTANCE = MAX_DISTANCE,
+            BIN_WIDTH = BIN_WIDTH
+    )
+    pickle.dump(res, sys.stdout)
 
 def process_line(distribution, line):
     columns = line.split()[0].split('t') + line.split()[1:]
-    chr = columns[0]
+    chrom = columns[0]
 
-    if chr[0] == '#':
+    if chrom[0] == '#':
         return distribution
+    
 
-    chr = re.sub('^chr','', chr)
     start = int(columns[1])
     end = int(columns[2])
     gene = columns[3]
@@ -39,12 +42,13 @@ def process_line(distribution, line):
     if coords is None:
         return distribution
     pos = (start + end) / 2
-    if coords[0] != chr:
+    if coords[0] != chrom:
         return distribution
     distance = abs(pos - coords[1])
     if distance > MAX_DISTANCE:
         return distribution
     distribution[int(distance / BIN_WIDTH)] += 1
+    
     return distribution
 
 def get_gene_tss(gene):
