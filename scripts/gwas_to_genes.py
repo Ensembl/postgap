@@ -132,7 +132,7 @@ def get_options():
     parser.add_argument('--species', nargs='*', default = 'Human')
     parser.add_argument('--database_dir', dest = 'databases', default = 'databases')
     parser.add_argument('--debug', '-g', action = 'store_true')
-    parser.add_argument('--populations_dir', dest = 'populations', default = 'specify_me')
+    parser.add_argument('--populations_dir', dest = 'populations', default = './databases/1000Genomes/CEPH')
     options = parser.parse_args()
 
     global DATABASES_DIR
@@ -142,7 +142,7 @@ def get_options():
     global DEBUG
     DEBUG = DEBUG or options.debug
     global POPULATIONS_DIR
-    POPULATIONS_DIR = options.populations[0]
+    POPULATIONS_DIR = options.populations
 
     assert DATABASES_DIR is not None
     assert options.efos is not None or options.diseases is not None
@@ -155,6 +155,7 @@ def get_options():
 
     # Expand list of EFOs to children, concatenate, remove duplicates
     options.efos = concatenate(map(efo_children, options.efos))
+    pdb.set_trace()
 
     return options
 
@@ -1060,7 +1061,7 @@ def cluster_to_genes(cluster, tissues, populations):
     #return [ sorted(res, key=lambda X: X.score)[-1] ]
     return sorted(res, key=lambda X: X.score)
 
-def get_lds_from_top_gwas(gwas_snp, ld_snps, populations, region=None,db=0, cutoff=0.5, population_filepath = POPULATIONS_DIR):
+def get_lds_from_top_gwas(gwas_snp, ld_snps, populations, region=None,db=0, cutoff=0.5):
     """
     For large numbers of SNPs, best to specify SNP region with chrom:to-from, e.g. 1:7654947-8155562
     For small numbers (<10), regions are extracted from ENSEMBL REST API.

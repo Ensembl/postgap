@@ -77,10 +77,22 @@ Regulome:
 #Phenotypes:
 
 d_1000Genomes:
-	for url in `cat ./scripts/preprocessing/links.txt`;wget -nc $${url}; done
-1000Genomes: d_1000Genomes
-	awk -F "\t" '{if ($4 == "CEU") print $1}' ./scripts/preprocessing/igsr_samples.tsv > ./scripts/preprocessing/CEPH_samples.txt
-	for i in `seq 1 22; echo X; echo Y`;
-		do echo "vcfkeepsamples ALL.chr${i}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz $(cat ./scripts/preprocessing/CEPH_samples.txt) > CEPH.chr${i}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf";
+	mkdir -p ./databases/raw/1000Genomes
+	for url in `cat ./scripts/preprocessing/links.txt`; do wget -nc $${url} -P ./databases/raw/1000Genomes/; done
+process_1000Genomes: 
+	for seq in `cat ./scripts/preprocessing/links.txt | cut -d'/' -f8`; \
+		do gzip -dc databases/raw/1000Genomes/$${seq} | \
+		bgzip -c > databases/1000Genomes/$${seq}.bgz; \
+	done
+
+index_1000Genomes:
+	for seq in `cat ./scripts/preprocessing/links.txt | cut -d'/' -f8`; \
+		do tabix -f databases/1000Genomes/$${seq}.bgz; \
+       	done
+extract_1000Genomes:
+	awk -F "\t" '{if ($$4 == "CEU") print $$1}' ./scripts/preprocessing/igsr_samples.tsv > ./scripts/preprocessing/CEPH_samples.txt
+	mkdir -p ./databases/1000Genomes/CEPH
+	for i in `seq 1 22; echo X; echo Y`; \
+		do vcfkeepsamples ./databases/1000Genomes/ALL.chr$${i}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz.bgz $$(cat ./scripts/preprocessing/CEPH_samples.txt) > ./databases/1000Genomes/CEPH/CEPH.chr$${i}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.bgz; \
 	done
 
