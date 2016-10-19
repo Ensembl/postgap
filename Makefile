@@ -1,9 +1,9 @@
 DEST_DIR=./databases
 
-#default: create_dir GRASP Phewas_Catalog GWAS_DB Fantom5 DHS Regulome Phenotypes
+default: download process
 
-download: create_dir d_GRASP d_Phewas_Catalog d_GWAS_DB d_Fantom5 d_DHS d_Regulome 
-process: GRASP Phewas_Catalog GWAS_DB Fantom5 DHS Regulome 
+download: create_dir d_GRASP d_Phewas_Catalog d_GWAS_DB d_Fantom5 d_DHS d_Regulome d_1000Genomes
+process: GRASP Phewas_Catalog GWAS_DB Fantom5 DHS Regulome 1000Genomes
 
 #GRASP: ${DEST_DIR}/GRASP.txt
 #Phewas_Catalog: ${DEST_DIR}/Phewas_Catalog.txt
@@ -36,8 +36,6 @@ d_Phewas_Catalog:
 
 Phewas_Catalog: 
 	python scripts/preprocessing/csvToTsv.py ${DEST_DIR}/raw/Phewas_Catalog.csv  > ${DEST_DIR}/Phewas_Catalog.txt
-
-
 
 d_GWAS_DB:
 	wget -nc ftp://jjwanglab.org/GWASdb/old_release/GWASdb_snp_v4.zip -O ${DEST_DIR}/raw/GWAS_DB.zip
@@ -74,25 +72,27 @@ Regulome:
 	awk 'BEGIN {FS="\t"} { print $$1,$$2,$$2 + 1,$$4 }' ${DEST_DIR}/regulome.csv | sed -e 's/^chr//' > ${DEST_DIR}/Regulome.bed
 	python scripts/preprocessing/regulome_tidy.py ${DEST_DIR}
 
-#Phenotypes:
-
 d_1000Genomes:
-	mkdir -p ./databases/raw/1000Genomes
-	for url in `cat ./scripts/preprocessing/links.txt`; do wget -nc $${url} -P ./databases/raw/1000Genomes/; done
+	mkdir -p ${DEST_DIR}/raw/1000Genomes
+	cat ./scripts/preprocessing/links.txt | xargs -n1 wget -nc -P ${DEST_DIR}/raw/1000Genomes/
+
+1000Genomes: process_1000Genomes index_1000Genomes extract_1000Genomes
+
 process_1000Genomes: 
-	for seq in `cat ./scripts/preprocessing/links.txt | cut -d'/' -f8`; \
-		do gzip -dc databases/raw/1000Genomes/$${seq} | \
-		bgzip -c > databases/1000Genomes/$${seq}.bgz; \
+	mkdir -p ${DEST_DIR}/1000Genomes
+	for seq in `cat ./scripts/preprocessing/links.txt | xargs -n1 basename `; \
+		do gzip -dc ${DEST_DIR}/raw/1000Genomes/$${seq} | \
+		bgzip -c > ${DEST_DIR}/1000Genomes/$${seq}.bgz; \
 	done
 
 index_1000Genomes:
-	for seq in `cat ./scripts/preprocessing/links.txt | cut -d'/' -f8`; \
-		do tabix -f databases/1000Genomes/$${seq}.bgz; \
+	for seq in `cat ./scripts/preprocessing/links.txt | xargs -n1 basename `; \
+		do tabix -p vcf -f ${DEST_DIR}/1000Genomes/$${seq}.bgz; \
        	done
+
 extract_1000Genomes:
 	awk -F "\t" '{if ($$4 == "CEU") print $$1}' ./scripts/preprocessing/igsr_samples.tsv > ./scripts/preprocessing/CEPH_samples.txt
-	mkdir -p ./databases/1000Genomes/CEPH
+	mkdir -p ${DEST_DIR}/1000Genomes/CEPH
 	for i in `seq 1 22; echo X; echo Y`; \
-		do vcfkeepsamples ./databases/1000Genomes/ALL.chr$${i}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz.bgz $$(cat ./scripts/preprocessing/CEPH_samples.txt) > ./databases/1000Genomes/CEPH/CEPH.chr$${i}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.bgz; \
+		do vcfkeepsamples ${DEST_DIR}/1000Genomes/ALL.chr$${i}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz.bgz $$(cat ./scripts/preprocessing/CEPH_samples.txt) > ${DEST_DIR}/1000Genomes/CEPH/CEPH.chr$${i}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.bgz; \
 	done
-
