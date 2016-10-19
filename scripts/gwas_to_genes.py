@@ -1092,7 +1092,7 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, populations, region=None,db=0, cuto
 
 
     ### Extract the required region from the VCF
-    chrom_file = 'CEPH.chr{}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.bgz'.format(chromosome)
+    chrom_file = 'CEPH.chr{}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf.gz'.format(chromosome)
 
     extract_region_comm = "bcftools view -r {} {} -O z -o region.vcf.gz".format(region, POPULATIONS_DIR + '/' + chrom_file)
     subprocess.call(extract_region_comm.split(" "))
