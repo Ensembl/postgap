@@ -126,7 +126,7 @@ def get_options():
     parser = argparse.ArgumentParser(description='Search GWAS/Regulatory/Cis-regulatory databases for causal genes')
     parser.add_argument('--efos', nargs='*')
     parser.add_argument('--diseases', nargs='*')
-    parser.add_argument('--populations', nargs='*', default=['1000GENOMES:phase_3:GBR'])
+    # parser.add_argument('--populations', nargs='*', default=['1000GENOMES:phase_3:GBR'])
     parser.add_argument('--tissues', nargs='*')
     parser.add_argument('--species', nargs='*', default = 'Human')
     parser.add_argument('--database_dir', dest = 'databases', default = 'databases')
@@ -869,7 +869,7 @@ def calculate_LD_window(snp, window_len=500000,populations='GBR',cutoff=0.5,db=0
     chromosome = snp.chrom
     region = '{}:{}-{}'.format(chromosome,from_pos,to_pos)
 
-    chrom_file = 'CEPH.chr{}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.nodup.bcf.gz'.format(chromosome)
+    chrom_file = 'CEPH.chr{}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf.gz'.format(chromosome)
 
 
 
@@ -1091,7 +1091,7 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, populations, region=None,db=0, cuto
 
 
     ### Extract the required region from the VCF
-    chrom_file = 'CEPH.chr{}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.nodup.bcf.gz'.format(chromosome)
+    chrom_file = 'CEPH.chr{}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf.gz'.format(chromosome)
 
     extract_region_comm = "bcftools view -r {} {} -O z -o region.vcf.gz".format(region, POPULATIONS_DIR + '/' + chrom_file)
     subprocess.call(extract_region_comm.split(" "))
