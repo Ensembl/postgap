@@ -71,7 +71,7 @@ d_1000Genomes:
 	mkdir -p ./databases/raw/1000Genomes
 	for url in `cat ./scripts/preprocessing/links.txt`; do wget -nc $${url} -P ./databases/raw/1000Genomes/; done
 1000Genomes: 
-	for i in `seq 22`; do \
+	for i in `seq 22; echo X; echo Y`; do \
 		echo "processing chr $${i}"; \
 		cat ./databases/raw/1000Genomes/ALL.chr$${i}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz \
 		| bgzip -dc | \
@@ -79,5 +79,6 @@ d_1000Genomes:
 		| bcftools convert -Ob \
 		> ./databases/1000Genomes/CEPH/CEPH.chr$${i}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf.gz; \
 		echo "indexing CEPH chr$$i"; \
+		tabix -f ./databases/1000Genomes/CEPH/CEPH.chr$${i}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf.gz
 	done;
 
