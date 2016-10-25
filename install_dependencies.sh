@@ -34,3 +34,4 @@ cd ..
 
 # pybedtools
 pip install pybedtools
+pip install plink
