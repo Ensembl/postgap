@@ -10,18 +10,18 @@ Its original design was based on [STOPGAP]().
 Installation
 ------------
 
-Type '''make download''' to download public databases.
-Type '''make process_databases''' to preprocess the databases. 
-Type ''' make process_1000G to preprocess 1000Genomes data from the raw vcf.gz files. This can take a long time, it is recommended to download the processed files directly.
+Type ```make download``` to download public databases.
+Type ```make process_databases``` to preprocess the databases. 
+Type ```make process_1000G``` to preprocess 1000Genomes data from the raw vcf.gz files. This can take a long time, it is recommended to download the processed files directly.
 
 Running
 -------
 
 By default, run from the root directory the command: 
 
-'''
+```
 python scripts/gwas_to_genes.py --disease autism  
-'''
+```
 
 Multiple disease names can be provided.
 
