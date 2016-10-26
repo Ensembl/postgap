@@ -21,7 +21,8 @@ Dataset Preprocessing
 ---------------------
 
 * Via the FTP site (*recommended*)
-Download all the files on the OpenTargets FTP site (URL TBD)
+
+  Download all the files on the OpenTargets FTP site (URL TBD)
 
 * Manually (*sloooow*)
   1. Type ```make download``` to download public databases.
@@ -44,6 +45,6 @@ Testing
 
 (Under construction)
 ```
-sh scripts/testing/test_all_efos.sh > table.tsv
+cat scripts/testing/all_efos.txt | xargs -n1 python scripts/gwas_to_genes.py --disease > table.tsv
 ```
 
