@@ -7,12 +7,26 @@ This script is designed to automatically finemap and highlight the causal varian
 
 Its original design was based on [STOPGAP](). 
 
-Installation
-------------
+Installing dependencies
+-----------------------
 
-Type ```make download``` to download public databases.
-Type ```make process_databases``` to preprocess the databases. 
-Type ```make process_1000G``` to preprocess 1000Genomes data from the raw vcf.gz files. This can take a long time, it is recommended to download the processed files directly.
+To install all dependencies run ```sh install_dependencies.sh```
+
+Add the the following directories to your ```$PATH``` environment variable:
+- bin
+- scripts
+- scripts/preprocessing
+
+Dataset Preprocessing
+---------------------
+
+* Via the FTP site (*recommended*)
+Download all the files on the OpenTargets FTP site (URL TBD)
+
+* Manually (*sloooow*)
+  1. Type ```make download``` to download public databases.
+  2. Type ```make process_databases``` to preprocess the databases. 
+  3. Type ```make process_1000G``` to preprocess 1000Genomes data from the raw vcf.gz files.
 
 Running
 -------
@@ -24,4 +38,12 @@ python scripts/gwas_to_genes.py --disease autism
 ```
 
 Multiple disease names can be provided.
+
+Testing
+-------
+
+(Under construction)
+```
+sh scripts/testing/test_all_efos.sh > table.tsv
+```
 
