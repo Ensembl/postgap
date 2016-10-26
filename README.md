@@ -12,10 +12,7 @@ Installing dependencies
 
 To install all dependencies run ```sh install_dependencies.sh```
 
-Add the the following directories to your ```$PATH``` environment variable:
-- bin
-- scripts
-- scripts/preprocessing
+Add the ```bin``` directory to your ```$PATH``` environment variable.
 
 Dataset Preprocessing
 ---------------------
