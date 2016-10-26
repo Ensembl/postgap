@@ -43,7 +43,6 @@ Multiple disease names can be provided.
 Testing
 -------
 
-(Under construction)
 ```
 cat scripts/testing/all_efos.txt | xargs -n1 python scripts/gwas_to_genes.py --disease > table.tsv
 ```
