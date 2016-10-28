@@ -55,13 +55,7 @@ d_Regulome:
 	wget -nc http://regulomedb.org/downloads/RegulomeDB.dbSNP132.Category3.txt.gz -qO ${DEST_DIR}/raw/regulome3.csv.gz
 
 Regulome:
-	gzip -dc ${DEST_DIR}/raw/regulome1.csv.gz > ${DEST_DIR}/regulome1.csv
-	gzip -dc ${DEST_DIR}/raw/regulome2.csv.gz > ${DEST_DIR}/regulome2.csv
-	gzip -dc ${DEST_DIR}/raw/regulome3.csv.gz > ${DEST_DIR}/regulome3.csv
-	cat ${DEST_DIR}/regulome1.csv ${DEST_DIR}/regulome2.csv ${DEST_DIR}/regulome3.csv > ${DEST_DIR}/regulome.csv
-	rm ${DEST_DIR}/regulome1.csv ${DEST_DIR}/regulome2.csv ${DEST_DIR}/regulome3.csv
-	awk 'BEGIN {FS="\t"} { print $$1,$$2,$$2 + 1,$$4 }' ${DEST_DIR}/regulome.csv | sed -e 's/^chr//' > ${DEST_DIR}/Regulome.bed
-	python scripts/preprocessing/regulome_tidy.py ${DEST_DIR}
+	gzip -dc ${DEST_DIR}/raw/regulome[123].csv.gz | sed -e 's/^chr//' | awk 'BEGIN {FS="\t"; OFS="\t"} { print $$1,$$2,$$2 + 1,$$5 }' | sort -k1,1 -k2,2n > ${DEST_DIR}/Regulome.bed
 
 d_1000Genomes:
 	mkdir -p ./databases/raw/1000Genomes

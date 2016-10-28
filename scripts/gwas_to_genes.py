@@ -1791,7 +1791,7 @@ def Regulome(ld_snps, tissues):
 
 	"""
 	snp_hash = dict( (snp.rsID, snp) for snp in ld_snps)
-	intersection = overlap_snps_to_bed(ld_snps, DATABASES_DIR + "/Regulome_new.bed")
+	intersection = overlap_snps_to_bed(ld_snps, DATABASES_DIR + "/Regulome.bed")
 	res = filter (lambda X: X.score, (get_regulome_evidence(feature, snp_hash) for feature in intersection))
 
 	if DEBUG:
