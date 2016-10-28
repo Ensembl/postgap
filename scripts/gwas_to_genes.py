@@ -315,25 +315,6 @@ def diseases_to_gwas_snps(diseases, efos):
 		Returntype: [ Association_SNP ]
 
 	"""
-	# DEBUG:
-	return [
-		GWAS_SNP(
-			snp = 'rs11209026',
-			pvalue = 1e-10,
-			disease = 'Inflammatory bowel diseases',
-			efo = 'EFO_0000384',
-			evidence = [
-				GWAS_Association(
-					pvalue = 1e-10,
-					snp = 'rs11209026',
-					disease = 'Inflammatory bowel diseases',
-					efo = 'EFO_0000384',
-					source = "GWAS Catalog",
-					study = "PMID00001"
-				)
-			]
-		)
-	]
 	res = filter(lambda X: X.pvalue < PVALUE_CUTOFF, scan_disease_databases(diseases, efos))
 
 	if DEBUG:
