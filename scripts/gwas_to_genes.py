@@ -71,7 +71,6 @@ NCBI_Taxon_ID = {
 
 # Globals
 DATABASES_DIR = None
-POPULATIONS_DIR = None
 SPECIES = None
 DEBUG = True
 PVALUE_CUTOFF = 1e-4
@@ -129,7 +128,6 @@ def get_options():
     parser.add_argument('--species', nargs='*', default = 'Human')
     parser.add_argument('--database_dir', dest = 'databases', default = 'databases')
     parser.add_argument('--debug', '-g', action = 'store_true')
-    parser.add_argument('--populations_dir', dest = 'populations', default = './databases/1000Genomes/CEPH')
     options = parser.parse_args()
 
     global DATABASES_DIR
@@ -138,8 +136,6 @@ def get_options():
     SPECIES = options.species
     global DEBUG
     DEBUG = DEBUG or options.debug
-    global POPULATIONS_DIR
-    POPULATIONS_DIR = options.populations
 
     assert DATABASES_DIR is not None
     assert options.efos is not None or options.diseases is not None
@@ -851,7 +847,7 @@ def cluster_gwas_snps(gwas_snps, populations):
 	return clusters
 
 
-def calculate_LD_window(snp, window_len=500000,populations='GBR',cutoff=0.5,db=0):
+def calculate_LD_window(snp, window_len=500000,population='CEPH',cutoff=0.5,db=0):
 
     """
     Given a SNP id, calculate the pairwise LD between all SNPs within window_size base pairs.
@@ -867,13 +863,11 @@ def calculate_LD_window(snp, window_len=500000,populations='GBR',cutoff=0.5,db=0
     chromosome = snp.chrom
     region = '{}:{}-{}'.format(chromosome,from_pos,to_pos)
 
-    chrom_file = 'CEPH.chr{}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf.gz'.format(chromosome)
-
-
+    chrom_file = "CEPH.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf.gz" % (chromosome)
 
     ### Extract this region out from the 1000 genomes BCF
 
-    extract_region_comm = "bcftools view -r {} {} -O v -o region.vcf".format(region, POPULATIONS_DIR + '/' + chrom_file)
+    extract_region_comm = "bcftools view -r %s %s -O v -o region.vcf" % (region, os.path.join(DATABASE_DIR, '1000Genomes', population, chrom_file))
 
     subprocess.call(extract_region_comm.split(" "))
     region_file = open('region.vcf','r')
@@ -1056,7 +1050,7 @@ def cluster_to_genes(cluster, tissues, populations):
     #return [ sorted(res, key=lambda X: X.score)[-1] ]
     return sorted(res, key=lambda X: X.score)
 
-def get_lds_from_top_gwas(gwas_snp, ld_snps, populations, region=None,db=0, cutoff=0.5):
+def get_lds_from_top_gwas(gwas_snp, ld_snps, population='CEPH', region=None,db=0, cutoff=0.5):
     """
     For large numbers of SNPs, best to specify SNP region with chrom:to-from, e.g. 1:7654947-8155562
     For small numbers (<10), regions are extracted from ENSEMBL REST API.
@@ -1089,9 +1083,9 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, populations, region=None,db=0, cuto
 
 
     ### Extract the required region from the VCF
-    chrom_file = 'CEPH.chr{}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf.gz'.format(chromosome)
+    chrom_file = '%s.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf.gz' % (population, chromosome)
 
-    extract_region_comm = "bcftools view -r {} {} -O z -o region.vcf.gz".format(region, POPULATIONS_DIR + '/' + chrom_file)
+    extract_region_comm = "bcftools view -r %s %s -O z -o region.vcf.gz" % (region, os.path.join(DATABASE_DIR, '1000Genomes', population, chrom_file))
     subprocess.call(extract_region_comm.split(" "))
     region_file = "region.vcf.gz"
 
