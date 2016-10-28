@@ -80,4 +80,4 @@ endef
 	$(eval vcf_files := $(wildcard ${DEST_DIR}/raw/1000Genomes/*.vcf.gz))
 	$(foreach file, $(vcf_files), $(call process_1000Genomes_file, $(file)))
 	$(eval bcf_files := $(wildcard ${DEST_DIR}/1000Genomes/*.bcf.gz))
-	$(foreach file, $(bcf_files), bcftools index $file;)
+	$(foreach file, $(bcf_files), bcftools index $(file);)
