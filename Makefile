@@ -18,25 +18,26 @@ d_GRASP:
 	wget -nc https://s3.amazonaws.com/NHLBI_Public/GRASP/GraspFullDataset2.zip -qO ${DEST_DIR}/raw/GRASP.zip
 
 GRASP:
-	unzip -c ${DEST_DIR}/raw/GRASP.zip | python scripts/preprocessing/column.py 12 > ${DEST_DIR}/GRASP.txt
+	unzip -qc ${DEST_DIR}/raw/GRASP.zip | python scripts/preprocessing/column.py 12 > ${DEST_DIR}/GRASP.txt
 
 
 d_Phewas_Catalog:
-	wget -nc http://phewas.mc.vanderbilt.edu/phewas-catalog.csv > ${DEST_DIR}/raw/Phewas_Catalog.csv
+	wget -nc http://phewas.mc.vanderbilt.edu/phewas-catalog.csv -qO ${DEST_DIR}/raw/Phewas_Catalog.csv
 
 Phewas_Catalog: 
 	python scripts/preprocessing/csvToTsv.py ${DEST_DIR}/raw/Phewas_Catalog.csv  > ${DEST_DIR}/Phewas_Catalog.txt
 
 d_GWAS_DB:
-	wget -nc ftp://jjwanglab.org/GWASdb/old_release/GWASdb_snp_v4.zip -O ${DEST_DIR}/raw/GWAS_DB.zip
+	wget -nc ftp://jjwanglab.org/GWASdb/old_release/GWASdb_snp_v4.zip -qO ${DEST_DIR}/raw/GWAS_DB.zip
+
 GWAS_DB:
-	unzip -c ${DEST_DIR}/raw/GWAS_DB.zip > ${DEST_DIR}/GWAS_DB.txt
+	unzip -qc ${DEST_DIR}/raw/GWAS_DB.zip > ${DEST_DIR}/GWAS_DB.txt
 
 GWAS_Catalog:
-	wget https://www.ebi.ac.uk/gwas/api/search/downloads/alternative -O ${DEST_DIR}/raw/GWAS_Catalog.txt
+	wget https://www.ebi.ac.uk/gwas/api/search/downloads/alternative -qO ${DEST_DIR}/raw/GWAS_Catalog.txt
 
 d_Fantom5:
-	wget -nc http://enhancer.binf.ku.dk/presets/enhancer_tss_associations.bed -O ${DEST_DIR}/raw/Fantom5.txt
+	wget -nc http://enhancer.binf.ku.dk/presets/enhancer_tss_associations.bed -qO ${DEST_DIR}/raw/Fantom5.txt
 
 Fantom5:
 	cat ${DEST_DIR}/raw/Fantom5.txt | cut -f4 | tr ';' '\t' | cut -f1,3,5 | grep 'FDR:' | sed -e 's/FDR://' -e 's/^chr//' -e 's/-/\t/' -e 's/:/\t/' > ${DEST_DIR}/Fantom5.bed
