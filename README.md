@@ -41,6 +41,6 @@ Testing
 -------
 
 ```
-cat scripts/testing/all_efos.txt | xargs -n1 python scripts/gwas_to_genes.py --disease > table.tsv
+cat scripts/testing/all_efos.txt | xargs -n1 python scripts/gwas_to_genes.py --efos > table.tsv
 ```
 
