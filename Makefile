@@ -58,11 +58,13 @@ d_Regulome:
 Regulome:
 	gzip -dc ${DEST_DIR}/raw/regulome[123].csv.gz | sed -e 's/^chr//' | awk 'BEGIN {FS="\t"; OFS="\t"} { print $$1,$$2,$$2 + 1,$$5 }' | sort -k1,1 -k2,2n > ${DEST_DIR}/Regulome.bed
 
-tabix:
-	$(eval bed_files := $(wildcard ${DEST_DIR}/*.bed))
-	$(foreach file, $(vcf_files), bgzip $(file);)
+tabix: bgz
 	$(eval bgz_files := $(wildcard ${DEST_DIR}/*.bed.gz))
-	$(foreach file, $(bcf_files), tabix -p bed $(file);)
+	$(foreach file, $(bgz_files), tabix -p bed $(file);)
+
+bgz:
+	$(eval bed_files := $(wildcard ${DEST_DIR}/*.bed))
+	$(foreach file, $(bed_files), bgzip $(file);)
 
 d_1000Genomes:
 	mkdir -p ./databases/raw/1000Genomes
