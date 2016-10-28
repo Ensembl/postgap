@@ -46,8 +46,8 @@ d_DHS:
 	wget -nc ftp://ftp.ebi.ac.uk/pub/databases/ensembl/encode/integration_data_jan2011/byDataType/openchrom/jan2011/dhs_gene_connectivity/genomewideCorrs_above0.7_promoterPlusMinus500kb_withGeneNames_32celltypeCategories.bed8.gz -qO ${DEST_DIR}/raw/DHS.txt.gz 
 
 DHS:
-	gzip -dc ${DEST_DIR}/raw/DHS.txt.gz | awk 'BEGIN {OFS="\t"} {print $$5,$$6,$$7,$$4,$$8}' | sed -e 's/^chr//' > ${DEST_DIR}/DHS.txt
-	cat ${DEST_DIR}/DHS.txt | python scripts/preprocessing/STOPGAP_FDR.py > ${DEST_DIR}/DHS.fdrs
+	gzip -dc ${DEST_DIR}/raw/DHS.txt.gz | awk 'BEGIN {OFS="\t"} {print $$5,$$6,$$7,$$4,$$8}' | sed -e 's/^chr//' > ${DEST_DIR}/DHS.bed
+	cat ${DEST_DIR}/DHS.bed | python scripts/preprocessing/STOPGAP_FDR.py > ${DEST_DIR}/DHS.fdrs
 
 d_Regulome:
 	wget -nc http://regulomedb.org/downloads/RegulomeDB.dbSNP132.Category1.txt.gz -qO ${DEST_DIR}/raw/regulome1.csv.gz

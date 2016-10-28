@@ -1518,7 +1518,7 @@ def DHS(ld_snps, tissues):
 		Returntype: [ Regulatory_Evidence ]
 
 	"""
-	intersection = overlap_snps_to_bed(ld_snps, DATABASES_DIR + "/DHS.txt")
+	intersection = overlap_snps_to_bed(ld_snps, DATABASES_DIR + "/DHS.bed")
 	fdr_model = pickle.load(open(DATABASES_DIR+"/DHS.fdrs"))
 	snp_hash = dict( (snp.rsID, snp) for snp in ld_snps)
 	res = filter (lambda X: X is not None and X.score, (get_dhs_evidence(feature, fdr_model, snp_hash) for feature in intersection))
