@@ -1,9 +1,8 @@
 import sys
 
+count = int(sys.argv[1])
 for line in sys.stdin:
 	items = line.strip().split('\t')
-	efo = items[-1]
-	while len(items) < 71:
+	while len(items) < count:
 		items.append("")
-	items[-1] = efo
 	print "\t".join(items)

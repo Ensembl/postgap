@@ -18,20 +18,19 @@ d_GRASP:
 	wget -nc https://s3.amazonaws.com/NHLBI_Public/GRASP/GraspFullDataset2.zip -qO ${DEST_DIR}/raw/GRASP.zip
 
 GRASP:
-	unzip -qc ${DEST_DIR}/raw/GRASP.zip | python scripts/preprocessing/column.py 12 > ${DEST_DIR}/GRASP.txt
-
+	unzip -qc ${DEST_DIR}/raw/GRASP.zip | python scripts/preprocessing/pad_columns.py 70 | python scripts/preprocessing/EFO_suggest.py 12 > ${DEST_DIR}/GRASP.txt
 
 d_Phewas_Catalog:
 	wget -nc http://phewas.mc.vanderbilt.edu/phewas-catalog.csv -qO ${DEST_DIR}/raw/Phewas_Catalog.csv
 
 Phewas_Catalog: 
-	cat ${DEST_DIR}/raw/Phewas_Catalog.csv | python scripts/preprocessing/csvToTsv.py > ${DEST_DIR}/Phewas_Catalog.txt
+	cat ${DEST_DIR}/raw/Phewas_Catalog.csv | python scripts/preprocessing/csvToTsv.py | python scripts/preprocessing/EFO_suggest.py 3 > ${DEST_DIR}/Phewas_Catalog.txt
 
 d_GWAS_DB:
 	wget -nc ftp://jjwanglab.org/GWASdb/old_release/GWASdb_snp_v4.zip -qO ${DEST_DIR}/raw/GWAS_DB.zip
 
 GWAS_DB:
-	unzip -qc ${DEST_DIR}/raw/GWAS_DB.zip > ${DEST_DIR}/GWAS_DB.txt
+	unzip -qc ${DEST_DIR}/raw/GWAS_DB.zip | awk 'BEGIN {FS="\t"; OFS="\t"} NF > 5 {print $$1, $$2, $$3, $$4, $$5, $$6}' | python scripts/preprocessing/EFO_suggest.py 6 > ${DEST_DIR}/GWAS_DB.txt
 
 GWAS_Catalog:
 	wget https://www.ebi.ac.uk/gwas/api/search/downloads/alternative -qO ${DEST_DIR}/raw/GWAS_Catalog.txt
