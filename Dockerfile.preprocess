@@ -1,0 +1,28 @@
+FROM ubuntu:xenial
+
+RUN apt-get update && apt-get install -yq --no-install-recommends \
+    libncurses5 libncurses5-dev \
+    zlib1g-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+## Tabix, bgzip
+RUN curl -sSL https://github.com/samtools/htslib/releases/download/1.3.2/htslib-1.3.2.tar.bz2 | tar -xjf \
+      && cd htslib \
+      && make \
+      && cp tabix bgzip /bin \
+      && rm -rf -- htslib
+
+RUN curl -sSL https://github.com/vcflib/vcflib/archive/v1.0.0-rc0.tar.gz | tar -xzf \
+      && cd vcflib \
+      && make \
+      && cp vcfkeepsamples /bin \
+      && rm -rf -- vcflib
+
+RUN curl -sSL https://github.com/samtools/bcftools/releases/download/1.3.1/bcftools-1.3.1.tar.bz2 | tar -xjf \
+      && cd bcftools \
+      && make \
+      && cp bcftools /bin \
+      && rm -rf -- bcftools
+
+CMD ["docker-entrypoint.preprocess.sh"]
