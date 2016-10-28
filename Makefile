@@ -25,7 +25,7 @@ d_Phewas_Catalog:
 	wget -nc http://phewas.mc.vanderbilt.edu/phewas-catalog.csv -qO ${DEST_DIR}/raw/Phewas_Catalog.csv
 
 Phewas_Catalog: 
-	python scripts/preprocessing/csvToTsv.py ${DEST_DIR}/raw/Phewas_Catalog.csv  > ${DEST_DIR}/Phewas_Catalog.txt
+	cat ${DEST_DIR}/raw/Phewas_Catalog.csv | python scripts/preprocessing/csvToTsv.py > ${DEST_DIR}/Phewas_Catalog.txt
 
 d_GWAS_DB:
 	wget -nc ftp://jjwanglab.org/GWASdb/old_release/GWASdb_snp_v4.zip -qO ${DEST_DIR}/raw/GWAS_DB.zip
