@@ -40,4 +40,9 @@ cd ..
 pip install pybedtools
 
 # Plink v1.07
-pip install plink
+git clone https://github.com/chrchang/plink-ng.git
+cd plink-ng
+mv Makefile.std Makefile
+./plink_first_compile
+cp plink ../bin
+cd ..
