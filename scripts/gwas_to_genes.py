@@ -85,8 +85,6 @@ A. Datasets to integrate:
 
 	-Epigenetic activity:
 		PhyloP (STOPGAP Scoring: FPR 0-0.6: +2, 0.6-0.85: +1,0.85-1: +0)
-		DHS
-		Fantom5
 
 B. Code improvements:
 	Pathways analysis (Downstream)
