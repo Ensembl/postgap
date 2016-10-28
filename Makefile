@@ -2,7 +2,7 @@ DEST_DIR=~/lustre2/CTTV24/databases_test
 
 default: download process
 download: create_dir d_GRASP d_Phewas_Catalog d_GWAS_DB d_Fantom5 d_DHS d_Regulome d_1000Genomes
-process: GRASP Phewas_Catalog GWAS_DB Fantom5 DHS Regulome 1000Genomes
+process: GRASP Phewas_Catalog GWAS_DB Fantom5 DHS Regulome tabix 1000Genomes
 
 clean_raw:
 	rm -rf ${DEST_DIR}/raw/*
@@ -56,6 +56,12 @@ d_Regulome:
 
 Regulome:
 	gzip -dc ${DEST_DIR}/raw/regulome[123].csv.gz | sed -e 's/^chr//' | awk 'BEGIN {FS="\t"; OFS="\t"} { print $$1,$$2,$$2 + 1,$$5 }' | sort -k1,1 -k2,2n > ${DEST_DIR}/Regulome.bed
+
+tabix:
+	$(eval bed_files := $(wildcard ${DEST_DIR}/*.bed))
+	$(foreach file, $(vcf_files), bgzip $(file);)
+	$(eval bgz_files := $(wildcard ${DEST_DIR}/*.bed.gz))
+	$(foreach file, $(bcf_files), tabix -p bed $(file);)
 
 d_1000Genomes:
 	mkdir -p ./databases/raw/1000Genomes
