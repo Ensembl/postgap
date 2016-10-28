@@ -887,7 +887,7 @@ def calculate_LD_window(snp, window_len=500000,populations='GBR',cutoff=0.5,db=0
 
 
     ### Calculate the pairwise LD using plink2
-    plinkcomm = "plink2 --vcf region.vcf --r2 --ld-snp {} --inter-chr --out LDwindow".format(SNP_id)
+    plinkcomm = "plink --vcf region.vcf --r2 --ld-snp {} --inter-chr --out LDwindow".format(SNP_id)
     plinkcomm_list = plinkcomm.split(" ")
 
     try:
