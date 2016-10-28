@@ -31,12 +31,12 @@ def main():
 	cache = dict()
 	for line in sys.stdin:
 		# To comply with Unix standards, the column number is provided as 1-based on the command line
-		phenotype = line.strip().split('\t')[phenotype_column - 1]
+		phenotype = str(line.strip().split('\t')[phenotype_column - 1])
 
 		if phenotype in cache:
 			efo = cache[phenotype]
 		else:
-			efo = efo_suggest(phenotype)
+			efo = str(efo_suggest(phenotype))
 			cache[phenotype] = efo
 			if efo is None:
 				sys.stderr.write("Could not find EFO for %s\n" % (phenotype))
@@ -60,14 +60,14 @@ def efo_suggest(term):
 	server = 'http://www.ebi.ac.uk/spot/zooma/v2/api'
 	url_term = re.sub("%", "", term)
 	url_term = re.sub(" ", "%20", url_term)
+	url_term = re.sub('\(', "", url_term)
+	url_term = re.sub('\)', "", url_term)
 	ext = "/summaries?query=%s" % url_term
 	r = requests.get(server+ext, headers={ "Content-Type" : "application/json"})
 	 
 	if not r.ok:
-		sys.stderr.write(repr(r) + "\n")
 		sys.stderr.write("Failure searching for term " + term + " with query " + server + ext + "\n")
-		r.raise_for_status()
-		sys.exit()
+		return None
 
 	try:
 		'''
@@ -103,8 +103,6 @@ def efo_suggest(term):
 		selected_hit = sorted_hits[-1]
 		return re.sub(r'^.*(EFO_[0-9]*).*$', r'\1', selected_hit['annotationSummaryTypeName'])
 	except:
-		sys.stderr.write(repr(r) + "\n")
-		sys.stderr.write("Failure searching for term " + term + " with query " + server + ext + "\n")
-		raise
+		return None
 
 main()
