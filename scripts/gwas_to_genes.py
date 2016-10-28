@@ -1832,17 +1832,16 @@ def get_regulome_evidence(feature, snp_hash):
 	1. chrom
 	2. start
 	3. end
-	4. Stuff
-	5. category
+	4. category
 
 	LD SNP coords:
-	6. chrom
-	7. start
-	8. end
-	9. rsID
+	5. chrom
+	6. start
+	7. end
+	8. rsID
 	'''
 	return Regulatory_Evidence(
-			snp = snp_hash[feature[8]],
+			snp = snp_hash[feature[7]],
 			source = "Regulome",
 			score = 2 if feature[3][0] == '1' or feature[3][0] == '2' else 1,
 			study = None,
