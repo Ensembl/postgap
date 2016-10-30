@@ -822,7 +822,7 @@ def calculate_LD_window(snp, window_len=500000,population='CEPH',cutoff=0.5,db=0
 
     ### Extract this region out from the 1000 genomes BCF
 
-    extract_region_comm = "bcftools view -r %s %s -O v -o region.vcf" % (region, os.path.join(DATABASE_DIR, '1000Genomes', population, chrom_file))
+    extract_region_comm = "bcftools view -r %s %s -O v -o region.vcf" % (region, os.path.join(DATABASES_DIR, '1000Genomes', population, chrom_file))
 
     subprocess.call(extract_region_comm.split(" "))
     region_file = open('region.vcf','r')
@@ -835,6 +835,7 @@ def calculate_LD_window(snp, window_len=500000,population='CEPH',cutoff=0.5,db=0
 
     ### Calculate the pairwise LD using plink2
     plinkcomm = "plink --vcf region.vcf --r2 --ld-snp {} --inter-chr --out LDwindow".format(SNP_id)
+    print plinkcomm
     plinkcomm_list = plinkcomm.split(" ")
 
     try:
@@ -1038,13 +1039,14 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, population='CEPH', region=None,db=0
     ### Extract the required region from the VCF
     chrom_file = '%s.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf.gz' % (population, chromosome)
 
-    extract_region_comm = "bcftools view -r %s %s -O z -o region.vcf.gz" % (region, os.path.join(DATABASE_DIR, '1000Genomes', population, chrom_file))
+    extract_region_comm = "bcftools view -r %s %s -O z -o region.vcf.gz" % (region, os.path.join(DATABASES_DIR, '1000Genomes', population, chrom_file))
     subprocess.call(extract_region_comm.split(" "))
     region_file = "region.vcf.gz"
 
 
     ### Extract the list of SNP ids from this region
     vcfcomm = "vcftools --gzvcf {} --snps {} --recode --stdout".format(region_file, SNPs_filepath)
+    print vcfcomm
     vcf = subprocess.check_output(vcfcomm.split(" "))
 
 
@@ -1060,7 +1062,8 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, population='CEPH', region=None,db=0
 
 
     ### Use plink2 to calculate pairwise LD between these SNPs.
-    plinkcomm = "plink2 --vcf snps.vcf --r2 square --out LD"
+    plinkcomm = "plink --vcf snps.vcf --r2 square --out LD"
+    print plinkcomm
     plinkcomm_list = plinkcomm.split(" ")
     subprocess.call(plinkcomm_list)
 
