@@ -729,44 +729,20 @@ def get_gwas_db_association(line, diseases, efos):
 		1. CHR
 		2. POS
 		3. SNPID
-		4. REF
-		5. ALT
-		6. ORI_SNPID
-		7. PMID
-		8. P_VALUE
-		9. P_VALUE_TEXT
-		10. OR/BETA
-		11. CI95_TEXT
-		12. GWAS_INITIAL_SAMPLE_SIZE
-		13. SUB_POPULATION
-		14. SUPER_POPULATION
-		15. GWAS_TRAIT
-		16. HPO_ID
-		17. HPO_TERM
-		18. DO_ID
-		19. DO_TERM
-		20. MESH_ID
-		21. MESH_TERM
-		22. EFO_ID
-		23. EFO_TERM
-		24. DOLITE_TERM
-		25. RISK_ALLELE
-		26. PUBLICATION_TYPE
-		27. AA
-		28. GENE_SYMBOL
-		29. TYPE
-		30. REFGENE
+		4. P_VALUE
+		5. PUBMED ID
+		6. MESH_TERM
+		7. EFO_ID
 
 	'''
 	items = line.rstrip().split('\t')
-	if items[14] in diseases or items[21] in efos:
+	if items[5] in diseases or items[6] in efos:
 		return GWAS_Association(
-			pvalue = float(items[7]),
+			pvalue = float(items[3]),
 			snp = items[2],
-			disease = items[14],
-			efo = items[21],
+			disease = Disease(name = items[5], efo = items[6]),
 			source = "GWAS DB",
-			study = items[6]
+			study = items[4]
 		)
 	else:
 		return None
