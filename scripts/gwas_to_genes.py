@@ -111,10 +111,11 @@ def main():
 		output = open(options.output, "w")
 
 	if options.json_output:
-		output.write("\n".join(map(json.dumps, res)))
+		formatted_results = "\n".join(map(json.dumps, res))
 	else:
-		output.write("\t".join(['ld_snp_rsID', 'gene_symbol', 'gene_id', 'disease_names', 'disease_efo_ids', 'score', 'gwas_snp_ids', 'GWAS Catalog', 'GRASP', 'GWAS DB', 'Phewas Catalog', 'VEP', 'Regulome', 'GTEx', 'DHS', 'Fantom5']))
-		output.write("\n".join(map(pretty_cluster_association, res)))
+		formatted_results = pretty_output(res)
+
+	output.write(formatted_results)
 
 def get_options():
     """
@@ -2027,7 +2028,7 @@ def pretty_cluster_association(association):
 	"""
 
 		Prints association stats in roughly the same format as STOPGAP for a cluster of SNPs
-		Args: Association
+		Args: GeneCluster_Association
 		Returntype: String
 
 	"""
