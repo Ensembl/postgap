@@ -1166,8 +1166,11 @@ def ld_snps_to_genes(ld_snps, tissues):
 	# Extract list of relevant SNPs:
 	selected_snps = set(gene_snp_pair[1] for gene_snp_pair in cisreg)
 
-	# Extract SNP specific info:
-	reg = regulatory_evidence(selected_snps, tissues)
+	if len(selected_snps) > 0:
+		# Extract SNP specific info:
+		reg = regulatory_evidence(selected_snps, tissues)
+	else:
+		reg = []
 
 	return [
 		GeneSNP_Association(
