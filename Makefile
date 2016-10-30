@@ -18,7 +18,7 @@ d_GRASP:
 	wget -nc https://s3.amazonaws.com/NHLBI_Public/GRASP/GraspFullDataset2.zip -qO ${DEST_DIR}/raw/GRASP.zip
 
 GRASP:
-	unzip -qc ${DEST_DIR}/raw/GRASP.zip | python scripts/preprocessing/pad_columns.py 70 | awk '$$11 < 1e-4' | python scripts/preprocessing/EFO_suggest.py 12 > ${DEST_DIR}/GRASP.txt
+	unzip -qc ${DEST_DIR}/raw/GRASP.zip | python scripts/preprocessing/pad_columns.py 70 | awk 'BEGIN {FS="\t"} $$11 < 1e-4' | python scripts/preprocessing/EFO_suggest.py 12 > ${DEST_DIR}/GRASP.txt
 
 d_Phewas_Catalog:
 	wget -nc http://phewas.mc.vanderbilt.edu/phewas-catalog.csv -qO ${DEST_DIR}/raw/Phewas_Catalog.csv
