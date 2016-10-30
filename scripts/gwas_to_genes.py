@@ -45,8 +45,8 @@ import subprocess
 SNP = collections.namedtuple("SNP", ['rsID', 'chrom', 'pos'])
 Gene = collections.namedtuple("Gene", ['name', 'id', 'chrom', 'tss', 'biotype'])
 Disease = collections.namedtuple('Disease', ['name', 'efo'])
-GWAS_Association = collections.namedtuple('GWAS_Association', ['snp','disease','efo','pvalue','source','study'])
-GWAS_SNP = collections.namedtuple('GWAS_SNP', ['snp','disease','efo','pvalue', 'evidence'])
+GWAS_Association = collections.namedtuple('GWAS_Association', ['snp','disease','pvalue','source','study'])
+GWAS_SNP = collections.namedtuple('GWAS_SNP', ['snp','pvalue', 'evidence'])
 GWAS_Cluster = collections.namedtuple('GWAS_Cluster', ['gwas_snps','ld_snps'])
 Cisregulatory_Evidence = collections.namedtuple('Cisregulatory_Evidence', ['snp','gene','score','source','study','tissue'])
 Regulatory_Evidence = collections.namedtuple('Regulatory_Evidence', ['snp','score','source','study','tissue'])
@@ -350,16 +350,12 @@ def scan_disease_databases(diseases, efos):
 				associations_by_snp[hit.snp] = GWAS_SNP(
 					snp = record.snp,
 					pvalue = hit.pvalue,
-					disease = record.disease,
-					efo = record.efo,
 					evidence = record.evidence
 				)
 		else:
 			associations_by_snp[hit.snp] = GWAS_SNP(
 				snp = hit.snp,
 				pvalue = hit.pvalue,
-				disease = hit.disease,
-				efo = hit.efo,
 				evidence = [ hit ]
 			)
 
@@ -531,8 +527,7 @@ def query_gwas_catalog(term):
 			GWAS_Association(
 				pvalue = float(hit['pValueMantissa']) * 10**float(hit['pValueExponent']),
 				snp = hit['rsId'][0].strip(),
-				disease = hit['traitName_s'],
-				efo = hit['shortForm'],
+				disease = Disease(name = hit['traitName_s'], efo = hit['shortForm'][0]),
 				source = "GWAS Catalog",
 				study = "PMID" + hit['pubmedId']
 			)
@@ -644,8 +639,7 @@ def get_grasp_association(line, diseases, efos):
 		return GWAS_Association(
 			pvalue = float(items[10]),
 			snp = "rs" + items[4],
-			disease = items[11],
-			efo = items[70],
+			disease = Disease(name = items[11], efo = items[70]),
 			source = "GRASP",
 			study = items[7]
 		)
@@ -692,8 +686,7 @@ def get_phewas_catalog_association(line, diseases, efos):
 		return GWAS_Association (
 			pvalue = float(items[4]),
 			snp = items[1],
-			disease = items[3],
-			efo = items[9],
+			disease = Disease(name = items[3], efo = items[9]), 
 			source = "Phewas Catalog",
 			study = None
 		)
@@ -910,8 +903,6 @@ def get_gwas_snp_locations(gwas_snps):
 	return [
 		GWAS_SNP(
 			snp = mapped_snp,
-			disease = original_gwas_snp[mapped_snp.rsID].disease,
-			efo = original_gwas_snp[mapped_snp.rsID].efo,
 			pvalue = original_gwas_snp[mapped_snp.rsID].pvalue,
 			evidence = original_gwas_snp[mapped_snp.rsID].evidence
 		)
