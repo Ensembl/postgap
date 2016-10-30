@@ -36,17 +36,17 @@ def main():
 		if phenotype in cache:
 			efo = cache[phenotype]
 		else:
-			efo = str(efo_suggest(phenotype))
+			efo = efo_suggest(phenotype)
 			cache[phenotype] = efo
 			if efo is None:
 				sys.stderr.write("Could not find EFO for %s\n" % (phenotype))
 			else:
-				sys.stderr.write("Phenotype %s mapped to %s\n" % (phenotype, efo))
+				sys.stderr.write("Phenotype %s mapped to %s\n" % (phenotype, str(efo)))
 
 		if efo is None:
-			print "%s\tN/A" % (str(line.strip()))
+			print "%s\tN/A" % (str(line[:-1]))
 		else:
-			print "%s\t%s" % (str(line.strip()), str(efo))
+			print "%s\t%s" % (str(line[:-1]), str(efo))
 
 def efo_suggest(term):
 	""" efo_suggest
