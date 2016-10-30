@@ -168,27 +168,32 @@ def efo_suggest(term):
 
 		Example search result:
 		{
-			status: "/api/status/ok",
-			result: [
-				{
-					'mid': '3804279AF8462F3A01EAEE2589C94781F248F9D7',
-					'notable': {
-						'name': 'disease; EFO_0000311',
-						'id': 'summary_from_disease_to_EFO_0000311'
-					},
-					'name': 'cancer',
-					'score': '86.11212'
-				}
-			]
-		}
+			id: "864A7A7335109CD59C2986398637CB519F21DB05",
+			semanticTags: [
+			"http://www.orpha.net/ORDO/Orphanet_308410"
+			],
+			annotationURIs: [
+					"http://rdf.ebi.ac.uk/resource/zooma/efo/DE1004D39B114BDEEFB7A2EA93D881AD"
+					],
+			annotationSourceURIs: [
+					"http://www.ebi.ac.uk/efo/efo.owl"
+					],
+			annotationSummaryTypeName: "disease; Orphanet_308410",
+			annotatedPropertyType: "disease",
+			annotatedPropertyValue: "Autism-epilepsy syndrome due to branched chain ketoacid dehydrogenase kinase deficiency",
+			annotatedPropertyUri: "http://rdf.ebi.ac.uk/resource/zooma/FB9E6464F1830B24C08204157E7A088E",
+			quality: 72.82359,
+			uri: "http://rdf.ebi.ac.uk/resource/zooma/annotation_summary/864A7A7335109CD59C2986398637CB519F21DB05"
+		},
+
 
 	'''
 
-	hits = filter(lambda X: re.search('EFO_\d+' , X['annotationSummaryTypeName']), result)
-	sorted_hits = sorted(hits, key = lambda X: X['quality'])
+	hits = filter(lambda X: len(X['semanticTags']) == 1, result)
 	if len(hits):
-		selection = sorted_hits[-1]['annotationSummaryTypeName']
-		efo = re.sub('.*\(EFO_[0-9]*\)$', '\1', selection)
+		sorted_hits = sorted(hits, key = lambda X: X['quality'])
+		selection = sorted_hits[-1]['semanticTags'][0]
+		efo = re.sub('.*/', '\1', selection)
 		if DEBUG:
 			print "Suggested EFO %s" % efo
 		return efo
