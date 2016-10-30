@@ -103,10 +103,18 @@ def main():
 
 	"""
 	options = get_options()
-	res = diseases_to_genes(options.diseases, options.efos, options.populations, options.tissues)
-	for association in res:
-		print association.cluster.gwas_snps[0].efo, association.gene.name, association.gene.id, association.cluster.gwas_snps[0].snp.rsID, association.evidence[0].snp.rsID, association.score
-		print json.dumps(association.evidence)
+	res = diseases_to_genes(options.diseases, options.efos, "CEPH", options.tissues)
+
+	if options.output is None:
+		output = sys.stdout
+	else:
+		output = open(options.output, "w")
+
+	if options.json_output:
+		output.write("\n".join(map(json.dumps, res)))
+	else:
+		output.write("\t".join(['ld_snp_rsID', 'gene_symbol', 'gene_id', 'disease_names', 'disease_efo_ids', 'score', 'gwas_snp_ids', 'GWAS Catalog', 'GRASP', 'GWAS DB', 'Phewas Catalog', 'VEP', 'Regulome', 'GTEx', 'DHS', 'Fantom5']))
+		output.write("\n".join(map(pretty_cluster_association, res)))
 
 def get_options():
     """
@@ -125,9 +133,11 @@ def get_options():
     parser.add_argument('--diseases', nargs='*')
     # parser.add_argument('--populations', nargs='*', default=['1000GENOMES:phase_3:GBR'])
     parser.add_argument('--tissues', nargs='*')
+    parser.add_argument('--output')
     parser.add_argument('--species', nargs='*', default = 'Human')
     parser.add_argument('--database_dir', dest = 'databases', default = 'databases')
     parser.add_argument('--debug', '-g', action = 'store_true')
+    parser.add_argument('--json_output', '-j', action = 'store_true')
     options = parser.parse_args()
 
     global DATABASES_DIR
@@ -2001,13 +2011,63 @@ def concatenate_hashes(list):
 	"""
 	return dict(sum(map(lambda X: X.items(), filter(lambda elem: elem is not None, list)), []))
 
+def pretty_output(associations):
+	"""
 
+		Prints association stats in roughly the same format as STOPGAP for a cluster of SNPs
+		Args: [ GeneCluster_Association ]
+		Returntype: String
+
+	"""
+	header = "\t".join(['ld_snp_rsID', 'gene_symbol', 'gene_id', 'disease_names', 'disease_efo_ids', 'score', 'gwas_snp_ids', 'GWAS Catalog', 'GRASP', 'GWAS DB', 'Phewas Catalog', 'VEP', 'Regulome', 'GTEx', 'DHS', 'Fantom5'])
+	content = map(pretty_cluster_association, associations)
+	return "\n".join([header] + content)
+
+def pretty_cluster_association(association):
+	"""
+
+		Prints association stats in roughly the same format as STOPGAP for a cluster of SNPs
+		Args: Association
+		Returntype: String
+
+	"""
+	gene_name = association.gene.name
+	gene_id = association.gene.id
+	cluster = association.cluster
+	gwas_snps = cluster.gwas_snps
+	disease_names = list(set(gwas_association.disease.name for gwas_snp in gwas_snps for gwas_association in gwas_snp.evidence))
+	disease_efos = list(set(gwas_association.disease.efo for gwas_snp in gwas_snps for gwas_association in gwas_snp.evidence))
+	cluster_score = association.score
+
+	gwas_scores = collections.defaultdict(lambda: collections.defaultdict(lambda: 1))
+	for gwas_snp in gwas_snps:
+		for gwas_association in gwas_snp.evidence:
+			if gwas_association.pvalue < gwas_scores[gwas_association.source][gwas_snp.snp.rsID]:
+				gwas_scores[gwas_association.source][gwas_snp.snp.rsID] = gwas_association.pvalue
+
+	functional_scores = collections.defaultdict(lambda: collections.defaultdict(int))
+	snp_scores = collections.defaultdict(int)
+	for gene_snp_association in association.evidence:
+		for evidence in gene_snp_association.regulatory_evidence + gene_snp_association.cisregulatory_evidence:
+			functional_scores[evidence.snp.rsID][evidence.source] += evidence.score
+		snp_scores[gene_snp_association.snp.rsID] = gene_snp_association.score
+	
+	pretty_strings = []
+	for ld_snp in cluster.ld_snps:
+		if snp_scores[ld_snp.rsID] > 0:
+			results = [ld_snp.rsID, gene_name, gene_id, ",".join(disease_names), ",".join(disease_efos), str(snp_scores[ld_snp.rsID])]
+			results.append(",".join(gwas_snp.snp.rsID for gwas_snp in gwas_snps))
+			for gwas_source in ['GWAS Catalog', 'GRASP', 'GWAS DB', 'Phewas Catalog']:
+				results.append(",".join(str(gwas_scores[gwas_source][gwas_snp.snp.rsID]) for gwas_snp in cluster.gwas_snps))
+			results += [str(functional_scores[ld_snp.rsID][functional_source]) for functional_source in ['VEP', 'Regulome', 'GTEx', 'DHS', 'Fantom5']]
+			pretty_strings.append("\t".join(results))
+
+	return "\n".join(pretty_strings)
 
 # List of databases used
 database_functions = [GWASCatalog, GWAS_DB, Phewas_Catalog, GRASP]
 ld_snp_to_gene_functions = [GTEx, Fantom5, VEP, DHS]
 snp_regulatory_functions = [Regulome] # TODO Implement and insert GERP code
-
 
 if __name__ == "__main__":
 	main()
