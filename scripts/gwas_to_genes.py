@@ -1285,7 +1285,7 @@ def GTEx_gene_tissue(gene, tissue, snp_hash):
 	"""
 
 
-	server = "http://193.62.54.30:5555"
+	server = "http://rest.ensembl.org"
 	ext = "/eqtl/id/%s/%s?content-type=application/json;statistic=p-value;tissue=%s" % ('homo_sapiens', gene.id, tissue);
 	try:
 		eQTLs = get_rest_json(server, ext)
@@ -1305,11 +1305,12 @@ def GTEx_gene_tissue(gene, tissue, snp_hash):
 				snp = snp_hash[eQTL['snp']],
 				gene = gene,
 				tissue = tissue,
-				score = float(eQTL['value']),
+				score = 1,
 				source = "GTEx",
 				study = None
 			)
 			for eQTL in eQTLs if eQTL['snp'] in snp_hash
+			if eQTL['value'] < 2.5e-5 
 		]
 
 		if DEBUG:
