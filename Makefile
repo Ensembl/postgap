@@ -66,7 +66,7 @@ bgz:
 	$(foreach file, $(bed_files), bgzip $(file);)
 
 d_1000Genomes:
-	mkdir -p ./databases/raw/1000Genomes
+	mkdir -p ${DEST_DIR}/raw/1000Genomes
 	cat ./scripts/preprocessing/links.txt | xargs -n1 wget -nc -P ${DEST_DIR}/raw/1000Genomes/
 
 define process_1000Genomes_file
