@@ -36,6 +36,14 @@ make
 cp src/cpp/vcftools ../bin
 cd ..
 
+# bedtools
+git clone https://github.com/arq5x/bedtools2.git
+git checkout v2.26.0
+cd bedtools2
+make
+cp bin/bedtools ../bin
+cd ..
+
 # pybedtools v0.7.8
 pip install pybedtools
 

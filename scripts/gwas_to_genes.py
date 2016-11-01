@@ -1531,6 +1531,64 @@ def get_dhs_evidence(feature, fdr_model, snp_hash):
 		tissue = None
 	)
 
+def PCHIC(ld_snps, tissues):
+	"""
+
+		Returns all genes associated to a set of SNPs in PCHIC
+		Args:
+		* [ SNP ]
+		* [ string ] (tissues)
+		Returntype: [ Regulatory_Evidence ]
+
+	"""
+	intersection = overlap_snps_to_bed(ld_snps, DATABASES_DIR + "/pchic.bed")
+	snp_hash = dict( (snp.rsID, snp) for snp in ld_snps)
+	res = filter (lambda X: X is not None and X.score, (get_pchic_evidence(feature, snp_hash) for feature in intersection))
+
+	if DEBUG:
+		print "\tFound %i gene associations in PCHIC" % len(res)
+
+	return res
+
+def get_pchic_evidence(feature, snp_hash):
+	"""
+
+		Parse output of bedtools searching for PCHIC evidence
+		Args:
+		* string
+		Returntype: Regulatory_Evidence
+
+	"""
+	'''
+
+		First 5 columns are from PCHIC file, the next 4 are LD SNP coords
+		Format of PCHIC correlation files:
+		1. chrom
+		2. chromStart
+		3. chromEnd
+		4. score
+		5. gene_id
+
+		6. chrom
+		7. start
+		8. end
+		9. rsID
+
+	'''
+	gene = get_gene(feature[4])
+	if gene is None:
+		return None
+	snp = snp_hash[feature[8]]
+
+	return Cisregulatory_Evidence(
+		snp = snp,
+		gene = gene,
+		score = 1,
+		source = "PCHIC",
+		study = None,
+		tissue = None
+	)
+
 def STOPGAP_FDR(snp, gene, fdr_model):
 	"""
 
@@ -1576,7 +1634,10 @@ def get_gene(gene_name):
 
 	"""
 	if gene_name not in known_genes:
-		known_genes[gene_name] = fetch_gene(gene_name)
+		if gene_name[:4] != 'ENSG':
+			known_genes[gene_name] = fetch_gene(gene_name)
+		else:
+			known_genes[gene_name] = fetch_gene_id(gene_name)
 	return known_genes[gene_name]
 
 def fetch_gene(gene_name):
@@ -1593,6 +1654,28 @@ def fetch_gene(gene_name):
 		hash = get_rest_json(server, ext)
 		return Gene(
 			name = gene_name,
+			id = hash['id'],
+			chrom = hash['seq_region_name'],
+			tss = int(hash['start']) if hash['strand'] > 0 else int(hash['end']),
+			biotype = hash['biotype']
+			)
+	except:
+		return None
+
+def fetch_gene_id(gene_id):
+	"""
+
+		Get gene details from name
+		* string
+		Returntype: Gene
+
+	"""
+	server = "http://grch37.rest.ensembl.org"
+	ext = "/lookup/id/%s?content-type=application/json;expand=1" % (gene_id)
+	try:
+		hash = get_rest_json(server, ext)
+		return Gene(
+			name = hash['display_name'],
 			id = hash['id'],
 			chrom = hash['seq_region_name'],
 			tss = int(hash['start']) if hash['strand'] > 0 else int(hash['end']),
@@ -2021,7 +2104,7 @@ def pretty_output(associations):
 		Returntype: String
 
 	"""
-	header = "\t".join(['ld_snp_rsID', 'gene_symbol', 'gene_id', 'disease_names', 'disease_efo_ids', 'score', 'gwas_snp_ids', 'GWAS Catalog', 'GRASP', 'GWAS DB', 'Phewas Catalog', 'VEP', 'Regulome', 'GTEx', 'DHS', 'Fantom5'])
+	header = "\t".join(['ld_snp_rsID', 'gene_symbol', 'gene_id', 'disease_names', 'disease_efo_ids', 'score', 'gwas_snp_ids', 'GWAS Catalog', 'GRASP', 'GWAS DB', 'Phewas Catalog', 'VEP', 'Regulome', 'GTEx', 'DHS', 'Fantom5', 'PCHIC'])
 	content = map(pretty_cluster_association, associations)
 	return "\n".join([header] + content)
 
@@ -2061,14 +2144,14 @@ def pretty_cluster_association(association):
 			results.append(",".join(gwas_snp.snp.rsID for gwas_snp in gwas_snps))
 			for gwas_source in ['GWAS Catalog', 'GRASP', 'GWAS DB', 'Phewas Catalog']:
 				results.append(",".join(str(gwas_scores[gwas_source][gwas_snp.snp.rsID]) for gwas_snp in cluster.gwas_snps))
-			results += [str(functional_scores[ld_snp.rsID][functional_source]) for functional_source in ['VEP', 'Regulome', 'GTEx', 'DHS', 'Fantom5']]
+			results += [str(functional_scores[ld_snp.rsID][functional_source]) for functional_source in ['VEP', 'Regulome', 'GTEx', 'DHS', 'Fantom5', 'PCHIC']]
 			pretty_strings.append("\t".join(results))
 
 	return "\n".join(pretty_strings)
 
 # List of databases used
 database_functions = [GWASCatalog, GWAS_DB, Phewas_Catalog, GRASP]
-ld_snp_to_gene_functions = [GTEx, Fantom5, VEP, DHS]
+ld_snp_to_gene_functions = [GTEx, Fantom5, VEP, DHS, PCHIC]
 snp_regulatory_functions = [Regulome] # TODO Implement and insert GERP code
 
 if __name__ == "__main__":
