@@ -1,5 +1,6 @@
 DEST_DIR=~/lustre2/CTTV24/databases_test
 
+
 default: download process
 download: create_dir d_GRASP d_Phewas_Catalog d_GWAS_DB d_Fantom5 d_DHS d_Regulome d_1000Genomes
 process: GRASP Phewas_Catalog GWAS_DB Fantom5 DHS Regulome tabix 1000Genomes
@@ -73,7 +74,7 @@ define process_1000Genomes_file
 gzip -dc $(1) \
 | vcfkeepsamples - `cat ./scripts/preprocessing/CEPH_samples.txt`\
 | bcftools convert -Ob \
-> ${DEST_DIR}/1000Genomes/CEPH/`basename $(1) | sed -e 's/vcf.gz/bcf.gz/'`;
+> ${DEST_DIR}/1000Genomes/CEPH/`basename $(1) | sed -e 's/vcf.gz/bcf/'`;
 endef
 
 .PHONY: 1000Genomes
@@ -81,5 +82,5 @@ endef
 1000Genomes:
 	$(eval vcf_files := $(wildcard ${DEST_DIR}/raw/1000Genomes/*.vcf.gz))
 	$(foreach file, $(vcf_files), $(call process_1000Genomes_file, $(file)))
-	$(eval bcf_files := $(wildcard ${DEST_DIR}/1000Genomes/*.bcf.gz))
+	$(eval bcf_files := $(wildcard ${DEST_DIR}/1000Genomes/*.bcf))
 	$(foreach file, $(bcf_files), bcftools index $(file);)

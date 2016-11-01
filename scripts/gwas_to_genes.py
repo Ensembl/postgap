@@ -829,7 +829,7 @@ def calculate_LD_window(snp, window_len=500000,population='CEPH',cutoff=0.5,db=0
     chromosome = snp.chrom
     region = '{}:{}-{}'.format(chromosome,from_pos,to_pos)
 
-    chrom_file = "CEPH.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf.gz" % (chromosome)
+    chrom_file = "ALL.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf" % (chromosome)
 
     ### Extract this region out from the 1000 genomes BCF
 
@@ -1048,7 +1048,7 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, population='CEPH', region=None,db=0
 
 
     ### Extract the required region from the VCF
-    chrom_file = '%s.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf.gz' % (population, chromosome)
+    chrom_file = 'ALL.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf' % (chromosome)
 
     extract_region_comm = "bcftools view -r %s %s -O z -o region.vcf.gz" % (region, os.path.join(DATABASES_DIR, '1000Genomes', population, chrom_file))
     subprocess.call(extract_region_comm.split(" "))
