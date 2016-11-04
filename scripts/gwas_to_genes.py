@@ -108,14 +108,14 @@ def main():
 	else:
 		output = open(options.output, "w")
 
-	if options.rsIDs is None:
+	if options.rsID is None:
 		res = diseases_to_genes(options.diseases, options.efos, "CEPH", options.tissues)
 	else:
-		res = rsIDs_to_genes(options.rsIDs, options.tissues)
+		res = rsIDs_to_genes(options.rsID, options.tissues)
 
 	if options.json_output:
 		formatted_results = "\n".join(map(json.dumps, res))
-	elif options.rsIDs is None:
+	elif options.rsID is None:
 		formatted_results = pretty_output(res)
 	else:
 		formatted_results = pretty_snp_output(res)
@@ -137,7 +137,7 @@ def get_options():
     parser = argparse.ArgumentParser(description='Search GWAS/Regulatory/Cis-regulatory databases for causal genes')
     parser.add_argument('--efos', nargs='*')
     parser.add_argument('--diseases', nargs='*')
-    parser.add_argument('--rsIDs', nargs='*')
+    parser.add_argument('--rsID')
     # parser.add_argument('--populations', nargs='*', default=['1000GENOMES:phase_3:GBR'])
     parser.add_argument('--tissues', nargs='*')
     parser.add_argument('--output')
@@ -155,8 +155,8 @@ def get_options():
     DEBUG = DEBUG or options.debug
 
     assert DATABASES_DIR is not None
-    assert options.rsIDs is None or (options.efos is None and options.diseases is None)
-    assert options.rsIDs is not None or options.efos is not None or options.diseases is not None
+    assert options.rsID is None or (options.efos is None and options.diseases is None)
+    assert options.rsID is not None or options.efos is not None or options.diseases is not None
 
     if options.diseases is None:
         options.diseases = []
@@ -1168,10 +1168,19 @@ def total_score(pics, gene_score):
 	B = gene_score * (gene_score ** (1/3))
 	return ((A + B) / 2) ** 3
 
-def rsIDs_to_genes(snps, tissues):
+def rsIDs_to_genes(snp, tissues):
+	"""
+
+		Associates genes to single SNP
+		Args:
+		* SNP
+		* [ string ] (tissues)
+		Returntype: [ GeneSNP_Association ]
+
+	"""
 	if tissues is None:
 		tissues = ["Whole_Blood"]
-	return ld_snps_to_genes(get_snp_locations(snps), tissues)
+	return ld_snps_to_genes(get_snp_locations([snp]), tissues)
 
 def ld_snps_to_genes(ld_snps, tissues):
 	"""
