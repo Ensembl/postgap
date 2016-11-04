@@ -28,6 +28,7 @@ limitations under the License.
 
 """
 import os
+import os.path
 import sys
 import argparse
 import re
@@ -40,6 +41,7 @@ import json
 import cPickle as pickle
 import time
 import subprocess
+import tempfile
 
 # Class definitions
 SNP = collections.namedtuple("SNP", ['rsID', 'chrom', 'pos'])
@@ -837,13 +839,16 @@ def calculate_LD_window(snp, window_len=500000,population='CEPH',cutoff=0.5,db=0
     region = '{}:{}-{}'.format(chromosome,from_pos,to_pos)
 
     chrom_file = "ALL.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf" % (chromosome)
+    if not os.path.isfile(chrom_file):
+	return dict([(snp, 1)])
 
     ### Extract this region out from the 1000 genomes BCF
 
-    extract_region_comm = "bcftools view -r %s %s -O v -o region.vcf" % (region, os.path.join(DATABASES_DIR, '1000Genomes', population, chrom_file))
+    region_file, region_file_name = tempfile.mkstemp()
+    extract_region_comm = "bcftools view -r %s %s -O v -o %s" % (region, os.path.join(DATABASES_DIR, '1000Genomes', population, chrom_file), region_file_name)
 
     subprocess.call(extract_region_comm.split(" "))
-    region_file = open('region.vcf','r')
+    region_file = open(region_file_name,'r')
     region_vcf = region_file.read()
 
 
@@ -852,7 +857,8 @@ def calculate_LD_window(snp, window_len=500000,population='CEPH',cutoff=0.5,db=0
 
 
     ### Calculate the pairwise LD using plink2
-    plinkcomm = "plink --vcf region.vcf --r2 --ld-snp {} --inter-chr --out LDwindow".format(SNP_id)
+    ld_file, ld_file_name = tempfile.mkstemp()
+    plinkcomm = "plink --vcf %s --r2 --ld-snp %s --inter-chr --out %s" % (region_file_name, SNP_id, ld_file_name)
     print plinkcomm
     plinkcomm_list = plinkcomm.split(" ")
 
@@ -862,17 +868,8 @@ def calculate_LD_window(snp, window_len=500000,population='CEPH',cutoff=0.5,db=0
         raise Exception("Plink2 needs to be installed")
         sys.exit()
 
-    ### Remove intermediate region VCF file
-
-
-
-
-
-
     ### Remove intermediate LD file
-
-
-    f = open('LDwindow.ld','r')
+    f = open(ld_file_name + '.ld','r')
     g = f.read().splitlines()
 
     r2_dict = {}
@@ -885,9 +882,8 @@ def calculate_LD_window(snp, window_len=500000,population='CEPH',cutoff=0.5,db=0
     pruned_ld_snps = dict([x for x in r2_dict.items() if x[1] > cutoff])
 
     if db != 1:
-        subprocess.call(['rm', 'region.vcf'])
-    if db != 1:
-        subprocess.call(['rm', 'LDwindow.ld', 'LDwindow.log', 'LDwindow.nosex', 'out.log'])
+        subprocess.call(['rm', region_file_name])
+        subprocess.call(['rm', ld_file_name + '.ld', ld_file_name + '.log', ld_file_name + '.nosex'])
 
     return pruned_ld_snps
 
@@ -926,6 +922,7 @@ def get_gwas_snp_locations(gwas_snps):
 			evidence = original_gwas_snp[mapped_snp.rsID].evidence
 		)
 		for mapped_snp in mapped_snps
+		if mapped_snp.rsID in original_gwas_snp
 	]
 
 def merge_preclusters(preclusters):
@@ -1047,8 +1044,8 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, population='CEPH', region=None,db=0
     chromosome = ld_snps[0].chrom
 
 
-    SNPs_filepath = 'snp_rsIDs.txt'
-    h = open('snp_rsIDs.txt', 'w')
+    rsID_file, rsID_file_name = tempfile.mkstemp()
+    h = open(rsID_file_name, 'w')
     for x in ld_snps:
         h.write('{}\n'.format(str(x.rsID)))
     h.close()
@@ -1056,14 +1053,16 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, population='CEPH', region=None,db=0
 
     ### Extract the required region from the VCF
     chrom_file = 'ALL.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf' % (chromosome)
+    if not os.path.isfile(chrom_file):
+	return dict((snp, 1) for snp in ld_snps)
 
-    extract_region_comm = "bcftools view -r %s %s -O z -o region.vcf.gz" % (region, os.path.join(DATABASES_DIR, '1000Genomes', population, chrom_file))
+    region_file, region_file_name = tempfile.mkstemp()
+    extract_region_comm = "bcftools view -r %s %s -O z -o %s" % (region, os.path.join(DATABASES_DIR, '1000Genomes', population, chrom_file), region_file_name)
     subprocess.call(extract_region_comm.split(" "))
-    region_file = "region.vcf.gz"
 
 
     ### Extract the list of SNP ids from this region
-    vcfcomm = "vcftools --gzvcf {} --snps {} --recode --stdout".format(region_file, SNPs_filepath)
+    vcfcomm = "vcftools --gzvcf %s --snps %s --recode --stdout" % (region_file_name, rsID_file_name)
     print vcfcomm
     vcf = subprocess.check_output(vcfcomm.split(" "))
 
@@ -1071,7 +1070,8 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, population='CEPH', region=None,db=0
     ### Remove intermediate region VCF file
 
 
-    f = open('snps.vcf', 'w')
+    snp_file, snp_file_name = tempfile.mkstemp()
+    f = open(snp_file_name, 'w')
     f.write(vcf)
     f.close()
 
@@ -1080,7 +1080,8 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, population='CEPH', region=None,db=0
 
 
     ### Use plink2 to calculate pairwise LD between these SNPs.
-    plinkcomm = "plink --vcf snps.vcf --r2 square --out LD"
+    ld_file, ld_file_name = tempfile.mkstemp()
+    plinkcomm = "plink --vcf %s --r2 square --out %s" % (snp_file_name, ld_file_name)
     print plinkcomm
     plinkcomm_list = plinkcomm.split(" ")
     subprocess.call(plinkcomm_list)
@@ -1088,7 +1089,7 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, population='CEPH', region=None,db=0
 
 
     ### Read from the generated results file and output an array.
-    LD_file = open('LD.ld','r')
+    LD_file = open(ld_file_name + '.ld','r')
     g = LD_file.read()
     LD_array = [x.split('\t') for x in g.splitlines()]
     LD_file.close
@@ -1104,10 +1105,10 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, population='CEPH', region=None,db=0
 
     ### Remove intermediate files
     if db != 1:
-        subprocess.call(['rm', 'LD.ld', 'LD.log', 'LD.nosex', 'out.log'])
-        subprocess.call(['rm', 'snps.vcf'])
-        subprocess.call(['rm', 'region.vcf.gz'])
-        subprocess.call(['rm', 'snp_rsIDs.txt'])
+        subprocess.call(['rm', ld_file_name + '.ld', ld_file_name + '.log', ld_file_name + '.nosex'])
+        subprocess.call(['rm', snp_file_name])
+        subprocess.call(['rm', region_file_name])
+        subprocess.call(['rm', rsID_file_name])
 
     return ld_scores_cutoff
 
@@ -1635,7 +1636,7 @@ def nearest_genes(snps):
 	"""
 	snps = list(snps)
 	bed = DATABASES_DIR + "/Ensembl_TSSs.bed"
-	SNP_string = "\n".join("\t".join((snp.chrom, str(snp.pos), str(snp.pos+1), snp.rsID)) for snp in snps)
+	SNP_string = "\n".join("\t".join((snp.chrom, str(snp.pos), str(snp.pos+1), snp.rsID)) for snp in sorted(snps, key=lambda X: (X.chrom, X.pos)))
 	SNP_bt = pybedtools.BedTool(SNP_string, from_string=True)
 
 	if not os.path.isfile(bed + '.gz') or not os.path.isfile(bed + '.gz.tbi'):
