@@ -103,17 +103,22 @@ def main():
 
 	"""
 	options = get_options()
-	res = diseases_to_genes(options.diseases, options.efos, "CEPH", options.tissues)
-
 	if options.output is None:
 		output = sys.stdout
 	else:
 		output = open(options.output, "w")
 
+	if options.rsIDs is None:
+		res = diseases_to_genes(options.diseases, options.efos, "CEPH", options.tissues)
+	else:
+		res = rsIDs_to_genes(options.rsIDs, options.tissues)
+
 	if options.json_output:
 		formatted_results = "\n".join(map(json.dumps, res))
-	else:
+	elif options.rsIDs is None:
 		formatted_results = pretty_output(res)
+	else:
+		formatted_results = pretty_snp_output(res)
 
 	output.write(formatted_results)
 
@@ -132,6 +137,7 @@ def get_options():
     parser = argparse.ArgumentParser(description='Search GWAS/Regulatory/Cis-regulatory databases for causal genes')
     parser.add_argument('--efos', nargs='*')
     parser.add_argument('--diseases', nargs='*')
+    parser.add_argument('--rsIDs', nargs='*')
     # parser.add_argument('--populations', nargs='*', default=['1000GENOMES:phase_3:GBR'])
     parser.add_argument('--tissues', nargs='*')
     parser.add_argument('--output')
@@ -149,7 +155,8 @@ def get_options():
     DEBUG = DEBUG or options.debug
 
     assert DATABASES_DIR is not None
-    assert options.efos is not None or options.diseases is not None
+    assert options.rsIDs is None or (options.efos is None and options.diseases is None)
+    assert options.rsIDs is not None or options.efos is not None or options.diseases is not None
 
     if options.diseases is None:
         options.diseases = []
@@ -1161,6 +1168,11 @@ def total_score(pics, gene_score):
 	B = gene_score * (gene_score ** (1/3))
 	return ((A + B) / 2) ** 3
 
+def rsIDs_to_genes(snps, tissues):
+	if tissues is None:
+		tissues = ["Whole_Blood"]
+	return ld_snps_to_genes(get_snp_locations(snps), tissues)
+
 def ld_snps_to_genes(ld_snps, tissues):
 	"""
 
@@ -2095,6 +2107,40 @@ def concatenate_hashes(list):
 
 	"""
 	return dict(sum(map(lambda X: X.items(), filter(lambda elem: elem is not None, list)), []))
+
+def pretty_snp_output(associations):
+	"""
+
+		Prints association stats in roughly the same format as STOPGAP for a cluster of SNPs
+		Args: [ GeneSNP_Association ]
+		Returntype: String
+
+	"""
+	header = "\t".join(['snp_rsID', 'gene_symbol', 'gene_id', 'score', 'VEP', 'Regulome', 'GTEx', 'DHS', 'Fantom5', 'PCHIC'])
+	content = map(pretty_snp_association, associations)
+	return "\n".join([header] + content) + "\n"
+
+def pretty_snp_association(association):
+	"""
+
+		Prints association stats in roughly the same format as STOPGAP for a cluster of SNPs
+		Args: GeneCluster_Association
+		Returntype: String
+
+	"""
+	snp = association.snp
+	gene_name = association.gene.name
+	gene_id = association.gene.id
+	score = association.score
+
+	functional_scores = collections.defaultdict(int)
+	for evidence in association.regulatory_evidence + association.cisregulatory_evidence:
+		functional_scores[evidence.source] += evidence.score
+	
+	results = [snp.rsID, gene_name, gene_id, str(score)]
+	results += [str(functional_scores[functional_source]) for functional_source in ['VEP', 'Regulome', 'GTEx', 'DHS', 'Fantom5', 'PCHIC']]
+	return "\t".join(results)
+
 
 def pretty_output(associations):
 	"""
