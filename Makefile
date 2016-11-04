@@ -65,7 +65,7 @@ pchic: Ensembl
 	gzip -dc ${DEST_DIR}/raw/pchic/* | sed -e 's/\<chr//g' | tr ':\-,' '\t' | bedtools intersect -wa -wb -a stdin -b ${DEST_DIR}/Ensembl_TSSs.bed | cut -f4,5,6,13,7 | sort -k1,1 -k2,2n > ${DEST_DIR}/pchic.bed
 
 Ensembl:
-	wget -q -O - ftp://ftp.ensembl.org/pub/grch37/update/gtf/homo_sapiens/Homo_sapiens.GRCh37.82.gtf.gz | gzip -dc | grep protein_coding | awk 'BEGIN {OFS="\t"} $$3 == "gene" && $$7== "+" { print $$1, $$4, $$4+1, $$10 } $$3 == "gene" && $$7== "-" { print $$1, $$5, $$5+1, $$10 } ' | tr -d '";' > ${DEST_DIR}/Ensembl_TSSs.bed
+	wget -q -O - ftp://ftp.ensembl.org/pub/grch37/update/gtf/homo_sapiens/Homo_sapiens.GRCh37.82.gtf.gz | gzip -dc | grep protein_coding | awk 'BEGIN {OFS="\t"} $$3 == "gene" && $$7== "+" { print $$1, $$4, $$4+1, $$10 } $$3 == "gene" && $$7== "-" { print $$1, $$5, $$5+1, $$10 } ' | tr -d '";' | sort -k1,1 -k2,2n > ${DEST_DIR}/Ensembl_TSSs.bed
 
 tabix: bgz
 	$(eval bgz_files := $(wildcard ${DEST_DIR}/*.bed.gz))
