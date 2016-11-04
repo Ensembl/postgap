@@ -1196,7 +1196,7 @@ def ld_snps_to_genes(ld_snps, tissues):
 	cisreg = cisregulatory_evidence(ld_snps, tissues)
 
 	# Extract list of relevant SNPs:
-	selected_snps = set(gene_snp_pair[1] for gene_snp_pair in cisreg)
+	selected_snps = set(snp for gene, snp in cisreg)
 
 	# Fallback solution: add nearest gene for dissappointing SNPs:
 	if len(selected_snps) != len(ld_snps):
