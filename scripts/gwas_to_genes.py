@@ -1198,6 +1198,20 @@ def ld_snps_to_genes(ld_snps, tissues):
 	# Extract list of relevant SNPs:
 	selected_snps = set(gene_snp_pair[1] for gene_snp_pair in cisreg)
 
+	# Fallback solution: add nearest gene for dissappointing SNPs:
+	if len(selected_snps) != len(ld_snps):
+		nearest_gene_hash = nearest_genes(ld_snps)
+		for snp in ld_snps:
+			if snp not in selected_snps and snp in nearest_gene_hash:
+				gene = nearest_gene_hash[snp.rsID]
+				cisreg[(gene, snp)].append(Cisregulatory_Evidence(
+						gene = gene,
+						snp = snp,
+						score = 1,
+						source = 'Nearest',
+						study = None,
+						tissue = None))
+
 	if len(selected_snps) > 0:
 		# Extract SNP specific info:
 		reg = regulatory_evidence(selected_snps, tissues)
@@ -1609,6 +1623,41 @@ def get_pchic_evidence(feature, snp_hash):
 		study = None,
 		tissue = None
 	)
+
+def nearest_genes(snps):
+	"""
+
+		Return nearest gene to SNP
+		Args:
+		* [ SNP ]
+		Returntype: dict(rsID => Gene)
+
+	"""
+	snps = list(snps)
+	bed = DATABASES_DIR + "/Ensembl_TSSs.bed"
+	SNP_string = "\n".join("\t".join((snp.chrom, str(snp.pos), str(snp.pos+1), snp.rsID)) for snp in snps)
+	SNP_bt = pybedtools.BedTool(SNP_string, from_string=True)
+
+	if not os.path.isfile(bed + '.gz') or not os.path.isfile(bed + '.gz.tbi'):
+		Annotation_bt = pybedtools.BedTool(bed)
+		Annotation_bt_indexed = Annotation_bt.tabix()
+	else:
+		Annotation_bt_indexed = pybedtools.BedTool(bed + '.gz')
+
+	'''
+		Parse output: first 4 columns are from SNP file, next 4 Gene coords
+		1. chrom
+		2. start
+		3. end
+		4. rsID
+
+		5. chrom
+		6. chromStart
+		7. chromEnd
+		8. HGNC
+
+	'''
+	return dict((row[3], get_gene(row[7])) for row in SNP_bt.closest(Annotation_bt_indexed, wa=True, wb=True))
 
 def STOPGAP_FDR(snp, gene, fdr_model):
 	"""
@@ -2125,7 +2174,7 @@ def pretty_snp_output(associations):
 		Returntype: String
 
 	"""
-	header = "\t".join(['snp_rsID', 'gene_symbol', 'gene_id', 'score', 'VEP', 'Regulome', 'GTEx', 'DHS', 'Fantom5', 'PCHIC'])
+	header = "\t".join(['snp_rsID', 'gene_symbol', 'gene_id', 'score', 'VEP', 'Regulome', 'GTEx', 'DHS', 'Fantom5', 'PCHIC', 'Nearest'])
 	content = map(pretty_snp_association, associations)
 	return "\n".join([header] + content) + "\n"
 
@@ -2147,7 +2196,7 @@ def pretty_snp_association(association):
 		functional_scores[evidence.source] += evidence.score
 	
 	results = [snp.rsID, gene_name, gene_id, str(score)]
-	results += [str(functional_scores[functional_source]) for functional_source in ['VEP', 'Regulome', 'GTEx', 'DHS', 'Fantom5', 'PCHIC']]
+	results += [str(functional_scores[functional_source]) for functional_source in ['VEP', 'Regulome', 'GTEx', 'DHS', 'Fantom5', 'PCHIC', 'Nearest']]
 	return "\t".join(results)
 
 
@@ -2159,7 +2208,7 @@ def pretty_output(associations):
 		Returntype: String
 
 	"""
-	header = "\t".join(['ld_snp_rsID', 'gene_symbol', 'gene_id', 'disease_names', 'disease_efo_ids', 'score', 'gwas_snp_ids', 'GWAS Catalog', 'GRASP', 'GWAS DB', 'Phewas Catalog', 'VEP', 'Regulome', 'GTEx', 'DHS', 'Fantom5', 'PCHIC'])
+	header = "\t".join(['ld_snp_rsID', 'gene_symbol', 'gene_id', 'disease_names', 'disease_efo_ids', 'score', 'gwas_snp_ids', 'GWAS Catalog', 'GRASP', 'GWAS DB', 'Phewas Catalog', 'VEP', 'Regulome', 'GTEx', 'DHS', 'Fantom5', 'PCHIC', 'Nearest'])
 	content = map(pretty_cluster_association, associations)
 	return "\n".join([header] + content)
 
@@ -2198,7 +2247,7 @@ def pretty_cluster_association(association):
 			results.append(",".join(gwas_snp.snp.rsID for gwas_snp in gwas_snps))
 			for gwas_source in ['GWAS Catalog', 'GRASP', 'GWAS DB', 'Phewas Catalog']:
 				results.append(",".join(str(gwas_scores[gwas_source][gwas_snp.snp.rsID]) for gwas_snp in cluster.gwas_snps))
-			results += [str(functional_scores[ld_snp.rsID][functional_source]) for functional_source in ['VEP', 'Regulome', 'GTEx', 'DHS', 'Fantom5', 'PCHIC']]
+			results += [str(functional_scores[ld_snp.rsID][functional_source]) for functional_source in ['VEP', 'Regulome', 'GTEx', 'DHS', 'Fantom5', 'PCHIC', 'Nearest']]
 			pretty_strings.append("\t".join(results))
 
 	return "\n".join(pretty_strings) + "\n"

@@ -59,11 +59,13 @@ Regulome:
 
 d_pchic:
 	mkdir -p ${DEST_DIR}/raw/pchic
-	wget -q -O - ftp://ftp.ensembl.org/pub/grch37/update/gtf/homo_sapiens/Homo_sapiens.GRCh37.82.gtf.gz | gzip -dc | awk 'BEGIN {OFS="\t"} $$3 == "gene" && $$7== "+" { print $$1, $$4, $$4+1, $$10 } $$3 == "gene" && $$7== "-" { print $$1, $$5, $$5+1, $$10 } ' | tr -d '";' > ${DEST_DIR}/raw/Ensembl_TSSs.bed
 	wget -q -O - ftp://ftp.ebi.ac.uk/pub/contrib/pchic/CHiCAGO/ | tr '<' '\n' | grep '.gz"' | sed -e 's/A HREF="//' -e 's/".*//' | sort | uniq | xargs -n1 -I file wget ftp://ftp.ebi.ac.uk/pub/contrib/pchic/CHiCAGO/file -P ${DEST_DIR}/raw/pchic
 
-pchic:
-	gzip -dc ${DEST_DIR}/raw/pchic/* | sed -e 's/\<chr//g' | tr ':\-,' '\t' | bedtools intersect -wa -wb -a stdin -b ${DEST_DIR}/raw/Ensembl_TSSs.bed | cut -f4,5,6,13,7 | sort -k1,1 -k2,2n > ${DEST_DIR}/pchic.bed
+pchic: Ensembl
+	gzip -dc ${DEST_DIR}/raw/pchic/* | sed -e 's/\<chr//g' | tr ':\-,' '\t' | bedtools intersect -wa -wb -a stdin -b ${DEST_DIR}/Ensembl_TSSs.bed | cut -f4,5,6,13,7 | sort -k1,1 -k2,2n > ${DEST_DIR}/pchic.bed
+
+Ensembl:
+	wget -q -O - ftp://ftp.ensembl.org/pub/grch37/update/gtf/homo_sapiens/Homo_sapiens.GRCh37.82.gtf.gz | gzip -dc | grep protein_coding | awk 'BEGIN {OFS="\t"} $$3 == "gene" && $$7== "+" { print $$1, $$4, $$4+1, $$10 } $$3 == "gene" && $$7== "-" { print $$1, $$5, $$5+1, $$10 } ' | tr -d '";' > ${DEST_DIR}/Ensembl_TSSs.bed
 
 tabix: bgz
 	$(eval bgz_files := $(wildcard ${DEST_DIR}/*.bed.gz))
