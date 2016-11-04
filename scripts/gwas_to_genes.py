@@ -2168,7 +2168,6 @@ def pretty_cluster_association(association):
 	gwas_snps = cluster.gwas_snps
 	disease_names = list(set(gwas_association.disease.name for gwas_snp in gwas_snps for gwas_association in gwas_snp.evidence))
 	disease_efos = list(set(gwas_association.disease.efo for gwas_snp in gwas_snps for gwas_association in gwas_snp.evidence))
-	cluster_score = association.score
 
 	gwas_scores = collections.defaultdict(lambda: collections.defaultdict(lambda: 1))
 	for gwas_snp in gwas_snps:
@@ -2193,7 +2192,7 @@ def pretty_cluster_association(association):
 			results += [str(functional_scores[ld_snp.rsID][functional_source]) for functional_source in ['VEP', 'Regulome', 'GTEx', 'DHS', 'Fantom5', 'PCHIC']]
 			pretty_strings.append("\t".join(results))
 
-	return "\n".join(pretty_strings)
+	return "\n".join(pretty_strings) + "\n"
 
 # List of databases used
 database_functions = [GWASCatalog, GWAS_DB, Phewas_Catalog, GRASP]
