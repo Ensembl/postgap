@@ -1,9 +1,8 @@
 DEST_DIR=~/lustre2/CTTV24/databases_test
 
-
 default: download process
 download: create_dir d_GRASP d_Phewas_Catalog d_GWAS_DB d_Fantom5 d_DHS d_Regulome d_pchic d_1000Genomes
-process: GRASP Phewas_Catalog GWAS_DB Fantom5 DHS Regulome tabix 1000Genomes
+process: GRASP Phewas_Catalog GWAS_DB Fantom5 DHS Regulome tabix pchic 1000Genomes
 
 clean_raw:
 	rm -rf ${DEST_DIR}/raw/*
