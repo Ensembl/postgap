@@ -185,9 +185,8 @@ def gwas_snp_to_precluster(gwas_snp, populations):
         Returntype: GWAS_Cluster
 
     """
-    snp = gwas_snp.snp
-    mapped_ld_snps_dict = LD.calculate_window(snp)
-    mapped_ld_snps = mapped_ld_snps_dict.keys()
+    mapped_ld_snps = LD.calculate_window(gwas_snp.snp)
+    print "Found %i SNPs in the vicinity of %s" % (len(mapped_ld_snps), gwas_snp.snp.rsID)
     return GWAS_Cluster(gwas_snps = [ gwas_snp ],ld_snps = mapped_ld_snps)
 
 def get_gwas_snp_locations(gwas_snps):

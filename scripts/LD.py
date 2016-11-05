@@ -33,163 +33,121 @@ import sys
 import re
 import subprocess
 import tempfile
+from DataModel import *
+import Globals
 
-def calculate_window(snp, window_len=500000,population='CEPH',cutoff=0.5,db=0):
+def calculate_window(snp, window_len=500000, population='CEPH', cutoff=0.5):
+	"""
 
-    """
-    Given a SNP id, calculate the pairwise LD between all SNPs within window_size base pairs.
-    """
+		Given a SNP id, calculate the pairwise LD between all SNPs within window_size base pairs.
 
-    SNP_id = snp.rsID
-    ### Get the SNP location from ENSEMBL
-    position = int(snp.pos)
+		Args:
+		* SNP
+		* int, window width
+		* string, population name
+		* float, r2 cutoff
+		Returntype: dict(SNP => float)
 
-    ### Define the necessary region.
-    from_pos = position - (window_len / 2)
-    to_pos = position + (window_len / 2)
-    chromosome = snp.chrom
-    region = '{}:{}-{}'.format(chromosome,from_pos,to_pos)
+	"""
+	### Define the necessary region.
+	from_pos = snp.pos - (window_len / 2)
+	to_pos = snp.pos + (window_len / 2)
 
-    chrom_file = "ALL.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf" % (chromosome)
-    if not os.path.isfile(chrom_file):
-	return dict([(snp, 1)])
+	### Find the relevant 1000 genomes BCF
+	chrom_file = os.path.join(Globals.DATABASES_DIR, '1000Genomes', population, "ALL.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf" % (snp.chrom))
+	if not os.path.isfile(chrom_file):
+		return dict([(snp, 1)])
 
-    ### Extract this region out from the 1000 genomes BCF
+	### Extract this region out from the 1000 genomes BCF
+	region_file, region_file_name = tempfile.mkstemp()
+	extract_region_comm = "bcftools view -r %s:%s-%s %s -O v -o %s" % (snp.chrom, from_pos, to_pos, chrom_file, region_file_name)
+	subprocess.call(extract_region_comm, shell=True)
 
-    region_file, region_file_name = tempfile.mkstemp()
-    extract_region_comm = "bcftools view -r %s %s -O v -o %s" % (region, os.path.join(DATABASES_DIR, '1000Genomes', population, chrom_file), region_file_name)
+	### Calculate the pairwise LD using plink2
+	ld_file, ld_file_name = tempfile.mkstemp()
+	plinkcomm = "plink --vcf %s --r2 --ld-snp %s --ld-window-r2 %f --inter-chr --out %s" % (region_file_name, snp.rsID, cutoff, ld_file_name)
+	sys.stderr.write(plinkcomm + "\n")
+	subprocess.call(plinkcomm, shell=True)
 
-    subprocess.call(extract_region_comm.split(" "))
-    region_file = open(region_file_name,'r')
-    region_vcf = region_file.read()
+	### Read LD file
+	ld_snps = []
+	for line in open(ld_file_name + '.ld'):
+		items = line.split()
+		if items[-1] == 'R2':
+			continue
+		ld = float(items[-1])
+		ld_snps.append(SNP(items[-2].split(';')[0], items[-4], int(items[-3])))
 
+	### Clean temp files
+	temp_file_names = [region_file_name] + [ ld_file_name + suffix for suffix in ["", ".ld", ".log", ".nosex"]]
+	map(os.remove, temp_file_names)
 
-    ### Find the order of SNPs in the VCF
-    SNPs_order = re.findall('rs[0-9]+', region_vcf)
+	return ld_snps
 
+def get_lds_from_top_gwas(gwas_snp, ld_snps, population='CEPH'):
+	"""
 
-    ### Calculate the pairwise LD using plink2
-    ld_file, ld_file_name = tempfile.mkstemp()
-    plinkcomm = "plink --vcf %s --r2 --ld-snp %s --inter-chr --out %s" % (region_file_name, SNP_id, ld_file_name)
-    print plinkcomm
-    plinkcomm_list = plinkcomm.split(" ")
+		For large numbers of SNPs, best to specify SNP region with chrom:to-from, e.g. 1:7654947-8155562
 
-    try:
-        subprocess.call(plinkcomm_list)
-    except:
-        raise Exception("Plink2 needs to be installed")
-        sys.exit()
+		Args:
+		* SNP
+		* [ SNP ], SNPs of interest
+		* string, population name
+		Returntype: dict(SNP => float)
 
-    ### Remove intermediate LD file
-    f = open(ld_file_name + '.ld','r')
-    g = f.read().splitlines()
+	"""
+	### Check inputs
+	if gwas_snp.rsID not in [x.rsID for x in ld_snps]:
+		ld_snps.append(gwas_snp)
+	if len(ld_snps) == 1:
+		return dict([(gwas_snp, 1)])
 
-    r2_dict = {}
-    for s in [l.split() for l in g][1:]:
-        ld = s[-1]
-        the_snp = SNP(s[-2].split(';')[0], s[-4], int(s[-3]))
-        r2_dict[the_snp] = float(ld)
+	### Define the region of interest
+	assert all(x.chrom == gwas_snp.chrom for x in ld_snps)
+	positions = [x.pos for x in ld_snps]
+	start = min(positions) - 10
+	end = max(positions) + 10
 
+	### Find the relevant BCF file
+	chrom_file = os.path.join(Globals.DATABASES_DIR, '1000Genomes', population, 'ALL.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf' % (gwas_snp.chrom))
+	if not os.path.isfile(chrom_file):
+		return dict((snp, 1) for snp in ld_snps)
 
-    pruned_ld_snps = dict([x for x in r2_dict.items() if x[1] > cutoff])
+	### Extract the required region from the BCF
+	region_file, region_file_name = tempfile.mkstemp()
+	extract_region_comm = "bcftools view -r %s:%s-%s %s -O z -o %s" % (gwas_snp.chrom, start, end, chrom_file, region_file_name)
+	sys.stderr.write(extract_region_comm + "\n")
+	subprocess.call(extract_region_comm, shell=True)
 
-    if db != 1:
-        subprocess.call(['rm', region_file_name])
-        subprocess.call(['rm', ld_file_name + '.ld', ld_file_name + '.log', ld_file_name + '.nosex'])
+	### Extract the list of SNP ids from this region
+	rsID_file, rsID_file_name = tempfile.mkstemp()
+	h = open(rsID_file_name, 'w')
+	h.write("\n".join(str(snp.rsID) for snp in ld_snps))
+	h.close()
+	snp_file, snp_file_name = tempfile.mkstemp()
+	vcfcomm = "vcftools --gzvcf %s --snps %s --recode --out %s" % (region_file_name, rsID_file_name, snp_file_name)
+	sys.stderr.write(vcfcomm + "\n")
+	subprocess.call(vcfcomm, shell=True)
 
-    return pruned_ld_snps
+	### Calculate the pairwise LD using plink2
+	ld_file, ld_file_name = tempfile.mkstemp()
+	plinkcomm = "plink --vcf %s.recode.vcf --r2 --ld-snp %s --inter-chr --out %s" % (snp_file_name, gwas_snp.rsID, ld_file_name)
+	sys.stderr.write(plinkcomm + "\n")
+	subprocess.call(plinkcomm, shell=True)
 
+	### Read LD file
+	snp_hash = dict((snp.rsID, snp) for snp in ld_snps)
+	r2_dict = {}
+	for line in open(ld_file_name + '.ld'):
+		items = line.split()
+		if items[-1] == 'R2':
+			continue
+		ld = float(items[-1])
+		ld_snp = snp_hash[items[-2].split(';')[0]]
+		r2_dict[ld_snp] = ld
 
-def get_lds_from_top_gwas(gwas_snp, ld_snps, population='CEPH', region=None,db=0, cutoff=0.5):
-    """
-    For large numbers of SNPs, best to specify SNP region with chrom:to-from, e.g. 1:7654947-8155562
-    For small numbers (<10), regions are extracted from ENSEMBL REST API.
-    SNPs can be inputted in a list or from a file with one SNP id per line.
-    """
+	### Clean temp files
+	temp_file_names = [region_file_name, rsID_file_name] + [snp_file_name + suffix for suffix in ["", ".recode.vcf", ".log"] ] + [ ld_file_name + suffix for suffix in ["", ".ld", ".log", ".nosex"]]
+	map(os.remove, temp_file_names)
 
-
-    if gwas_snp.rsID not in [x.rsID for x in ld_snps]:
-        ld_snps.append(gwas_snp)
-
-
-    snp_position_map = {}
-    for s in ld_snps:
-        snp_position_map[s.rsID] = s.pos
-
-
-
-    assert [x.chrom for x in ld_snps] == ([ld_snps[0].chrom] * len(ld_snps))
-    positions = [x.pos for x in ld_snps]
-    region = '{}:{}-{}'.format(ld_snps[0].chrom, min(positions), max(positions))
-
-    chromosome = ld_snps[0].chrom
-
-
-    rsID_file, rsID_file_name = tempfile.mkstemp()
-    h = open(rsID_file_name, 'w')
-    for x in ld_snps:
-        h.write('{}\n'.format(str(x.rsID)))
-    h.close()
-
-
-    ### Extract the required region from the VCF
-    chrom_file = 'ALL.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf' % (chromosome)
-    if not os.path.isfile(chrom_file):
-	return dict((snp, 1) for snp in ld_snps)
-
-    region_file, region_file_name = tempfile.mkstemp()
-    extract_region_comm = "bcftools view -r %s %s -O z -o %s" % (region, os.path.join(DATABASES_DIR, '1000Genomes', population, chrom_file), region_file_name)
-    subprocess.call(extract_region_comm.split(" "))
-
-
-    ### Extract the list of SNP ids from this region
-    vcfcomm = "vcftools --gzvcf %s --snps %s --recode --stdout" % (region_file_name, rsID_file_name)
-    print vcfcomm
-    vcf = subprocess.check_output(vcfcomm.split(" "))
-
-
-    ### Remove intermediate region VCF file
-
-
-    snp_file, snp_file_name = tempfile.mkstemp()
-    f = open(snp_file_name, 'w')
-    f.write(vcf)
-    f.close()
-
-    ### Extract out the order of SNPs
-    SNPs_order = re.findall('rs[0-9]+', vcf)
-
-
-    ### Use plink2 to calculate pairwise LD between these SNPs.
-    ld_file, ld_file_name = tempfile.mkstemp()
-    plinkcomm = "plink --vcf %s --r2 square --out %s" % (snp_file_name, ld_file_name)
-    print plinkcomm
-    plinkcomm_list = plinkcomm.split(" ")
-    subprocess.call(plinkcomm_list)
-
-
-
-    ### Read from the generated results file and output an array.
-    LD_file = open(ld_file_name + '.ld','r')
-    g = LD_file.read()
-    LD_array = [x.split('\t') for x in g.splitlines()]
-    LD_file.close
-
-
-    snp_index = SNPs_order.index(gwas_snp.rsID)
-    ld_vector = LD_array[snp_index]
-
-
-    SNPs = [SNP(snp_id, chromosome, snp_position_map[snp_id]) for snp_id in SNPs_order]
-    ld_scores = [(SNPs[i],float(ld_vector[i])) for i in range(len(ld_vector))]
-    ld_scores_cutoff = dict([x for x in ld_scores if x[1] > cutoff])
-
-    ### Remove intermediate files
-    if db != 1:
-        subprocess.call(['rm', ld_file_name + '.ld', ld_file_name + '.log', ld_file_name + '.nosex'])
-        subprocess.call(['rm', snp_file_name])
-        subprocess.call(['rm', region_file_name])
-        subprocess.call(['rm', rsID_file_name])
-
-    return ld_scores_cutoff
-
+	return r2_dict
