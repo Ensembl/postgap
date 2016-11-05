@@ -10,7 +10,6 @@ MAX_DISTANCE = 500000
 MAX_BIN = int((MAX_DISTANCE - 1) / BIN_WIDTH)
 TSS_cache = None
 SPECIES = 'Human'
-FDR_Model = collections.namedtuple('FDR_Model', ['FDR','BIN_WIDTH','MAX_DISTANCE'])
 
 def main():
     lines = sys.stdin.readlines()
@@ -20,10 +19,11 @@ def main():
 	    sys.exit()
     distribution = reduce(process_line, lines, collections.defaultdict(lambda:  0))
 
-    res = FDR_Model(
-            FDR = dict((bin_num, distribution[MAX_BIN] * .99 / distribution[bin_num]) for bin_num in distribution.keys()),
-            MAX_DISTANCE = MAX_DISTANCE,
-            BIN_WIDTH = BIN_WIDTH
+    res = dict(
+            [('FDR', dict((bin_num, distribution[MAX_BIN] * .99 / distribution[bin_num]) for bin_num in distribution.keys())),
+            ('MAX_DISTANCE', MAX_DISTANCE),
+            ('BIN_WIDTH', BIN_WIDTH)]
+
     )
     pickle.dump(res, sys.stdout)
 
