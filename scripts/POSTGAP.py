@@ -215,7 +215,7 @@ def pretty_cluster_association(association):
 			results += [str(functional_scores[ld_snp.rsID][functional_source.display_name]) for functional_source in Cisreg.sources + Reg.sources]
 			pretty_strings.append("\t".join(results))
 
-	return "\n".join(pretty_strings) + "\n"
+	return "\n".join(pretty_strings)
 
 if __name__ == "__main__":
 	main()
