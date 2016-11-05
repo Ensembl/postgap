@@ -5,7 +5,7 @@ Copyright holder: [EMBL-European Bioinformatics Institute](http://www.ebi.ac.uk)
 
 This script is designed to automatically finemap and highlight the causal variants behind GWAS results by cross-examining GWAS, population genetic, epigenetic and cis-regulatory datasets.
 
-Its original design was based on [STOPGAP](). 
+Its original design was based on STOPGAP. 
 
 Installing dependencies
 -----------------------
@@ -32,7 +32,7 @@ Running
 By default, run from the root directory the command: 
 
 ```
-python scripts/gwas_to_genes.py --disease autism  
+python scripts/POSTGAP.py --disease autism  
 ```
 
 Multiple disease names can be provided.
@@ -41,6 +41,6 @@ Testing
 -------
 
 ```
-cat scripts/testing/all_efos.txt | xargs -n1 python scripts/gwas_to_genes.py --efos > table.tsv
+cat scripts/testing/all_efos.txt | xargs -n1 python scripts/POSTGAP.py --efos > table.tsv
 ```
 
