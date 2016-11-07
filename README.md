@@ -1,5 +1,5 @@
-CTTV 24 Project
-===============
+POSTGAP
+=======
 
 Copyright holder: [EMBL-European Bioinformatics Institute](http://www.ebi.ac.uk) (Apache 2 License)
 
