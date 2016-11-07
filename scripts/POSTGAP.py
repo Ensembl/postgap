@@ -139,7 +139,7 @@ def pretty_snp_output(associations):
 		Returntype: String
 
 	"""
-	header = "\t".join(['snp_rsID', 'gene_symbol', 'gene_id', 'score'] + [obj.name for obj in Cisreg.sources + Reg.sources])
+	header = "\t".join(['snp_rsID', 'gene_symbol', 'gene_id', 'score'] + [obj.display_name for obj in Cisreg.sources + Reg.sources])
 	content = map(pretty_snp_association, associations)
 	return "\n".join([header] + content) + "\n"
 
