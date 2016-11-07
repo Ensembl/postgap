@@ -26,6 +26,8 @@ Dataset Preprocessing
 
   Download all the files on the OpenTargets FTP site (URL TBD)
 
+  Note that the FTP download may mess up your timestamps, so you should run ```make tabix``` to ensure the tabix indices are more recent than the corresponding bed.gz files.
+
 * Manually (*sloooow*)
   1. Type ```make download``` to download public databases.
   2. Type ```make process``` to preprocess the databases. **Warning** this may take days as it needs to split the entire 1000 Genomes files by population.
