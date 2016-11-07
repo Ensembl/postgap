@@ -46,7 +46,7 @@ def calculate_window(snp, window_len=500000, population='CEPH', cutoff=0.5):
 		* int, window width
 		* string, population name
 		* float, r2 cutoff
-		Returntype: dict(SNP => float)
+		Returntype: [ SNP ]
 
 	"""
 	### Define the necessary region.
@@ -56,18 +56,25 @@ def calculate_window(snp, window_len=500000, population='CEPH', cutoff=0.5):
 	### Find the relevant 1000 genomes BCF
 	chrom_file = os.path.join(Globals.DATABASES_DIR, '1000Genomes', population, "ALL.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf" % (snp.chrom))
 	if not os.path.isfile(chrom_file):
-		return dict([(snp, 1)])
+		return [snp]
 
 	### Extract this region out from the 1000 genomes BCF
 	region_file, region_file_name = tempfile.mkstemp()
 	extract_region_comm = "bcftools view -r %s:%s-%s %s -O v -o %s" % (snp.chrom, from_pos, to_pos, chrom_file, region_file_name)
+	sys.stderr.write(extract_region_comm + "\n")
 	subprocess.call(extract_region_comm, shell=True)
 
 	### Calculate the pairwise LD using plink2
 	ld_file, ld_file_name = tempfile.mkstemp()
 	plinkcomm = "plink --vcf %s --r2 --ld-snp %s --ld-window-r2 %f --inter-chr --out %s" % (region_file_name, snp.rsID, cutoff, ld_file_name)
 	sys.stderr.write(plinkcomm + "\n")
-	subprocess.call(plinkcomm, shell=True)
+	if subprocess.call(plinkcomm, shell=True) != 0:
+		# Catching error reported by plink, generally that the GWAS SNP is not in the VCF as expected
+		temp_file_names = [region_file_name] + [ ld_file_name + suffix for suffix in ["", ".ld", ".log", ".nosex"]]
+		for temp_file_name in temp_file_names:
+			if os.path.isfile(temp_file_name):
+				os.remove(temp_file_name)
+		return [snp]
 
 	### Read LD file
 	ld_snps = []
@@ -82,7 +89,10 @@ def calculate_window(snp, window_len=500000, population='CEPH', cutoff=0.5):
 	temp_file_names = [region_file_name] + [ ld_file_name + suffix for suffix in ["", ".ld", ".log", ".nosex"]]
 	map(os.remove, temp_file_names)
 
-	return ld_snps
+	if len(ld_snps) > 0:
+		return ld_snps
+	else:
+		return [snp]
 
 def get_lds_from_top_gwas(gwas_snp, ld_snps, population='CEPH'):
 	"""
@@ -148,6 +158,8 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, population='CEPH'):
 
 	### Clean temp files
 	temp_file_names = [region_file_name, rsID_file_name] + [snp_file_name + suffix for suffix in ["", ".recode.vcf", ".log"] ] + [ ld_file_name + suffix for suffix in ["", ".ld", ".log", ".nosex"]]
-	map(os.remove, temp_file_names)
+	for temp_file_name in temp_file_names:
+		if os.path.isfile(temp_file_name):
+			os.remove(temp_file_name)
 
 	return r2_dict
