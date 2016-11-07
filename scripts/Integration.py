@@ -91,6 +91,10 @@ def scan_disease_databases(diseases, efos):
 	hits = concatenate(source().run(diseases, efos) for source in GWAS.sources)
 	associations_by_snp = dict()
 	for hit in hits:
+		# Sanity filter to avoid breaking downstream code
+		# Looking at you GWAS DB, "p-value = 0", pshaw!
+		if hit.pvalue <= 0:
+			continue
 		if hit.snp in associations_by_snp:
 			record = associations_by_snp[hit.snp]
 			record.evidence.append(hit)
@@ -425,7 +429,7 @@ def cisregulatory_evidence(ld_snps, tissues):
 	if len(lonely_snps) > 0:
 		evidence.extend(Cisreg.nearest_gene().run(lonely_snps, None))
 
-	filtered_evidence = filter(lambda association: association.gene.biotype == "protein_coding", evidence)
+	filtered_evidence = filter(lambda association: association.gene is not None and association.gene.biotype == "protein_coding", evidence)
 
 	# Group by (gene,snp) pair:
 	res = collections.defaultdict(list)
