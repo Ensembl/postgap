@@ -46,12 +46,12 @@ VEP_impact_to_score = {
 }
 
 class Cisreg_source(object):
-	def run(self, ld_snps, tissues):
+	def run(self, snps, tissues):
 		assert False, "This stub should be defined"
 
 class GTEx(Cisreg_source):
 	display_name = "GTEx"
-	def run(self, ld_snps, tissues):
+	def run(self, snps, tissues):
 		"""
 
 			Returns all genes associated to a set of SNPs in GTEx
@@ -62,9 +62,9 @@ class GTEx(Cisreg_source):
 
 		"""
 		# Find all genes with 1Mb
-		start = min(snp.pos for snp in ld_snps)
-		end = max(snp.pos for snp in ld_snps)
-		chrom = ld_snps[0].chrom
+		start = min(snp.pos for snp in snps)
+		end = max(snp.pos for snp in snps)
+		chrom = snps[0].chrom
 
 		server = 'http://grch37.rest.ensembl.org'
 		ext = '/overlap/region/%s/%s:%i-%i?feature=gene;content-type=application/json' % (Globals.SPECIES, chrom, max(0, start - 1e6), end + 1e6)
@@ -77,8 +77,11 @@ class GTEx(Cisreg_source):
 			)
 			for gene in REST.get(server, ext)
 		]
-		snp_hash = dict( (snp.rsID, snp) for snp in ld_snps)
-		res = concatenate((self.gene(gene, tissues, snp_hash) for gene in genes))
+		if len(genes) < len(snps):
+			snp_hash = dict( (snp.rsID, snp) for snp in snps)
+			res = concatenate((self.gene(gene, tissues, snp_hash) for gene in genes))
+		else:
+			res = concatenate((self.snp(snp, tissues) for snp in snps))
 
 		if Globals.DEBUG:
 			print "\tFound %i interactions in GTEx" % (len(res))
@@ -90,9 +93,9 @@ class GTEx(Cisreg_source):
 
 			Returns all SNPs associated to a gene in GTEx
 			Args:
-			* [ SNP ]
+			* Gene
 			* [ string ] (tissues)
-			* { rsID: rsID }
+			* { rsID: SNP }
 			Returntype: [ Cisregulatory_Evidence ]
 
 		"""
@@ -108,9 +111,9 @@ class GTEx(Cisreg_source):
 
 			Returns all SNPs associated to a gene in GTEx in a given tissue
 			Args:
-			* [ SNP ]
-			* [ string ] (tissues)
-			* { rsID: rsID }
+			* Gene
+			* string, tissue
+			* { rsID: SNP }
 			Returntype: [ Cisregulatory_Evidence ]
 
 		"""
@@ -140,7 +143,8 @@ class GTEx(Cisreg_source):
 					source = self.display_name,
 					study = None
 				)
-				for eQTL in eQTLs if eQTL['snp'] in snp_hash
+				for eQTL in eQTLs 
+				if eQTL['snp'] in snp_hash
 				if eQTL['value'] < 2.5e-5 
 			]
 
@@ -151,9 +155,74 @@ class GTEx(Cisreg_source):
 		except:
 			return None
 
+	def snp(self, snp, tissues):
+		"""
+
+			Returns all genes associated to a snp in GTEx
+			Args:
+			* SNP
+			* [ string ] (tissues)
+			Returntype: [ Cisregulatory_Evidence ]
+
+		"""
+		res = concatenate(self.snp_tissue(snp, tissue) for tissue in tissues)
+
+		if Globals.DEBUG:
+			print "\tFound %i genes associated to snp %s in GTEx" % (len(res), snp.rsID)
+
+		return res
+
+	def snp_tissue(self, snp, tissue):
+		"""
+
+			Returns all genes associated to a SNP in GTEx in a given tissue
+			Args:
+			* SNP
+			* string, tissues
+			Returntype: [ Cisregulatory_Evidence ]
+
+		"""
+
+
+		server = "http://rest.ensembl.org"
+		ext = "/eqtl/variant_name/%s/%s?content-type=application/json;statistic=p-value;tissue=%s" % ('homo_sapiens', snp.rsID, tissue);
+		try:
+			eQTLs = REST.get(server, ext)
+
+			'''
+				Example return object:
+				[
+					{
+						minus_log10_p_value: 1.47569690641653,
+						value: 0.0334428355738418,
+						gene: "ENSG00000162627"
+					},
+				]
+			'''
+
+			res = [
+				Cisregulatory_Evidence(
+					snp = snp,
+					gene = Ensembl_lookup.get_ensembl_gene(eQTL['gene']),
+					tissue = tissue,
+					score = 1,
+					source = self.display_name,
+					study = None
+				)
+				for eQTL in eQTLs
+				if eQTL['value'] < 2.5e-5 
+			]
+
+			if Globals.DEBUG:
+				print "\tFound %i SNPs associated to gene %s in tissue %s in GTEx" % (len(res), snp.rsID, tissue)
+
+			return res
+		except:
+			return None
+
 class VEP(Cisreg_source):
 	display_name = "VEP"
-	def run(self, ld_snps, tissues):
+	def run(self, snps, tissues):
 		"""
 
 			Returns all genes associated to a set of SNPs in VEP
@@ -165,7 +234,7 @@ class VEP(Cisreg_source):
 		"""
 		server = "http://grch37.rest.ensembl.org"
 		ext = "/vep/%s/id" % (Globals.SPECIES)
-		list = concatenate(REST.get(server, ext, data = {"ids" : [snp.rsID for snp in chunk]}) for chunk in chunks(ld_snps, 999))
+		list = concatenate(REST.get(server, ext, data = {"ids" : [snp.rsID for snp in chunk]}) for chunk in chunks(snps, 999))
 		'''
 
 			Example output from VEP:
@@ -227,7 +296,7 @@ class VEP(Cisreg_source):
 
 		'''
 
-		snp_hash = dict( (snp.rsID, snp) for snp in ld_snps)
+		snp_hash = dict( (snp.rsID, snp) for snp in snps)
 		transcript_consequences = filter(lambda X: 'transcript_consequences' in X, list)
 		res = [
 			Cisregulatory_Evidence(
@@ -248,7 +317,7 @@ class VEP(Cisreg_source):
 
 class Fantom5(Cisreg_source):
 	display_name = "Fantom5"
-	def run(self, ld_snps, tissues):
+	def run(self, snps, tissues):
 		"""
 
 			Returns all genes associated to a set of SNPs in Fantom5
@@ -258,13 +327,13 @@ class Fantom5(Cisreg_source):
 			Returntype: [ Regulatory_Evidence ]
 
 		"""
-		intersection = BedTools.overlap_snps_to_bed(ld_snps, Globals.DATABASES_DIR + "/Fantom5.bed")
+		intersection = BedTools.overlap_snps_to_bed(snps, Globals.DATABASES_DIR + "/Fantom5.bed")
 		fdr_model = pickle.load(open(Globals.DATABASES_DIR + "/Fantom5.fdrs"))
-		snp_hash = dict( (snp.rsID, snp) for snp in ld_snps)
+		snp_hash = dict( (snp.rsID, snp) for snp in snps)
 		hits  = filter(lambda X: X is not None, map(lambda X: self.get_evidence(X, fdr_model, snp_hash), intersection))
 
 		if Globals.DEBUG:
-			print "\tFound %i overlaps with %i SNPs to Fantom5" % (len(hits), len(ld_snps))
+			print "\tFound %i overlaps with %i SNPs to Fantom5" % (len(hits), len(snps))
 
 		res = filter(lambda X: X.score, hits)
 
@@ -304,7 +373,7 @@ class Fantom5(Cisreg_source):
 
 class DHS(Cisreg_source):
 	display_name = "DHS"
-	def run (self, ld_snps, tissues):
+	def run (self, snps, tissues):
 		"""
 
 			Returns all genes associated to a set of SNPs in DHS
@@ -314,9 +383,9 @@ class DHS(Cisreg_source):
 			Returntype: [ Regulatory_Evidence ]
 
 		"""
-		intersection = BedTools.overlap_snps_to_bed(ld_snps, Globals.DATABASES_DIR + "/DHS.bed")
+		intersection = BedTools.overlap_snps_to_bed(snps, Globals.DATABASES_DIR + "/DHS.bed")
 		fdr_model = pickle.load(open(Globals.DATABASES_DIR+"/DHS.fdrs"))
-		snp_hash = dict( (snp.rsID, snp) for snp in ld_snps)
+		snp_hash = dict( (snp.rsID, snp) for snp in snps)
 		res = filter (lambda X: X is not None and X.score, (self.get_evidence(feature, fdr_model, snp_hash) for feature in intersection))
 
 		if Globals.DEBUG:
@@ -405,7 +474,7 @@ def STOPGAP_FDR(snp, gene, fdr_model):
 
 class PCHIC(Cisreg_source):
 	display_name = "PCHiC"
-	def run(self, ld_snps, tissues):
+	def run(self, snps, tissues):
 		"""
 
 			Returns all genes associated to a set of SNPs in PCHIC
@@ -415,8 +484,8 @@ class PCHIC(Cisreg_source):
 			Returntype: [ Regulatory_Evidence ]
 
 		"""
-		intersection = BedTools.overlap_snps_to_bed(ld_snps, Globals.DATABASES_DIR + "/pchic.bed")
-		snp_hash = dict( (snp.rsID, snp) for snp in ld_snps)
+		intersection = BedTools.overlap_snps_to_bed(snps, Globals.DATABASES_DIR + "/pchic.bed")
+		snp_hash = dict( (snp.rsID, snp) for snp in snps)
 		res = filter (lambda X: X is not None and X.score, (self.get_evidence(feature, snp_hash) for feature in intersection))
 
 		if Globals.DEBUG:
@@ -465,7 +534,7 @@ class PCHIC(Cisreg_source):
 
 class nearest_gene(Cisreg_source):
 	display_name = 'Nearest'
-	def run (self, ld_snps, tissues):
+	def run (self, snps, tissues):
 		"""
 
 			Return nearest gene to SNP
@@ -474,7 +543,7 @@ class nearest_gene(Cisreg_source):
 			Returntype: dict(rsID => Gene)
 
 		"""
-		snps = list(ld_snps)
+		snps = list(snps)
 		bed = Globals.DATABASES_DIR + "/Ensembl_TSSs.bed"
 		res = BedTools.closest(snps, bed)
 		snp_hash = dict((snp.rsID, snp) for snp in snps)
