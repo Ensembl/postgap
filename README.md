@@ -23,8 +23,7 @@ Dataset Preprocessing
 
 * Manually (*sloooow*)
   1. Type ```make download``` to download public databases.
-  2. Type ```make process_databases``` to preprocess the databases. 
-  3. Type ```make process_1000G``` to preprocess 1000Genomes data from the raw vcf.gz files.
+  2. Type ```make process``` to preprocess the databases. **Warning** this may take days as it needs to split the entire 1000 Genomes files by population.
 
 Running
 -------
