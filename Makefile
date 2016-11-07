@@ -46,7 +46,7 @@ d_DHS:
 	wget -nc ftp://ftp.ebi.ac.uk/pub/databases/ensembl/encode/integration_data_jan2011/byDataType/openchrom/jan2011/dhs_gene_connectivity/genomewideCorrs_above0.7_promoterPlusMinus500kb_withGeneNames_32celltypeCategories.bed8.gz -qO ${DEST_DIR}/raw/DHS.txt.gz 
 
 DHS:
-	gzip -dc ${DEST_DIR}/raw/DHS.txt.gz | awk 'BEGIN {OFS="\t"} {print $$5,$$6,$$7,$$4,$$8}' | sed -e 's/^chr//' > ${DEST_DIR}/DHS.bed
+	gzip -dc ${DEST_DIR}/raw/DHS.txt.gz | awk 'BEGIN {OFS="\t"} {print $$5,$$6,$$7,$$4,$$8}' | sed -e 's/^chr//' | sort -k1,1 -k2,2n > ${DEST_DIR}/DHS.bed
 	cat ${DEST_DIR}/DHS.bed | python scripts/preprocessing/STOPGAP_FDR.py > ${DEST_DIR}/DHS.fdrs
 
 d_Regulome:
@@ -69,7 +69,7 @@ Ensembl:
 
 tabix: bgz
 	$(eval bgz_files := $(wildcard ${DEST_DIR}/*.bed.gz))
-	$(foreach file, $(bgz_files), tabix -p bed $(file);)
+	$(foreach file, $(bgz_files), tabix -f -p bed $(file);)
 
 bgz:
 	$(eval bed_files := $(wildcard ${DEST_DIR}/*.bed))
