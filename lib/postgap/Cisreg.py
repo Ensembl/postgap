@@ -30,10 +30,10 @@ limitations under the License.
 import cPickle as pickle
 import collections
 
-from DataModel import *
-from Utils import *
+from postgap.DataModel import *
+from postgap.Utils import *
 import REST
-import Globals 
+import postgap.Globals 
 import BedTools
 import Ensembl_lookup
 
@@ -67,7 +67,7 @@ class GTEx(Cisreg_source):
 		chrom = snps[0].chrom
 
 		server = 'http://grch37.rest.ensembl.org'
-		ext = '/overlap/region/%s/%s:%i-%i?feature=gene;content-type=application/json' % (Globals.SPECIES, chrom, max(0, start - 1e6), end + 1e6)
+		ext = '/overlap/region/%s/%s:%i-%i?feature=gene;content-type=application/json' % (postgap.Globals.SPECIES, chrom, max(0, start - 1e6), end + 1e6)
 		genes = [ Gene(
 				name = gene['external_name'],
 				id = gene['id'],
@@ -75,7 +75,7 @@ class GTEx(Cisreg_source):
 				tss = int(gene['start']) if gene['strand'] > 0 else int(gene['end']),
 				biotype = gene['biotype']
 			)
-			for gene in REST.get(server, ext)
+			for gene in postgap.REST.get(server, ext)
 		]
 		if len(genes) < len(snps):
 			snp_hash = dict( (snp.rsID, snp) for snp in snps)
@@ -83,7 +83,7 @@ class GTEx(Cisreg_source):
 		else:
 			res = concatenate((self.snp(snp, tissues) for snp in snps))
 
-		if Globals.DEBUG:
+		if postgap.Globals.DEBUG:
 			print "\tFound %i interactions in GTEx" % (len(res))
 
 		return res
@@ -101,7 +101,7 @@ class GTEx(Cisreg_source):
 		"""
 		res = concatenate(self.gene_tissue(gene, tissue, snp_hash) for tissue in tissues)
 
-		if Globals.DEBUG:
+		if postgap.Globals.DEBUG:
 			print "\tFound %i genes associated to gene %s in GTEx" % (len(res), gene.id)
 
 		return res
@@ -122,7 +122,7 @@ class GTEx(Cisreg_source):
 		server = "http://rest.ensembl.org"
 		ext = "/eqtl/id/%s/%s?content-type=application/json;statistic=p-value;tissue=%s" % ('homo_sapiens', gene.id, tissue);
 		try:
-			eQTLs = REST.get(server, ext)
+			eQTLs = postgap.REST.get(server, ext)
 
 			'''
 				Example return object:
@@ -148,7 +148,7 @@ class GTEx(Cisreg_source):
 				if eQTL['value'] < 2.5e-5 
 			]
 
-			if Globals.DEBUG:
+			if postgap.Globals.DEBUG:
 				print "\tFound %i SNPs associated to gene %s in tissue %s in GTEx" % (len(res), gene.id, tissue)
 
 			return res
@@ -167,7 +167,7 @@ class GTEx(Cisreg_source):
 		"""
 		res = concatenate(self.snp_tissue(snp, tissue) for tissue in tissues)
 
-		if Globals.DEBUG:
+		if postgap.Globals.DEBUG:
 			print "\tFound %i genes associated to snp %s in GTEx" % (len(res), snp.rsID)
 
 		return res
@@ -187,7 +187,7 @@ class GTEx(Cisreg_source):
 		server = "http://rest.ensembl.org"
 		ext = "/eqtl/variant_name/%s/%s?content-type=application/json;statistic=p-value;tissue=%s" % ('homo_sapiens', snp.rsID, tissue);
 		try:
-			eQTLs = REST.get(server, ext)
+			eQTLs = postgap.REST.get(server, ext)
 
 			'''
 				Example return object:
@@ -203,7 +203,7 @@ class GTEx(Cisreg_source):
 			res = [
 				Cisregulatory_Evidence(
 					snp = snp,
-					gene = Ensembl_lookup.get_ensembl_gene(eQTL['gene']),
+					gene = postgap.Ensembl_lookup.get_ensembl_gene(eQTL['gene']),
 					tissue = tissue,
 					score = 1,
 					source = self.display_name,
@@ -213,7 +213,7 @@ class GTEx(Cisreg_source):
 				if eQTL['value'] < 2.5e-5 
 			]
 
-			if Globals.DEBUG:
+			if postgap.Globals.DEBUG:
 				print "\tFound %i SNPs associated to gene %s in tissue %s in GTEx" % (len(res), snp.rsID, tissue)
 
 			return res
@@ -233,8 +233,8 @@ class VEP(Cisreg_source):
 
 		"""
 		server = "http://grch37.rest.ensembl.org"
-		ext = "/vep/%s/id" % (Globals.SPECIES)
-		list = concatenate(REST.get(server, ext, data = {"ids" : [snp.rsID for snp in chunk]}) for chunk in chunks(snps, 999))
+		ext = "/vep/%s/id" % (postgap.Globals.SPECIES)
+		list = concatenate(postgap.REST.get(server, ext, data = {"ids" : [snp.rsID for snp in chunk]}) for chunk in chunks(snps, 999))
 		'''
 
 			Example output from VEP:
@@ -301,7 +301,7 @@ class VEP(Cisreg_source):
 		res = [
 			Cisregulatory_Evidence(
 				snp = snp_hash[hit['input']],
-				gene = Ensembl_lookup.get_ensembl_gene(consequence['gene_id']),
+				gene = postgap.Ensembl_lookup.get_ensembl_gene(consequence['gene_id']),
 				score = VEP_impact_to_score[consequence['impact']],
 				source = self.display_name,
 				study = None,
@@ -310,7 +310,7 @@ class VEP(Cisreg_source):
 			for hit in transcript_consequences for consequence in hit['transcript_consequences']
 		]
 
-		if Globals.DEBUG:
+		if postgap.Globals.DEBUG:
 			print "\tFound %i interactions in VEP" % (len(res))
 
 		return res
@@ -327,17 +327,17 @@ class Fantom5(Cisreg_source):
 			Returntype: [ Regulatory_Evidence ]
 
 		"""
-		intersection = BedTools.overlap_snps_to_bed(snps, Globals.DATABASES_DIR + "/Fantom5.bed")
-		fdr_model = pickle.load(open(Globals.DATABASES_DIR + "/Fantom5.fdrs"))
+		intersection = postgap.BedTools.overlap_snps_to_bed(snps, postgap.Globals.DATABASES_DIR + "/Fantom5.bed")
+		fdr_model = pickle.load(open(postgap.Globals.DATABASES_DIR + "/Fantom5.fdrs"))
 		snp_hash = dict( (snp.rsID, snp) for snp in snps)
 		hits  = filter(lambda X: X is not None, map(lambda X: self.get_evidence(X, fdr_model, snp_hash), intersection))
 
-		if Globals.DEBUG:
+		if postgap.Globals.DEBUG:
 			print "\tFound %i overlaps with %i SNPs to Fantom5" % (len(hits), len(snps))
 
 		res = filter(lambda X: X.score, hits)
 
-		if Globals.DEBUG:
+		if postgap.Globals.DEBUG:
 			print "\tFound %i interactions in Fantom5" % (len(res))
 
 		return res
@@ -356,7 +356,7 @@ class Fantom5(Cisreg_source):
 			8. end
 			9. rsID
 		'''
-		gene = Ensembl_lookup.get_gene(feature[3])
+		gene = postgap.Ensembl_lookup.get_gene(feature[3])
 		if gene is None:
 			return None
 		snp = snp_hash[feature[8]]
@@ -383,12 +383,12 @@ class DHS(Cisreg_source):
 			Returntype: [ Regulatory_Evidence ]
 
 		"""
-		intersection = BedTools.overlap_snps_to_bed(snps, Globals.DATABASES_DIR + "/DHS.bed")
-		fdr_model = pickle.load(open(Globals.DATABASES_DIR+"/DHS.fdrs"))
+		intersection = postgap.BedTools.overlap_snps_to_bed(snps, postgap.Globals.DATABASES_DIR + "/DHS.bed")
+		fdr_model = pickle.load(open(postgap.Globals.DATABASES_DIR+"/DHS.fdrs"))
 		snp_hash = dict( (snp.rsID, snp) for snp in snps)
 		res = filter (lambda X: X is not None and X.score, (self.get_evidence(feature, fdr_model, snp_hash) for feature in intersection))
 
-		if Globals.DEBUG:
+		if postgap.Globals.DEBUG:
 			print "\tFound %i gene associations in DHS" % len(res)
 
 		return res
@@ -418,7 +418,7 @@ class DHS(Cisreg_source):
 			9. rsID
 
 		'''
-		gene = Ensembl_lookup.get_gene(feature[3])
+		gene = postgap.Ensembl_lookup.get_gene(feature[3])
 		if gene is None:
 			return None
 		snp = snp_hash[feature[8]]
@@ -484,11 +484,11 @@ class PCHIC(Cisreg_source):
 			Returntype: [ Regulatory_Evidence ]
 
 		"""
-		intersection = BedTools.overlap_snps_to_bed(snps, Globals.DATABASES_DIR + "/pchic.bed")
+		intersection = postgap.BedTools.overlap_snps_to_bed(snps, postgap.Globals.DATABASES_DIR + "/pchic.bed")
 		snp_hash = dict( (snp.rsID, snp) for snp in snps)
 		res = filter (lambda X: X is not None and X.score, (self.get_evidence(feature, snp_hash) for feature in intersection))
 
-		if Globals.DEBUG:
+		if postgap.Globals.DEBUG:
 			print "\tFound %i gene associations in PCHIC" % len(res)
 
 		return res
@@ -518,7 +518,7 @@ class PCHIC(Cisreg_source):
 			9. rsID
 
 		'''
-		gene = Ensembl_lookup.get_gene(feature[4])
+		gene = postgap.Ensembl_lookup.get_gene(feature[4])
 		if gene is None:
 			return None
 		snp = snp_hash[feature[8]]
@@ -544,8 +544,8 @@ class nearest_gene(Cisreg_source):
 
 		"""
 		snps = list(snps)
-		bed = Globals.DATABASES_DIR + "/Ensembl_TSSs.bed"
-		res = BedTools.closest(snps, bed)
+		bed = postgap.Globals.DATABASES_DIR + "/Ensembl_TSSs.bed"
+		res = postgap.BedTools.closest(snps, bed)
 		snp_hash = dict((snp.rsID, snp) for snp in snps)
 
 		'''
@@ -562,7 +562,7 @@ class nearest_gene(Cisreg_source):
 
 		'''
 		return [ Cisregulatory_Evidence(
-				gene = Ensembl_lookup.get_gene(row[7]),
+				gene = postgap.Ensembl_lookup.get_gene(row[7]),
 				snp = snp_hash[row[3]],
 				score = 1,
 				source = self.display_name,

@@ -28,10 +28,10 @@ limitations under the License.
 
 """
 
-import REST
-from DataModel import *
-import Globals
-from Utils import *
+import postgap.REST
+from postgap.DataModel import *
+import postgap.Globals
+from postgap.Utils import *
 
 known_genes = {}
 
@@ -59,9 +59,9 @@ def fetch_gene(gene_name):
 
 	"""
 	server = "http://grch37.rest.ensembl.org"
-	ext = "/lookup/symbol/%s/%s?content-type=application/json;expand=1" % (Globals.SPECIES, gene_name)
+	ext = "/lookup/symbol/%s/%s?content-type=application/json;expand=1" % (postgap.Globals.SPECIES, gene_name)
 	try:
-		hash = REST.get(server, ext)
+		hash = postgap.REST.get(server, ext)
 		return Gene(
 			name = gene_name,
 			id = hash['id'],
@@ -83,7 +83,7 @@ def fetch_gene_id(gene_id):
 	server = "http://grch37.rest.ensembl.org"
 	ext = "/lookup/id/%s?content-type=application/json;expand=1" % (gene_id)
 	try:
-		hash = REST.get(server, ext)
+		hash = postgap.REST.get(server, ext)
 		return Gene(
 			name = hash['display_name'],
 			id = hash['id'],
@@ -117,7 +117,7 @@ def fetch_ensembl_gene(ensembl_id):
 	"""
 	server = "http://grch37.rest.ensembl.org"
 	ext = "/lookup/id/%s?content-type=application/json;expand=1" % (ensembl_id)
-	hash = REST.get(server, ext)
+	hash = postgap.REST.get(server, ext)
 	return Gene(
 		name = hash['display_name'],
 		id = ensembl_id,
@@ -136,8 +136,8 @@ def get_snp_locations(rsIDs):
 	"""
 
 	server = "http://grch37.rest.ensembl.org"
-	ext = "/variation/%s?content-type=application/json" % (Globals.SPECIES)
-	hash = concatenate_hashes(REST.get(server, ext, data={'ids':chunk}) for chunk in chunks(rsIDs, 999))
+	ext = "/variation/%s?content-type=application/json" % (postgap.Globals.SPECIES)
+	hash = concatenate_hashes(postgap.REST.get(server, ext, data={'ids':chunk}) for chunk in chunks(rsIDs, 999))
 
 	'''
 		Example response:

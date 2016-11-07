@@ -31,10 +31,10 @@ import re
 import requests
 import json
 
-import REST
-import Globals
-from DataModel import *
-from Utils import *
+import postgap.REST
+import postgap.Globals
+from postgap.DataModel import *
+from postgap.Utils import *
 
 class GWAS_source(object):
 	def run(self, diseases, efos):
@@ -50,7 +50,7 @@ class GWAS_source(object):
 		assert False, "This stub should be defined"
 
 class GWASCatalog(GWAS_source):
-	display_name = 'GWAS Catalog'
+	display_name = 'postgap.GWAS Catalog'
 
 	def run(self, diseases, efos):
 		"""
@@ -67,7 +67,7 @@ class GWASCatalog(GWAS_source):
 		else:
 			res = concatenate(self.query(query) for query in diseases)
 
-		if Globals.DEBUG:
+		if postgap.Globals.DEBUG:
 			print "\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GWAS Catalog" % (len(res), ", ".join(diseases), ", ".join(efos))
 
 		return res
@@ -76,13 +76,13 @@ class GWASCatalog(GWAS_source):
 		server = 'http://www.ebi.ac.uk'
 		url_term = re.sub(" ", "%20", term)
 		ext1 = '/gwas/api/search/moreresults?q="%s"&max=0&facet=association&pvalfilter=&orfilter=&betafilter=&datefilter=&sort=' % (url_term)
-		hash = REST.get(server, ext1)
+		hash = postgap.REST.get(server, ext1)
 		try:
 			count = int(hash['response']['numFound'])
 		except:
 			print "Failed on %s%s" % (server, ext1)
 		ext2 = '/gwas/api/search/moreresults?q="%s"&max=%i&facet=association&pvalfilter=&orfilter=&betafilter=&datefilter=&sort=' % (url_term, count)
-		hash = REST.get(server, ext2)
+		hash = postgap.REST.get(server, ext2)
 		"""
 			{
 			  "_version_": 1526208365253886000,
@@ -234,11 +234,11 @@ class GRASP(GWAS_source):
 			Returntype: [ GWAS_Association ]
 
 		"""
-		file = open(Globals.DATABASES_DIR+"/GRASP.txt")
+		file = open(postgap.Globals.DATABASES_DIR+"/GRASP.txt")
 		res = [ self.get_association(line, diseases, efos) for line in file ]
 		res = filter(lambda X: X is not None, res)
 
-		if Globals.DEBUG:
+		if postgap.Globals.DEBUG:
 			print "\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GRASP" % (len(res), ", ".join(diseases), ", ".join(efos))
 
 		return res
@@ -346,11 +346,11 @@ class Phewas_Catalog(GWAS_source):
 			Returntype: [ GWAS_Association ]
 
 		"""
-		file = open(Globals.DATABASES_DIR+"/Phewas_Catalog.txt")
+		file = open(postgap.Globals.DATABASES_DIR+"/Phewas_Catalog.txt")
 		res = [ self.get_association(line, diseases, efos) for line in file ]
 		res = filter(lambda X: X is not None, res)
 
-		if Globals.DEBUG:
+		if postgap.Globals.DEBUG:
 			print "\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in Phewas Catalog" % (len(res), ", ".join(diseases), ", ".join(efos))
 
 		return res
@@ -395,14 +395,14 @@ class GWAS_DB(GWAS_source):
 			Returntype: [ GWAS_Association ]
 
 		"""
-		file = open(Globals.DATABASES_DIR+"/GWAS_DB.txt")
+		file = open(postgap.Globals.DATABASES_DIR+"/GWAS_DB.txt")
 
 		# Note the format of the EFO strings is modified in this file format, so we need to change the queries
 		efos2 = [re.sub("_", "ID:", efo) for efo in efos]
 		res = [ self.get_association(line, diseases, efos) for line in file ]
 		res = filter(lambda X: X is not None, res)
 
-		if Globals.DEBUG:
+		if postgap.Globals.DEBUG:
 			print "\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GWAS DB" % (len(res), ", ".join(diseases), ", ".join(efos))
 
 		return res

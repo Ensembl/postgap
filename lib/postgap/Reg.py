@@ -29,8 +29,8 @@ limitations under the License.
 """
 
 import Globals
-from DataModel import *
-import BedTools
+from postgap.DataModel import *
+import postgap.BedTools
 
 class Reg_source(object):
 	def run(self, ld_snps, tissues):
@@ -58,10 +58,10 @@ class Regulome(Reg_source):
 
 		"""
 		snp_hash = dict( (snp.rsID, snp) for snp in ld_snps)
-		intersection = BedTools.overlap_snps_to_bed(ld_snps, Globals.DATABASES_DIR + "/Regulome.bed")
+		intersection = postgap.BedTools.overlap_snps_to_bed(ld_snps, postgap.Globals.DATABASES_DIR + "/Regulome.bed")
 		res = filter (lambda X: X.score, (self.get_regulome_evidence(feature, snp_hash) for feature in intersection))
 
-		if Globals.DEBUG:
+		if postgap.Globals.DEBUG:
 			print "\tFound %i regulatory variants in Regulome" % (len(res))
 
 		return res

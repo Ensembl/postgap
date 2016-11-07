@@ -31,7 +31,7 @@ import sys
 import requests
 import json
 
-from Globals import *
+from postgap.Globals import *
 
 def get(server, ext, data=None):
 	"""

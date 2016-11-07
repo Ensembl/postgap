@@ -7,6 +7,11 @@ This script is designed to automatically finemap and highlight the causal varian
 
 Its original design was based on STOPGAP. 
 
+Installing
+----------
+
+Add the ```lib/``` directory to your ```$PYTHONPATH``` environment variable.
+
 Installing dependencies
 -----------------------
 

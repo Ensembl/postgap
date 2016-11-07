@@ -33,8 +33,8 @@ import sys
 import re
 import subprocess
 import tempfile
-from DataModel import *
-import Globals
+from postgap.DataModel import *
+import postgap.Globals
 
 def calculate_window(snp, window_len=500000, population='CEPH', cutoff=0.5):
 	"""
@@ -54,7 +54,7 @@ def calculate_window(snp, window_len=500000, population='CEPH', cutoff=0.5):
 	to_pos = snp.pos + (window_len / 2)
 
 	### Find the relevant 1000 genomes BCF
-	chrom_file = os.path.join(Globals.DATABASES_DIR, '1000Genomes', population, "ALL.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf" % (snp.chrom))
+	chrom_file = os.path.join(postgap.Globals.DATABASES_DIR, '1000Genomes', population, "ALL.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf" % (snp.chrom))
 	if not os.path.isfile(chrom_file):
 		return [snp]
 
@@ -119,7 +119,7 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, population='CEPH'):
 	end = max(positions) + 10
 
 	### Find the relevant BCF file
-	chrom_file = os.path.join(Globals.DATABASES_DIR, '1000Genomes', population, 'ALL.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf' % (gwas_snp.chrom))
+	chrom_file = os.path.join(postgap.Globals.DATABASES_DIR, '1000Genomes', population, 'ALL.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf' % (gwas_snp.chrom))
 	if not os.path.isfile(chrom_file):
 		return dict((snp, 1) for snp in ld_snps)
 

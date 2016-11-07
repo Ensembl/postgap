@@ -29,8 +29,8 @@ limitations under the License.
 """
 import re
 
-import REST
-from Globals import *
+import postgap.REST
+from postgap.Globals import *
 
 def suggest(term):
 	"""
@@ -44,7 +44,7 @@ def suggest(term):
 	server = 'http://www.ebi.ac.uk/spot/zooma/v2/api'
 	url_term = re.sub(" ", "%20", term)
 	ext = "/summaries?query=%s" % (url_term)
-	result = REST.get(server, ext)
+	result = postgap.REST.get(server, ext)
 	'''
 
 		Example search result:
@@ -99,7 +99,7 @@ def children(efo):
 
 	while (True):
 		ext = "/ols/beta/api/ontologies/efo/terms/http253A252F252Fwww.ebi.ac.uk252Fefo252F%s/descendants?page%i&size=10" % (efo, page)
-		hash = REST.get(server, ext)
+		hash = postgap.REST.get(server, ext)
 		'''
 
 			OWL Output format:

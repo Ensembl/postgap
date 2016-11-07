@@ -35,16 +35,16 @@ NCBI_Taxon_ID = {
 	'Human': 9606
 }
 
-def gene_to_MeSH(gene):
+def gene_to_postgap.MeSH(gene):
 	"""
 
-		Look up MeSH annotations for gene
+		Look up postgap.MeSH annotations for gene
 		Args:
 		* [ string ] (gene names)
 		Return type: [ string ] (annotations)
 	"""
 	server = "http://gene2mesh.ncibi.org"
-	ext = "/fetch?genesymbol=%s&taxid=%s" % (gene.name, NCBI_Taxon_ID[Globals.SPECIES])
+	ext = "/fetch?genesymbol=%s&taxid=%s" % (gene.name, NCBI_Taxon_ID[postgap.Globals.SPECIES])
 	print '>>>>>>>>>>>>>>>>>>'
 	print str(server)+str(ext)
 	print '>>>>>>>>>>>>>>>>>>'
@@ -57,10 +57,10 @@ def gene_to_MeSH(gene):
 		print repr(response)
 
 	'''
-	Example MeSH output:
+	Example postgap.MeSH output:
 
 	{
-		'Gene2MeSH': {
+		'Gene2postgap.MeSH': {
 			'Request': {
 				'ParameterSet': {
 					'Tool': 'none',
@@ -81,7 +81,7 @@ def gene_to_MeSH(gene):
 							},
 							'ChiSquare': '112213.6506462',
 							'Fover': '1498.1813411401',
-							'MeSH': {
+							'postgap.MeSH': {
 								'Qualifier': {
 									'Name': 'metabolism'
 								},
@@ -123,7 +123,7 @@ def gene_to_MeSH(gene):
 				'Copyright': {
 					'Details': 'http://nlp.ncibi.org/Copyright.txt',
 					'Year': '2009',
-					'Statement': 'Copyright 2009 by the Regents of the University of Michigan'
+					'Statement': 'Copyright 2009 by the postgap.Regents of the University of Michigan'
 				},
 				'Support': {
 					'Details': 'http://www.ncibi.org',
@@ -140,13 +140,13 @@ def gene_to_MeSH(gene):
 		try:
 			hash = xmltodict.parse(response.content)
 			print repr(hash)
-			hits = hash['Gene2MeSH']['Request']['ResultSet']['Result']
+			hits = hash['Gene2postgap.MeSH']['Request']['ResultSet']['Result']
 			# XML subtletly: if a tag is repeated, a list of objects is produced,
 			# else a single object. Careful when unpacking!
 			if hits is list:
-				return [hit['MeSH']['Descriptor']['Name'] for hit in hits]
+				return [hit['postgap.MeSH']['Descriptor']['Name'] for hit in hits]
 			else:
-				return [hits['MeSH']['Descriptor']['Name']]
+				return [hits['postgap.MeSH']['Descriptor']['Name']]
 		except:
 			return []
 	else:

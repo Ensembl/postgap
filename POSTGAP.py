@@ -32,13 +32,14 @@ import argparse
 import collections
 import json
 
-import GWAS
-import Cisreg
-import Reg
-import EFO
-import Globals
-import Integration
-from Utils import *
+import postgap
+import postgap.GWAS
+import postgap.Cisreg
+import postgap.Reg
+import postgap.EFO
+import postgap.Globals
+import postgap.Integration
+from postgap.Utils import *
 
 '''
 Development TODO list:
@@ -74,9 +75,9 @@ def main():
 		output = open(options.output, "w")
 
 	if options.rsID is None:
-		res = Integration.diseases_to_genes(options.diseases, options.efos, "CEPH", options.tissues)
+		res = postgap.Integration.diseases_to_genes(options.diseases, options.efos, "CEPH", options.tissues)
 	else:
-		res = Integration.rsIDs_to_genes(options.rsID, options.tissues)
+		res = postgap.Integration.rsIDs_to_genes(options.rsID, options.tissues)
 
 	if options.json_output:
 		formatted_results = "\n".join(map(json.dumps, res))
@@ -112,11 +113,11 @@ def get_options():
     parser.add_argument('--json_output', '-j', action = 'store_true')
     options = parser.parse_args()
 
-    Globals.DATABASES_DIR = options.databases
-    Globals.SPECIES = options.species
-    Globals.DEBUG = Globals.DEBUG or options.debug
+    postgap.Globals.DATABASES_DIR = options.databases
+    postgap.Globals.SPECIES = options.species
+    postgap.Globals.DEBUG = postgap.Globals.DEBUG or options.debug
 
-    assert Globals.DATABASES_DIR is not None
+    assert postgap.Globals.DATABASES_DIR is not None
     assert options.rsID is None or (options.efos is None and options.diseases is None)
     assert options.rsID is not None or options.efos is not None or options.diseases is not None
 
@@ -124,10 +125,10 @@ def get_options():
         options.diseases = []
 
     if options.efos is None:
-        options.efos = filter(lambda X: X is not None, (EFO.suggest(disease) for disease in options.diseases))
+        options.efos = filter(lambda X: X is not None, (postgap.EFO.suggest(disease) for disease in options.diseases))
 
     # Expand list of EFOs to children, concatenate, remove duplicates
-    options.efos = concatenate(map(EFO.children, options.efos))
+    options.efos = concatenate(map(postgap.EFO.children, options.efos))
 
     return options
 
@@ -139,7 +140,7 @@ def pretty_snp_output(associations):
 		Returntype: String
 
 	"""
-	header = "\t".join(['snp_rsID', 'gene_symbol', 'gene_id', 'score'] + [obj.display_name for obj in Cisreg.sources + Reg.sources])
+	header = "\t".join(['snp_rsID', 'gene_symbol', 'gene_id', 'score'] + [obj.display_name for obj in postgap.Cisreg.sources + postgap.Reg.sources])
 	content = map(pretty_snp_association, associations)
 	return "\n".join([header] + content) + "\n"
 
@@ -161,7 +162,7 @@ def pretty_snp_association(association):
 		functional_scores[evidence.source] += evidence.score
 	
 	results = [snp.rsID, gene_name, gene_id, str(score)]
-	results += [str(functional_scores[functional_source.display_name]) for functional_source in Cisreg.sources]
+	results += [str(functional_scores[functional_source.display_name]) for functional_source in postgap.Cisreg.sources]
 	return "\t".join(results)
 
 
@@ -173,7 +174,7 @@ def pretty_output(associations):
 		Returntype: String
 
 	"""
-	header = "\t".join(['ld_snp_rsID', 'gene_symbol', 'gene_id', 'disease_names', 'disease_efo_ids', 'score', 'gwas_snp_ids'] + [source.display_name for source in GWAS.sources + Cisreg.sources + Reg.sources])
+	header = "\t".join(['ld_snp_rsID', 'gene_symbol', 'gene_id', 'disease_names', 'disease_efo_ids', 'score', 'gwas_snp_ids'] + [source.display_name for source in postgap.GWAS.sources + postgap.Cisreg.sources + postgap.Reg.sources])
 	content = map(pretty_cluster_association, associations)
 	return "\n".join([header] + content)
 
@@ -210,9 +211,9 @@ def pretty_cluster_association(association):
 		if snp_scores[ld_snp.rsID] > 0:
 			results = [ld_snp.rsID, gene_name, gene_id, ",".join(disease_names), ",".join(disease_efos), str(snp_scores[ld_snp.rsID])]
 			results.append(",".join(gwas_snp.snp.rsID for gwas_snp in gwas_snps))
-			for gwas_source in GWAS.sources:
+			for gwas_source in postgap.GWAS.sources:
 				results.append(",".join(str(gwas_scores[gwas_source.display_name][gwas_snp.snp.rsID]) for gwas_snp in cluster.gwas_snps))
-			results += [str(functional_scores[ld_snp.rsID][functional_source.display_name]) for functional_source in Cisreg.sources + Reg.sources]
+			results += [str(functional_scores[ld_snp.rsID][functional_source.display_name]) for functional_source in postgap.Cisreg.sources + postgap.Reg.sources]
 			pretty_strings.append("\t".join(results))
 
 	return "\n".join(pretty_strings)
