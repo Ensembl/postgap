@@ -143,7 +143,12 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, population='CEPH'):
 	ld_file, ld_file_name = tempfile.mkstemp()
 	plinkcomm = "plink --vcf %s.recode.vcf --r2 --ld-snp %s --inter-chr --out %s" % (snp_file_name, gwas_snp.rsID, ld_file_name)
 	sys.stderr.write(plinkcomm + "\n")
-	subprocess.call(plinkcomm, shell=True)
+	if subprocess.call(plinkcomm, shell=True) != 0:
+		temp_file_names = [region_file_name, rsID_file_name] + [snp_file_name + suffix for suffix in ["", ".recode.vcf", ".log"] ] + [ ld_file_name + suffix for suffix in ["", ".ld", ".log", ".nosex"]]
+		for temp_file_name in temp_file_names:
+			if os.path.isfile(temp_file_name):
+				os.remove(temp_file_name)
+		return dict([(gwas_snp, 1)])
 
 	### Read LD file
 	snp_hash = dict((snp.rsID, snp) for snp in ld_snps)
