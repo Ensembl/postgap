@@ -418,12 +418,7 @@ def cisregulatory_evidence(ld_snps, tissues):
 	"""
 	if postgap.Globals.DEBUG:
 		print "Searching for cis-regulatory data on %i SNPs in all databases" % (len(ld_snps))
-	evidence = concatenate(source().run(ld_snps, tissues) for source in postgap.Cisreg.sources if source is not postgap.Cisreg.nearest_gene)
-
-	# Fallback solution: add nearest gene for dissappointing SNPs:
-	lonely_snps = list(set(ld_snps).difference(record.snp for record in evidence))
-	if len(lonely_snps) > 0:
-		evidence.extend(postgap.Cisreg.nearest_gene().run(lonely_snps, None))
+	evidence = concatenate(source().run(ld_snps, tissues) for source in postgap.Cisreg.sources)
 
 	filtered_evidence = filter(lambda association: association.gene is not None and association.gene.biotype == "protein_coding", evidence)
 
