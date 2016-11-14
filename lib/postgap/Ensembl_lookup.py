@@ -130,8 +130,8 @@ def get_snp_locations(rsIDs):
 	"""
 
 		Get SNP details from rsID
-		* string
-		Returntype: SNP
+		* [ string ]
+		Returntype: [ SNP ]
 
 	"""
 
