@@ -140,7 +140,7 @@ def pretty_snp_output(associations):
 		Returntype: String
 
 	"""
-	header = "\t".join(['snp_rsID', 'gene_symbol', 'gene_id', 'score'] + [obj.display_name for obj in postgap.Cisreg.sources + postgap.Reg.sources])
+	header = "\t".join(['snp_rsID', 'chrom', 'pos', 'gene_symbol', 'gene_id', 'score'] + [obj.display_name for obj in postgap.Cisreg.sources + postgap.Reg.sources])
 	content = map(pretty_snp_association, associations)
 	return "\n".join([header] + content) + "\n"
 
@@ -161,7 +161,7 @@ def pretty_snp_association(association):
 	for evidence in association.regulatory_evidence + association.cisregulatory_evidence:
 		functional_scores[evidence.source] += evidence.score
 	
-	results = [snp.rsID, gene_name, gene_id, str(score)]
+	results = [snp.rsID, snp.chrom, str(snp.pos), gene_name, gene_id, str(score)]
 	results += [str(functional_scores[functional_source.display_name]) for functional_source in postgap.Cisreg.sources]
 	return "\t".join(results)
 
@@ -174,7 +174,7 @@ def pretty_output(associations):
 		Returntype: String
 
 	"""
-	header = "\t".join(['ld_snp_rsID', 'gene_symbol', 'gene_id', 'disease_names', 'disease_efo_ids', 'score', 'gwas_snp_ids'] + [source.display_name for source in postgap.GWAS.sources + postgap.Cisreg.sources + postgap.Reg.sources])
+	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'gene_symbol', 'gene_id', 'disease_names', 'disease_efo_ids', 'score', 'gwas_snp_ids'] + [source.display_name for source in postgap.GWAS.sources + postgap.Cisreg.sources + postgap.Reg.sources])
 	content = map(pretty_cluster_association, associations)
 	return "\n".join([header] + content)
 
@@ -209,7 +209,7 @@ def pretty_cluster_association(association):
 	pretty_strings = []
 	for ld_snp in cluster.ld_snps:
 		if snp_scores[ld_snp.rsID] > 0:
-			results = [ld_snp.rsID, gene_name, gene_id, ",".join(disease_names), ",".join(disease_efos), str(snp_scores[ld_snp.rsID])]
+			results = [ld_snp.rsID, ld_snp.chrom, str(ld_snp.pos), gene_name, gene_id, ",".join(disease_names), ",".join(disease_efos), str(snp_scores[ld_snp.rsID])]
 			results.append(",".join(gwas_snp.snp.rsID for gwas_snp in gwas_snps))
 			for gwas_source in postgap.GWAS.sources:
 				results.append(",".join(str(gwas_scores[gwas_source.display_name][gwas_snp.snp.rsID]) for gwas_snp in cluster.gwas_snps))
