@@ -5,7 +5,9 @@ Copyright holder: [EMBL-European Bioinformatics Institute](http://www.ebi.ac.uk)
 
 This script is designed to automatically finemap and highlight the causal variants behind GWAS results by cross-examining GWAS, population genetic, epigenetic and cis-regulatory datasets.
 
-Its original design was based on STOPGAP. 
+Its original design was based on STOPGAP. It takes as input a disease identifier, extracts associated SNPs via GWAS databases, expands them by LD, then searches an array of regulatory and cis-regulatory databases for gene associations.
+
+![Pipeline diagram](https://github.com/Ensembl/postgap/blob/master/POSTGAP%20pipeline.png "Pipeline diagram")
 
 Installing
 ----------
