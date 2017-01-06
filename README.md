@@ -26,7 +26,7 @@ Dataset Preprocessing
 
 * Via the FTP site (*recommended*)
 
-  ```download.sh```
+  ```sh download.sh```
 
 * Manually (*sloooow*)
   1. Type ```make download``` to download public databases.
