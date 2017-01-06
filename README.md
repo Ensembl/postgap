@@ -21,8 +21,8 @@ To install all dependencies run ```sh install_dependencies.sh```
 
 Add the ```bin``` directory to your ```$PATH``` environment variable.
 
-Dataset Preprocessing
----------------------
+Flatfile preparation
+--------------------
 
 * Via the FTP site (*recommended*)
 
