@@ -26,9 +26,7 @@ Dataset Preprocessing
 
 * Via the FTP site (*recommended*)
 
-  Download all the files on the OpenTargets FTP site (URL TBD)
-
-  Note that the FTP download may mess up your timestamps, so you should run ```make tabix``` to ensure the tabix indices are more recent than the corresponding bed.gz files.
+  ```download.sh```
 
 * Manually (*sloooow*)
   1. Type ```make download``` to download public databases.
