@@ -51,6 +51,10 @@ pip install pybedtools requests pandas
 git clone https://github.com/chrchang/plink-ng.git
 cd plink-ng
 mv Makefile.std Makefile
+
+# sometimes the zlib arch has moved...
+perl -pi -e 's/zlib.net\/zlib/zlib.net\/fossils\/zlib/g' plink_first_compile
+
 ./plink_first_compile
 cp plink ../bin
 cd ..
