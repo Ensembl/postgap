@@ -44,8 +44,8 @@ make
 cp bin/bedtools ../bin
 cd ..
 
-# pybedtools v0.7.8
-pip install pybedtools
+# pybedtools v0.7.8, requests, pandas
+pip install pybedtools requests pandas
 
 # Plink v1.07
 git clone https://github.com/chrchang/plink-ng.git
