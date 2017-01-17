@@ -4,32 +4,32 @@ mkdir -p bin
 
 ## Tabix, bgzip
 git clone https://github.com/samtools/htslib.git
-git checkout 1.3.2
 cd htslib
+git checkout 1.3.2
 make
 cp tabix bgzip ../bin
 cd ..
 
 ## vcfkeepsamples
 git clone https://github.com/vcflib/vcflib.git
-git checkout v1.0.0-rc0
 cd vcflib
+git checkout v1.0.0-rc0
 make
 cp vcfkeepsamples ../bin
 cd ..
 
 ## bcftools
 git clone https://github.com/samtools/bcftools.git
-gti checkout 1.3.1
 cd bcftools
+git checkout 1.3.1
 make
 cp bcftools ../bin
 cd ..
 
 # vcftools
 git clone https://github.com/vcftools/vcftools.git
-git checkout v0.1.14
 cd vcftools
+git checkout v0.1.14
 ./autogen.sh
 ./configure
 make
@@ -38,8 +38,8 @@ cd ..
 
 # bedtools
 git clone https://github.com/arq5x/bedtools2.git
-git checkout v2.26.0
 cd bedtools2
+git checkout v2.26.0
 make
 cp bin/bedtools ../bin
 cd ..
