@@ -26,3 +26,4 @@ RUN sh install_dependencies.sh
 
 # set up env
 ENV PYTHONPATH $HOME/src/postgap/lib/
+ENV PATH $PATH:$HOME/src/postgap/bin/
