@@ -13,7 +13,7 @@ cd ..
 ## vcfkeepsamples
 git clone --recursive https://github.com/vcflib/vcflib.git
 cd vcflib
-git checkout v1.0.0-rc0
+git checkout v1.0.0-rc1
 make
 cp vcfkeepsamples ../bin
 cd ..
