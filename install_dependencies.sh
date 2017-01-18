@@ -11,7 +11,7 @@ cp tabix bgzip ../bin
 cd ..
 
 ## vcfkeepsamples
-git clone https://github.com/vcflib/vcflib.git
+git clone --recursive https://github.com/vcflib/vcflib.git
 cd vcflib
 git checkout v1.0.0-rc0
 make
