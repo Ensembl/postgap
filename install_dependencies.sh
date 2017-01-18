@@ -41,7 +41,7 @@ git clone https://github.com/arq5x/bedtools2.git
 cd bedtools2
 git checkout v2.26.0
 make
-cp bin/bedtools ../bin
+cp bin/bedtools bin/intersectBed ../bin
 cd ..
 
 # pybedtools v0.7.8, requests, pandas
