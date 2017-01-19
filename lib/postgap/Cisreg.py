@@ -141,7 +141,8 @@ class GTEx(Cisreg_source):
 					tissue = tissue,
 					score = 1,
 					source = self.display_name,
-					study = None
+					study = None,
+					info = None
 				)
 				for eQTL in eQTLs 
 				if eQTL['snp'] in snp_hash
@@ -207,7 +208,8 @@ class GTEx(Cisreg_source):
 					tissue = tissue,
 					score = 1,
 					source = self.display_name,
-					study = None
+					study = None,
+					info = None
 				)
 				for eQTL in eQTLs
 				if eQTL['value'] < 2.5e-5 
@@ -305,7 +307,8 @@ class VEP(Cisreg_source):
 				score = VEP_impact_to_score[consequence['impact']],
 				source = self.display_name,
 				study = None,
-				tissue = None
+				tissue = None,
+				info = None
 			)
 			for hit in transcript_consequences for consequence in hit['transcript_consequences']
 		]
@@ -368,7 +371,8 @@ class Fantom5(Cisreg_source):
 				source = self.display_name,
 				score = score,
 				study = None,
-				tissue = None
+				tissue = None,
+				info = None
 			)
 
 class DHS(Cisreg_source):
@@ -430,7 +434,8 @@ class DHS(Cisreg_source):
 			score = score,
 			source = self.display_name,
 			study = None,
-			tissue = None
+			tissue = None,
+			info = None
 		)
 
 def get_fdr_model(filename):
@@ -529,7 +534,8 @@ class PCHIC(Cisreg_source):
 			score = 1,
 			source = self.display_name,
 			study = None,
-			tissue = None
+			tissue = None,
+			info = None
 		)
 
 class nearest_gene(Cisreg_source):
@@ -567,7 +573,9 @@ class nearest_gene(Cisreg_source):
 				score = 1,
 				source = self.display_name,
 				study = None,
-				tissue = None)
+				tissue = None,
+				info = None
+				)
 			for row in res ]
 
 sources = Cisreg_source.__subclasses__()
