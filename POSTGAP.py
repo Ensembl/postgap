@@ -219,7 +219,7 @@ def pretty_cluster_association(association):
 					gene_name, 
 					gene_id, 
 					gene_chrom, 
-					gene_tss, 
+					str(gene_tss), 
 					",".join(disease_names), 
 					",".join(disease_efos), 
 					str(snp_scores[ld_snp.rsID]), 
