@@ -174,7 +174,7 @@ def pretty_output(associations):
 		Returntype: String
 
 	"""
-	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'gene_symbol', 'gene_id', 'disease_names', 'disease_efo_ids', 'score', 'gwas_snp_ids'] + [source.display_name for source in postgap.GWAS.sources + postgap.Cisreg.sources + postgap.Reg.sources])
+	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'disease_names', 'disease_efo_ids', 'score', 'gwas_snp_ids'] + [source.display_name for source in postgap.GWAS.sources + postgap.Cisreg.sources + postgap.Reg.sources])
 	content = map(pretty_cluster_association, associations)
 	return "\n".join([header] + content)
 
@@ -188,6 +188,8 @@ def pretty_cluster_association(association):
 	"""
 	gene_name = association.gene.name
 	gene_id = association.gene.id
+	gene_chrom = association.gene.chrom
+	gene_tss = association.gene.tss
 	cluster = association.cluster
 	gwas_snps = cluster.gwas_snps
 	disease_names = list(set(gwas_association.disease.name for gwas_snp in gwas_snps for gwas_association in gwas_snp.evidence))
@@ -209,7 +211,7 @@ def pretty_cluster_association(association):
 	pretty_strings = []
 	for ld_snp in cluster.ld_snps:
 		if snp_scores[ld_snp.rsID] > 0:
-			results = [ld_snp.rsID, ld_snp.chrom, str(ld_snp.pos), gene_name, gene_id, ",".join(disease_names), ",".join(disease_efos), str(snp_scores[ld_snp.rsID])]
+			results = [ld_snp.rsID, ld_snp.chrom, str(ld_snp.pos), gene_name, gene_id, gene_chrom, gene_tss, ",".join(disease_names), ",".join(disease_efos), str(snp_scores[ld_snp.rsID])]
 			results.append(",".join(gwas_snp.snp.rsID for gwas_snp in gwas_snps))
 			for gwas_source in postgap.GWAS.sources:
 				results.append(",".join(str(gwas_scores[gwas_source.display_name][gwas_snp.snp.rsID]) for gwas_snp in cluster.gwas_snps))
