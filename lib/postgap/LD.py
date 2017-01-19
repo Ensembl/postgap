@@ -36,7 +36,7 @@ import tempfile
 from postgap.DataModel import *
 import postgap.Globals
 
-def calculate_window(snp, window_len=500000, population='CEPH', cutoff=0.5):
+def calculate_window(snp, window_len=500000, population='CEPH', cutoff=0.7):
 	"""
 
 		Given a SNP id, calculate the pairwise LD between all SNPs within window_size base pairs.
