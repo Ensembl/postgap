@@ -323,7 +323,7 @@ class GRASP(GWAS_source):
 		items = line.rstrip().split('\t')
 		if len(items) < 61:
 			assert False, line
-		if items[11] in diseases or items[60] in efos:
+		if items[11] in diseases or items[70] in efos:
 			return GWAS_Association(
 				pvalue = float(items[10]),
 				snp = "rs" + items[4],
