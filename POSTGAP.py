@@ -174,7 +174,7 @@ def pretty_output(associations):
 		Returntype: String
 
 	"""
-	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'disease_names', 'disease_efo_ids', 'score', 'gwas_snp_ids', 'ls_snp_is_gwas_snp'] + [source.display_name for source in postgap.GWAS.sources + postgap.Cisreg.sources + postgap.Reg.sources])
+	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'disease_names', 'disease_efo_ids', 'score', 'gwas_snp_ids', 'ls_snp_is_gwas_snp', 'vep_terms'] + [source.display_name for source in postgap.GWAS.sources + postgap.Cisreg.sources + postgap.Reg.sources])
 	content = map(pretty_cluster_association, associations)
 	return "\n".join([header] + content)
 
@@ -195,6 +195,7 @@ def pretty_cluster_association(association):
 	gwas_snp_rsIDs = [gwas_snp.snp.rsID for gwas_snp in gwas_snps]
 	disease_names = list(set(gwas_association.disease.name for gwas_snp in gwas_snps for gwas_association in gwas_snp.evidence))
 	disease_efos = list(set(gwas_association.disease.efo for gwas_snp in gwas_snps for gwas_association in gwas_snp.evidence))
+	vep_terms = "N/A"
 
 	gwas_scores = collections.defaultdict(lambda: collections.defaultdict(lambda: 1))
 	for gwas_snp in gwas_snps:
@@ -207,6 +208,8 @@ def pretty_cluster_association(association):
 	for gene_snp_association in association.evidence:
 		for evidence in gene_snp_association.regulatory_evidence + gene_snp_association.cisregulatory_evidence:
 			functional_scores[evidence.snp.rsID][evidence.source] += evidence.score
+			if evidence.source == "VEP":
+				vep_terms = ",".join(evidence.info['consequence_terms'])
 		snp_scores[gene_snp_association.snp.rsID] = gene_snp_association.score
 	
 	pretty_strings = []
@@ -224,7 +227,8 @@ def pretty_cluster_association(association):
 					",".join(disease_efos), 
 					str(snp_scores[ld_snp.rsID]), 
 					",".join(gwas_snp.snp.rsID for gwas_snp in gwas_snps),
-					str(ld_snp.rsID in gwas_snp_rsIDs)
+					str(ld_snp.rsID in gwas_snp_rsIDs),
+					vep_terms
 				]
 			for gwas_source in postgap.GWAS.sources:
 				results.append(",".join(str(gwas_scores[gwas_source.display_name][gwas_snp.snp.rsID]) for gwas_snp in cluster.gwas_snps))

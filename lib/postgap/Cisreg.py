@@ -308,7 +308,7 @@ class VEP(Cisreg_source):
 				source = self.display_name,
 				study = None,
 				tissue = None,
-				info = None
+				info = {'consequence_terms': consequence['consequence_terms']}
 			)
 			for hit in transcript_consequences for consequence in hit['transcript_consequences']
 		]
