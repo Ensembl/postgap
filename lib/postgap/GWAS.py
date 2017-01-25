@@ -50,7 +50,7 @@ class GWAS_source(object):
 		assert False, "This stub should be defined"
 
 class GWASCatalog(GWAS_source):
-	display_name = 'postgap.GWAS Catalog'
+	display_name = 'GWAS Catalog'
 
 	def run(self, diseases, efos):
 		"""
