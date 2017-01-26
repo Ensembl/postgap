@@ -86,7 +86,7 @@ def main():
 	else:
 		formatted_results = pretty_snp_output(res)
 
-	output.write(formatted_results)
+	output.write(formatted_results + "\n")
 
 def get_options():
     """
