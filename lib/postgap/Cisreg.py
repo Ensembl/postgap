@@ -236,7 +236,7 @@ class VEP(Cisreg_source):
 		"""
 		server = "http://grch37.rest.ensembl.org"
 		ext = "/vep/%s/id" % (postgap.Globals.SPECIES)
-		list = concatenate(postgap.REST.get(server, ext, data = {"ids" : [snp.rsID for snp in chunk]}) for chunk in chunks(snps, 999))
+		list = concatenate(postgap.REST.get(server, ext, data = {"ids" : [snp.rsID for snp in chunk]}) for chunk in chunks(snps, 199))
 		'''
 
 			Example output from VEP:
