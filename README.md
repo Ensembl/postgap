@@ -55,6 +55,30 @@ Or an rsID:
 python POSTGAP.py --rsID rs10009124
 ```
 
+Output
+------
+
+By default, the script writes out a tab delimited file to standard out.
+
+If you wish, you can redirect this into a file:
+
+```
+python scripts/POSTGAP.py --disease autism --output resutls.txt
+```
+
+or an SQLITE database:
+
+```
+python scripts/POSTGAP.py --disease autism --db results.sqlite3
+```
+
+If you want a JSON dump of all the data retrieved by the pipeline:
+
+```
+python scripts/POSTGAP.py --disease autism --output resutls.txt --json
+python scripts/POSTGAP.py --disease autism --json
+```
+
 Testing
 -------
 
