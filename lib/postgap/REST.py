@@ -45,15 +45,16 @@ def get(server, ext, data=None):
 	retries = 0
 
 	while True:
+		if DEBUG:
+			sys.stderr.write("REST JSON Query: %s%s\n" % (server, ext))
+			start_time = time.time()
+
 		if data is None:
 			headers = { "Content-Type" : "application/json" }
 			r = requests.get(str(server)+str(ext), headers = headers)
 		else:
 			headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
 			r = requests.post(str(server)+str(ext), headers = headers, data = json.dumps(data))
-
-		if DEBUG:
-			sys.stderr.write("REST JSON Query: %s%s\n" % (server, ext))
 
 		if not r.ok:
 			sys.stderr.write("Failed to get proper response to query %s%s\n" % (server, ext) )
@@ -66,6 +67,9 @@ def get(server, ext, data=None):
 				continue
 			r.raise_for_status()
 			sys.exit()
+
+		if DEBUG:
+			sys.stderr.write("Time: %f\n" % (time.time() - start_time))
 
 		try:
 			return r.json()
