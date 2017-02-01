@@ -43,6 +43,18 @@ python scripts/POSTGAP.py --disease autism
 
 Multiple disease names can be provided.
 
+You can also provide a list of EFOs:
+
+```
+python POSTGAP.py --efos EFO_0000196
+```
+
+Or an rsID:
+
+```
+python POSTGAP.py --rsID rs10009124
+```
+
 Testing
 -------
 
