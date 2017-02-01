@@ -26,9 +26,15 @@ Flatfile preparation
 
 * Via the FTP site (*recommended*)
 
+  The following script downloads a bunch of files into PWD.
   ```sh download.sh```
 
+  Ideally, save these files in a separate directory, which we will call ```databases_dir````
+
+  Everytime you run POSTGAP, add ```--databases_dir /path/to/databases_dir``` to the command line.
+
 * Manually (*sloooow*)
+  This script will create a ```databases_dir``` directory for you:
   1. Type ```make download``` to download public databases.
   2. Type ```make process``` to preprocess the databases. **Warning** this may take days as it needs to split the entire 1000 Genomes files by population.
 
