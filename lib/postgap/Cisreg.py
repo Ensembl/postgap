@@ -36,6 +36,7 @@ import REST
 import postgap.Globals 
 import BedTools
 import Ensembl_lookup
+import requests
 
 VEP_impact_to_score = {
 	'HIGH': 4,
@@ -234,9 +235,7 @@ class VEP(Cisreg_source):
 			Returntype: [ Regulatory_Evidence ]
 
 		"""
-		server = "http://grch37.rest.ensembl.org"
-		ext = "/vep/%s/id" % (postgap.Globals.SPECIES)
-		list = concatenate(postgap.REST.get(server, ext, data = {"ids" : [snp.rsID for snp in chunk]}) for chunk in chunks(snps, 199))
+		list = concatenate(self.get(chunk) for chunk in chunks(snps, 199))
 		'''
 
 			Example output from VEP:
@@ -317,6 +316,33 @@ class VEP(Cisreg_source):
 			print "\tFound %i interactions in VEP" % (len(res))
 
 		return res
+
+	def get(self, chunk):
+		"""
+
+			Queries Ensembl servers. Recursively breaks down query if error code 400 is returned
+			Args:
+			* [ SNP ]
+			Returntype: [ Regulatory_Evidence ]
+
+		"""
+		if len(chunk) == 0:
+			return []
+
+		try:
+			server = "http://grch37.rest.ensembl.org"
+			ext = "/vep/%s/id" % (postgap.Globals.SPECIES)
+			return postgap.REST.get(server, ext, data = {"ids" : [snp.rsID for snp in chunk]})
+
+		except requests.exceptions.HTTPError as error:
+			if error.response.status_code == 400:
+				if len(chunk) == 1:
+					return []
+				else:
+					return self.get(chunk[:len(chunk)/2]) + self.get(chunk[len(chunk)/2:])
+			else:
+				raise
+				
 
 class Fantom5(Cisreg_source):
 	display_name = "Fantom5"
