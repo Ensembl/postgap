@@ -40,7 +40,7 @@ def overlap_snps_to_bed(snps, bed):
 
 	'''
 	snps = list(snps)
-	max_pos = max([x.pos for x in snps])
+	max_pos = max([x.pos + 1 for x in snps])
 	min_pos = min([x.pos for x in snps])
 	chrom = snps[0].chrom
 	SNP_bt = snps_to_bt(snps)
