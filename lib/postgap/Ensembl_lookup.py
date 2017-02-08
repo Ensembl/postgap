@@ -58,7 +58,7 @@ def fetch_gene(gene_name):
 		Returntype: Gene
 
 	"""
-	server = "http://grch37.rest.ensembl.org"
+	server = postgap.Globals.ENSEMBL_REST_SERVER
 	ext = "/lookup/symbol/%s/%s?content-type=application/json;expand=1" % (postgap.Globals.SPECIES, gene_name)
 	try:
 		hash = postgap.REST.get(server, ext)
@@ -80,7 +80,7 @@ def fetch_gene_id(gene_id):
 		Returntype: Gene
 
 	"""
-	server = "http://grch37.rest.ensembl.org"
+	server = postgap.Globals.ENSEMBL_REST_SERVER
 	ext = "/lookup/id/%s?content-type=application/json;expand=1" % (gene_id)
 	try:
 		hash = postgap.REST.get(server, ext)
@@ -115,7 +115,7 @@ def fetch_ensembl_gene(ensembl_id):
 		Returntype: Gene
 
 	"""
-	server = "http://grch37.rest.ensembl.org"
+	server = postgap.Globals.ENSEMBL_REST_SERVER
 	ext = "/lookup/id/%s?content-type=application/json;expand=1" % (ensembl_id)
 	hash = postgap.REST.get(server, ext)
 	return Gene(
@@ -135,7 +135,7 @@ def get_snp_locations(rsIDs):
 
 	"""
 
-	server = "http://grch37.rest.ensembl.org"
+	server = postgap.Globals.ENSEMBL_REST_SERVER
 	ext = "/variation/%s?content-type=application/json" % (postgap.Globals.SPECIES)
 	hash = concatenate_hashes(postgap.REST.get(server, ext, data={'ids':chunk}) for chunk in chunks(rsIDs, 999))
 
