@@ -220,8 +220,8 @@ def merge_preclusters(preclusters):
 		Returntype: [ Cluster ]
 
 	"""
+	clusters = list(preclusters)
 	snp_owner = dict()
-	kill_list = list()
 	for cluster in preclusters:
 		for ld_snp in cluster.ld_snps:
 			if ld_snp in snp_owner and snp_owner[ld_snp] is not cluster:
@@ -231,27 +231,25 @@ def merge_preclusters(preclusters):
 				# Merge data from current cluster into previous cluster
 				merged_gwas_snps = other_cluster.gwas_snps + cluster.gwas_snps
 				merged_ld_snps = dict((ld_snp.rsID, ld_snp) for ld_snp in cluster.ld_snps + other_cluster.ld_snps).values()
-				snp_owner[ld_snp] = GWAS_Cluster(
+				merged_cluster = GWAS_Cluster(
 					gwas_snps = merged_gwas_snps,
 					ld_snps = merged_ld_snps
 				)
+				clusters.remove(cluster)
+				clusters.remove(other_cluster)
+				clusters.append(merged_cluster)
 
-				# Mark for deletion
-				kill_list.append(cluster)
-				for snp in cluster.ld_snps:
-					snp_owner[snp] = other_cluster
+				for snp in merged_cluster.ld_snps:
+					snp_owner[snp] = merged_cluster 
 
-				# Exit from that cluster
 				break
 			else:
 				snp_owner[ld_snp] = cluster
 
-	res = filter(lambda cluster: cluster not in kill_list, preclusters)
-
 	if postgap.Globals.DEBUG:
-		print "\tFound %i clusters from the GWAS peaks" % (len(res))
+		print "\tFound %i clusters from the GWAS peaks" % (len(clusters))
 
-	return res
+	return clusters
 
 
 def cluster_to_genes(cluster, tissues, populations):
