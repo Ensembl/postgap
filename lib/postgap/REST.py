@@ -65,6 +65,9 @@ def get(server, ext, data=None):
 				time.sleep(int(r.headers['Retry-After']))
 				retries += 1
 				continue
+			if r.status_code == 403:
+				time.sleep(600) # Sleep 10 minutes while server cools down
+				continue
 			r.raise_for_status()
 			sys.exit()
 
