@@ -376,7 +376,7 @@ class Phewas_Catalog(GWAS_source):
 			return GWAS_Association (
 				pvalue = float(items[4]),
 				snp = items[1],
-				disease = Disease(name = items[3], efo = items[9]), 
+				disease = Disease(name = items[2], efo = items[9]), 
 				source = self.display_name,
 				study = None
 			)
