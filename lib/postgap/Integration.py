@@ -65,7 +65,7 @@ def diseases_to_gwas_snps(diseases, efos):
 		Args:
 		* [ string ] (trait descriptions - free strings )
 		* [ string ] (trait EFO identifiers)
-		Returntype: [ Association_SNP ]
+		Returntype: [ GWAS_SNP ]
 
 	"""
 	res = filter(lambda X: X.pvalue < PVALUE_CUTOFF, scan_disease_databases(diseases, efos))
