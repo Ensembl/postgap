@@ -422,7 +422,7 @@ class GWAS_DB(GWAS_source):
 			return GWAS_Association(
 				pvalue = float(items[3]),
 				snp = items[2],
-				disease = Disease(name = items[5], efo = items[6]),
+				disease = Disease(name = items[5].decode('latin1'), efo = items[6]),
 				source = self.display_name,
 				study = items[4]
 			)
