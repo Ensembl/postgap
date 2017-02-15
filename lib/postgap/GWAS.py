@@ -207,20 +207,17 @@ class GWASCatalog(GWAS_source):
 
 
 		"""
-		try:
-			hits = hash['response']['docs']
-			return [
-				GWAS_Association(
-					pvalue = float(hit['pValueMantissa']) * 10**float(hit['pValueExponent']),
-					snp = hit['rsId'][0].strip(),
-					disease = Disease(name = hit['traitName_s'], efo = hit['shortForm'][0]),
-					source = self.display_name,
-					study = "PMID" + hit['pubmedId']
-				)
-				for hit in hits
-			]
-		except:
-			print "Failed on %s%s" % (server, ext2)
+		hits = hash['response']['docs']
+		return [
+			GWAS_Association(
+				pvalue = float(hit['pValueMantissa']) * 10**float(hit['pValueExponent']),
+				snp = hit['rsId'][0].strip(),
+				disease = Disease(name = hit['traitName_s'], efo = hit['shortForm'][0]),
+				source = self.display_name,
+				study = "PMID" + hit['pubmedId']
+			)
+			for hit in hits
+		]
 
 class GRASP(GWAS_source):
 	display_name = "GRASP"
