@@ -72,10 +72,15 @@ def main():
 	"""
 	options = get_options()
 
-	if options.rsID is None:
+	if len(options.diseases) > 0 or len(options.efos) > 0:
 		res = postgap.Integration.diseases_to_genes(options.diseases, options.efos, "CEPH", options.tissues)
-	else:
+	elif options.rsID is not None:
 		res = postgap.Integration.rsIDs_to_genes(options.rsID, options.tissues)
+	elif options.coords is not None:
+		snp = postgap.DataModel.SNP(rsID = options.coords[0], chrom = options.coords[1], pos = int(options.coords[2]))
+		if options.tissues is None:
+			options.tissues = ["Whole_Blood"]
+		res = postgap.Integration.ld_snps_to_genes([snp], options.tissues)
 
 	if options.db is None:
 		if options.output is None:
@@ -85,7 +90,7 @@ def main():
 
 		if options.json_output:
 			formatted_results = "\n".join(map(json.dumps, res))
-		elif options.rsID is None:
+		elif options.rsID is None and options.coords is None:
 			formatted_results = pretty_output(res)
 		else:
 			formatted_results = pretty_snp_output(res)
@@ -110,6 +115,7 @@ def get_options():
     parser.add_argument('--efos', nargs='*')
     parser.add_argument('--diseases', nargs='*')
     parser.add_argument('--rsID')
+    parser.add_argument('--coords', nargs=3)
     # parser.add_argument('--populations', nargs='*', default=['1000GENOMES:phase_3:GBR'])
     parser.add_argument('--tissues', nargs='*')
     parser.add_argument('--output')
@@ -126,7 +132,7 @@ def get_options():
 
     assert postgap.Globals.DATABASES_DIR is not None
     assert options.rsID is None or (options.efos is None and options.diseases is None)
-    assert options.rsID is not None or options.efos is not None or options.diseases is not None
+    assert options.rsID is not None or options.efos is not None or options.diseases is not None or options.coords is not None
 
     if options.diseases is None:
         options.diseases = []
