@@ -255,7 +255,6 @@ def genecluster_association_table(association):
 	gwas_snp_rsIDs = [gwas_snp.snp.rsID for gwas_snp in gwas_snps]
 	disease_names = list(set(gwas_association.disease.name for gwas_snp in gwas_snps for gwas_association in gwas_snp.evidence))
 	disease_efos = list(set(gwas_association.disease.efo for gwas_snp in gwas_snps for gwas_association in gwas_snp.evidence))
-	vep_terms = "N/A"
 
 	gwas_scores = collections.defaultdict(lambda: collections.defaultdict(lambda: 1))
 	for gwas_snp in gwas_snps:
@@ -265,6 +264,7 @@ def genecluster_association_table(association):
 
 	results = []
 	for gene_snp_association in association.evidence:
+		vep_terms = "N/A"
 		for evidence in gene_snp_association.cisregulatory_evidence:
 			if evidence.source == "VEP":
 				vep_terms = ",".join(evidence.info['consequence_terms'])
