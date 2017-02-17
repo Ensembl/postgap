@@ -161,7 +161,7 @@ def pretty_snp_association(association):
 	"""
 
 		Prints association stats in roughly the same format as STOPGAP for a cluster of SNPs
-		Args: GeneCluster_Association
+		Args: GeneSNP_Association
 		Returntype: String
 
 	"""
@@ -170,12 +170,8 @@ def pretty_snp_association(association):
 	gene_id = association.gene.id
 	score = association.score
 
-	functional_scores = collections.defaultdict(int)
-	for evidence in association.regulatory_evidence + association.cisregulatory_evidence:
-		functional_scores[evidence.source] += evidence.score
-	
 	results = [snp.rsID, snp.chrom, str(snp.pos), gene_name, gene_id, str(score)]
-	results += [str(functional_scores[functional_source.display_name]) for functional_source in postgap.Cisreg.sources]
+	results += [str(association.intermediary_scores[functional_source.display_name]) for functional_source in postgap.Cisreg.sources]
 	return "\t".join(results)
 
 def pretty_output(associations):
@@ -198,56 +194,8 @@ def pretty_cluster_association(association):
 		Returntype: String
 
 	"""
-	gene_name = association.gene.name
-	gene_id = association.gene.id
-	gene_chrom = association.gene.chrom
-	gene_tss = association.gene.tss
-	cluster = association.cluster
-	gwas_snps = cluster.gwas_snps
-	gwas_snp_rsIDs = [gwas_snp.snp.rsID for gwas_snp in gwas_snps]
-	disease_names = list(set(gwas_association.disease.name for gwas_snp in gwas_snps for gwas_association in gwas_snp.evidence))
-	disease_efos = list(set(gwas_association.disease.efo for gwas_snp in gwas_snps for gwas_association in gwas_snp.evidence))
-	vep_terms = "N/A"
-
-	gwas_scores = collections.defaultdict(lambda: collections.defaultdict(lambda: 1))
-	for gwas_snp in gwas_snps:
-		for gwas_association in gwas_snp.evidence:
-			if gwas_association.pvalue < gwas_scores[gwas_association.source][gwas_snp.snp.rsID]:
-				gwas_scores[gwas_association.source][gwas_snp.snp.rsID] = gwas_association.pvalue
-
-	functional_scores = collections.defaultdict(lambda: collections.defaultdict(int))
-	snp_scores = collections.defaultdict(int)
-	for gene_snp_association in association.evidence:
-		for evidence in gene_snp_association.regulatory_evidence + gene_snp_association.cisregulatory_evidence:
-			functional_scores[evidence.snp.rsID][evidence.source] += evidence.score
-			if evidence.source == "VEP":
-				vep_terms = ",".join(evidence.info['consequence_terms'])
-		snp_scores[gene_snp_association.snp.rsID] = gene_snp_association.score
-	
-	pretty_strings = []
-	for ld_snp in cluster.ld_snps:
-		if snp_scores[ld_snp.rsID] > 0:
-			results = [
-					ld_snp.rsID, 
-					ld_snp.chrom, 
-					str(ld_snp.pos), 
-					gene_name, 
-					gene_id, 
-					gene_chrom, 
-					str(gene_tss), 
-					",".join(map(str, disease_names)), 
-					",".join(disease_efos), 
-					str(snp_scores[ld_snp.rsID]), 
-					",".join(gwas_snp.snp.rsID for gwas_snp in gwas_snps),
-					str(ld_snp.rsID in gwas_snp_rsIDs),
-					vep_terms
-				]
-			for gwas_source in postgap.GWAS.sources:
-				results.append(",".join(str(gwas_scores[gwas_source.display_name][gwas_snp.snp.rsID]) for gwas_snp in cluster.gwas_snps))
-			results += [str(functional_scores[ld_snp.rsID][functional_source.display_name]) for functional_source in postgap.Cisreg.sources + postgap.Reg.sources]
-			pretty_strings.append("\t".join(results))
-
-	return "\n".join(pretty_strings)
+	results = genecluster_association_table(association)
+	return "\n".join("\t".join(map(unicode, row)) for row in results)
 
 def db_output(db, associations):
 	"""
@@ -286,6 +234,18 @@ def db_output_association(conn, association):
 		Returntype: String
 
 	"""
+	results = genecluster_association_table(association)
+	sql_cmd = "INSERT INTO results VALUES (%s)" % ",".join("?" for item in results)
+	conn.execute(sql_cmd, results)
+
+def genecluster_association_table(association):
+	"""
+
+		Returns association stats in roughly the same format as STOPGAP for a cluster of SNPs
+		Arg1: GeneCluster_Association
+		Returntype: [[ string or float ]]
+
+	"""
 	gene_name = association.gene.name
 	gene_id = association.gene.id
 	gene_chrom = association.gene.chrom
@@ -303,38 +263,35 @@ def db_output_association(conn, association):
 			if gwas_association.pvalue < gwas_scores[gwas_association.source][gwas_snp.snp.rsID]:
 				gwas_scores[gwas_association.source][gwas_snp.snp.rsID] = gwas_association.pvalue
 
-	functional_scores = collections.defaultdict(lambda: collections.defaultdict(int))
-	snp_scores = collections.defaultdict(int)
+	results = []
 	for gene_snp_association in association.evidence:
-		for evidence in gene_snp_association.regulatory_evidence + gene_snp_association.cisregulatory_evidence:
-			functional_scores[evidence.snp.rsID][evidence.source] += evidence.score
+		for evidence in gene_snp_association.cisregulatory_evidence:
 			if evidence.source == "VEP":
 				vep_terms = ",".join(evidence.info['consequence_terms'])
-		snp_scores[gene_snp_association.snp.rsID] = gene_snp_association.score
-	
-	for ld_snp in cluster.ld_snps:
-		if snp_scores[ld_snp.rsID] > 0:
-			results = [
-					ld_snp.rsID, 
-					ld_snp.chrom, 
-					ld_snp.pos, 
-					gene_name, 
-					gene_id, 
-					gene_chrom, 
-					gene_tss, 
-					",".join(map(str, disease_names)), 
-					",".join(disease_efos), 
-					snp_scores[ld_snp.rsID], 
-					",".join(gwas_snp.snp.rsID for gwas_snp in gwas_snps),
-					int(ld_snp.rsID in gwas_snp_rsIDs),
-					vep_terms
-				]
-			for gwas_source in postgap.GWAS.sources:
-				results.append(",".join(str(gwas_scores[gwas_source.display_name][gwas_snp.snp.rsID]) for gwas_snp in cluster.gwas_snps))
-			results += [str(functional_scores[ld_snp.rsID][functional_source.display_name]) for functional_source in postgap.Cisreg.sources + postgap.Reg.sources]
+				break
 
-	sql_cmd = "INSERT INTO results VALUES (%s)" % ",".join("?" for item in results)
-	conn.execute(sql_cmd, results)
+		row = [
+				gene_snp_association.snp.rsID, 
+				gene_snp_association.snp.chrom, 
+				gene_snp_association.snp.pos, 
+				gene_name, 
+				gene_id, 
+				gene_chrom, 
+				gene_tss, 
+				",".join(disease_names), 
+				",".join(disease_efos), 
+				gene_snp_association.score, 
+				",".join(gwas_snp.snp.rsID for gwas_snp in gwas_snps),
+				int(gene_snp_association.snp.rsID in gwas_snp_rsIDs),
+				vep_terms
+			]
+
+		for gwas_source in postgap.GWAS.sources:
+			row.append(",".join(str(gwas_scores[gwas_source.display_name][gwas_snp.snp.rsID]) for gwas_snp in cluster.gwas_snps))
+		row += [gene_snp_association.intermediary_scores[functional_source.display_name] for functional_source in postgap.Cisreg.sources + postgap.Reg.sources]
+		results.append(row)
+
+	return results
 
 if __name__ == "__main__":
 	main()

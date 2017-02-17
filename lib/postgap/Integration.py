@@ -374,7 +374,7 @@ def rsIDs_to_genes(snp, tissues):
 def ld_snps_to_genes(ld_snps, tissues):
 	"""
 
-		Associates genes to LD linked SNP
+		Associates genes to LD linked SNPs
 		Args:
 		* [ SNP ]
 		* [ string ] (tissues)
@@ -390,19 +390,37 @@ def ld_snps_to_genes(ld_snps, tissues):
 	if len(selected_snps) > 0:
 		# Extract SNP specific info:
 		reg = regulatory_evidence(selected_snps, tissues)
+		return [create_GeneSNP_Association(gene, snp, reg[snp], cisreg[(gene, snp)]) for (gene, snp) in cisreg]
 	else:
-		reg = []
+		return []
 
-	return [
-		GeneSNP_Association(
-			gene = gene,
-			snp = snp,
-			cisregulatory_evidence = cisreg[(gene, snp)],
-			regulatory_evidence = reg[snp],
-			score = sum(float(evidence.score) for evidence in reg[snp] + cisreg[(gene, snp)])
-		)
-		for (gene, snp) in cisreg
-	]
+
+def create_GeneSNP_Association(gene, snp, reg, cisreg):
+	"""
+
+		Associates gene to LD linked SNP
+		Args:
+		* Gene
+		* SNP
+		* [ Regulatory_Evidence ]
+		* [ Cisregulatory_Evidence ]
+		Returntype: GeneSNP_Association
+
+	"""
+	intermediary_scores = collections.defaultdict(int)
+	for evidence in reg + cisreg:
+		intermediary_scores[evidence.source] += float(evidence.score)
+	# This is the space for balancing the importance of different sources:	
+	intermediary_scores['PCHiC'] = min(intermediary_scores['PCHiC'], 1)
+
+	return GeneSNP_Association(
+		gene = gene,
+		snp = snp,
+		cisregulatory_evidence = cisreg,
+		regulatory_evidence = reg,
+		intermediary_scores = intermediary_scores,
+		score = sum(intermediary_scores.values())
+	)
 
 def cisregulatory_evidence(ld_snps, tissues):
 	"""
