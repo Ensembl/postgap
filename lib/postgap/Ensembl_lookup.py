@@ -139,6 +139,9 @@ def get_snp_locations(rsIDs):
 	server = ENSEMBL_REST_SERVER
 	ext = "/variation/%s?content-type=application/json" % (postgap.Globals.SPECIES)
 	hash = concatenate_hashes(postgap.REST.get(server, ext, data={'ids':chunk}) for chunk in chunks(rsIDs, 999))
+	for record in hash.values():
+		for synonym in record["synonyms"]:
+			hash[synonym] = record
 
 	'''
 		Example response:
@@ -175,13 +178,16 @@ def get_snp_locations(rsIDs):
 			}
 		}
 	'''
-	return [
-		SNP(
-			rsID = rsID,
-			chrom = mapping['seq_region_name'],
-			pos = (int(mapping['start']) + int(mapping['end'])) / 2
-		)
-		for rsID in hash
-		for mapping in hash[rsID]['mappings']
-	]
+	results = []
+	for rsID in rsIDs:
+		if rsID in hash:
+			for mapping in hash[rsID]['mappings']:
+				results.append(
+					SNP(
+						rsID = rsID,
+						chrom = mapping['seq_region_name'],
+						pos = (int(mapping['start']) + int(mapping['end'])) / 2
+					)
+				)
+	return results
 
