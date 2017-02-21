@@ -88,6 +88,7 @@ def calculate_window(snp, window_len=500000, population='CEPH', cutoff=0.7):
 	### Clean temp files
 	temp_file_names = [region_file_name] + [ ld_file_name + suffix for suffix in ["", ".ld", ".log", ".nosex"]]
 	map(os.remove, temp_file_names)
+	map(os.close, [region_file, ld_file])
 
 	if len(ld_snps) > 0:
 		return ld_snps
@@ -166,5 +167,6 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, population='CEPH'):
 	for temp_file_name in temp_file_names:
 		if os.path.isfile(temp_file_name):
 			os.remove(temp_file_name)
+	map(os.close, [region_file, rsID_file, snp_file, ld_file])
 
 	return r2_dict
