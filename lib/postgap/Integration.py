@@ -226,7 +226,6 @@ def merge_preclusters(preclusters):
 		for ld_snp in cluster.ld_snps:
 			if ld_snp in snp_owner and snp_owner[ld_snp] is not cluster:
 				other_cluster = snp_owner[ld_snp]
-				print "Overlap between %i and %i" % (id(cluster), id(other_cluster))
 
 				# Merge data from current cluster into previous cluster
 				merged_gwas_snps = other_cluster.gwas_snps + cluster.gwas_snps
