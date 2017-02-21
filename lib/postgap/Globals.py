@@ -31,4 +31,3 @@ limitations under the License.
 DATABASES_DIR = None
 SPECIES = None
 DEBUG = True
-ENSEMBL_REST_SERVER = "http://grch37.rest.ensembl.org"
