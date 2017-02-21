@@ -318,16 +318,17 @@ class GRASP(GWAS_source):
 
 		'''
 		items = line.rstrip().split('\t')
-		if len(items) < 61:
-			assert False, line
 		if items[11] in diseases or items[70] in efos:
-			return GWAS_Association(
-				pvalue = float(items[10]),
-				snp = "rs" + items[4],
-				disease = Disease(name = items[11], efo = items[70]),
-				source = self.display_name,
-				study = items[7]
-			)
+			try:
+				return GWAS_Association(
+					pvalue = float(items[10]),
+					snp = "rs" + items[4],
+					disease = Disease(name = items[11], efo = items[70]),
+					source = self.display_name,
+					study = items[7]
+				)
+			except:
+				return None
 		else:
 			return None
 
