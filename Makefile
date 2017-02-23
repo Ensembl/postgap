@@ -81,9 +81,9 @@ d_1000Genomes:
 
 define process_1000Genomes_file
 gzip -dc $(1) \
-| vcfkeepsamples - `cat ./preprocessing/CEPH_samples.txt`\
+| vcfkeepsamples - `cat ./preprocessing/EUR_samples.txt`\
 | bcftools convert -Ob \
-> ${DEST_DIR}/1000Genomes/CEPH/`basename $(1) | sed -e 's/vcf.gz/bcf/'`;
+> ${DEST_DIR}/1000Genomes/EUR/`basename $(1) | sed -e 's/vcf.gz/bcf/'`;
 endef
 
 .PHONY: 1000Genomes

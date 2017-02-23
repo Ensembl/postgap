@@ -36,7 +36,7 @@ import tempfile
 from postgap.DataModel import *
 import postgap.Globals
 
-def calculate_window(snp, window_len=500000, population='CEPH', cutoff=0.7):
+def calculate_window(snp, window_len=500000, population='EUR', cutoff=0.7):
 	"""
 
 		Given a SNP id, calculate the pairwise LD between all SNPs within window_size base pairs.
@@ -95,7 +95,7 @@ def calculate_window(snp, window_len=500000, population='CEPH', cutoff=0.7):
 	else:
 		return [snp]
 
-def get_lds_from_top_gwas(gwas_snp, ld_snps, population='CEPH'):
+def get_lds_from_top_gwas(gwas_snp, ld_snps, population='EUR'):
 	"""
 
 		For large numbers of SNPs, best to specify SNP region with chrom:to-from, e.g. 1:7654947-8155562
