@@ -42,19 +42,20 @@ def get(server, ext, data=None):
 		Return type: JSON object
 
 	"""
-	retries = 0
-
-	while True:
+	for retries in range(3):
 		if DEBUG:
 			sys.stderr.write("REST JSON Query: %s%s\n" % (server, ext))
 			start_time = time.time()
 
-		if data is None:
-			headers = { "Content-Type" : "application/json" }
-			r = requests.get(str(server)+str(ext), headers = headers)
-		else:
-			headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
-			r = requests.post(str(server)+str(ext), headers = headers, data = json.dumps(data))
+		try:
+			if data is None:
+				headers = { "Content-Type" : "application/json" }
+				r = requests.get(str(server)+str(ext), headers = headers, timeout=200)
+			else:
+				headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+				r = requests.post(str(server)+str(ext), headers = headers, data = json.dumps(data), timeout=200)
+		except requests.exceptions.ReadTimeout:
+			continue
 
 		if not r.ok:
 			sys.stderr.write("Failed to get proper response to query %s%s\n" % (server, ext) )
@@ -63,13 +64,13 @@ def get(server, ext, data=None):
 				sys.stderr.write("With data:\n" + repr(data) + "\n")
 			if 'Retry-After' in r.headers:
 				time.sleep(int(r.headers['Retry-After']))
-				retries += 1
-				continue
-			if r.status_code == 403:
-				time.sleep(600) # Sleep 10 minutes while server cools down
-				continue
-			r.raise_for_status()
-			sys.exit()
+			elif r.status_code == 403:
+				time.sleep(600) # Sleep 10 minutes while server calms down
+			elif r.status_code == 104 or r.status_code == 504:
+				time.sleep(60) # Sleep 1 minute while server cools down
+			else:
+				r.raise_for_status()
+			continue
 
 		if DEBUG:
 			sys.stderr.write("Time: %f\n" % (time.time() - start_time))
