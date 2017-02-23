@@ -210,7 +210,7 @@ class GWASCatalog(GWAS_source):
 		hits = hash['response']['docs']
 		return [
 			GWAS_Association(
-				pvalue = float(hit['pValueMantissa']) * 10**float(hit['pValueExponent']),
+				pvalue = max(float(hit['pValueMantissa']) * 10**float(hit['pValueExponent']), 4.9406564584124654e-324),
 				snp = hit['rsId'][0].strip(),
 				disease = Disease(name = hit['traitName_s'], efo = hit['shortForm'][0]),
 				source = self.display_name,
