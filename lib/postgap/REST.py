@@ -62,6 +62,7 @@ def get(server, ext, data=None):
 			sys.stderr.write("With headers:\n" + repr(headers) + "\n")
 			if data is not None:
 				sys.stderr.write("With data:\n" + repr(data) + "\n")
+			sys.stderr.write("Error code: %s\n" % r.status_code)
 			if 'Retry-After' in r.headers:
 				time.sleep(int(r.headers['Retry-After']))
 			elif r.status_code == 403:
