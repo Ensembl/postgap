@@ -61,6 +61,13 @@ Or an rsID:
 python POSTGAP.py --rsID rs10009124
 ```
 
+Or a manually defined variant:
+
+```
+python POSTGAP.py --coords my_variant 1 1234567 
+```
+
+
 Output
 ------
 
