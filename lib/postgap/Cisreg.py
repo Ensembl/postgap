@@ -335,13 +335,12 @@ class VEP(Cisreg_source):
 			return postgap.REST.get(server, ext, data = {"ids" : [snp.rsID for snp in chunk]})
 
 		except requests.exceptions.HTTPError as error:
-			if error.response.status_code == 400:
+			if error.response.status_code == 400 or error.response.status_code == 504:
 				if len(chunk) == 1:
 					return []
 				else:
 					return self.get(chunk[:len(chunk)/2]) + self.get(chunk[len(chunk)/2:])
-			else:
-				raise
+			raise
 				
 
 class Fantom5(Cisreg_source):
