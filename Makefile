@@ -90,6 +90,7 @@ endef
 .PHONY: 1000Genomes
 
 1000Genomes:
+	mkdir -p ${DEST_DIR}/1000Genomes/EUR
 	$(eval vcf_files := $(wildcard ${DEST_DIR}/raw/1000Genomes/*.vcf.gz))
 	$(foreach file, $(vcf_files), $(call process_1000Genomes_file, $(file)))
 	$(eval bcf_files := $(wildcard ${DEST_DIR}/1000Genomes/*.bcf))
