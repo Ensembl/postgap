@@ -136,7 +136,7 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, population='EUR'):
 	h.write("\n".join(str(snp.rsID) for snp in ld_snps))
 	h.close()
 	snp_file, snp_file_name = tempfile.mkstemp()
-	vcfcomm = "vcftools --gzvcf %s --snps %s --recode --maf 0.01 --min-alleles 2 --max-alleles 2 --out %s" % (region_file_name, rsID_file_name, snp_file_name)
+	vcfcomm = "vcftools --gzvcf %s --snps %s --recode --out %s" % (region_file_name, rsID_file_name, snp_file_name)
 	sys.stderr.write(vcfcomm + "\n")
 	subprocess.call(vcfcomm, shell=True)
 
