@@ -82,7 +82,7 @@ d_1000Genomes:
 define process_1000Genomes_file
 gzip -dc $(1) \
 | vcfkeepsamples - `cat ./preprocessing/EUR_samples.txt`\
-| vcftools -vcf - --maf 0.01 --min-alleles 2 --max-alleles 2 --recode --stdout \
+| vcftools --vcf - --maf 0.01 --min-alleles 2 --max-alleles 2 --recode --stdout \
 | bcftools convert -Ob \
 > ${DEST_DIR}/1000Genomes/EUR/`basename $(1) | sed -e 's/vcf.gz/bcf/'`;
 endef
