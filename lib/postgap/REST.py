@@ -63,8 +63,13 @@ def get(server, ext, data=None):
 			if data is not None:
 				sys.stderr.write("With data:\n" + repr(data) + "\n")
 			sys.stderr.write("Error code: %s\n" % r.status_code)
+
+			if retries == 2:
+				r.raise_for_status()
+
 			if 'Retry-After' in r.headers:
 				time.sleep(int(r.headers['Retry-After']))
+
 			elif r.status_code == 403:
 				time.sleep(600) # Sleep 10 minutes while server calms down
 			elif r.status_code == 104 or r.status_code == 504:
@@ -83,5 +88,5 @@ def get(server, ext, data=None):
 			raise
 
 	# Failed too many times
-	sys.exit()
+	assert False
 
