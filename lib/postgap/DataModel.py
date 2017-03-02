@@ -30,6 +30,7 @@ limitations under the License.
 
 import collections
 
+Region = collections.namedtuple("Region", ['chrom', 'start', 'end'])
 SNP = collections.namedtuple("SNP", ['rsID', 'chrom', 'pos'])
 Gene = collections.namedtuple("Gene", ['name', 'id', 'chrom', 'tss', 'biotype'])
 Disease = collections.namedtuple('Disease', ['name', 'efo'])

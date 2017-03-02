@@ -39,6 +39,7 @@ import postgap.LD
 import postgap.EFO
 import postgap.Ensembl_lookup
 import postgap.Globals
+import postgap.RegionFilter
 from postgap.Utils import *
 
 phenotype_cache = ()
@@ -170,7 +171,8 @@ def cluster_gwas_snps(gwas_snps, populations):
 		"Found %i locations from %i GWAS SNPs" % (len(gwas_snp_locations), len(gwas_snps))
 
 	preclusters = filter (lambda X: X is not None, [ gwas_snp_to_precluster(gwas_snp_location, populations) for gwas_snp_location in gwas_snp_locations ])
-	clusters = merge_preclusters(preclusters)
+	filtered_preclusters = postgap.RegionFilter.filter(clusters)
+	clusters = merge_preclusters(filtered_preclusters)
 
 	if postgap.Globals.DEBUG:
 		"Found %i clusters from %i GWAS SNP locations" % (len(clusters), len(gwas_snp_locations))
