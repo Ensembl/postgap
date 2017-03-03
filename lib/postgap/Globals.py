@@ -27,6 +27,7 @@ limitations under the License.
 	<http://www.ensembl.org/Help/Contact>.
 
 """
+from postgap.DataModel import Region
 
 DATABASES_DIR = None
 SPECIES = None
