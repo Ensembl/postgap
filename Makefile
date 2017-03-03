@@ -1,4 +1,4 @@
-DEST_DIR=databases_dir
+DEST_DIR=~/hps/postgap/databases
 
 default: download process
 download: create_dir d_GRASP d_Phewas_Catalog d_GWAS_DB d_Fantom5 d_DHS d_Regulome d_pchic d_1000Genomes
@@ -18,19 +18,20 @@ d_GRASP:
 	wget -nc https://s3.amazonaws.com/NHLBI_Public/GRASP/GraspFullDataset2.zip -qO ${DEST_DIR}/raw/GRASP.zip
 
 GRASP:
-	unzip -qc ${DEST_DIR}/raw/GRASP.zip | python preprocessing/pad_columns.py 70 | awk 'BEGIN {FS="\t"} $$11 < 1e-4' | python preprocessing/EFO_suggest.py 12 > ${DEST_DIR}/GRASP.txt
+	unzip -qc ${DEST_DIR}/raw/GRASP.zip | python preprocessing/pad_columns.py 70 | awk 'BEGIN {FS="\t"} $$11 < 1e-4' | python preprocessing/EFO_suggest.py 13 preprocessing/grasp_suggestions.txt preprocessing/mesh_suggestions.txt > ${DEST_DIR}/GRASP.txt
 
 d_Phewas_Catalog:
-	wget -nc http://phewas.mc.vanderbilt.edu/phewas-catalog.csv -qO ${DEST_DIR}/raw/Phewas_Catalog.csv
+	wget -nc http://phewascatalog.org/files/phewas-catalog.csv.zip -qO ${DEST_DIR}/raw/Phewas_Catalog.csv.zip
+	unzip -d ${DEST_DIR}/raw/ ${DEST_DIR}/raw/Phewas_Catalog.csv.zip
 
 Phewas_Catalog: 
-	cat ${DEST_DIR}/raw/Phewas_Catalog.csv | python preprocessing/csvToTsv.py | python preprocessing/EFO_suggest.py 3 > ${DEST_DIR}/Phewas_Catalog.txt
+	cat ${DEST_DIR}/raw/phewas-catalog.csv | python preprocessing/csvToTsv.py | python preprocessing/EFO_suggest.py 3 preprocessing/grasp_suggestions.txt preprocessing/mesh_suggestions.txt > ${DEST_DIR}/Phewas_Catalog.txt
 
 d_GWAS_DB:
 	wget -nc ftp://jjwanglab.org/GWASdb/old_release/GWASdb_snp_v4.zip -qO ${DEST_DIR}/raw/GWAS_DB.zip
 
 GWAS_DB:
-	unzip -qc ${DEST_DIR}/raw/GWAS_DB.zip | awk 'BEGIN {FS="\t"; OFS="\t"} NF > 5 {print $$1, $$2, $$3, $$4, $$5, $$6}' | python preprocessing/EFO_suggest.py 6 > ${DEST_DIR}/GWAS_DB.txt
+	unzip -qc ${DEST_DIR}/raw/GWAS_DB.zip | awk 'BEGIN {FS="\t"; OFS="\t"} NF > 5 {print $$1, $$2, $$3, $$4, $$5, $$6}' | python preprocessing/EFO_suggest.py 6 preprocessing/grasp_suggestions.txt preprocessing/mesh_suggestions.txt > ${DEST_DIR}/GWAS_DB.txt
 
 GWAS_Catalog:
 	wget https://www.ebi.ac.uk/gwas/api/search/downloads/alternative -qO ${DEST_DIR}/raw/GWAS_Catalog.txt

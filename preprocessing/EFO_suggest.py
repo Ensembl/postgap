@@ -29,6 +29,14 @@ import requests
 def main():
 	phenotype_column = int(sys.argv[1])
 	cache = dict()
+
+	# Preload cache with precomupted suggestions:
+	for filename in sys.argv[2:]:
+		file = open(filename)
+		for line in file:
+			items = line.strip().split('\t')
+			cache[items[0]] = items[1]
+
 	for line in sys.stdin:
 		# To comply with Unix standards, the column number is provided as 1-based on the command line
 		phenotype = str(line.strip().split('\t')[phenotype_column - 1])
@@ -58,7 +66,7 @@ def efo_suggest(term):
 
 	"""
 	server = 'http://www.ebi.ac.uk/spot/zooma/v2/api'
-	url_term = re.sub("%", "", term)
+	url_term = re.sub("%", "", term.decode('latin1').encode('utf8'))
 	url_term = re.sub(" ", "%20", url_term)
 	url_term = re.sub('\(', "", url_term)
 	url_term = re.sub('\)', "", url_term)
