@@ -171,7 +171,7 @@ def cluster_gwas_snps(gwas_snps, populations):
 		"Found %i locations from %i GWAS SNPs" % (len(gwas_snp_locations), len(gwas_snps))
 
 	preclusters = filter (lambda X: X is not None, [ gwas_snp_to_precluster(gwas_snp_location, populations) for gwas_snp_location in gwas_snp_locations ])
-	filtered_preclusters = postgap.RegionFilter.filter(clusters)
+	filtered_preclusters = postgap.RegionFilter.region_filter(preclusters)
 	clusters = merge_preclusters(filtered_preclusters)
 
 	if postgap.Globals.DEBUG:
