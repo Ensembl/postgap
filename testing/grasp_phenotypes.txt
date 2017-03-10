@@ -1,0 +1,721 @@
+Metabolites, in serum
+Metabolites, in urine
+Metabolites, in serum in prostate cancer
+Blood cell traits, in red blood cells
+N-glycosylation of IgG in plasma
+Metabolites, in serum in men
+Body mass index (BMI)
+Multiple traits (bipolar disorder, coronary artery disease, Crohn's disease, rheumatoid arthritis, T1D, T2D, hypertension)
+Chronic kidney disease (CKD) and renal traits
+Response to statin treatment (simvastatin, pravastatin, atorvastatin), change in cholesterol levels
+Urate (in serum), gout
+Lung function decline in adults with and without asthma
+Type II Diabetes Mellitus
+Transmission distortion
+Glucose homeostasis traits (fasting glucose, fasting insulin, HOMA-B, HOMA-IR)
+Obesity, childhood
+Adiponectin, in serum
+Suicide attempts in bipolar disorder patients
+Bone mineral density (BMD)
+Nonsyndromic striae distensae
+Uric acid levels, in serum
+Neutropenia or leukopenia in response to chemotherapeutic agents
+Multiple traits (lipids, glucose, obesity, blood pressure)
+Nicotine, smoking behavior
+Cognitive impairment induced by topiramate
+Response to gemcitabine or arabinosylcytosin in blood cell lines
+Bilirubin levels, in serum
+Blood cell counts and traits, in red blood cells
+HIV-1 viral load at set point
+Response to glucose and insulin
+Major depression, recurrent early onset
+Albuminuria, in urine
+Amyotrophic Lateral Sclerosis (ALS)
+Blood pressure and/or hypertension
+Blood cell counts, in white cells
+Valvular calcification and aortic stenosis
+Long chain n-3 polyunsaturated fatty acid levels, in plasma
+Hair, eye and skin pigmentation
+Cisplatin and carboplatin cytotoxicity, in blood cell lines
+Blood pressure, CVD RF and other traits (body mass index (BMI), waist:hip ratio, renin activity in plasma, aldosterone concentration in plasma, BNP levels in plasma, alcohol consumption)
+Post-operative nausea and vomiting
+Fatty acid levels, in plasma
+Maternally-mediated genetic effects and parent-of-origin effects on risk of orofacial clefting
+Alopecia (early-onset androgenetic alopecia)
+Chemotherapeutic response (cytabarine, 5'deoxyfluorouridine, carboplatin, cisplatin), in blood cell lines
+Antihypertensive response to an Angiotensin II Receptor Blocker
+Anti-cytomegalovirus antibody response
+IgE (total IgE) concentrations, plasma
+Coagulation factors and fibrin factor levels and ischemic stroke
+Bone mineral density, low-trauma fracture
+Adiposity traits
+Protein-C levels, in plasma
+Alzheimer's disease with psychotic symptoms
+Personality traits and mood states
+Cardiac structure and function measurements (LV mass, internal dimensions, wall size, systolic dysfunction, aortic root size, left atrial size)
+Coronary heart disease and related risk factors (LDL cholesterol, HDL cholesterol, hypertension, smoking, T2D)
+Circulating phospho- and sphingolipid concentrations
+Antidepressant efficacy in major depressive disorder
+Lipid level measurements, in plasma
+Butyrylcholinesterase activity, in serum
+Activated partial thromboplastin time (aPTT) and prothrombin time
+Cognition (information processing speed)
+Chronic kidney disease (CKD)
+Monoamine metabolite levels in cerebrospinal fluid
+Metabolites, in plasma
+Brain white matter hyperintensity
+ADHD
+Subjective response to d-amphetamine in healthy subjects
+Platelet count (PLT) and platelet volume (MPV)
+Androgen levels in men, serum
+Blood cell counts and traits, in red and white blood cells
+VLDL, LDL and HDL cholesterol particle size
+Liver enzyme concentrations (alanine aminotransaminase, alkaline phosphatase, gamme-glutamyl transferase), in plasma
+Circulating galectin-3 levels
+Multiple traits (eye color, freckles, hair color, hair curl, asparagus anosmia, photic sneeze reflex, handedness, footedness, attached earlobes, dental work, myopia, taste preference, motion sickness, astigmatism)
+Anthropometric traits (body mass index, waist to hip ratio, height, obesity grade)
+Brain derived neurotrophic factor levels, in serum
+Venous thrombosis
+Depressive affect
+Taxane response in lymphoblastoid cell lines and taxane-treated lung cancer survival
+Amyotrophic Lateral Sclerosis (ALS), sporadic
+t(11;14)(q13;q32) translocation in multiple myeloma
+Personality traits and mood states (depressive affects)
+Metabolites and sphingolipids, circulating concentrations
+Magnesium levels, in serum
+Nicotine, smoking cessation
+Creutzfeldt-Jakob disease and other prion disease variants
+HIV-1/AIDS progression
+IL-6, erythrocyte sedimentation rate, MCP-1, C-reactive protein (CRP) 
+Circulating estradiol, testosterone, and sex hormone-binding globulin in postmenopausal women
+Pulmonary fibrosis (fibrotic idiopathic interstitial pneumonias)
+Cognition (intelligence)
+Acute lung injury following major trauma
+Calcium levels, in serum
+Primary tooth eruption
+Radiation-induced damage on blood cell lines
+Liver cancer (hepatocellular carcinoma) in patients with chronic hepatitis B virus infection
+Alzheimer's disease, age at onset
+Cisplatin cytotoxicity, in blood cell lines
+Fasting glucose and insulin, and response to glucose in plasma
+Response to pegylated interferon-alpha and ribavirin treatment in chronic hepatitis C
+Response to TNF? inhibitors in patients with rheumatoid arthritis
+ECG (Electrocardiogram measurements), QT interval
+ADHD, inattention and hyperactivity-impulsivity tests
+Metabolic response to hydrochlorothiazide
+Nasion Position
+Taste perception
+Esophageal cancer (esophageal squamous cell carcinoma)
+Drug-induced liver injury (>200 drugs included)
+Hemoglobin levels, fetal hemoglobin levels in adults (HbF) by F cell levels
+Weight loss after Roux-en-Y gastric bypass surgery
+Dehydroepiandrosterone sulphate (DHEAS) levels, in serum
+N-glycan levels, in plasma
+Glaucoma (optic nerve degeneration in glaucoma)
+HIV-1 acquisition and viral load at set point
+Soluble leptin receptor (sOB-R) levels, in plasma
+Phytosterol levels, in serum
+Response to tocilizumab for the treatment of rheumatoid arthritis
+DNA methylation, in blood cell lines
+IgA deficiency (selective IgA deficiency)
+Fasting insulin; insulin resistance
+Gamma-glutamyl transferase (GGT) levels, in serum
+Breast cancer, BRCA1-positive 
+Pit-and-fissure- and smooth-surface carries
+Iron levels, in serum
+Abdominal subcutaneous and visceral adipose depots
+Nicotine smoking
+Matrix metalloproteinase (MMP-1) levels, in serum
+Myopia (high myopia)
+Aortic root diameter
+Health and aging, CVD and cancer age of onset
+Rheumatoid arthritis, cyclic citrullinated peptide (CCP) positive
+Epilepsy (genetic generalized epilepsies)
+Temperament in bipolar disorder
+Major depression, gender differences
+Second to fourth digit length ratio
+Ankle-brachial index (ABI)
+Fasting glycemic traits and insulin resistance
+Skin cancer (cutaneous melanoma)
+Response to antidepressants (selective serotonin reuptake inhibitors (SSRIs))
+Post-traumatic stress disorder (PTSD)
+Adaptation of normoxic and mild-hypoxic inhabitants
+Blood cell counts and other traits (platelet count (PLT), red cell count, white cell count, hemoglobin, urate, GGT, alkaline phosphatase, AST, ALT, creatinine kinase, total protein, albumin, blood urea nitrogen, serum creatinine, HDL cholesterol, triglycerides)
+Ferritin and soluble transferrin receptor levels, in serum
+Frontal cortex theta oscillations in alcoholism
+Behçet's disease
+Obesity-related traits (body mass index (BMI), weight)
+Leukemia (pediatric acute lymphoblastic leukemia)
+Beta-trace protein levels, in plasma
+Ventricular dysfunction after primary coronary artery bypass graft surgery
+Multiple sclerosis (brain lesion distribution in multiple sclerosis)
+Hypertension (essential hypertension)
+Fasting triglycerides, in plasma
+Trabecular and cortical volumetric BMD, bone microstructure
+Hippocampal volume, total cerebral volume, white matter hyperintensities in Alzheimer disease patients
+Cognitive decline, age-related rate of
+Concentrations of cancer antigen 19-9 (CA19-9), carcinoembryonic antigen (CEA) and ? fetoprotein (AFP)
+Central cornea thickness
+Statin-induced myopathy
+Age at menarche and age at natural menopause
+Salmonella induced pyroptosis in B-lymphoblastoid cell lines
+Bone mineral density (BMD), cortical density, in men
+Bipolar disorder, affective
+Biomarkers (liver function, butrylycholinesterase, CRP, ferritin, glucose, HDL cholesterol, insulin, LDL cholesterol, triglycerides, uric acid), body mass index (BMI)
+Protein quantitative traits (42 protein levels in fasting serum and plasma: including C-reactive protein (CRP), IL6R, IL18, Lipoprotein A (LPA), GGT, IL1RN, TNFa, adiponectin, albumin, alkaline phosphatase, fibrinogen, ferritin, hemoglobin, insulin, leptin, SHBG, transferrin, thyroid stimulating hormone, MCP1)
+Lipoprotein-associated phospholipase A2 mass and activity; coronary heart disease
+Lung function with asthma
+Blood pressure, CVD RF and other traits (body mass index (BMI), waist:hip ratio, pulse rate, bone mineral density (BMD))
+Breast and ovarian cancer risk in BRCA1 carriers
+Fatty liver and alanine aminotransferase levels (ALT)
+ECG (Electrocardiogram measurements), PR interval, QRS duration
+Response to statin treatment (atorvastatin), change in cholesterol levels
+Paget's disease of bone
+Smallpox vaccine cytokine responses
+Lp-PLA2 activity and mass
+Gallstone disease
+Transferrin glycosylation, in serum
+Testicular germ cell carcinoma
+Methotrexate clearance in acute lymphoblastic leukemia
+Tau protein levels, in cerebrospinal fluid (CSF)
+Tuberculosis (early age of onset)
+Warfarin dose
+Insulin traits (Insulin sensitivity index (ISI), Insulin disposition index (IDI))
+Ferritin levels, in serum
+Hepatitis C virus-induced liver fibrosis
+Body mass index (BMI) in adolescents and young adults
+Vascular endothelial growth factor (VEGF) levels, in serum
+Leukemia (childhood acute lymphoblastic leukemia relapse)
+Fibrinogen levels, in plasma
+Antibody response to anthrax vaccine adsorbed
+Restenosis after percutaneous coronary intervention (PCI)
+Cognition, memory (episodic memory)
+Treatment responses in severe sepsis
+IL-6 levels
+Blood pressure, CVD RF and other traits (body mass index (BMI), height, waist circumference, weight, leptin, percent body fat, HDL cholesterol, LDL cholesterol, total cholesterol, triglycerides, fasting glucose, thyroid stimulating hormone, C-reactive protein (CRP))
+Cortisol secretion, in saliva
+Asthma (adult)
+Male fertility (family size, birth rate)
+Lipid level measurements, blood pressure, albumin, CRP levels, fibrinogen, uric acid, white cell count, FII, FIII, vWF, glucose, insulin, waist circumference
+Amyloid A levels, in serum
+Acetaminophen toxicity in blood cell lines
+Alcohol and nicotine co-dependence
+Lung cancer (interstitial lung disease in gefitinib-treated non-small-cell lung cancer)
+Comorbid depressive syndrome and alcohol dependence
+Blood biomarkers in chronic obstructive pulmonary disease
+Psychiatric disorders (Autism, ADHD, Bipolar disorder, Schizophrenia, Depression)
+Frontotemporal lobar degeneration with TDP-43 inclusions, in brain
+C-reactive protein (CRP) levels, in plasma, in women
+Bipolar disorder with irritable or elated mania in severe episodes
+C-reactive protein (CRP)
+ADHD and conduct disorder symptoms
+Optic nerve assessment
+C-reactive protein (CRP) levels, in serum
+Personality (temperament scales)
+Differential cardiovascular event reduction by pravastatin therapy
+Major depression, recurrent
+Lipoprotein A [Lp(a)] levels, in plasma
+Hypertension and blood pressure traits
+Asthma response to bronchodilators
+Hemoglobin (HbA1c, glycated hemoglobin levels)
+Bone mineral density (BMD), in women
+Irinotecan-related severe toxicities in patients with advanced non-small-cell lung cancer
+Response to clopidogrel (anti-platelet), variation in
+Brain white matter integrity
+Soluble ICAM-1 levels, in women
+Longevity, exceptional
+Lipoprotein A [Lp(a)] levels in plasma, cardiovascular disease and mortality
+Heart failure with dilated cardiomyopathy
+Central corneal thickness and keratoconus
+Uterine leiomyomata
+Carotenoid and tocopherol levels, in plasma
+Antineutrophil cytoplasmic antibody (ANCA)-associated vasculitis
+Primary rhegmatogenous retinal detachment
+Polyunsaturated fatty acid levels, in plasma
+Nephropathy (Immunoglobulin A (IgA) nephropathy)
+Cognitive decline (rate in Alzheimer's disease)
+Warfarin dose (acenocoumarol)
+Response to anti-TNF treatment in arthritis
+Metabolic traits (triglycerides, HDL cholesterol, LDL cholesterol, fasting plasma glucose, albumin, blood urea nitrogen, gamma-glutaryl transpeptidase, alanine aminotransferase, aspartate aminotransferase)
+Metabolic side effects to antipsychotic drugs
+Brain aging, MRI and cognition phenotypes
+Bone mass and geometry
+Height (pubertal growth)
+IgE levels, in serum
+Copper, selenium and zinc levels
+Colorectal adenomas
+Blood cell traits (red blood cell count, hemoglobin, hematocrit)
+Tanning ability
+Schizophrenia with formal thought disorder (disorganized speech)
+Antibody titer to hepatitis B vaccination
+Adiponectin levels, in plasma
+Multiple sclerosis, glutamate concentrations in brains in
+Chronic kidney disease (CKD) and kidney stones
+Bone thickness, bone strength, osteoporotic fracture risk
+Alzheimer's disease, MRI atrophy as a QTL for
+Uterine fibroids (benign tumors)
+Schizophrenia and bipolar disorder (joint pleiotropy)
+Parkinson's disease motor and cognitive outcomes
+Iris patterns
+ECG (Electrocardiogram measurements), PR interval
+Childhood dental caries
+Breast cancer in males
+Congenital heart malformations (sporadic non-syndromic)
+Aspirin-exacerbated respiratory disease
+vWF levels, in plasma
+Left ventricular (LV) wall thickness
+Asthma, toluene diisocynate induced
+Androgenic alopecia (Male pattern baldness)
+Subclinical atherosclerosis (coronary artery calcium, abdominal artery calcium, ankle-brachial index, carotid intimal media thickness)
+SSRI/SNRI-induced sexual dysfunction in depression
+Fibrinogen (gamma fibrinogen)
+Cerebrospinal fluid tau
+93 circulating phenotypes
+Type II Diabetes Mellitus (gestational diabetes)
+Lipoprotein A [Lp(a)] levels and coronary artery disease
+ECG (Electrocardiogram measurements), RR interval
+Antisocial behavior (adult)
+Response to treatment (fludarabine, chlorambucil, combination) in chronic lymphocytic leukemia
+Polycystic ovary syndrome through obesity-related condition
+Lung cancer, survival in non-small cell lung carcinoma with platinum-based chemotherapy
+Longevity and age-related phenotypes (age at menopause, walking speed, biological age)
+Gender
+Alcohol withdrawal symptoms
+ADD
+Vitamin D concentrations
+Thyrotropin and thyroid function, in serum
+Lymphoma subtypes
+Lung cancer in never smokers
+Liver cancer (hepatocellular carcinoma), progresstion to with chronic viral hepatitis
+Hoarding behavior
+Carotid artery intimal-media thickness
+Response to methylphenidate treatment
+Natural anticoagulant inhibitors and protein C anticoagulant pathway in venous thrombosis, in plasma
+Lung function phenotypes
+Lipid measurements and other quantitative traits (in serum: sodium, potassium, chloride, urea, creatinine, calcium, albumin, GGT, glucose, urate, total cholesterol, LDL cholesterol, HDL cholesterol, triglycerides; in urine: sodium, potassium, creatinine, albumin)
+Breast cancer meta
+Suicidal ideation with antidepressant treatment
+Pre-eclampsia
+Kidney function and endocrine traits (urinary albumin, creatinine, cystatin-C, thyroid stimulating hormone), in serum and in urine
+ECG (Electrocardiogram measurements), QT interval, PR interval, RR interval, Heart rate variability
+ECG dimensions, brachial artery endothelial function, treadmill exercise responses
+Blood phenotypes and cell counts (fibrinogen, FVII, PAI1, vWF, tPA, D-dimer, platelet aggregation, viscosity, hemoglobin, red blood cell counts)
+Alpha-tocopherol after vitamin E supplementation in men, serum
+Metabolic syndrome (waist circumference, fasting glucose, HDL cholesterol, triglycerides, blood pressure)
+Chronic obstructive pulmonary disease (COPD), smoking behavior in
+Bone mineral density (hip), in women
+Pemphigus vulgaris
+Interleukin levels (IL10, IL1Ra, IL6), in plasma
+HIV-1 non-progression (untreated, long term)
+Hematological toxicities in cancer patients receiving gemcitabine therapy
+Biomarkers (natriuretic peptides, vitamin K, vitamin D, CD40L, osteoprotegerin, P-selectin, TNFR2, TNFa, liver function, osteocalcin, CRP, IL6, sICAM, MCP1, myelperoxidase), in plasma or serum
+Response to treatment in pediatric acute lymphoblastic leukemia
+Prostate cancer, advanced
+ECG (Electrocardiogram measurements), QRS interval
+Paclitaxel sensitivity in NCI60 cancer cell lines
+Epirubicin-induced leukopenia in cancer patients
+Bone mineral traits, uni and bivariate analyses, in men
+Albumin:globin ratio, serum
+Suicidal ideation with antidepressant (escitaloprim, nortriptyline) treatment
+Stroke, large vessel ischemic
+Obesity-related traits (body mass index (BMI), waist circumference, weight change, height, adiposity)
+Fasting proinsulin levels in non-diabetics
+Breast cancer (ER-positive) and post-menopausal estradiol concentrations, in plasma
+Selenium concentration, serum
+Lung cancer (squamous cell carcinoma)
+Heart rate response to exercise training
+Sickle cell anemia, severity
+Protein C levels and protein S levels, in plasma
+Diabetes in cystic fibrosis
+CVD outcomes (CVD, MI, stroke, CHD death, atrial fibrillation, heart failure)
+Cognitive decline (nonpathological)
+Body mass index (BMI) and asthma
+Type I Diabetes, autoantibody positivity in
+Plasma uric acid level in obese and never-overweight individuals
+Major depression (age of onset)
+Lung cancer, survival in small cell lung cancer treated with irinitecan and cisplatin
+Creatinine level, in serum
+Adipocyte fatty acid-binding protein concentration, in serum
+Testicular dysgenesis syndrome
+Fasting glucose, in plasma
+Coronary artery and aortic artery calcification
+Carotid-femoral pulse wave velocity
+Antibody response to smallpox vaccine
+Amygdala activation, in youths, with and without bipolar disorder
+Systemic lupus erythematosus, in women
+Obesity-related traits, body mass index (BMI), blood pressure
+IFN? response to smallpox vaccine
+Cytabarine toxicity in blood cell lines
+Prostate-specific antigen (free-to-total, %fPSA), in serum
+ECG (Electrocardiogram measurements), QT interval, PR interval, QRS duration, Heart rate variability
+Age at menopause (early menopause)
+Metabolic syndrome (HDL cholesterol, triglycerides, plasma glucose, waist circumference, systolic and diastolic blood pressure)
+Colorectal and prostate cancer risk
+Circulating vitamin D levels in children with asthma
+Breast cancer, hormonal receptor-positive
+Asthma response to inhaled corticosteroids
+Age at natural menopause
+Warfarin responsiveness (phenprocoumon)
+Response to atorvastatin
+Response to antidepressants (escitaloprim, nortriptyline)
+Nonobstructive Azoospermia
+Major depression, side-effects of antidepressant treatment
+LDL cholesterol in genotype-1 chronic hepatitis C
+Activated partial thromboplastin time (aPTT) and activated protein C resistance
+Theta band oscillations and alcohol dependence
+Stroke in sickle cell anemia patients
+Obesity traits in postmenopausal women
+Lung cancer, prognosis in advanced non-small cell lung carcinoma with platinum-based chemotherapy
+Lung cancer, non-small cell lung cancer prognosis
+Antidepressant response in major depressive disorder
+Prostate-specific antigen levels in men, in serum
+Platelet response, antiplatelets and cardiovascular outcomes
+Lactate dehydrogenase, in serum
+Homocysteine levels, in plasma, in women
+Hemoglobin A2 (HbA2) levels
+Congenital heart malformations (with septal, obstructive and cyanotic defects)
+Chemerin levels, in plasma
+Breast cancer, ER negative
+Advanced age-related macular degeneration subtypes
+Warfarin responsiveness
+Platelet aggregation, pre-aspirin and post-aspirin
+Low thyroid-stimulation hormone (TSH) levels and thyroid cancer
+Cytokine responses to Pam(3)CSK(4) (N-palmitoyl-S-dipalmitoylglyceryl Cys-Ser-(Lys)(4)) in blood
+Asthma exacerbation
+Alcohol craving
+Wheezing after influenza vaccination in children
+Renal sinus fat accumulation
+Progranulin levels, in plasma
+Obesity, early onset in children and adolescents
+Lamotrigine- and phenytoin-induced hypersensitivity reactions
+Glaucoma (normal tension glaucoma)
+Bipolar disorder, age of onset in
+ADHD in adults
+Osteoporotic fracture
+Metabolic syndrome (HDL cholesterol, plasma glucose, T2D, waist to hip ratio, diastolic blood pressure)
+DNA methylation in blood
+Bone mineral density in premenopausal women
+Alcohol dependence in bipolar cases and non-bipolar controls
+Addiction phenotypes (alcohol, nicotine, marijuana, cocaine, opiates, other drugs)
+Response to treatment and survival on dialysis in T2D patients
+Osteoarthritis (knee), in women
+Dental caries in permanent dentition
+Cognition (childhood intelligence)
+ADHD, methylphenidate treatment response in
+Soluble E-selectin levels, in serum
+Rheumatoid arthritis, anti-TNF response in 
+Prostate cancer mortality
+Homocysteine levels, in plasma
+Hepatitis B virus (HBV) clearance
+Glaucoma, normal tension
+Breast cancer, BRCA2-positive 
+Urinary symptoms following radiotherapy for prostate cancer
+Tremors, antipsychotic-induced
+Sleep and circadian phenotypes
+Bivariate analysis of femoral neck bone mineral density and age at menarche
+Autoimmune thyroid disease (Grave's disease and Hashimoto's thyroiditis)
+Age-related cataract (ARC) and Alzheimer disease (AD)
+Troponin levels (highly sensitive cardiac troponin-T levels), in plasma
+Schizophrenia with negative symptoms
+Response to antidepressants (sustained antidepressant response)
+Lp-PLA(2) mass and activity at baseline and after 12 months of rosuvastatin therapy
+FVII levels
+Crohn's disease (earlier required surgery)
+Cognition with anti-psychotic treatment
+Subcutaneous adipose tissue volume in HIV-infected men
+Response to statins (simvastatin, lovastatin) in NCI60 cancer cell lines
+Nicotine, smoking quantity
+Nicotine dependence, cigarettes per day
+Major depression (suicidal thoughts and behavior)
+Interleukin levels (IL18 levels)
+Esophageal cancer (esophageal squamous cell carcinoma) survival
+ECG (Electrocardiogram measurements), QRS duration
+Drug-induced liver injury with flucloxacillin treatment
+Dabigatran plasma levels
+Circulating haptoglobin levels
+Brain microstructure; intellectual performance
+Body mass index (BMI), height, weight, waist circumference
+Aging successfully (longevity and low disease burden)
+Upper airway tract cancer
+Toxicity after 5-fluorouracil or FOLFOX administration for colorectal cancer
+HIV-1 progression to AIDS and death
+Height (in Pygmies)
+Gains in maximal O(2) uptake (VO(2max)) after exposure to a standardized 20-wk exercise program
+Fibrinogen levels, in plasma, in women
+CVD risk factors and quantitative traits (blood pressure, heart rate, LDL cholesterol, HDL cholesterol, total cholesterol, triglycerides, glucose, insulin, height, weight, waist circumference)
+Soluble ICAM1 (sICAM) levels, in plasma, in women
+Podoconiosis
+Obesity, menopause
+Monocyte colony-forming units (CFUs)
+Liver cancer (hepatocellular carcinoma)
+Heart failure risk and mortality
+Eruption of permanent teeth
+Circulating PCSK9 Levels
+Circulating levels of plasminogen activator inhibitor-1 (PAI-1)
+CD4:CD8 T cell ratios
+Brain neural connectivity
+Blood pressure, early onset hypertension
+Azoospermia and oligozoospermia
+Visceral adipose tissue-derived serine protease inhibitor (vaspin)
+Soluble E-selectin levels, in plasma, in women
+Renal cancer
+Lymphoma (Hodgkin's lymphoma and Epstein-Barr virus status-defined subgroups)
+HIV-1 (efavirenz pharmacokinetics)
+HDL cholesterol and triglyceride levels, in plasma
+Glaucoma-related traits
+Pancreatic cancer, survival with gemcitabine treatment
+Leukemia, T-cell recognition in patients
+Hypothyroidism and thyroid conditions
+Heart failure (incident risk)
+Fasting insulin processing and secretion in non-diabetics
+Coronary artery lesions in Kawasaki disease
+Atypical cytochrome P450 3A4 (CYP3A4) enzyme activity
+Asthma, aspirin-intolerant
+Antipsychotic drug-induced weight gain, severe
+Alcohol-related and sporadic pancreatitis
+Ventricular fibrillation in acute MI
+Telomere length (mean telomere length)
+Sex hormone-binding globulin (SHBG) concentrations
+Schizophrenia symptoms (positive, negative/disorganized, mood)
+Response to fenofibrate treatment on inflammation biomarkers
+Prostate cancer gene 3 (PCA3) mRNA levels
+Placental abruption
+Obesity-related traits (body mass index (BMI), weight, hip circumference)
+Multiple traits (coronary heart disease, T2D, LDL cholesterol, HDL cholesterol)
+Midregional-proadrenomedullin and C-terminal-pro-endothelin-1, in plasma
+HIV-1, mother to child transmission
+Heart failure mortality among adults
+HDL particle features
+EEG measurements, in brain
+ECG (Electrocardiogram measurements), PR interval, QRS interval, QTc interval
+Calcium intake levels and metabolic syndrome
+Response to antipsychotics in schizophrenia (treatment refractory)
+Primary tooth development during infancy
+Opioid sensitivity in healthy subjects
+Keratoconus 
+D-dimer levels, in plasma
+Cortical thickness, in brain
+Schizophrenia and brain fMRI during sensorimotor tasks
+Ocular axial length and high myopia
+Interferon-related cytopenia in hepatitis C
+Inter-adventitial common carotid artery diameter
+Inflammatory demyelinating disease
+IgG index in multiple sclerosis
+Carotid atherosclerosis in HIV-infected men
+Paraoxonase and arylesterase activities in serum
+Coagulation factor levels (FVII, FVIII, vWF), in plasma
+Chewing tobacco associated oral cancers
+Brain size
+Bipolar disorder (mood-incongruent psychotic bipolar disorder)
+Beta-2 microglobulin, in plasma
+Adolescent idiopathic scoliosis, in women
+Skin naphthyl-keratin adduct levels in workers exposed to naphthalene
+Sickle cell anemia total bilirubin and cholelithiasis risk
+Response to citalopram in major depressive disorder
+Periodontal pathogen colonization
+Parkinsonism in schizophrenia patients, antipsychotic-induced
+Obesity-related traits (body mass index (BMI), weight, hip circumference, waist circumference, brachial circumference, height)
+Lung function decline in mild to moderate chronic obstructive pulmonary disease
+Lung cancer in never-smoking women
+Hypertension with short sleep duration
+Height and body mass index (BMI)
+Fenofibrate effects on circulating adiponectin
+End-stage renal disease (ESRD), non-diabetic
+Cataracts (diabetic cataract)
+Breast cancer, adverse effects to aromatase inhibitors
+Birth weight, length, head circumference and fat mass
+Anti-cyclic citrullinated peptide titer
+Thyroid volume and goiter risk
+Response to antidepressants (citalopram-induced side effects)
+Peripartum cardiomyopathy
+Neuropsychological treatments and metabolic and cardiovascular risk factors (HDL cholesterol, BMI)
+Height, pubertal growth in
+Glaucoma (central corneal thickness in primary open-angle glaucoma)
+Cystic fibrosis with meconium ileus
+Cystic fibrosis, severity of
+Cardiac structure and systolic function
+Breast cancer risk
+Bipolar disorder with seasonal pattern mania
+Asthma (childhood asthma, age at onset)
+Recipient kidney allograft function
+Psoriasis risk prediction
+Multiple cancer types (lung cancer, noncardia gastric cancer, esophageal squamous-cell carcinoma)
+Left ventricular hypertrophy by electrocardiogram (ECG)
+Gastric cancer (diffuse-type gastric cancer)
+Breast cancer, lapatinib-induced hepatotoxicity in
+Bleomycin sensitivity, in blood samples
+Bisphosphonate-related osteonecrosis of the jaw
+Autism spectrum disorders with language delay
+Atopy, with and without asthma
+Antipsychotic treatment outcomes
+Amygdala reactivity
+Primary nonsyndromic vesicoureteric reflex
+Lipoprotein A [Lp(a)] levels in plasma
+Kidney stone disease
+Intracranial aneurysm, sporadic
+Insulin like growth factor levels
+Disordered gambling
+Confectionary intake
+Cell-Free DNA, serum
+Carbamazepine ADRs
+Brain A? levels
+Bone mineral density (BMD) and osteoporosis-related phenotypes
+Response to glucose in plasma
+Response to antipsychotics (olanzapine, quetiapine, risperidone, ziprasidone, perhpenazine)
+Platelet volume (MPV)
+Human intelligence or general cognitive ability in ADHD families
+HIV-associated neurocognitive disorders
+HIV-1 infection (development of cross-reacting neutralizing antibodies)
+Hemoglobin levels, in serum
+Compressive strength index (CSI) and appendicular lean mass (ALM)
+Breast cancer survival (early-onset breast cancer)
+Breast cancer, clinical outcomes of adjuvant tamoxifen therapy
+Bone mineral density (BMD) (wrist)
+Antithrombin, in plasma
+Adiponectin, in plasma
+Vitamin E, circulating levels
+Vitamin D (25(OH)D), circulating levels
+Skin cancer (cutaneous basal cell carcinoma and squamous cell carcinoma)
+Platelet thrombus formation under high shear stress
+Neurofibrillary tangles in non-demented elderly subjects, in brain
+Neurodevelopmental phenotypes at four-year follow-up following cardiac surgery in infancy
+Hepcidin, in serum
+FSH levels, anti-Mullerian hormone levels, in serum
+Essential hypersomnia
+C-reactive protein (CRP) and white blood cell (WBC)
+Colorectal cancer, efficacy of capecitabine, oxaliplatin and bevacizumab in metastatic colorectal cancer
+Chronic widespread pain
+B-vitamin level (Vitamin B6, Vitamin B12) concentrations, folate and homocysteine, in serum
+Astigmatism
+Asthma (acute bronchodilator response)
+Antipsychotic-induced tardive dyskinesia
+Activated partial thromboplastin time (aPTT), in blood
+?(2) -GPI levels, in plasma
+Type I Diabetes, serum ZnT8 autoantibody levels in
+Triglycerides levels, in serum, in men
+Statin-induced (cerivastatin) rhabdomyolysis
+Spontaneous resolution of hepatitis C virus
+Soluble P-selectin levels and soluble ICAM-1 levles
+Ovarian follicle number and menopause
+Osteoarthritis (hip) and joint-space width (cartilage thickness)
+Metabolite concentrations, gender-specific, in serum
+Colorectal cancer, severe oxaliplatin-induced chronic peripheral neuropathy in
+Brain infarcts, covert MRI-defined
+Blood group types in women
+Anxiety (childhood anxiety)
+Vitamin B12, in serum
+Testosterone concentration in men, in serum
+Skin cancer (cutaneous nevi and melanoma risk)
+Lung cancer, survival in non-small cell lung carcinoma in never smokers
+Lung cancer, survival in advanced non-small cell lung cancer with carboplatin and paclitaxel treatment
+Lung cancer (lung adenocarcinoma)
+Idiopathic premature ovarian failure
+ECG (Electrocardiogram measurements), early repolarization pattern
+Cognitive impairment without dementia
+Breast cancer, sporadic post-menopausal 
+Breast cancer risk in Ashkenazi Jewish women without BRCA1/2 mutations
+Bone mineral density of forearm
+Schizophrenia, treatment response to risperidone
+Phosphorous concentrations, in serum
+Nicotine dependence, relapse
+Metabolites related insulin sensitivity in non-diabetics, in plasma
+Lung cancer (non-small cell lung cancer), hypertriglyceridemia with bexarotene treatment of 
+Late rectal bleeding following chemotherapy for prostate cancer
+Human papilloma virus seropositivity
+Erectile dysfunction (ED) among prostate cancer patients treated with radiation therapy
+DNA methylation (allele-specific methylation), in blood cell lines
+Adiponectin, high molecular weight, in serum
+YKL-40 levels, in serum
+Response to treatment with analgesics (midazolam, lidocaine)
+Prostate cancer and Type II Diabetes Mellitus
+Plasminogen activator inhibitor-1 (PAI1) levels, in plasma
+Paclitaxel-induced sensory peripheral neuropathy
+Obesity traits (body mass index (BMI), total fat mass), blood pressure
+Neuroblastoma (in low-risk cases)
+Monocyte chemoattractant protein-1 (MCP-1) in obese children
+Lung cancer (lung adenocarcinoma stage)
+IgA levels, in serum
+Hepatic adverse events with thrombin inhibitor ximelagatran
+Fetal growth and birth weight
+Effectiveness of iloperidone treatment in schizophrenia
+ECG (Electrocardiogram measurements), QT interval change with iloperidone treatment in schizophrenia
+Drug-induced liver injury with amoxicillin-clavulanate treatment
+Cognition, memory (short term memory)
+Blood cell count (monocyte count)
+Bipolar disorder, personality traits within
+Bicuspid aortic valve
+Anxiety spectrum disorders
+Perception of the odorants androstenone and galaxolide
+Oxidized LDL cholesterol levels
+Ovarian response to FSH stimulation in IVF
+Opiates addiction
+Lypmhoma (nodular sclerosis Hodgkin lymphoma)
+Implantable cardioverter-defibrillator activation with life-threatening arrhythmias
+IgM, in serum
+IgG level, in serum
+Hypertension, salt-sensitive
+Factor XI Level and activated partial thromboplastin time (aPTT), in plasma
+Exercise participation
+Equol producers
+Circulating resistin levels
+Chronic hepatitis B progression
+Cataracts in T2D
+Cardiovascular disease events in migraineurs
+Breast cancer risk related to menopausal hormone therapy
+Adiponectin levels in women
+Acute lung injury
+?2-adrenoceptor-mediated vasoconstriction
+Vitamin A (retinol), circulating levels
+Visual cortical surface area
+Tamsulosin hydrochloride pharmacokinetics in benign prostatic hyperplasia
+Suicidal ideation with citalopram treatment
+Stroke, atherothrombotic
+Soluble CD14
+Skin cancer (basal cell carcinoma)
+Sickle cell anemia (haemolytic anemia)
+Selenium resistance in NCI60 cancer cell lines
+Lung cancer (DNA-repair capacity in lung cancer)
+ECG (Electrocardiogram measurements), QT interval prolongation with antipsychotic treatment
+Drug response to interferon-beta therapy in multiple sclerosis (MS)
+Coronary heart disease (incident CHD)
+Cognitive function, normal and in bipolar disorder and schizophrenia
+Cardiovascular disease adverse events in renal patients treated with calcineurin inhibitors
+Blood cell count (neutrophil count)
+Vitamin B12 levels, in plasma, in women
+Ulcerative colitis, refractory
+Temozolomide response in lymphoblastoid cell lines
+Suicide, with and without major depression
+Skin cancer (cutaneous basal cell carcinoma)
+Response to glucose and GLP-1-infusion on insulin secretion
+Pain relief with opioid treatment
+Nevus count
+LDL cholesterol, coronary artery calcification
+Cognition (mathematical ability)
+Ceruloplasmin levels, in serum
+Angiotensin-converting enzyme (ACE) activity, in serum
+Anemia, ribavirin-induced in hepatitis C treatment
+Alcohol consumption (heavy)
+Trichophyton tonsurans susceptibility
+Systemic lupus erythematosus, serologic and cytokine (interferon gamma) profiles in serum in
+Ovarian cancer survival
+Nonsyndromic sagittal craniosynostosis
+Lung function in textile workers with endotoxin exposure
+Hypertropic cardiomyopathy
+Facial photoaging
+ECG (Electrocardiogram measurements), T-Peak to T-End interval
+Colorectal cancer (drug response in metastatic colorectal cancer)
+Chronic fatigue syndrome
+Bipolar disorder with negative mood delusions
+Autism, gender differences
+Antisocial behavior
+Age-related macular degeneration (AMD), wet neovascular 
+5-HTT serotonin transporter levels, in brain
+Thiazolidinedione-induced edema
+Sickle cell anemia with elevated tricuspid regurgitation velocity
+Malarial infection
+HIV-1 acquisition
+Cognition, memory (memory task performance)
+Cognition, early reading ability
+Aspirin hydrolytic activity, in plasma
+Aspartate aminotransferase (AAT) levels, in serum
+Asparaginase sensitivity in blood cell lines
