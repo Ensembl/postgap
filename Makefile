@@ -1,4 +1,4 @@
-DEST_DIR=~/hps/postgap/databases
+DEST_DIR=./databases
 
 default: download process
 download: create_dir d_GRASP d_Phewas_Catalog d_GWAS_DB d_Fantom5 d_DHS d_Regulome d_pchic d_1000Genomes
