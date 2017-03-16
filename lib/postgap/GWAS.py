@@ -211,12 +211,14 @@ class GWASCatalog(GWAS_source):
 		return [
 			GWAS_Association(
 				pvalue = max(float(hit['pValueMantissa']) * 10**float(hit['pValueExponent']), 4.9406564584124654e-324),
-				snp = hit['rsId'][0].strip(),
+				snp = rsID,
 				disease = Disease(name = hit['traitName_s'], efo = hit['shortForm'][0]),
 				source = self.display_name,
 				study = "PMID" + hit['pubmedId']
 			)
 			for hit in hits
+			for rsID_string in hit['rsId']
+			for rsID in rsID_string.strip().split(' x ')
 		]
 
 class GRASP(GWAS_source):
