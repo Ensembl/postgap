@@ -76,13 +76,27 @@ class GWASCatalog(GWAS_source):
 		server = 'http://www.ebi.ac.uk'
 		url_term = re.sub(" ", "%20", term)
 		ext1 = '/gwas/api/search/moreresults?q="%s"&max=0&facet=association&pvalfilter=&orfilter=&betafilter=&datefilter=&sort=' % (url_term)
-		hash = postgap.REST.get(server, ext1)
+		for count in range(3):
+			try:
+				hash = postgap.REST.get(server, ext1)
+				break
+			except:
+				if count == 2:
+					raise
+
 		try:
 			count = int(hash['response']['numFound'])
 		except:
 			print "Failed on %s%s" % (server, ext1)
+
 		ext2 = '/gwas/api/search/moreresults?q="%s"&max=%i&facet=association&pvalfilter=&orfilter=&betafilter=&datefilter=&sort=' % (url_term, count)
-		hash = postgap.REST.get(server, ext2)
+		for count in range(3):
+			try:
+				hash = postgap.REST.get(server, ext2)
+				break
+			except:
+				if count == 2:
+					raise
 		"""
 			{
 			  "_version_": 1526208365253886000,
