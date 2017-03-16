@@ -135,6 +135,29 @@ def get_snp_locations(rsIDs):
 		Returntype: [ SNP ]
 
 	"""
+	if len(rsIDs) == 0:
+		return []
+
+	res = get_snp_locations_simple(rsIDs) 
+
+	if len(res) == 0:
+		if len(rsIDs) == 1:
+			return []
+		else:
+			return get_snp_locations(rsIDs[:len(rsIDs)/2]) + get_snp_locations(rsIDs[len(rsIDs)/2:])
+	else:
+		return res
+	
+
+
+def get_snp_locations_simple(rsIDs):
+	"""
+
+		Get SNP details from rsID
+		* [ string ]
+		Returntype: [ SNP ]
+
+	"""
 
 	server = ENSEMBL_REST_SERVER
 	ext = "/variation/%s?content-type=application/json" % (postgap.Globals.SPECIES)
