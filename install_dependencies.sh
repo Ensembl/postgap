@@ -49,10 +49,10 @@ pip install pybedtools==0.7.4 requests pandas
 
 # Plink v1.07
 git clone https://github.com/chrchang/plink-ng.git
-cd plink-ng
+cd plink-ng/1.9
 mv Makefile.std Makefile
 sed -e 's/^NO_LAPACK =/NO_LAPACK = 1/' -i Makefile
 sed -e 's@^// #define NOLAPACK@#define NOLAPACK@' -i plink_common.h
 ./plink_first_compile
-cp plink ../bin
-cd ..
+cp plink ../../bin
+cd ../..
