@@ -75,7 +75,7 @@ class GWASCatalog(GWAS_source):
 	def query(self, term):
 		server = 'http://www.ebi.ac.uk'
 		url_term = re.sub(" ", "%20", term)
-		ext1 = '/gwas/api/search/moreresults?q="%s"&max=0&facet=association&pvalfilter=&orfilter=&betafilter=&datefilter=&sort=' % (url_term)
+		ext1 = '/gwas/api/search/moreresults?q="%s"&max=0&facet=association&pvalfilter=&orfilter=&genomicfilter=&betafilter=&datefilter=&sort=' % (url_term)
 		for count in range(3):
 			try:
 				hash = postgap.REST.get(server, ext1)
@@ -89,7 +89,7 @@ class GWASCatalog(GWAS_source):
 		except:
 			print "Failed on %s%s" % (server, ext1)
 
-		ext2 = '/gwas/api/search/moreresults?q="%s"&max=%i&facet=association&pvalfilter=&orfilter=&betafilter=&datefilter=&sort=' % (url_term, count)
+		ext2 = '/gwas/api/search/moreresults?q="%s"&max=%i&facet=association&pvalfilter=&orfilter=&genomicfilter=&betafilter=&datefilter=&sort=' % (url_term, count)
 		for count in range(3):
 			try:
 				hash = postgap.REST.get(server, ext2)
