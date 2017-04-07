@@ -4,7 +4,7 @@ RUN apt-get update && apt-get -y install build-essential curl git vim wget unzip
 
 # these python packages also feature in install_dependencies.sh
 # but we install them here as root to avoid sudo-ing or path issues
-RUN pip install pybedtools requests pandas
+RUN pip install pybedtools requests pandas flask cherrypy
 
 # create a postgap user
 RUN useradd -r -m -U -d /home/postgap -s /bin/bash -c "POSTGAP User" -p '' postgap
