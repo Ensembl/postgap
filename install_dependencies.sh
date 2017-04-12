@@ -45,7 +45,7 @@ cp bin/bedtools bin/intersectBed ../bin
 cd ..
 
 # pybedtools v0.7.8, requests, pandas
-pip install pybedtools==0.7.4 requests pandas
+pip install pybedtools==0.7.4 requests pandas flask cherrypy
 
 # Plink v1.07
 git clone https://github.com/chrchang/plink-ng.git
