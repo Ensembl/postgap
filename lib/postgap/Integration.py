@@ -264,17 +264,17 @@ def cluster_to_genes(cluster, tissues, populations):
         Returntype: [ GeneCluster_Association ]
 
     """
-    # Obtain interaction data from LD snps
-    associations = ld_snps_to_genes(cluster.ld_snps, tissues)
-
-    # Compute LD based scores
+    # Compute LD from top SNP
     top_gwas_hit = sorted(cluster.gwas_snps, key=lambda X: X.pvalue)[-1]
     ld = postgap.LD.get_lds_from_top_gwas(top_gwas_hit.snp, cluster.ld_snps, populations)
-    pics = PICS(ld, top_gwas_hit.pvalue)
 
+    # Obtain interaction data from LD snps
+    associations = ld_snps_to_genes([snp for snp in cluster.ld_snps if snp in ld], tissues, ld)
+    
+    # Compute gene score
     gene_scores = dict(
         ((association.gene, association.snp), (association, association.score * ld[association.snp]))
-        for association in associations if association.snp in ld
+        for association in associations
     )
 
     if len(gene_scores) == 0:
@@ -286,6 +286,8 @@ def cluster_to_genes(cluster, tissues, populations):
         if len(gene_to_phenotypes(gene)):
             gene_scores[(gene, snp)][1] = max_score
 
+    # PICS score precomputed and normalised
+    pics = PICS(ld, top_gwas_hit.pvalue)
 
     res = [
         GeneCluster_Association(
@@ -372,13 +374,14 @@ def rsIDs_to_genes(snp, tissues):
 		tissues = ["Whole_Blood"]
 	return ld_snps_to_genes(postgap.Ensembl_lookup.get_snp_locations([snp]), tissues)
 
-def ld_snps_to_genes(ld_snps, tissues):
+def ld_snps_to_genes(ld_snps, tissues, ld):
 	"""
 
 		Associates genes to LD linked SNPs
 		Args:
 		* [ SNP ]
 		* [ string ] (tissues)
+		* Dict SNP => float
 		Returntype: [ GeneSNP_Association ]
 
 	"""
@@ -391,12 +394,12 @@ def ld_snps_to_genes(ld_snps, tissues):
 	if len(selected_snps) > 0:
 		# Extract SNP specific info:
 		reg = regulatory_evidence(selected_snps, tissues)
-		return [create_GeneSNP_Association(gene, snp, reg[snp], cisreg[(gene, snp)]) for (gene, snp) in cisreg]
+		return [create_GeneSNP_Association(gene, snp, reg[snp], cisreg[(gene, snp)], ld[snp]) for (gene, snp) in cisreg]
 	else:
 		return []
 
 
-def create_GeneSNP_Association(gene, snp, reg, cisreg):
+def create_GeneSNP_Association(gene, snp, reg, cisreg, ld):
 	"""
 
 		Associates gene to LD linked SNP
@@ -405,6 +408,7 @@ def create_GeneSNP_Association(gene, snp, reg, cisreg):
 		* SNP
 		* [ Regulatory_Evidence ]
 		* [ Cisregulatory_Evidence ]
+		* float
 		Returntype: GeneSNP_Association
 
 	"""
@@ -420,7 +424,8 @@ def create_GeneSNP_Association(gene, snp, reg, cisreg):
 		cisregulatory_evidence = cisreg,
 		regulatory_evidence = reg,
 		intermediary_scores = intermediary_scores,
-		score = sum(intermediary_scores.values())
+		score = sum(intermediary_scores.values()),
+		r2 = ld
 	)
 
 def cisregulatory_evidence(ld_snps, tissues):
