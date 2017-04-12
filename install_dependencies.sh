@@ -47,12 +47,6 @@ cd ..
 # pybedtools v0.7.8, requests, pandas
 pip install pybedtools==0.7.4 requests pandas flask cherrypy
 
-# Plink v1.07
-git clone https://github.com/chrchang/plink-ng.git
-cd plink-ng/1.9
-mv Makefile.std Makefile
-sed -e 's/^NO_LAPACK =/NO_LAPACK = 1/' -i Makefile
-sed -e 's@^// #define NOLAPACK@#define NOLAPACK@' -i plink_common.h
-./plink_first_compile
-cp plink ../../bin
-cd ../..
+# ld_vcf from ensembl-variation
+curl -L -O https://raw.githubusercontent.com/Ensembl/ensembl-variation/master/C_code/ld_vcf.c
+gcc -Wall -O3 ld_vcf.c -I htslib/htslib -o bin/ld_vcf -Lhtslib -Wl,-rpath,htslib -lhts

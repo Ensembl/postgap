@@ -31,8 +31,8 @@ import os
 import os.path
 import sys
 import re
-import subprocess
 import tempfile
+from subprocess import Popen, PIPE
 from postgap.DataModel import *
 import postgap.Globals
 
@@ -58,37 +58,41 @@ def calculate_window(snp, window_len=500000, population='EUR', cutoff=0.7):
 	if not os.path.isfile(chrom_file):
 		return [snp]
 
-	### Extract this region out from the 1000 genomes BCF
-	region_file, region_file_name = tempfile.mkstemp()
-	extract_region_comm = "bcftools view -r %s:%s-%s %s -O v -o %s" % (snp.chrom, from_pos, to_pos, chrom_file, region_file_name)
-	sys.stderr.write(extract_region_comm + "\n")
-	subprocess.call(extract_region_comm, shell=True)
+	### use ld_vcf
+	ld_comm = [
+		"ld_vcf",
+		"-f", chrom_file,
+		"-r", "%s:%i-%i" % (snp.chrom, from_pos, to_pos),
+		"-v", snp.rsID,
+		"-w", str(window_len)
+	]
+	sys.stderr.write(" ".join(ld_comm) + "\n")
 
-	### Calculate the pairwise LD using plink2
-	ld_file, ld_file_name = tempfile.mkstemp()
-	plinkcomm = "plink --vcf %s --r2 --ld-snp %s --ld-window-r2 %f --inter-chr --keep-allele-order --out %s" % (region_file_name, snp.rsID, cutoff, ld_file_name)
-	sys.stderr.write(plinkcomm + "\n")
-	if subprocess.call(plinkcomm, shell=True) != 0:
-		# Catching error reported by plink, generally that the GWAS SNP is not in the VCF as expected
-		temp_file_names = [region_file_name] + [ ld_file_name + suffix for suffix in ["", ".ld", ".log", ".nosex"]]
-		for temp_file_name in temp_file_names:
-			if os.path.isfile(temp_file_name):
-				os.remove(temp_file_name)
-		return [snp]
+	process = Popen(ld_comm, stdout=PIPE)
+	(output, err) = process.communicate()
+	if process.wait():
+		raise Exception(err)
 
 	### Read LD file
 	ld_snps = []
-	for line in open(ld_file_name + '.ld'):
-		items = line.split()
-		if items[-1] == 'R2':
-			continue
-		ld = float(items[-1])
-		ld_snps.append(SNP(items[-2].split(';')[0], items[-4], int(items[-3])))
+	for line in output.split("\n"):
 
-	### Clean temp files
-	temp_file_names = [region_file_name] + [ ld_file_name + suffix for suffix in ["", ".ld", ".log", ".nosex"]]
-	map(os.remove, temp_file_names)
-	map(os.close, [region_file, ld_file])
+		items = line.split()
+		if len(items) == 0:
+			continue
+
+		if float(items[-3]) >= cutoff:
+			ld_pos = 0
+			ld_id  = ''
+
+			if items[3] == snp.rsID:
+				ld_pos = items[4]
+				ld_id  = items[5]
+			else:
+				ld_pos = items[2]
+				ld_id  = items[3]
+
+			ld_snps.append(SNP(ld_id, snp.chrom, int(ld_pos)))
 
 	if len(ld_snps) > 0:
 		return ld_snps
@@ -124,49 +128,41 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, population='EUR'):
 	if not os.path.isfile(chrom_file):
 		return dict((snp, 1) for snp in ld_snps)
 
-	### Extract the required region from the BCF
-	region_file, region_file_name = tempfile.mkstemp()
-	extract_region_comm = "bcftools view -r %s:%s-%s %s -O z -o %s" % (gwas_snp.chrom, start, end, chrom_file, region_file_name)
-	sys.stderr.write(extract_region_comm + "\n")
-	subprocess.call(extract_region_comm, shell=True)
-
-	### Extract the list of SNP ids from this region
+	### get a list of rsIDs into a file
 	rsID_file, rsID_file_name = tempfile.mkstemp()
 	h = open(rsID_file_name, 'w')
 	h.write("\n".join(str(snp.rsID) for snp in ld_snps))
 	h.close()
-	snp_file, snp_file_name = tempfile.mkstemp()
-	vcfcomm = "vcftools --gzvcf %s --snps %s --recode --out %s" % (region_file_name, rsID_file_name, snp_file_name)
-	sys.stderr.write(vcfcomm + "\n")
-	subprocess.call(vcfcomm, shell=True)
 
-	### Calculate the pairwise LD using plink2
-	ld_file, ld_file_name = tempfile.mkstemp()
-	plinkcomm = "plink --vcf %s.recode.vcf --r2 --ld-snp %s --inter-chr --keep-allele-order --out %s" % (snp_file_name, gwas_snp.rsID, ld_file_name)
-	sys.stderr.write(plinkcomm + "\n")
-	if subprocess.call(plinkcomm, shell=True) != 0:
-		temp_file_names = [region_file_name, rsID_file_name] + [snp_file_name + suffix for suffix in ["", ".recode.vcf", ".log"] ] + [ ld_file_name + suffix for suffix in ["", ".ld", ".log", ".nosex"]]
-		for temp_file_name in temp_file_names:
-			if os.path.isfile(temp_file_name):
-				os.remove(temp_file_name)
-		return dict([(gwas_snp, 1)])
+	### use ld_vcf
+	ld_comm = [
+		"ld_vcf",
+		"-f", chrom_file,
+		"-r", "%s:%i-%i" % (gwas_snp.chrom, start, end),
+		"-v", gwas_snp.rsID,
+		"-n", rsID_file_name,
+		"-w", str((end - start) + 1)
+	]
+	sys.stderr.write(" ".join(ld_comm) + "\n")
+
+	process = Popen(ld_comm, stdout=PIPE)
+	(output, err) = process.communicate()
+	if process.wait():
+		raise Exception(err)
 
 	### Read LD file
 	snp_hash = dict((snp.rsID, snp) for snp in ld_snps)
 	r2_dict = {}
-	for line in open(ld_file_name + '.ld'):
-		items = line.split()
-		if items[-1] == 'R2':
-			continue
-		ld = float(items[-1])
-		ld_snp = snp_hash[items[-2].split(';')[0]]
-		r2_dict[ld_snp] = ld
 
-	### Clean temp files
-	temp_file_names = [region_file_name, rsID_file_name] + [snp_file_name + suffix for suffix in ["", ".recode.vcf", ".log"] ] + [ ld_file_name + suffix for suffix in ["", ".ld", ".log", ".nosex"]]
-	for temp_file_name in temp_file_names:
-		if os.path.isfile(temp_file_name):
-			os.remove(temp_file_name)
-	map(os.close, [region_file, rsID_file, snp_file, ld_file])
+	for line in output.split("\n"):
+		items = line.split()
+		if len(items) == 0:
+			continue
+
+		ld_id = items[5] if items[3] == gwas_snp.rsID else items[3]
+		r2_dict[snp_hash[ld_id]] = float(items[-3])
+
+	os.remove(rsID_file_name)
+	os.close(rsID_file)
 
 	return r2_dict
