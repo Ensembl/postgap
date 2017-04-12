@@ -60,7 +60,7 @@ def fetch_gene(gene_name):
 
 	"""
 	server = ENSEMBL_REST_SERVER
-	ext = "/lookup/symbol/%s/%s?content-type=application/json;expand=1" % (postgap.Globals.SPECIES, gene_name)
+	ext = "/lookup/symbol/%s/%s?content-type=application/json" % (postgap.Globals.SPECIES, gene_name)
 	try:
 		hash = postgap.REST.get(server, ext)
 		return Gene(
@@ -82,7 +82,7 @@ def fetch_gene_id(gene_id):
 
 	"""
 	server = ENSEMBL_REST_SERVER
-	ext = "/lookup/id/%s?content-type=application/json;expand=1" % (gene_id)
+	ext = "/lookup/id/%s?content-type=application/json" % (gene_id)
 	try:
 		hash = postgap.REST.get(server, ext)
 		return Gene(
@@ -117,7 +117,7 @@ def fetch_ensembl_gene(ensembl_id):
 
 	"""
 	server = ENSEMBL_REST_SERVER
-	ext = "/lookup/id/%s?content-type=application/json;expand=1" % (ensembl_id)
+	ext = "/lookup/id/%s?content-type=application/json" % (ensembl_id)
 	hash = postgap.REST.get(server, ext)
 	return Gene(
 		name = hash['display_name'],
