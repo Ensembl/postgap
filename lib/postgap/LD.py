@@ -82,7 +82,7 @@ def calculate_window(snp, window_len=500000, population='EUR', cutoff=0.7):
 		if len(items) == 0:
 			continue
 
-		if float(items[-3]) >= cutoff:
+		if float(items[6]) >= cutoff:
 			ld_pos = 0
 			ld_id  = ''
 
