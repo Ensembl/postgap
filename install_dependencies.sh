@@ -48,5 +48,4 @@ cd ..
 pip install pybedtools==0.7.4 requests pandas flask cherrypy
 
 # ld_vcf from ensembl-variation
-curl -L -O https://raw.githubusercontent.com/Ensembl/ensembl-variation/master/C_code/ld_vcf.c
-gcc -Wall -O3 ld_vcf.c -I htslib/htslib -o bin/ld_vcf -Lhtslib -Wl,-rpath,htslib -lhts
+gcc -Wall -O3 C/ld_vcf.c -I htslib/htslib -o bin/ld_vcf -Lhtslib -Wl,-rpath,htslib -lhts -lm

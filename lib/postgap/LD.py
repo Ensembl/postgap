@@ -32,6 +32,7 @@ import os.path
 import sys
 import re
 import tempfile
+import numpy
 from subprocess import Popen, PIPE
 from postgap.DataModel import *
 import postgap.Globals
@@ -166,3 +167,76 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, population='EUR'):
 	os.close(rsID_file)
 
 	return r2_dict
+
+def get_pairwise_ld(ld_snps, population='EUR'):
+	"""
+
+		For large numbers of SNPs, best to specify SNP region with chrom:to-from, e.g. 1:7654947-8155562
+
+		Args:
+		* [ SNP ], SNPs of interest
+		* string, population name
+		Returntype: [String (rsID)], Numpy.Array (2D)
+
+	"""
+	### Check inputs
+	chrom = ld_snps[0].chrom
+	assert all(x.chrom == chrom for x in ld_snps)
+	positions = [x.pos for x in ld_snps]
+	start = min(positions) - 10
+	end = max(positions) + 10
+
+	### Find the relevant BCF file
+	chrom_file = os.path.join(postgap.Globals.DATABASES_DIR, '1000Genomes', population, 'ALL.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf' % (chrom))
+	if not os.path.isfile(chrom_file):
+		return dict((snp, 1) for snp in ld_snps)
+
+	### get a list of rsIDs into a file
+	rsID_file, rsID_file_name = tempfile.mkstemp()
+	h = open(rsID_file_name, 'w')
+	h.write("\n".join(str(snp.rsID) for snp in ld_snps))
+	h.close()
+
+	### use ld_vcf
+	ld_comm = [
+		"ld_vcf",
+		"-f", chrom_file,
+		"-r", "%s:%i-%i" % (chrom, start, end),
+		"-n", rsID_file_name,
+		"-w", str((end - start) + 1)
+	]
+	sys.stderr.write(" ".join(ld_comm) + "\n")
+
+	process = Popen(ld_comm, stdout=PIPE, stderr=PIPE)
+	(output, err) = process.communicate()
+	if process.returncode:
+		print process.returncode
+		raise Exception(err)
+
+	### First pass through file: collect rsIDs
+	observed_snps = set()
+	for line in output.split("\n"):
+		items = line.split('\t')
+		if len(items) < 9:
+			continue
+		observed_snps.add(items[3])
+		observed_snps.add(items[5])
+
+	### Second pass through file: store LD into matrix
+	SNP_ids = [x.rsID for x in ld_snps if x.rsID in observed_snps]
+	snp_order = dict((rsID, rank) for rank, rsID in enumerate(SNP_ids))
+	r2_array = numpy.zeros((len(SNP_ids), len(SNP_ids)))
+	for line in output.split("\n"):
+		items = line.split('\t')
+		if len(items) < 9:
+			continue
+		snp_1_rank = snp_order[items[3]]
+		snp_2_rank = snp_order[items[5]]
+		r2_array[snp_1_rank][snp_2_rank] = float(items[9])
+		r2_array[snp_2_rank][snp_1_rank] = float(items[9])
+
+	### Clean up
+	os.remove(rsID_file_name)
+	os.close(rsID_file)
+
+	return SNP_ids, r2_array
