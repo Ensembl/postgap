@@ -269,7 +269,7 @@ def cluster_to_genes(cluster, tissues, populations):
     ld = postgap.LD.get_lds_from_top_gwas(top_gwas_hit.snp, cluster.ld_snps, populations)
 
     # Obtain interaction data from LD snps
-    associations = ld_snps_to_genes([snp for snp in cluster.ld_snps if snp in ld], tissues, ld)
+    associations = ld_snps_to_genes([snp for snp in cluster.ld_snps if snp in ld], tissues)
     
     # Compute gene score
     gene_scores = dict(
@@ -294,7 +294,8 @@ def cluster_to_genes(cluster, tissues, populations):
             gene = gene,
             score = total_score(pics[snp], gene_scores[(gene, snp)][1]),
             cluster = cluster,
-            evidence = gene_scores[(gene, snp)][:1] # This is a [ GeneSNP_Association ]
+            evidence = gene_scores[(gene, snp)][:1], # This is a [ GeneSNP_Association ]
+	    r2 = ld[snp]
         )
         for (gene, snp) in gene_scores if snp in pics
     ]
@@ -374,7 +375,7 @@ def rsIDs_to_genes(snp, tissues):
 		tissues = ["Whole_Blood"]
 	return ld_snps_to_genes(postgap.Ensembl_lookup.get_snp_locations([snp]), tissues)
 
-def ld_snps_to_genes(ld_snps, tissues, ld):
+def ld_snps_to_genes(ld_snps, tissues):
 	"""
 
 		Associates genes to LD linked SNPs
@@ -388,45 +389,60 @@ def ld_snps_to_genes(ld_snps, tissues, ld):
 	# Search for SNP-Gene pairs:
 	cisreg = cisregulatory_evidence(ld_snps, tissues)
 
-	# Extract list of relevant SNPs:
-	selected_snps = set(snp for gene, snp in cisreg)
+	# Extract SNP specific info:
+	reg = regulatory_evidence(cisreg.keys(), tissues)
 
-	if len(selected_snps) > 0:
-		# Extract SNP specific info:
-		reg = regulatory_evidence(selected_snps, tissues)
-		return [create_GeneSNP_Association(gene, snp, reg[snp], cisreg[(gene, snp)], ld[snp]) for (gene, snp) in cisreg]
-	else:
-		return []
+	# Create objects
+	return concatenate((create_SNP_GeneSNP_Associations(snp, reg[snp], cisreg[snp]) for snp in cisreg))
 
 
-def create_GeneSNP_Association(gene, snp, reg, cisreg, ld):
+def create_SNP_GeneSNP_Associations(snp, reg, cisreg):
 	"""
 
 		Associates gene to LD linked SNP
 		Args:
-		* Gene
 		* SNP
 		* [ Regulatory_Evidence ]
 		* [ Cisregulatory_Evidence ]
-		* float
-		Returntype: GeneSNP_Association
+		Returntype: [GeneSNP_Association]
 
 	"""
-	intermediary_scores = collections.defaultdict(int)
-	for evidence in reg + cisreg:
-		intermediary_scores[evidence.source] += float(evidence.score)
-	# This is the space for balancing the importance of different sources:	
-	intermediary_scores['PCHiC'] = min(intermediary_scores['PCHiC'], 1)
+	intermediary_scores, gene_scores = compute_v2g_scores(reg, cisreg)
+	rank = dict((score, index) for index, score in enumerate(sorted(gene_scores.values())))
 
-	return GeneSNP_Association(
+	return [ GeneSNP_Association(
 		gene = gene,
 		snp = snp,
-		cisregulatory_evidence = cisreg,
+		cisregulatory_evidence = cisreg[gene],
 		regulatory_evidence = reg,
-		intermediary_scores = intermediary_scores,
-		score = sum(intermediary_scores.values()),
-		r2 = ld
-	)
+		intermediary_scores = intermediary_scores[gene],
+		score = gene_scores[gene],
+		rank = rank[gene_scores[gene]])
+	for gene in cisreg ]
+
+def compute_v2g_scores(reg, cisreg):
+	"""
+
+		Goes through evidence and scores associations to a SNP
+		Args:
+		* [ Regulatory_Evidence ]
+		* [ Cisregulatory_Evidence ] 
+		Returntype: dict(Gene: dict(string: float)), dict(Gene: float)
+
+	"""
+	intermediary_scores = dict()
+	gene_scores = dict()
+	for gene in cisreg:
+		intermediary_scores[gene] = collections.defaultdict(int)
+		for evidence in cisreg[gene] + reg:
+			intermediary_scores[gene][evidence.source] += float(evidence.score)
+
+		# Ad hoc bounds defined here:
+		intermediary_scores[gene]['PCHiC'] = min(intermediary_scores[gene]['PCHiC'], 1)
+
+		gene_scores[gene] = sum(intermediary_scores[gene].values())
+
+	return intermediary_scores, gene_scores
 
 def cisregulatory_evidence(ld_snps, tissues):
 	"""
@@ -435,7 +451,7 @@ def cisregulatory_evidence(ld_snps, tissues):
 		Args:
 		* [ SNP ]
 		* [ string ] (tissues)
-		Returntype: { (Gene, SNP): Cisregulatory_Evidence }
+		Returntype: Hash of hashes SNP => Gene => Cisregulatory_Evidence
 
 	"""
 	if postgap.Globals.DEBUG:
@@ -444,10 +460,10 @@ def cisregulatory_evidence(ld_snps, tissues):
 
 	filtered_evidence = filter(lambda association: association.gene is not None and association.gene.biotype == "protein_coding", evidence)
 
-	# Group by (gene,snp) pair:
-	res = collections.defaultdict(list)
+	# Group by snp, then gene:
+	res = collections.defaultdict(lambda: collections.defaultdict(list))
 	for association in filtered_evidence:
-		res[(association.gene, association.snp)].append(association)
+		res[association.snp][association.gene].append(association)
 
 	if postgap.Globals.DEBUG:
 		print "Found %i cis-regulatory interactions in all databases" % (len(res))

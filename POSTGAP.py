@@ -182,7 +182,7 @@ def pretty_output(associations):
 		Returntype: String
 
 	"""
-	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'disease_names', 'disease_efo_ids', 'score', 'r2', 'gwas_snp_ids', 'ls_snp_is_gwas_snp', 'vep_terms'] + [source.display_name for source in postgap.GWAS.sources + postgap.Cisreg.sources + postgap.Reg.sources])
+	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'disease_names', 'disease_efo_ids', 'score', 'rank', 'r2', 'gwas_snp_ids', 'ls_snp_is_gwas_snp', 'vep_terms'] + [source.display_name for source in postgap.GWAS.sources + postgap.Cisreg.sources + postgap.Reg.sources])
 	content = map(pretty_cluster_association, associations)
 	return "\n".join([header] + content)
 
@@ -281,7 +281,8 @@ def genecluster_association_table(association):
 				",".join(disease_names), 
 				",".join(disease_efos), 
 				gene_snp_association.score, 
-				gene_snp_association.r2,
+				gene_snp_association.rank,
+				association.r2,
 				",".join(gwas_snp.snp.rsID for gwas_snp in gwas_snps),
 				int(gene_snp_association.snp.rsID in gwas_snp_rsIDs),
 				vep_terms
