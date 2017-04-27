@@ -47,7 +47,8 @@ def suggest(term):
 	"""
 	server = 'http://www.ebi.ac.uk/spot/zooma/v2/api'
 	url_term = re.sub(" ", "%20", term)
-	ext = "/summaries?query=%s" % (url_term)
+	#ext = "/summaries?query=%s" % (url_term)
+	ext = "/services/annotate?propertyValue=%s&filter=required:[none],ontologies:[efo]" % (url_term)
 	result = postgap.REST.get(server, ext)
 	'''
 
@@ -71,10 +72,91 @@ def suggest(term):
 			uri: "http://rdf.ebi.ac.uk/resource/zooma/annotation_summary/864A7A7335109CD59C2986398637CB519F21DB05"
 		},
 
+[
+
+    {
+        "uri": null,
+        "annotatedProperty": {
+            "uri": null,
+            "propertyType": null,
+            "propertyValue": "diabetes mellitus"
+        },
+        "_links": {
+            "olslinks": [
+                {
+                    "href": "http://www.ebi.ac.uk/ols/api/terms?iri=http%3A%2F%2Fwww.ebi.ac.uk%2Fefo%2FEFO_0000400",
+                    "semanticTag": "http://www.ebi.ac.uk/efo/EFO_0000400"
+                }
+            ]
+        },
+        "semanticTags": [
+            "http://www.ebi.ac.uk/efo/EFO_0000400"
+        ],
+        "replacedBy": [ ],
+        "replaces": [ ],
+        "derivedFrom": {
+            "uri": "http://rdf.ebi.ac.uk/resource/zooma/annotation_summary/OLS",
+            "annotatedProperty": {
+                "uri": null,
+                "propertyType": null,
+                "propertyValue": "diabetes mellitus"
+            },
+            "_links": {
+                "olslinks": [
+                    {
+                        "href": "http://www.ebi.ac.uk/efo/EFO_0000400",
+                        "semanticTag": "http://www.ebi.ac.uk/efo/EFO_0000400"
+                    }
+                ]
+            },
+            "semanticTags": [
+                "http://www.ebi.ac.uk/efo/EFO_0000400"
+            ],
+            "replacedBy": [ ],
+            "replaces": [ ],
+            "annotatedBiologicalEntities": [ ],
+            "provenance": {
+                "source": {
+                    "type": "ONTOLOGY",
+                    "name": "http://www.ebi.ac.uk/efo",
+                    "uri": "http://www.ebi.ac.uk/efo"
+                },
+                "evidence": "COMPUTED_FROM_ONTOLOGY",
+                "accuracy": null,
+                "generator": "http://www.ebi.ac.uk/efo",
+                "generatedDate": null,
+                "annotator": null,
+                "annotationDate": null
+            }
+        },
+        "confidence": "GOOD",
+        "annotatedBiologicalEntities": [ ],
+        "provenance": {
+            "source": {
+                "type": "DATABASE",
+                "name": "zooma",
+                "uri": "http://www.ebi.ac.uk/spot/zooma"
+            },
+            "evidence": "COMPUTED_FROM_TEXT_MATCH",
+            "accuracy": null,
+            "generator": "ZOOMA",
+            "generatedDate": 1493109533692,
+            "annotator": "ZOOMA",
+            "annotationDate": 1493109533692
+        }
+    }
+
+]
 
 	'''
 
 	hits = filter(lambda X: len(X['semanticTags']) == 1, result)
+	efo = hits[0]['semanticTags'][0]
+	return efo
+	
+	pprint(hits)
+	sys.exit()
+	
 	if len(hits):
 		sorted_hits = sorted(hits, key = lambda X: X['quality'])
 		selection = sorted_hits[-1]['semanticTags'][0]
