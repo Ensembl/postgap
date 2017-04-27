@@ -171,95 +171,141 @@ def suggest(term):
 		return None
 
 def children(efo):
-	"""
+    """
 
-		Return list of children EFO IDs
-		Arg:
-		* string (EFO ID)
-		Returntype: [ string ] (EFI IDs)
+      Return list of children EFO IDs
+      Arg:
+      * string (EFO ID)
+      Returntype: [ string ] (EFI IDs)
 
-	"""
-	server = 'http://www.ebi.ac.uk'
-	page = 1
-	res = [efo]
+    """
+    server = 'http://www.ebi.ac.uk'
+    page = 1
+    res = [efo]
 
-	while (True):
-		ext = "/ols/beta/api/ontologies/efo/terms/http253A252F252Fwww.ebi.ac.uk252Fefo252F%s/descendants?page%i&size=10" % (efo, page)
-		hash = postgap.REST.get(server, ext)
-		'''
+    import urllib
+    double_quoted_iri = urllib.quote_plus(urllib.quote_plus(efo))
 
-			OWL Output format:
-			{
-				"_links" : {
-					"first" : {
-			"href" : "http://www.ebi.ac.uk/ols/beta/api/ontologies/efo/terms/http253A252F252Fwww.ebi.ac.uk252Fefo252FEFO_0001071/descendants?page=0&size=10"
-					},
-					"prev" : {
-			"href" : "http://www.ebi.ac.uk/ols/beta/api/ontologies/efo/terms/http253A252F252Fwww.ebi.ac.uk252Fefo252FEFO_0001071/descendants?page=0&size=10"
-					},
-					"self" : {
-			"href" : "http://www.ebi.ac.uk/ols/beta/api/ontologies/efo/terms/http253A252F252Fwww.ebi.ac.uk252Fefo252FEFO_0001071/descendants?page=1&size=10"
-					},
-					"last" : {
-			"href" : "http://www.ebi.ac.uk/ols/beta/api/ontologies/efo/terms/http253A252F252Fwww.ebi.ac.uk252Fefo252FEFO_0001071/descendants?page=1&size=10"
-					}
-				},
-				"_embedded" : {
-					"terms" : [ {
-						"iri" : "http://www.ebi.ac.uk/efo/EFO_1000333",
-						"label" : "Lung Inflammatory Myofibroblastic Tumor",
-						"description" : [ "An intermediate fibroblastic neoplasm arising from the lung. It is characterized by the presence of spindle-shaped fibroblasts and myofibroblasts, and a chronic inflammatory infiltrate composed of eosinophils, lymphocytes and plasma cells." ],
-						"annotation" : {
-							"NCI_Thesaurus_definition_citation" : [ "NCIt:C39740" ]
-						},
-						"synonyms" : null,
-						"ontology_name" : "efo",
-						"ontology_prefix" : "EFO",
-						"ontology_iri" : "http://www.ebi.ac.uk/efo",
-						"is_obsolete" : false,
-						"is_defining_ontology" : true,
-						"has_children" : false,
-						"is_root" : false,
-						"short_form" : "EFO_1000333",
-						"obo_id" : "EFO:1000333",
-						"_links" : {
-							"self" : {
-								"href" : "http://www.ebi.ac.uk/ols/beta/api/ontologies/efo/terms/http253A252F252Fwww.ebi.ac.uk252Fefo252FEFO_1000333"
-							},
-							"parents" : {
-								"href" : "http://www.ebi.ac.uk/ols/beta/api/ontologies/efo/terms/http253A252F252Fwww.ebi.ac.uk252Fefo252FEFO_1000333/parents"
-							},
-							"ancestors" : {
-								"href" : "http://www.ebi.ac.uk/ols/beta/api/ontologies/efo/terms/http253A252F252Fwww.ebi.ac.uk252Fefo252FEFO_1000333/ancestors"
-							},
-							"jstree" : {
-								"href" : "http://www.ebi.ac.uk/ols/beta/api/ontologies/efo/terms/http253A252F252Fwww.ebi.ac.uk252Fefo252FEFO_1000333/jstree"
-							},
-							"graph" : {
-								"href" : "http://www.ebi.ac.uk/ols/beta/api/ontologies/efo/terms/http253A252F252Fwww.ebi.ac.uk252Fefo252FEFO_1000333/graph"
-							}
-						}
-					} ]
-				},
-				"page" : {
-					"size" : 10,
-					"totalElements" : 20,
-					"totalPages" : 2,
-					"number" : 1
-				}
-			}
+    # E.g.: http://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_0000400
+    ext = "/ols/api/ontologies/efo/terms/" + double_quoted_iri
+    hash = postgap.REST.get(server, ext)
+    '''
+        {
 
-		'''
+            "iri": "http://www.ebi.ac.uk/efo/EFO_0000400",
+            "label": "diabetes mellitus",
+            "description": [
+                "A heterogeneous group of disorders characterized by HYPERGLYCEMIA and GLUCOSE INTOLERANCE.",
+                "A metabolic disorder characterized by abnormally high blood sugar levels due to diminished production of insulin or insulin resistance/desensitization."
+            ],
+            "annotation": {
+                "DOID_definition_citation": [
+                    "DOID:9351"
+                ],
+                "ICD9_definition_citation": [
+                    "ICD9:250"
+                ],
+                "MSH_definition_citation": [
+                    "MSH:D003920"
+                ],
+                "NCI_Thesaurus_definition_citation": [
+                    "NCIt:C2985"
+                ],
+                "OMIM_definition_citation": [
+                    "OMIM:612227"
+                ],
+                "SNOMEDCT_definition_citation": [
+                    "SNOMEDCT:73211009"
+                ],
+                "bioportal_provenance": [
+                    "Diabetes mellitus, NOS[accessedResource: SNOMEDCT:73211009][accessDate: 05-04-2011]",
+                    "Diabetes mellitus (disorder)[accessedResource: DOID:9351][accessDate: 05-04-2011]",
+                    "DM - Diabetes mellitus[accessedResource: SNOMEDCT:73211009][accessDate: 05-04-2011]",
+                    "A heterogeneous group of disorders characterized by HYPERGLYCEMIA and GLUCOSE INTOLERANCE.[accessedResource: MSH:D003920][accessDate: 05-04-2011]",
+                    "Diabetes NOS[accessedResource: DOID:9351][accessDate: 05-04-2011]",
+                    "Diabetes[accessedResource: DOID:9351][accessDate: 05-04-2011]",
+                    "A metabolic disorder characterized by abnormally high blood sugar levels due to diminished production of insulin or insulin resistance/desensitization.[accessedResource: NCIt:C2985][accessDate: 05-04-2011]"
+                ],
+                "gwas_trait": [
+                    "true"
+                ],
+                "term editor": [
+                    "James Malone"
+                ]
+            },
+            "synonyms": [
+                "Diabetes mellitus (disorder)",
+                "Diabetes",
+                "Diabetes mellitus, NOS",
+                "DM - Diabetes mellitus",
+                "Diabetes NOS"
+            ],
+            "ontology_name": "efo",
+            "ontology_prefix": "EFO",
+            "ontology_iri": "http://www.ebi.ac.uk/efo",
+            "is_obsolete": false,
+            "term_replaced_by": null,
+            "is_defining_ontology": true,
+            "has_children": true,
+            "is_root": false,
+            "short_form": "EFO_0000400",
+            "obo_id": "EFO:0000400",
+            "in_subset": null,
+            "obo_definition_citation": null,
+            "obo_xref": null,
+            "obo_synonym": null,
+            "_links": {
+                "self": {
+                    "href": "http://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_0000400"
+                },
+                "parents": {
+                    "href": "http://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_0000400/parents"
+                },
+                "ancestors": {
+                    "href": "http://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_0000400/ancestors"
+                },
+                "hierarchicalParents": {
+                    "href": "http://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_0000400/hierarchicalParents"
+                },
+                "hierarchicalAncestors": {
+                    "href": "http://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_0000400/hierarchicalAncestors"
+                },
+                "jstree": {
+                    "href": "http://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_0000400/jstree"
+                },
+                "children": {
+                    "href": "http://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_0000400/children"
+                },
+                "descendants": {
+                    "href": "http://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_0000400/descendants"
+                },
+                "hierarchicalChildren": {
+                    "href": "http://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_0000400/hierarchicalChildren"
+                },
+                "hierarchicalDescendants": {
+                    "href": "http://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_0000400/hierarchicalDescendants"
+                },
+                "graph": {
+                    "href": "http://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_0000400/graph"
+                }
+            }
 
-		if '_embedded' in hash:
-			res += [ result['short_form'] for result in hash['_embedded']['terms'] ]
+        }
+    '''
 
-		if page > int(hash['page']['totalPages']):
-			break
+    descendants_href = hash['_links']['descendants']['href']
+    
+    hash = postgap.REST.get(descendants_href, '')
+    
+    terms = hash['_embedded']['terms']
+    for term in terms:
+        print term['short_form'];
+    
+    result = [ term['short_form'] for term in terms ]
+    pprint(result);
+    
+    if DEBUG:
+      print "EFO children: " + "\t".join(result)
 
-		page += 1
-
-	if DEBUG:
-		print "EFO children: " + "\t".join(res)
-	return res
+    return result
 
