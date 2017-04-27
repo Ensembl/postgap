@@ -32,6 +32,10 @@ import re
 import postgap.REST
 from postgap.Globals import *
 
+import sys
+from pprint import pprint
+
+
 def suggest(term):
 	"""
 
