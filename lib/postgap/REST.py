@@ -54,8 +54,13 @@ def get(server, ext, data=None):
 			else:
 				headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
 				r = requests.post(str(server)+str(ext), headers = headers, data = json.dumps(data), timeout=200)
-		except requests.exceptions.ReadTimeout:
+                except requests.exceptions.ReadTimeout:
 			continue
+		except requests.exceptions.ConnectionError:
+			# A timeout can creep up as a connection error, so catching this as well.
+			# requests.exceptions.ConnectionError: HTTPConnectionPool(host='grch37.rest.ensembl.org', port=80): Read timed out.
+			continue
+
 
 		if not r.ok:
 			sys.stderr.write("Failed to get proper response to query %s%s\n" % (server, ext) )
