@@ -755,4 +755,5 @@ int main(int argc, char *argv[]) {
     // Compute LD around variant of interest
     calculate_ld(&locus_list, fh, windowsize, variant_index);
   }
+  return 0;
 }
