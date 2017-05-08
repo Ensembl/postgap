@@ -33,7 +33,6 @@ import postgap.REST
 from postgap.Globals import *
 
 import sys
-from pprint import pprint
 
 
 def suggest(term):
@@ -47,7 +46,6 @@ def suggest(term):
 	"""
 	server = 'http://www.ebi.ac.uk/spot/zooma/v2/api'
 	url_term = re.sub(" ", "%20", term)
-	#ext = "/summaries?query=%s" % (url_term)
 	ext = "/services/annotate?propertyValue=%s&filter=required:[none],ontologies:[efo]" % (url_term)
 	result = postgap.REST.get(server, ext)
 	'''
@@ -153,43 +151,29 @@ def suggest(term):
 	hits = filter(lambda X: len(X['semanticTags']) == 1, result)
 	efo = hits[0]['semanticTags'][0]
 	return efo
-	
-	pprint(hits)
-	sys.exit()
-	
-	if len(hits):
-		sorted_hits = sorted(hits, key = lambda X: X['quality'])
-		selection = sorted_hits[-1]['semanticTags'][0]
-		efo = re.sub('.*/', '\1', selection)
-		if DEBUG:
-			print "Suggested EFO %s" % efo
-		return efo
-
-	else:
-		if DEBUG:
-			print "Suggested EFO N/A"
-		return None
 
 def children(efo):
-    """
+	"""
 
-      Return list of children EFO IDs
-      Arg:
-      * string (EFO ID)
-      Returntype: [ string ] (EFI IDs)
+	Return list of children EFO IDs
+	Arg:
+	* string (EFO ID)
+	Returntype: [ string ] (EFI IDs)
 
-    """
-    server = 'http://www.ebi.ac.uk'
-    page = 1
-    res = [efo]
+	"""
 
-    import urllib
-    double_quoted_iri = urllib.quote_plus(urllib.quote_plus(efo))
+	import logging
+	logger = logging.getLogger(__name__)
+	
+	server = 'http://www.ebi.ac.uk'
 
-    # E.g.: http://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_0000400
-    ext = "/ols/api/ontologies/efo/terms/" + double_quoted_iri
-    hash = postgap.REST.get(server, ext)
-    '''
+	import urllib
+	double_quoted_iri = urllib.quote_plus(urllib.quote_plus(efo))
+
+	# E.g.: http://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_0000400
+	ext = "/ols/api/ontologies/efo/terms/" + double_quoted_iri
+	hash = postgap.REST.get(server, ext)
+	'''
         {
 
             "iri": "http://www.ebi.ac.uk/efo/EFO_0000400",
@@ -291,21 +275,21 @@ def children(efo):
             }
 
         }
-    '''
+	'''
 
-    descendants_href = hash['_links']['descendants']['href']
-    
-    hash = postgap.REST.get(descendants_href, '')
-    
-    terms = hash['_embedded']['terms']
-    for term in terms:
-        print term['short_form'];
-    
-    result = [ term['short_form'] for term in terms ]
-    pprint(result);
-    
-    if DEBUG:
-      print "EFO children: " + "\t".join(result)
+	has_children = hash['has_children']
+	if (has_children == False):
+		return []
 
-    return result
+	descendants_href = hash['_links']['descendants']['href']
+	hash = postgap.REST.get(descendants_href, '')
+
+	terms = hash['_embedded']['terms']
+	logger.debug("The Ontology Lookup Service returned the descendants for " + efo)
+	for term in terms:
+		logger.debug(" - " + term['short_form']);
+
+	result = [ term['short_form'] for term in terms ]
+
+	return result
 
