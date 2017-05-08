@@ -41,6 +41,7 @@ import postgap.Ensembl_lookup
 import postgap.Globals
 import postgap.RegionFilter
 from postgap.Utils import *
+import logging
 
 phenotype_cache = ()
 PVALUE_CUTOFF = 1e-4
@@ -69,10 +70,11 @@ def diseases_to_gwas_snps(diseases, efos):
 		Returntype: [ GWAS_SNP ]
 
 	"""
+	logger = logging.getLogger(__name__)
+	
 	res = filter(lambda X: X.pvalue < PVALUE_CUTOFF, scan_disease_databases(diseases, efos))
 
-	if postgap.Globals.DEBUG:
-		print "Found %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) after p-value filter (%f)" % (len(res), ", ".join(diseases), ", ".join(efos), PVALUE_CUTOFF)
+	logger.info("Found %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) after p-value filter (%f)" % (len(res), ", ".join(diseases), ", ".join(efos), PVALUE_CUTOFF))
 
 	return res
 
@@ -86,8 +88,9 @@ def scan_disease_databases(diseases, efos):
 		Returntype: [ GWAS_SNP ]
 
 	"""
-	if postgap.Globals.DEBUG:
-		print "Searching for GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (", ".join(diseases), ", ".join(efos))
+	logger = logging.getLogger(__name__)
+
+	logger.info("Searching for GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (", ".join(diseases), ", ".join(efos)))
 
 	hits = concatenate(source().run(diseases, efos) for source in postgap.GWAS.sources)
 	associations_by_snp = dict()
@@ -114,8 +117,7 @@ def scan_disease_databases(diseases, efos):
 
 	res = associations_by_snp.values()
 
-	if postgap.Globals.DEBUG:
-		print "Found %i unique GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (len(res), ", ".join(diseases), ", ".join(efos))
+	logger.info("Found %i unique GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (len(res), ", ".join(diseases), ", ".join(efos)))
 
 	return res
 
@@ -130,6 +132,7 @@ def gwas_snps_to_genes(gwas_snps, populations, tissue_weights):
 		Returntype: [ GeneCluster_Association ]
 
 	"""
+	logger = logging.getLogger(__name__)
 	# Must set the tissue settings before separating out the gwas_snps
 	if tissue_weights is None:
 		tissue_weights = gwas_snps_to_tissue_weights(gwas_snps)
@@ -137,8 +140,7 @@ def gwas_snps_to_genes(gwas_snps, populations, tissue_weights):
 	clusters = cluster_gwas_snps(gwas_snps, populations)
 	res = concatenate(cluster_to_genes(cluster, tissue_weights, populations) for cluster in clusters)
 
-	if postgap.Globals.DEBUG:
-		print "\tFound %i genes associated to all clusters" % (len(res))
+	logger.info("\tFound %i genes associated to all clusters" % (len(res)))
 
 	if len(res) == 0:
 		return []
@@ -165,17 +167,18 @@ def cluster_gwas_snps(gwas_snps, populations):
 		Returntype: [ GWAS_Cluster ]
 
 	"""
+	
+	logger = logging.getLogger(__name__)
+	
 	gwas_snp_locations = get_gwas_snp_locations(gwas_snps)
 
-	if postgap.Globals.DEBUG:
-		"Found %i locations from %i GWAS SNPs" % (len(gwas_snp_locations), len(gwas_snps))
+	logger.info("Found %i locations from %i GWAS SNPs" % (len(gwas_snp_locations), len(gwas_snps)))
 
 	preclusters = filter (lambda X: X is not None, [ gwas_snp_to_precluster(gwas_snp_location, populations) for gwas_snp_location in gwas_snp_locations ])
 	filtered_preclusters = postgap.RegionFilter.region_filter(preclusters)
 	clusters = merge_preclusters(filtered_preclusters)
 
-	if postgap.Globals.DEBUG:
-		"Found %i clusters from %i GWAS SNP locations" % (len(clusters), len(gwas_snp_locations))
+	logger.info("Found %i clusters from %i GWAS SNP locations" % (len(clusters), len(gwas_snp_locations)))
 
 	return clusters
 
@@ -189,8 +192,10 @@ def gwas_snp_to_precluster(gwas_snp, populations):
         Returntype: GWAS_Cluster
 
     """
+    logger = logging.getLogger(__name__)
+    
     mapped_ld_snps = postgap.LD.calculate_window(gwas_snp.snp)
-    print "Found %i SNPs in the vicinity of %s" % (len(mapped_ld_snps), gwas_snp.snp.rsID)
+    logger.info("Found %i SNPs in the vicinity of %s" % (len(mapped_ld_snps), gwas_snp.snp.rsID))
     return GWAS_Cluster(gwas_snps = [ gwas_snp ],ld_snps = mapped_ld_snps)
 
 def get_gwas_snp_locations(gwas_snps):
@@ -222,6 +227,8 @@ def merge_preclusters(preclusters):
 		Returntype: [ Cluster ]
 
 	"""
+	logger = logging.getLogger(__name__)
+	
 	clusters = list(preclusters)
 	snp_owner = dict()
 	for cluster in preclusters:
@@ -247,8 +254,7 @@ def merge_preclusters(preclusters):
 			else:
 				snp_owner[ld_snp] = cluster
 
-	if postgap.Globals.DEBUG:
-		print "\tFound %i clusters from the GWAS peaks" % (len(clusters))
+	logger.info("\tFound %i clusters from the GWAS peaks" % (len(clusters)))
 
 	return clusters
 
@@ -300,8 +306,8 @@ def cluster_to_genes(cluster, tissues, populations):
         for (gene, snp) in gene_scores if snp in pics
     ]
 
-    if postgap.Globals.DEBUG:
-        print "\tFound %i genes associated around GWAS SNP %s" % (len(res), top_gwas_hit.snp.rsID)
+    logger = logging.getLogger(__name__)
+    logger.info("\tFound %i genes associated around GWAS SNP %s" % (len(res), top_gwas_hit.snp.rsID))
 
     # Pick the association with the highest score
     return sorted(res, key=lambda X: X.score)
@@ -454,8 +460,9 @@ def cisregulatory_evidence(ld_snps, tissues):
 		Returntype: Hash of hashes SNP => Gene => Cisregulatory_Evidence
 
 	"""
-	if postgap.Globals.DEBUG:
-		print "Searching for cis-regulatory data on %i SNPs in all databases" % (len(ld_snps))
+	logger = logging.getLogger(__name__)
+	
+	logger.info("Searching for cis-regulatory data on %i SNPs in all databases" % (len(ld_snps)))
 	evidence = concatenate(source().run(ld_snps, tissues) for source in postgap.Cisreg.sources)
 
 	filtered_evidence = filter(lambda association: association.gene is not None and association.gene.biotype == "protein_coding", evidence)
@@ -466,7 +473,7 @@ def cisregulatory_evidence(ld_snps, tissues):
 		res[association.snp][association.gene].append(association)
 
 	if postgap.Globals.DEBUG:
-		print "Found %i cis-regulatory interactions in all databases" % (len(res))
+		logger.info(("Found %i cis-regulatory interactions in all databases" % (len(res))))
 
 	return res
 
@@ -479,13 +486,13 @@ def regulatory_evidence(snps, tissues):
 		Returntype: [ Regulatory_Evidence ]
 
 	"""
-	if postgap.Globals.DEBUG:
-		print "Searching for regulatory data on %i SNPs in all databases" % (len(snps))
+	logger = logging.getLogger(__name__)
+	
+	logger.info("Searching for regulatory data on %i SNPs in all databases" % (len(snps)))
 
 	res = concatenate(source().run(snps, tissues) for source in postgap.Reg.sources)
 
-	if postgap.Globals.DEBUG:
-		print "Found %i regulatory SNPs among %i in all databases" % (len(res), len(snps))
+	logging.info("Found %i regulatory SNPs among %i in all databases" % (len(res), len(snps)))
 
 	# Group by SNP
 	hash = collections.defaultdict(list)

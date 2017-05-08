@@ -33,6 +33,8 @@ import collections
 import json
 import sqlite3
 import re
+import logging
+import logging.config
 
 import postgap
 import postgap.GWAS
@@ -42,6 +44,9 @@ import postgap.EFO
 import postgap.Globals
 import postgap.Integration
 from postgap.Utils import *
+
+import sys
+from pprint import pformat
 
 '''
 Development TODO list:
@@ -70,7 +75,14 @@ def main():
 		Reads commandline parameters, prints corresponding associated genes with evidence info
 
 	"""
+	
+	logging.config.fileConfig('configuration/logging.conf')
+	logger = logging.getLogger(__name__)
+
 	options = get_options()
+	
+	logger.info("Starting postagp with the following options:")
+	logger.info(pformat(options))
 
 	if len(options.diseases) > 0 or len(options.efos) > 0:
 		res = postgap.Integration.diseases_to_genes(options.diseases, options.efos, "CEPH", options.tissues)

@@ -39,11 +39,8 @@ from postgap.Utils import *
 
 import logging
 import sys
-from pprint import pprint
 
 #postgap.REST.DEBUG = False
-
-logging.basicConfig(level=logging.INFO)
 
 
 class GWAS_source(object):
@@ -60,90 +57,92 @@ class GWAS_source(object):
 		assert False, "This stub should be defined"
 
 class GWASCatalog(GWAS_source):
-    display_name = 'GWAS Catalog'
+	display_name = 'GWAS Catalog'
 
-    def run(self, diseases, efos):
-      """
+	def run(self, diseases, efos):
+		"""
+			Returns all GWAS SNPs associated to a disease in GWAS Catalog
+			Args:
+			* [ string ] (trait descriptions)
+			* [ string ] (trait EFO identifiers)
+			Returntype: [ GWAS_Association ]
+		"""
 
-      Returns all GWAS SNPs associated to a disease in GWAS Catalog
-      Args:
-      * [ string ] (trait descriptions)
-      * [ string ] (trait EFO identifiers)
-      Returntype: [ GWAS_Association ]
+		logger = logging.getLogger(__name__)
 
-      """
-      if efos is not None and len(efos) > 0:
-          res = concatenate(self.query(query) for query in efos)
-      else:
-          res = concatenate(self.query(query) for query in diseases)
+		if efos is not None and len(efos) > 0:
+			res = concatenate(self.query(query) for query in efos)
+		else:
+			res = concatenate(self.query(query) for query in diseases)
 
-      if postgap.Globals.DEBUG:
-        print "\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GWAS Catalog" % (len(res), ", ".join(diseases), ", ".join(efos))
+		logger.debug("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GWAS Catalog" % (len(res), ", ".join(diseases), ", ".join(efos)))
 
-      return res
+		return res
 
-    def query(self, efo):
+	def query(self, efo):
+		term = "http://www.ebi.ac.uk/efo/" + efo
+		logger = logging.getLogger(__name__)
+		logger.info("Querying GWAS catalog for " + term);
 
+		server = 'http://wwwdev.ebi.ac.uk'
+		url = '/gwas/beta/rest/api/efoTraits/search/findByUri?uri=%s' % (term)
 
-      term = "http://www.ebi.ac.uk/efo/" + efo
+		hash = postgap.REST.get(server, url)
+		list_of_GWAS_Associations = []
 
-      logging.info("Querying GWAS catalog for " + term);
+		efoTraits = hash["_embedded"]["efoTraits"]
 
-      server = 'http://wwwdev.ebi.ac.uk'
-      url = '/gwas/beta/rest/api/efoTraits/search/findByUri?uri=%s' % (term)
+		for efoTraitHash in efoTraits:
 
-      hash = postgap.REST.get(server, url)
+			efoTraitLinks = efoTraitHash["_links"]
+			efoTraitName  = efoTraitHash["trait"]
 
-      list_of_GWAS_Associations = []
+			logger.info("Querying Gwas rest server for SNPs associated with " + efoTraitName)
 
-      efoTraits = hash["_embedded"]["efoTraits"]
+			association_rest_response = efoTraitLinks["associations"]
+			association_url = association_rest_response["href"]
+			association_response = postgap.REST.get(association_url, "")
+			associations = association_response["_embedded"]["associations"]
 
-      for efoTraitHash in efoTraits:
-        
-          efoTraitLinks = efoTraitHash["_links"]
-          efoTraitName  = efoTraitHash["trait"]
+			logger.info("Received " + str(len(associations)) + " associations with SNPs.")
+			logger.info("Fetching SNPs and pvalues.")
 
-          logging.info("Name: " + efoTraitName)
+			for current_association in associations:
 
-          association_rest_response = efoTraitLinks["associations"]
-          association_url = association_rest_response["href"]
-          association_response = postgap.REST.get(association_url, "")
-          associations = association_response["_embedded"]["associations"]
+				snp_url = current_association["_links"]["snps"]["href"]
+				snp_response = postgap.REST.get(snp_url, "")
+				singleNucleotidePolymorphisms = snp_response["_embedded"]["singleNucleotidePolymorphisms"]
 
-          for current_association in associations:
+				if (len(singleNucleotidePolymorphisms) == 0):
+					sys.exit("Got no snp for a pvalue!")
+				if (len(singleNucleotidePolymorphisms) != 1):
+					sys.exit("Got more than one snp for a pvalue!")
 
-            logging.info("    Pvalue of association: " + str(current_association["pvalue"]))
+				study_url = current_association["_links"]["study"]["href"]
+				study_response = postgap.REST.get(study_url, "")
+				pubmedId = study_response["pubmedId"]
 
-            snp_url = current_association["_links"]["snps"]["href"]
-            snp_response = postgap.REST.get(snp_url, "")
-            singleNucleotidePolymorphisms = snp_response["_embedded"]["singleNucleotidePolymorphisms"]
+				for current_snp in singleNucleotidePolymorphisms:
+					logger.debug("    received association with snp rsId: " + '{:12}'.format(current_snp["rsId"]) + " with a pvalue of " + str(current_association["pvalue"]))
 
-            if (len(singleNucleotidePolymorphisms) == 0):
-              sys.exit("Got no snp for a pvalue!")
-            if (len(singleNucleotidePolymorphisms) != 1):
-              sys.exit("Got more than one snp for a pvalue!")
-            
-            study_url = current_association["_links"]["study"]["href"]
-            study_response = postgap.REST.get(study_url, "")
-            pubmedId = study_response["pubmedId"]
-
-            for current_snp in singleNucleotidePolymorphisms:
-              logging.info("        rsId: " + current_snp["rsId"])
-              
-              list_of_GWAS_Associations.append(
-                GWAS_Association(
-                  disease = Disease(
-                    name = efoTraitName,
-                    efo  = efo
-                  ),
-                  snp     = current_snp["rsId"],
-                  pvalue  = current_association["pvalue"],
-                  source  = 'GWAS Catalog',
-                  study   = 'PMID' + pubmedId
-                )
-              )
-      
-      return list_of_GWAS_Associations
+					list_of_GWAS_Associations.append(
+						GWAS_Association(
+							disease = Disease(
+								name = efoTraitName,
+								efo  = efo
+							),
+							snp     = current_snp["rsId"],
+							pvalue  = current_association["pvalue"],
+							source  = 'GWAS Catalog',
+							study   = 'PMID' + pubmedId
+						)
+					)
+		if len(list_of_GWAS_Associations) > 0:
+			logger.info("Successfully fetched " +  str(len(list_of_GWAS_Associations)) + " SNPs and pvalues.")
+		if len(list_of_GWAS_Associations) == 0:
+			logger.info("Found no associated SNPs and pvalues.")
+	
+		return list_of_GWAS_Associations
 
 class GRASP(GWAS_source):
 	display_name = "GRASP"
@@ -157,12 +156,13 @@ class GRASP(GWAS_source):
 			Returntype: [ GWAS_Association ]
 
 		"""
+		logger = logging.getLogger(__name__)
+		
 		file = open(postgap.Globals.DATABASES_DIR+"/GRASP.txt")
 		res = [ self.get_association(line, diseases, efos) for line in file ]
 		res = filter(lambda X: X is not None, res)
 
-		if postgap.Globals.DEBUG:
-			print "\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GRASP" % (len(res), ", ".join(diseases), ", ".join(efos))
+		logger.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GRASP" % (len(res), ", ".join(diseases), ", ".join(efos)))
 
 		return res
 
@@ -260,6 +260,8 @@ class GRASP(GWAS_source):
 
 class Phewas_Catalog(GWAS_source):
 	display_name = "Phewas Catalog"
+	logger = logging.getLogger(__name__)
+	
 	def run(self, diseases, efos):
 		"""
 
@@ -274,8 +276,7 @@ class Phewas_Catalog(GWAS_source):
 		res = [ self.get_association(line, diseases, efos) for line in file ]
 		res = filter(lambda X: X is not None, res)
 
-		if postgap.Globals.DEBUG:
-			print "\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in Phewas Catalog" % (len(res), ", ".join(diseases), ", ".join(efos))
+		self.logger.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in Phewas Catalog" % (len(res), ", ".join(diseases), ", ".join(efos)))
 
 		return res
 
@@ -309,6 +310,8 @@ class Phewas_Catalog(GWAS_source):
 
 class GWAS_DB(GWAS_source):
 	display_name = "GWAS DB"
+	logger = logging.getLogger(__name__)
+	
 	def run(self, diseases, efos):
 		"""
 
@@ -326,8 +329,7 @@ class GWAS_DB(GWAS_source):
 		res = [ self.get_association(line, diseases, efos) for line in file ]
 		res = filter(lambda X: X is not None, res)
 
-		if postgap.Globals.DEBUG:
-			print "\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GWAS DB" % (len(res), ", ".join(diseases), ", ".join(efos))
+		self.logger.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GWAS DB" % (len(res), ", ".join(diseases), ", ".join(efos)))
 
 		return res
 
