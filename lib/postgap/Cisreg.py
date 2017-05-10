@@ -37,6 +37,7 @@ import postgap.Globals
 import BedTools
 import Ensembl_lookup
 import requests
+import logging
 
 VEP_impact_to_score = {
 	'HIGH': 4,
@@ -47,11 +48,14 @@ VEP_impact_to_score = {
 }
 
 class Cisreg_source(object):
+	logger = logging.getLogger(__name__)
 	def run(self, snps, tissues):
 		assert False, "This stub should be defined"
 
 class GTEx(Cisreg_source):
 	display_name = "GTEx"
+
+	
 	def run(self, snps, tissues):
 		"""
 
@@ -84,8 +88,7 @@ class GTEx(Cisreg_source):
 		else:
 			res = concatenate((self.snp(snp, tissues) for snp in snps))
 
-		if postgap.Globals.DEBUG:
-			print "\tFound %i interactions in GTEx" % (len(res))
+		self.logger.info("\tFound %i interactions in GTEx" % (len(res)))
 
 		return res
 
@@ -102,8 +105,7 @@ class GTEx(Cisreg_source):
 		"""
 		res = concatenate(self.gene_tissue(gene, tissue, snp_hash) for tissue in tissues)
 
-		if postgap.Globals.DEBUG:
-			print "\tFound %i genes associated to gene %s in GTEx" % (len(res), gene.id)
+		self.logger.info("\tFound %i SNPs associated to gene %s in GTEx" % (len(res), gene.id))
 
 		return res
 
@@ -150,11 +152,13 @@ class GTEx(Cisreg_source):
 				if eQTL['value'] < 2.5e-5 
 			]
 
-			if postgap.Globals.DEBUG:
-				print "\tFound %i SNPs associated to gene %s in tissue %s in GTEx" % (len(res), gene.id, tissue)
+			self.logger.info("\tFound %i SNPs associated to gene %s in tissue %s in GTEx" % (len(res), gene.id, tissue))
 
 			return res
-		except:
+		except Exception as e:
+			self.logger.warning("Got exception when querying %s%s" % (server, ext))
+			self.logger.warning("The exception is %s" % (e))
+			self.logger.warning("Returning 'None' and pretending this didn't happen.")
 			return None
 
 	def snp(self, snp, tissues):
@@ -169,8 +173,7 @@ class GTEx(Cisreg_source):
 		"""
 		res = concatenate(self.snp_tissue(snp, tissue) for tissue in tissues)
 
-		if postgap.Globals.DEBUG:
-			print "\tFound %i genes associated to snp %s in GTEx" % (len(res), snp.rsID)
+		self.logger.info("\tFound %i genes associated to snp %s in GTEx" % (len(res), snp.rsID))
 
 		return res
 
@@ -216,8 +219,7 @@ class GTEx(Cisreg_source):
 				if eQTL['value'] < 2.5e-5 
 			]
 
-			if postgap.Globals.DEBUG:
-				print "\tFound %i SNPs associated to gene %s in tissue %s in GTEx" % (len(res), snp.rsID, tissue)
+			self.logger.info("\tFound %i genes associated the SNP %s in tissue %s in GTEx" % (len(res), snp.rsID, tissue))
 
 			return res
 		except:
@@ -225,6 +227,8 @@ class GTEx(Cisreg_source):
 
 class VEP(Cisreg_source):
 	display_name = "VEP"
+
+	
 	def run(self, snps, tissues):
 		"""
 
@@ -312,12 +316,17 @@ class VEP(Cisreg_source):
 			for hit in transcript_consequences for consequence in hit['transcript_consequences']
 		]
 
-		if postgap.Globals.DEBUG:
-			print "\tFound %i interactions in VEP" % (len(res))
+		self.logger.info("\tFound %i interactions in VEP" % (len(res)))
 
 		return res
 
-	def get(self, chunk):
+	def remove_none_elements(self, list):
+		return filter(self.exists, list)
+
+	def exists(self, it):
+		return (it is not None)
+
+	def get(self, chunk_param):
 		"""
 
 			Queries Ensembl servers. Recursively breaks down query if error code 400 is returned
@@ -326,6 +335,10 @@ class VEP(Cisreg_source):
 			Returntype: [ Regulatory_Evidence ]
 
 		"""
+
+		# 
+		chunk = self.remove_none_elements(chunk_param)
+
 		if len(chunk) == 0:
 			return []
 
@@ -345,6 +358,8 @@ class VEP(Cisreg_source):
 
 class Fantom5(Cisreg_source):
 	display_name = "Fantom5"
+
+	
 	def run(self, snps, tissues):
 		"""
 
@@ -360,13 +375,11 @@ class Fantom5(Cisreg_source):
 		snp_hash = dict( (snp.rsID, snp) for snp in snps)
 		hits  = filter(lambda X: X is not None, map(lambda X: self.get_evidence(X, fdr_model, snp_hash), intersection))
 
-		if postgap.Globals.DEBUG:
-			print "\tFound %i overlaps with %i SNPs to Fantom5" % (len(hits), len(snps))
+		self.logger.info("\tFound %i overlaps with %i SNPs to Fantom5" % (len(hits), len(snps)))
 
 		res = filter(lambda X: X.score, hits)
 
-		if postgap.Globals.DEBUG:
-			print "\tFound %i interactions in Fantom5" % (len(res))
+		self.logger.info("\tFound %i interactions in Fantom5" % (len(res)))
 
 		return res
 
@@ -402,6 +415,8 @@ class Fantom5(Cisreg_source):
 
 class DHS(Cisreg_source):
 	display_name = "DHS"
+
+	
 	def run (self, snps, tissues):
 		"""
 
@@ -417,8 +432,7 @@ class DHS(Cisreg_source):
 		snp_hash = dict( (snp.rsID, snp) for snp in snps)
 		res = filter (lambda X: X is not None and X.score, (self.get_evidence(feature, fdr_model, snp_hash) for feature in intersection))
 
-		if postgap.Globals.DEBUG:
-			print "\tFound %i gene associations in DHS" % len(res)
+		self.logger.info("\tFound %i gene associations in DHS" % len(res))
 
 		return res
 
@@ -504,6 +518,8 @@ def STOPGAP_FDR(snp, gene, fdr_model):
 
 class PCHIC(Cisreg_source):
 	display_name = "PCHiC"
+
+	
 	def run(self, snps, tissues):
 		"""
 
@@ -518,8 +534,7 @@ class PCHIC(Cisreg_source):
 		snp_hash = dict( (snp.rsID, snp) for snp in snps)
 		res = filter (lambda X: X is not None and X.score, (self.get_evidence(feature, snp_hash) for feature in intersection))
 
-		if postgap.Globals.DEBUG:
-			print "\tFound %i gene associations in PCHIC" % len(res)
+		self.logger.info("\tFound %i gene associations in PCHIC" % len(res))
 
 		return res
 
@@ -565,6 +580,7 @@ class PCHIC(Cisreg_source):
 
 class nearest_gene(Cisreg_source):
 	display_name = 'Nearest'
+	
 	def run (self, snps, tissues):
 		"""
 

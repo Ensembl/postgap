@@ -31,6 +31,7 @@ import sys
 import requests
 import json
 import time
+import logging
 
 from postgap.Globals import *
 
@@ -42,9 +43,12 @@ def get(server, ext, data=None):
 		Return type: JSON object
 
 	"""
+	#logger = logging.getLogger(__name__)
+	logger = logging.getLogger(__file__)
+	
 	for retries in range(3):
 		if DEBUG:
-			sys.stderr.write("REST JSON Query: %s%s\n" % (server, ext))
+			logging.debug("REST JSON Query: %s%s" % (server, ext))
 			start_time = time.time()
 
 		try:
@@ -54,37 +58,47 @@ def get(server, ext, data=None):
 			else:
 				headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
 				r = requests.post(str(server)+str(ext), headers = headers, data = json.dumps(data), timeout=200)
-		except requests.exceptions.ReadTimeout:
+                except requests.exceptions.ReadTimeout:
+			continue
+		except requests.exceptions.ConnectionError:
+			# A timeout can creep up as a connection error, so catching this as well.
+			# requests.exceptions.ConnectionError: HTTPConnectionPool(host='grch37.rest.ensembl.org', port=80): Read timed out.
 			continue
 
+
 		if not r.ok:
-			sys.stderr.write("Failed to get proper response to query %s%s\n" % (server, ext) )
-			sys.stderr.write("With headers:\n" + repr(headers) + "\n")
+			logging.error("Failed to get proper response to query %s%s" % (server, ext) )
+			logging.error("With headers:" + repr(headers))
 			if data is not None:
-				sys.stderr.write("With data:\n" + repr(data) + "\n")
-			sys.stderr.write("Error code: %s\n" % r.status_code)
+				logging.error("With data:" + repr(data))
+			logging.error("Error code: %s" % r.status_code)
 
 			if retries == 2:
+				logging.critical("Giving up.")
 				r.raise_for_status()
 
 			if 'Retry-After' in r.headers:
+				logging.error("Will try again in %s seconds." % r.headers['Retry-After'])
 				time.sleep(int(r.headers['Retry-After']))
 
 			elif r.status_code == 403:
+				logging.error("Will try again in %s seconds." % 600)
 				time.sleep(600) # Sleep 10 minutes while server calms down
 			elif r.status_code == 104 or r.status_code == 504:
+				logging.error("Will try again in %s seconds." % 60)
 				time.sleep(60) # Sleep 1 minute while server cools down
 			else:
+				logging.error("Got status code %s." % r.status_code)
 				r.raise_for_status()
 			continue
 
 		if DEBUG:
-			sys.stderr.write("Time: %f\n" % (time.time() - start_time))
+			logging.debug("Time: %f" % (time.time() - start_time))
 
 		try:
 			return r.json()
 		except:
-			sys.stderr.write("Failed to get proper response to query %s%s\n" % (server, ext) )
+			logging.critical("Failed to get proper response to query %s%s" % (server, ext) )
 			raise
 
 	# Failed too many times
