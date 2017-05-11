@@ -101,7 +101,7 @@ def main():
 			output = open(options.output, "w")
 
 		if options.json_output:
-			formatted_results = json.dumps([X._asdict() for X in res])
+			formatted_results = json.dumps(objectToDict(res))
 		elif options.rsID is None and options.coords is None:
 			formatted_results = pretty_output(res)
 		else:
