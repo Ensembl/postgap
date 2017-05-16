@@ -87,7 +87,7 @@ def main():
 	efo_iris = []
 
 	if options.efos is not None:
-		efo_iris = efo_iris = query_iris_for_efo_short_form_list(options.efos)
+		efo_iris = query_iris_for_efo_short_form_list(options.efos)
 
 	if options.efos is None:
 		efo_iris = filter(lambda X: X is not None, (postgap.EFO.suggest(disease) for disease in options.diseases))
