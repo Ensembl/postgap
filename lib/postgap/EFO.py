@@ -289,7 +289,7 @@ def children(efo):
 	for term in terms:
 		logger.debug(" - " + term['short_form']);
 
-	result = [ term['short_form'] for term in terms ]
+	result = [ term['iri'] for term in terms ]
 
 	return result
 

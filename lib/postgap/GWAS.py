@@ -80,12 +80,13 @@ class GWASCatalog(GWAS_source):
 		return res
 
 	def query(self, efo):
-		term = "http://www.ebi.ac.uk/efo/" + efo
 		logger = logging.getLogger(__name__)
-		logger.info("Querying GWAS catalog for " + term);
+		logger.info("Querying GWAS catalog for " + efo);
 
 		server = 'http://wwwdev.ebi.ac.uk'
-		url = '/gwas/beta/rest/api/efoTraits/search/findByUri?uri=%s' % (term)
+		url = '/gwas/beta/rest/api/efoTraits/search/findByUri?uri=%s' % (efo)
+		
+		#print "Querying: " + server + url;
 
 		hash = postgap.REST.get(server, url)
 		list_of_GWAS_Associations = []
