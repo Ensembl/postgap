@@ -216,7 +216,7 @@ def pretty_output(associations):
 		Returntype: String
 
 	"""
-	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'disease_names', 'disease_efo_ids', 'score', 'rank', 'r2', 'gwas_snp_ids', 'ls_snp_is_gwas_snp', 'vep_terms'] + [source.display_name for source in postgap.GWAS.sources + postgap.Cisreg.sources + postgap.Reg.sources])
+	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'disease_names', 'disease_efo_ids', 'score', 'rank', 'r2', 'gwas_source', 'gwas_snp', 'gwas_pvalue', 'gwas_pmid', 'ls_snp_is_gwas_snp', 'vep_terms'] + [source.display_name for source in postgap.Cisreg.sources + postgap.Reg.sources])
 	content = map(pretty_cluster_association, associations)
 	return "\n".join([header] + content)
 
@@ -251,7 +251,12 @@ def db_output(db, associations):
 		disease_names TEXT,
 		disease_efo_ids TEXT, 
 		score REAL,
-		gwas_snp_ids TEXT,
+		rank INT,
+		r2 real,
+		gwas_source TEXT,
+		gwas_snp TEXT,
+		gwas_pvalue TEXT,
+		gwas_pmid TEXT,
 		ls_snp_is_gwas_snp INT,
 		vep_terms TEXT,''' + ",".join([re.sub(" ", "_", source.display_name) + " INT\n" for source in postgap.GWAS.sources + postgap.Cisreg.sources + postgap.Reg.sources]) + ")"
 	conn.execute(table_sql)
@@ -280,22 +285,6 @@ def genecluster_association_table(association):
 		Returntype: [[ string or float ]]
 
 	"""
-	gene_name = association.gene.name
-	gene_id = association.gene.id
-	gene_chrom = association.gene.chrom
-	gene_tss = association.gene.tss
-	cluster = association.cluster
-	gwas_snps = cluster.gwas_snps
-	gwas_snp_rsIDs = [gwas_snp.snp.rsID for gwas_snp in gwas_snps]
-	disease_names = list(set(gwas_association.disease.name for gwas_snp in gwas_snps for gwas_association in gwas_snp.evidence))
-	disease_efos = list(set(gwas_association.disease.efo for gwas_snp in gwas_snps for gwas_association in gwas_snp.evidence))
-
-	gwas_scores = collections.defaultdict(lambda: collections.defaultdict(lambda: 1))
-	for gwas_snp in gwas_snps:
-		for gwas_association in gwas_snp.evidence:
-			if gwas_association.pvalue < gwas_scores[gwas_association.source][gwas_snp.snp.rsID]:
-				gwas_scores[gwas_association.source][gwas_snp.snp.rsID] = gwas_association.pvalue
-
 	results = []
 	for gene_snp_association in association.evidence:
 		vep_terms = "N/A"
@@ -304,28 +293,31 @@ def genecluster_association_table(association):
 				vep_terms = ",".join(evidence.info['consequence_terms'])
 				break
 
-		row = [
-				gene_snp_association.snp.rsID, 
-				gene_snp_association.snp.chrom, 
-				gene_snp_association.snp.pos, 
-				gene_name, 
-				gene_id, 
-				gene_chrom, 
-				gene_tss, 
-				",".join(disease_names), 
-				",".join(disease_efos), 
-				gene_snp_association.score, 
-				gene_snp_association.rank,
-				association.r2,
-				",".join(gwas_snp.snp.rsID for gwas_snp in gwas_snps),
-				int(gene_snp_association.snp.rsID in gwas_snp_rsIDs),
-				vep_terms
-			]
+		for gwas_snp in association.cluster.gwas_snps:
+			for gwas_association in gwas_snp.evidence:
+				row = [
+						gene_snp_association.snp.rsID, 
+						gene_snp_association.snp.chrom, 
+						gene_snp_association.snp.pos, 
+						association.gene.name, 
+						association.gene.id, 
+						association.gene.chrom, 
+						association.gene.tss, 
+						gwas_association.disease.name,
+						gwas_association.disease.efo,
+						gene_snp_association.score, 
+						gene_snp_association.rank,
+						association.r2,
+						gwas_association.source,
+						gwas_association.snp,
+						gwas_association.pvalue,
+						gwas_association.study,
+						int(gene_snp_association.snp.rsID == gwas_snp.snp.rsID),
+						vep_terms
+					]
 
-		for gwas_source in postgap.GWAS.sources:
-			row.append(",".join(str(gwas_scores[gwas_source.display_name][gwas_snp.snp.rsID]) for gwas_snp in cluster.gwas_snps))
-		row += [gene_snp_association.intermediary_scores[functional_source.display_name] for functional_source in postgap.Cisreg.sources + postgap.Reg.sources]
-		results.append(row)
+				row += [gene_snp_association.intermediary_scores[functional_source.display_name] for functional_source in postgap.Cisreg.sources + postgap.Reg.sources]
+				results.append(row)
 
 	return results
 
