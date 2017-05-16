@@ -93,7 +93,7 @@ def main():
 		efo_iris = filter(lambda X: X is not None, (postgap.EFO.suggest(disease) for disease in options.diseases))
 
 	# Expand list of EFOs to children, concatenate, remove duplicates
-	expanded_efo_iris = concatenate(map(postgap.EFO.children, efo_iris))
+	expanded_efo_iris = efo_iris + concatenate(map(postgap.EFO.children, efo_iris))
 
 	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0:
 		res = postgap.Integration.diseases_to_genes(options.diseases, expanded_efo_iris, "CEPH", options.tissues)
