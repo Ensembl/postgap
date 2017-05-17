@@ -314,7 +314,7 @@ class Phewas_Catalog(GWAS_source):
 				disease = Disease(name = postgap.EFO.term(items[9]), efo = items[9]), 
 				reported_trait = items[2],
 				source = self.display_name,
-				study = None
+				study = "None"
 			)
 		else:
 			return None
