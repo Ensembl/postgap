@@ -87,7 +87,7 @@ def main():
 	efo_iris = []
 
 	if options.efos is not None:
-		efo_iris = query_iris_for_efo_short_form_list(options.efos)
+		efo_iris = postgap.EFO.query_iris_for_efo_short_form_list(options.efos)
 
 	if options.efos is None:
 		efo_iris = filter(lambda X: X is not None, (postgap.EFO.suggest(disease) for disease in options.diseases))
@@ -121,23 +121,6 @@ def main():
 		output.write(formatted_results + "\n")
 	else:
 		db_output(options.db, res)
-
-def query_iris_for_efo_short_form_list(efo_short_form_list):
-	
-	iri_list = []
-	for efo_short_form in efo_short_form_list:
-		iri_list += query_iris_for_efo_short_form(efo_short_form)
-		
-	return iri_list
-
-def query_iris_for_efo_short_form(efo_short_form):
-	
-	server = 'http://www.ebi.ac.uk'
-	ext = "/ols/api/ontologies/efo/terms?short_form=%s" % (efo_short_form)
-	result = postgap.REST.get(server, ext)
-	terms = result['_embedded']['terms']
-	iri_terms = [ term['iri'] for term in terms ]
-	return iri_terms
 
 def get_options():
     """

@@ -305,7 +305,7 @@ def term(efo):
 
 	"""
 	if efo not in known_terms:
-		known_term[efo] = lookup_term(efo)
+		known_terms[efo] = lookup_term(efo)
 	return known_terms[efo]
 
 def lookup_term(efo):
@@ -323,7 +323,7 @@ def lookup_term(efo):
 	server = 'http://www.ebi.ac.uk'
 
 	import urllib
-	double_quoted_iri = urllib.quote_plus(urllib.quote_plus(efo))
+	double_quoted_iri = urllib.quote_plus(urllib.quote_plus(query_iris_for_efo_short_form(efo)[0]))
 
 	# E.g.: http://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_0000400
 	ext = "/ols/api/ontologies/efo/terms/" + double_quoted_iri
@@ -433,3 +433,17 @@ def lookup_term(efo):
 	'''
 	return hash['label']
 
+def query_iris_for_efo_short_form_list(efo_short_form_list):
+	iri_list = []
+	for efo_short_form in efo_short_form_list:
+		iri_list += query_iris_for_efo_short_form(efo_short_form)
+		
+	return iri_list
+
+def query_iris_for_efo_short_form(efo_short_form):
+	server = 'http://www.ebi.ac.uk'
+	ext = "/ols/api/ontologies/efo/terms?short_form=%s" % (efo_short_form)
+	result = postgap.REST.get(server, ext)
+	terms = result['_embedded']['terms']
+	iri_terms = [ term['iri'] for term in terms ]
+	return iri_terms
