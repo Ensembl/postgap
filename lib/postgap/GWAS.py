@@ -116,8 +116,6 @@ class GWASCatalog(GWAS_source):
 
 				if (len(singleNucleotidePolymorphisms) == 0):
 					sys.exit("Got no snp for a pvalue!")
-				if (len(singleNucleotidePolymorphisms) != 1):
-					sys.exit("Got more than one snp for a pvalue!")
 
 				study_url = current_association["_links"]["study"]["href"]
 				study_response = postgap.REST.get(study_url, "")
