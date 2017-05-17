@@ -216,7 +216,7 @@ def pretty_output(associations):
 		Returntype: String
 
 	"""
-	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'disease_names', 'disease_efo_ids', 'score', 'rank', 'r2', 'gwas_source', 'gwas_snp', 'gwas_pvalue', 'gwas_pmid', 'ls_snp_is_gwas_snp', 'vep_terms'] + [source.display_name for source in postgap.Cisreg.sources + postgap.Reg.sources])
+	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'disease_name', 'disease_efo_id', 'score', 'rank', 'r2', 'gwas_source', 'gwas_snp', 'gwas_pvalue', 'gwas_pmid', 'gwas_reported_trait', 'ls_snp_is_gwas_snp', 'vep_terms'] + [source.display_name for source in postgap.Cisreg.sources + postgap.Reg.sources])
 	content = map(pretty_cluster_association, associations)
 	return "\n".join([header] + content)
 
@@ -248,8 +248,8 @@ def db_output(db, associations):
 		gene_id TEXT,
 		gene_chrom TEXT,
 		gene_tss INT,
-		disease_names TEXT,
-		disease_efo_ids TEXT, 
+		disease_name TEXT,
+		disease_efo_id TEXT, 
 		score REAL,
 		rank INT,
 		r2 real,
@@ -257,6 +257,7 @@ def db_output(db, associations):
 		gwas_snp TEXT,
 		gwas_pvalue TEXT,
 		gwas_pmid TEXT,
+		gwas_reported_trait TEXT,
 		ls_snp_is_gwas_snp INT,
 		vep_terms TEXT,''' + ",".join([re.sub(" ", "_", source.display_name) + " INT\n" for source in postgap.GWAS.sources + postgap.Cisreg.sources + postgap.Reg.sources]) + ")"
 	conn.execute(table_sql)
@@ -312,6 +313,7 @@ def genecluster_association_table(association):
 						gwas_association.snp,
 						gwas_association.pvalue,
 						gwas_association.study,
+						gwas_association.reported_trait,
 						int(gene_snp_association.snp.rsID == gwas_snp.snp.rsID),
 						vep_terms
 					]

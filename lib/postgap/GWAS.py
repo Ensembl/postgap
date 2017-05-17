@@ -123,6 +123,10 @@ class GWASCatalog(GWAS_source):
 				study_response = postgap.REST.get(study_url, "")
 				pubmedId = study_response["pubmedId"]
 
+				diseaseTrait_url = study_response["_links"]["diseaseTrait"]["href"]
+				diseaseTrait_response = postgap.REST.get(diseaseTrait_url, "")
+				diseaseTrait = diseaseTrait_response['trait']
+
 				for current_snp in singleNucleotidePolymorphisms:
 					logger.debug("    received association with snp rsId: " + '{:12}'.format(current_snp["rsId"]) + " with a pvalue of " + str(current_association["pvalue"]))
 
@@ -132,6 +136,7 @@ class GWASCatalog(GWAS_source):
 								name = efoTraitName,
 								efo  = efo
 							),
+							reported_trait = diseaseTrait,
 							snp     = current_snp["rsId"],
 							pvalue  = current_association["pvalue"],
 							source  = 'GWAS Catalog',
@@ -250,7 +255,8 @@ class GRASP(GWAS_source):
 				return GWAS_Association(
 					pvalue = float(items[10]),
 					snp = "rs" + items[4],
-					disease = Disease(name = items[12], efo = items[70]),
+					disease = Disease(name = postgap.EFO.term(items[70]), efo = items[70]),
+					reported_trait = items[12],
 					source = self.display_name,
 					study = items[7]
 				)
@@ -352,7 +358,8 @@ class GWAS_DB(GWAS_source):
 			return GWAS_Association(
 				pvalue = float(items[3]),
 				snp = items[2],
-				disease = Disease(name = items[5].decode('latin1'), efo = items[6]),
+				disease = Disease(name = postgap.EFO.term(items[6]), efo = items[6]),
+				reported_trait = items[5].decode('latin1'),
 				source = self.display_name,
 				study = items[4]
 			)
