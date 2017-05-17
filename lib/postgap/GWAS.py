@@ -163,6 +163,9 @@ class GRASP(GWAS_source):
 
 		"""
 		logger = logging.getLogger(__name__)
+
+		# Temporary hack: current files have IDs, not IRIs:
+		efos = [re.sub('.*/',"", efo) for efo in efos]
 		
 		file = open(postgap.Globals.DATABASES_DIR+"/GRASP.txt")
 		res = [ self.get_association(line, diseases, efos) for line in file ]
@@ -335,7 +338,8 @@ class GWAS_DB(GWAS_source):
 		file = open(postgap.Globals.DATABASES_DIR+"/GWAS_DB.txt")
 
 		# Note the format of the EFO strings is modified in this file format, so we need to change the queries
-		efos2 = [re.sub("_", "ID:", efo) for efo in efos]
+		efos2 = [re.sub("_", "ID:", re.sub(".*/","", efo)) for efo in efos]
+	
 		res = [ self.get_association(line, diseases, efos) for line in file ]
 		res = filter(lambda X: X is not None, res)
 

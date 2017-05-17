@@ -305,7 +305,7 @@ def genecluster_association_table(association):
 						association.gene.chrom, 
 						association.gene.tss, 
 						gwas_association.disease.name,
-						gwas_association.disease.efo,
+						re.sub(".*/", "", gwas_association.disease.efo),
 						gene_snp_association.score, 
 						gene_snp_association.rank,
 						association.r2,
