@@ -299,34 +299,38 @@ def genecluster_association_table(association):
 		else:
 			vep_mean = 0
 
-		for gwas_snp in association.cluster.gwas_snps:
-			for gwas_association in gwas_snp.evidence:
-				row = [
-						gene_snp_association.snp.rsID, 
-						gene_snp_association.snp.chrom, 
-						gene_snp_association.snp.pos, 
-						association.gene.name, 
-						association.gene.id, 
-						association.gene.chrom, 
-						association.gene.tss, 
-						gwas_association.disease.name,
-						re.sub(".*/", "", gwas_association.disease.efo),
-						gene_snp_association.score, 
-						gene_snp_association.rank,
-						association.r2,
-						gwas_association.source,
-						gwas_association.snp,
-						gwas_association.pvalue,
-						gwas_association.study,
-						gwas_association.reported_trait,
-						int(gene_snp_association.snp.rsID == gwas_snp.snp.rsID),
-						vep_terms,
-						gene_snp_association.intermediary_scores['VEP_max'],
-						vep_mean
-					]
+		gwas_sources = [gwas_association.source for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
+		gwas_snps = [gwas_association.snp for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
+		gwas_pvalues = [gwas_association.pvalue for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
+		gwas_studies = [gwas_association.study for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
+		gwas_reported_traits = [gwas_association.reported_trait for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
 
-				row += [gene_snp_association.intermediary_scores[functional_source.display_name] for functional_source in postgap.Cisreg.sources + postgap.Reg.sources]
-				results.append(row)
+		row = [
+				gene_snp_association.snp.rsID, 
+				gene_snp_association.snp.chrom, 
+				gene_snp_association.snp.pos, 
+				association.gene.name, 
+				association.gene.id, 
+				association.gene.chrom, 
+				association.gene.tss, 
+				gwas_association.disease.name,
+				re.sub(".*/", "", gwas_association.disease.efo),
+				gene_snp_association.score, 
+				gene_snp_association.rank,
+				association.r2,
+				"|".join(gwas_sources),
+				"|".join(gwas_snps),
+				"|".join(map(str, gwas_pvalues)),
+				"|".join(gwas_studies),
+				"|".join(gwas_reported_traits),
+				int(gene_snp_association.snp.rsID in gwas_snps),
+				vep_terms,
+				gene_snp_association.intermediary_scores['VEP_max'],
+				vep_mean
+			]
+
+		row += [gene_snp_association.intermediary_scores[functional_source.display_name] for functional_source in postgap.Cisreg.sources + postgap.Reg.sources]
+		results.append(row)
 
 	return results
 
