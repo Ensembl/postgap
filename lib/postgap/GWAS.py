@@ -304,11 +304,14 @@ class Phewas_Catalog(GWAS_source):
 
 		'''
 		items = line.rstrip().split('\t')
+		# Temporary hack: current files have IDs, not IRIs:
+		efos = [re.sub('.*/',"", efo) for efo in efos]
 		if items[2] in diseases or items[9] in efos:
 			return GWAS_Association (
 				pvalue = float(items[4]),
 				snp = items[1],
-				disease = Disease(name = items[2], efo = items[9]), 
+				disease = Disease(name = postgap.EFO.term(items[9]), efo = items[9]), 
+				reported_trait = items[2],
 				source = self.display_name,
 				study = None
 			)
