@@ -443,10 +443,19 @@ def compute_v2g_scores(reg, cisreg):
 		for evidence in cisreg[gene] + reg:
 			intermediary_scores[gene][evidence.source] += float(evidence.score)
 
+			# VEP stats
+			if evidence.source == 'VEP':
+				if float(evidence.score) > intermediary_scores[gene]['VEP_max']:
+					intermediary_scores[gene]['VEP_max'] = float(evidence.score)
+				intermediary_scores[gene]['VEP_count'] += 1
+
 		# Ad hoc bounds defined here:
+		# PCHiC
 		intermediary_scores[gene]['PCHiC'] = min(intermediary_scores[gene]['PCHiC'], 1)
 
 		gene_scores[gene] = sum(intermediary_scores[gene].values())
+
+
 
 	return intermediary_scores, gene_scores
 

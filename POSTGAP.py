@@ -216,7 +216,7 @@ def pretty_output(associations):
 		Returntype: String
 
 	"""
-	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'disease_name', 'disease_efo_id', 'score', 'rank', 'r2', 'gwas_source', 'gwas_snp', 'gwas_pvalue', 'gwas_pmid', 'gwas_reported_trait', 'ls_snp_is_gwas_snp', 'vep_terms'] + [source.display_name for source in postgap.Cisreg.sources + postgap.Reg.sources])
+	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'disease_name', 'disease_efo_id', 'score', 'rank', 'r2', 'gwas_source', 'gwas_snp', 'gwas_pvalue', 'gwas_pmid', 'gwas_reported_trait', 'ls_snp_is_gwas_snp', 'vep_terms', 'vep_max', 'vep_mean'] + [source.display_name for source in postgap.Cisreg.sources + postgap.Reg.sources])
 	content = map(pretty_cluster_association, associations)
 	return "\n".join([header] + content)
 
@@ -294,6 +294,11 @@ def genecluster_association_table(association):
 				vep_terms = ",".join(evidence.info['consequence_terms'])
 				break
 
+		if gene_snp_association.intermediary_scores['VEP_count'] > 0:
+			vep_mean = gene_snp_association.intermediary_scores['VEP'] / gene_snp_association.intermediary_scores['VEP_count']
+		else:
+			vep_mean = 0
+
 		for gwas_snp in association.cluster.gwas_snps:
 			for gwas_association in gwas_snp.evidence:
 				row = [
@@ -315,7 +320,9 @@ def genecluster_association_table(association):
 						gwas_association.study,
 						gwas_association.reported_trait,
 						int(gene_snp_association.snp.rsID == gwas_snp.snp.rsID),
-						vep_terms
+						vep_terms,
+						gene_snp_association.intermediary_scores['VEP_max'],
+						vep_mean
 					]
 
 				row += [gene_snp_association.intermediary_scores[functional_source.display_name] for functional_source in postgap.Cisreg.sources + postgap.Reg.sources]
