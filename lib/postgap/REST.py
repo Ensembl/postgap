@@ -32,6 +32,7 @@ import requests
 import json
 import time
 import logging
+import httplib
 
 from postgap.Globals import *
 
@@ -67,11 +68,20 @@ def get(server, ext, data=None):
 
 
 		if not r.ok:
+			
+			http_response_code = httplib.responses[r.status_code]
+			
+			if (http_response_code == ""):
+				error_message = "Unknown status code %s" % (r.status_code)
+				logging.critical(error_message)
+				raise RuntimeError(error_message)
+			
 			logging.error("Failed to get proper response to query %s%s" % (server, ext) )
 			logging.error("With headers:" + repr(headers))
 			if data is not None:
 				logging.error("With data:" + repr(data))
-			logging.error("Error code: %s" % r.status_code)
+			
+			logging.error("Error code: %s (%s) %s" % (http_response_code, r.status_code, json.dumps(r.json()) ) )
 
 			if retries == 2:
 				logging.critical("Giving up.")
@@ -81,14 +91,14 @@ def get(server, ext, data=None):
 				logging.error("Will try again in %s seconds." % r.headers['Retry-After'])
 				time.sleep(int(r.headers['Retry-After']))
 
-			elif r.status_code == 403:
+			elif r.status_code == requests.codes.forbidden:
 				logging.error("Will try again in %s seconds." % 600)
 				time.sleep(600) # Sleep 10 minutes while server calms down
-			elif r.status_code == 104 or r.status_code == 504:
+			elif r.status_code == 104 or r.status_code == requests.codes.gateway_timeout or r.status_code == requests.codes.request_timeout:
 				logging.error("Will try again in %s seconds." % 60)
 				time.sleep(60) # Sleep 1 minute while server cools down
 			else:
-				logging.error("Got status code %s." % r.status_code)
+				logging.error("Got status code %s (%s)." % (r.status_code, http_response_code))
 				r.raise_for_status()
 			continue
 
@@ -98,8 +108,9 @@ def get(server, ext, data=None):
 		try:
 			return r.json()
 		except:
-			logging.critical("Failed to get proper response to query %s%s" % (server, ext) )
-			raise
+			error_message = "Failed to get proper response to query %s%s" % (server, ext) 
+			logging.critical(error_message)
+			raise requests.HTTPError(error_message)
 
 	# Failed too many times
 	assert False
