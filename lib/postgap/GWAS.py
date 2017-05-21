@@ -102,7 +102,10 @@ class GWASCatalog(GWAS_source):
 
 			association_rest_response = efoTraitLinks["associations"]
 			association_url = association_rest_response["href"]
-			association_response = postgap.REST.get(association_url, "")
+			try:
+				association_response = postgap.REST.get(association_url, "")
+			except:
+				continue
 			associations = association_response["_embedded"]["associations"]
 
 			logger.info("Received " + str(len(associations)) + " associations with SNPs.")
@@ -115,7 +118,8 @@ class GWASCatalog(GWAS_source):
 				singleNucleotidePolymorphisms = snp_response["_embedded"]["singleNucleotidePolymorphisms"]
 
 				if (len(singleNucleotidePolymorphisms) == 0):
-					sys.exit("Got no snp for a pvalue!")
+					# sys.exit("Got no snp for a pvalue!")
+					continue
 
 				study_url = current_association["_links"]["study"]["href"]
 				study_response = postgap.REST.get(study_url, "")
@@ -126,6 +130,9 @@ class GWASCatalog(GWAS_source):
 				diseaseTrait = diseaseTrait_response['trait']
 
 				for current_snp in singleNucleotidePolymorphisms:
+					if current_snp["rsId"] == '6':
+						continue
+
 					logger.debug("    received association with snp rsId: " + '{:12}'.format(current_snp["rsId"]) + " with a pvalue of " + str(current_association["pvalue"]))
 
 					list_of_GWAS_Associations.append(
