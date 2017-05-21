@@ -212,7 +212,7 @@ def pretty_cluster_association(association):
 
 	"""
 	results = genecluster_association_table(association)
-	return "\n".join("\t".join(map(unicode, row)) for row in results)
+	return "\n".join("\t".join([unicode(element).encode('utf-8') for element in row]) for row in results)
 
 def db_output(db, associations):
 	"""
