@@ -149,6 +149,8 @@ def suggest(term):
 	'''
 
 	hits = filter(lambda X: len(X['semanticTags']) == 1, result)
+	if len(hits)==0:
+		return
 	efo = hits[0]['semanticTags'][0]
 	return efo
 
