@@ -295,7 +295,7 @@ def children(efo):
 
 	return result
 
-known_terms = dict()
+known_terms = {'N/A':'N/A'}
 
 def term(efo):
 	"""
