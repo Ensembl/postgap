@@ -97,10 +97,10 @@ def calculate_window(snp, window_len=500000, population='EUR', cutoff=0.7):
 
 			ld_snps.append(SNP(ld_id, snp.chrom, int(ld_pos)))
 
-	if len(ld_snps) > 0:
+	if any(ld_snp.rsID == snp.rsID for ld_snp in ld_snps):
 		return ld_snps
 	else:
-		return [snp]
+		return ld_snps + [snp]
 
 def get_lds_from_top_gwas(gwas_snp, ld_snps, population='EUR'):
 	"""
