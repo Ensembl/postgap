@@ -249,6 +249,8 @@ def merge_preclusters(preclusters):
 
 				for snp in merged_cluster.ld_snps:
 					snp_owner[snp] = merged_cluster 
+				for snp in cluster.ld_snps:
+					snp_owner[snp] = merged_cluster 
 
 				break
 			else:
