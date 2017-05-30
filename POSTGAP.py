@@ -111,7 +111,9 @@ def main():
 		postgap.Globals.Reg_adaptors = options.Reg
 
 	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0:
+		logger.info("Starting diseases_to_genes")
 		res = postgap.Integration.diseases_to_genes(options.diseases, expanded_efo_iris, "CEPH", options.tissues)
+		logger.info("Done with diseases_to_genes")
 	elif options.rsID is not None:
 		res = postgap.Integration.rsIDs_to_genes(options.rsID, options.tissues)
 	elif options.coords is not None:
