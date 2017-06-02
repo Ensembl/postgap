@@ -246,7 +246,13 @@ class GWASCatalog(GWAS_source):
 							pvalue  = current_association["pvalue"],
 							sample_size = sample_size,
 							source  = 'GWAS Catalog',
-							study   = 'PMID' + pubmedId
+							study   = 'PMID' + pubmedId,
+							
+							odds_ratio                 = current_association["orPerCopyNum"],
+
+							beta_coefficient           = current_association["betaNum"],
+							beta_coefficient_unit      = current_association["betaUnit"],
+							beta_coefficient_direction = current_association["betaDirection"],
 						)
 					)
 		if len(list_of_GWAS_Associations) > 0:
@@ -365,7 +371,11 @@ class GRASP(GWAS_source):
 					reported_trait = items[12].decode('latin1'),
 					source = self.display_name,
 					study = items[7],
-					sample_size = int(items[24])
+					sample_size = int(items[24]),
+					odds_ratio = None,
+					beta_coefficient = None,
+					beta_coefficient_unit = None,
+					beta_coefficient_direction = None
 				)
 
 		if items[12] in diseases:
@@ -377,7 +387,11 @@ class GRASP(GWAS_source):
 				reported_trait = items[12].decode('latin1'),
 				source = self.display_name,
 				study = items[7],
-				sample_size = int(items[24])
+				sample_size = int(items[24]),
+				odds_ratio = None,
+				beta_coefficient = None,
+				beta_coefficient_unit = None,
+				beta_coefficient_direction = None
 			)
 
 		return None
@@ -430,7 +444,11 @@ class Phewas_Catalog(GWAS_source):
 					reported_trait = items[2],
 					source = self.display_name,
 					study = "N/A",
-					sample_size = int(items[3])
+					sample_size = int(items[3]),
+					odds_ratio = float(items[5]),
+					beta_coefficient = None,
+					beta_coefficient_unit = None,
+					beta_coefficient_direction = None
 				)
 
 		if items[2] in diseases: 
@@ -442,7 +460,11 @@ class Phewas_Catalog(GWAS_source):
 				reported_trait = items[2],
 				source = self.display_name,
 				study = "N/A",
-				sample_size = int(items[3])
+				sample_size = int(items[3]),
+				odds_ratio = float(items[5]),
+				beta_coefficient = None,
+				beta_coefficient_unit = None,
+				beta_coefficient_direction = None
 			)
 
 		return None
@@ -493,7 +515,11 @@ class GWAS_DB(GWAS_source):
 					reported_trait = items[5].decode('latin1'),
 					source = self.display_name,
 					study = items[4],
-					sample_size = "N/A"
+					sample_size = "N/A",
+					odds_ratio = None,
+					beta_coefficient = None,
+					beta_coefficient_unit = None,
+					beta_coefficient_direction = None
 				)
 
 		if items[5] in diseases:
@@ -505,7 +531,11 @@ class GWAS_DB(GWAS_source):
 				reported_trait = items[5].decode('latin1'),
 				source = self.display_name,
 				study = items[4],
-				sample_size = "N/A"
+				sample_size = "N/A",
+				odds_ratio = None,
+				beta_coefficient = None,
+				beta_coefficient_unit = None,
+				beta_coefficient_direction = None
 			)
 
 		return None
