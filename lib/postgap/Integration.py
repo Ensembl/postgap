@@ -183,7 +183,19 @@ def cluster_gwas_snps(gwas_snps, populations):
 
 	preclusters = filter (lambda X: X is not None, [ gwas_snp_to_precluster(gwas_snp_location, populations) for gwas_snp_location in gwas_snp_locations ])
 	filtered_preclusters = postgap.RegionFilter.region_filter(preclusters)
+	
 	clusters = merge_preclusters(filtered_preclusters)
+	
+	if len(clusters)>0:
+		from pprint import pformat
+		import pickle
+		logger.info("Writing %i clusters from %i GWAS SNP locations to gwas_snps_all.pickle" % (len(clusters), len(gwas_snp_locations)))
+		f = open('gwas_snps.merged_preclusters.pickle', 'a')
+		pickle.dump(clusters, f)
+		f.close
+		import sys
+		sys.exit(0);
+
 
 	logger.info("Found %i clusters from %i GWAS SNP locations" % (len(clusters), len(gwas_snp_locations)))
 
