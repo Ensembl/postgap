@@ -468,6 +468,7 @@ class Phewas_Catalog(GWAS_source):
 				study = "PMID24270849",
 				sample_size = int(items[3]),
 				odds_ratio = float(items[5]),
+				study = None,
 				beta_coefficient = None,
 				beta_coefficient_unit = None,
 				beta_coefficient_direction = None
