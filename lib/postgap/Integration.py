@@ -95,6 +95,8 @@ def scan_disease_databases(diseases, efos):
 	logger.info("Searching for GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (", ".join(diseases), ", ".join(efos)))
 
 	gwas_associations = concatenate(source().run(diseases, efos) for source in postgap.GWAS.sources)
+	
+	logger.info("Done searching for GWAS SNPs. Found %s gwas associations." % len(gwas_associations) )
 
 	associations_by_snp = dict()
 	for gwas_association in gwas_associations:
