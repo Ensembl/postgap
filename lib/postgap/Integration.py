@@ -509,8 +509,7 @@ def cisregulatory_evidence(ld_snps, tissues):
 	for association in filtered_evidence:
 		res[association.snp][association.gene].append(association)
 
-	if postgap.Globals.DEBUG:
-		logger.info(("Found %i cis-regulatory interactions in all databases" % (len(res))))
+	logger.info(("Found %i cis-regulatory interactions in all databases" % (len(res))))
 
 	return res
 
