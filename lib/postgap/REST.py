@@ -94,7 +94,10 @@ def get(server, ext, data=None):
 			elif r.status_code == requests.codes.forbidden:
 				logging.error("Will try again in %s seconds." % 600)
 				time.sleep(600) # Sleep 10 minutes while server calms down
-			elif r.status_code == 104 or r.status_code == requests.codes.gateway_timeout or r.status_code == requests.codes.request_timeout:
+			elif r.status_code == 104 \
+				or r.status_code == requests.codes.gateway_timeout \
+				or r.status_code == requests.codes.request_timeout:
+
 				logging.error("Will try again in %s seconds." % 60)
 				time.sleep(60) # Sleep 1 minute while server cools down
 			else:
