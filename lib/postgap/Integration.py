@@ -107,6 +107,10 @@ def scan_disease_databases(diseases, efos):
 		if gwas_association.snp in associations_by_snp:
 			record = associations_by_snp[gwas_association.snp]
 			record.evidence.append(gwas_association)
+			
+			# If the association is better (has a smaller pvalue) than the 
+			# current lead SNP, then make the current one the lead SNP.
+			#
 			if record.pvalue > gwas_association.pvalue:
 				associations_by_snp[gwas_association.snp] = GWAS_SNP(
 					snp = record.snp,
@@ -129,6 +133,7 @@ def scan_disease_databases(diseases, efos):
 				beta_coefficient_unit      = gwas_association.beta_coefficient_unit,
 				beta_coefficient_direction = gwas_association.beta_coefficient_direction,
 
+				# A GWAS association is its own evidence.
 				evidence = [ gwas_association ]
 			)
 
@@ -191,9 +196,20 @@ def cluster_gwas_snps(gwas_snps, populations):
 
 	logger.info("Found %i locations from %i GWAS SNPs" % (len(gwas_snp_locations), len(gwas_snps)))
 
+	# For every gwas snp location, create the preclusters.
+	#
+	# A precluster is a GWAS_Cluster with the current SNP in the 
+	# GWAS_Cluster.gwas_snps list and the SNPs found by linkage disequilibrium
+	# in GWAS_Cluster.ld_snps.
+	# 
 	preclusters = filter (lambda X: X is not None, [ gwas_snp_to_precluster(gwas_snp_location, populations) for gwas_snp_location in gwas_snp_locations ])
+	
+	# Remove preclusters having a SNP in a blacklisted region
+	#
 	filtered_preclusters = postgap.RegionFilter.region_filter(preclusters)
 	
+	# Merge precluster that share one of their GWAS_Cluster.ld_snps.
+	#
 	clusters = merge_preclusters(filtered_preclusters)
 	
 	if len(clusters)>0:
