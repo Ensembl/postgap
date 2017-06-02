@@ -113,5 +113,7 @@ def get(server, ext, data=None):
 			raise requests.HTTPError(error_message)
 
 	# Failed too many times
-	assert False
+	error_message = "Failed too many times to get a proper response for query %s%s !" % (server, ext)
+	logging.critical(error_message)
+	raise requests.exceptions.ConnectionError(error_message)
 
