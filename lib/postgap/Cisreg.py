@@ -429,7 +429,8 @@ class VEP(Cisreg_source):
 	def get(self, chunk_param):
 		"""
 
-			Queries Ensembl servers. Recursively breaks down query if error code 400 is returned
+			Queries Ensembl servers. Recursively breaks down query if error code 400 
+			("Bad request") is returned
 			Args:
 			* [ SNP ]
 			Returntype: [ Regulatory_Evidence ]
@@ -448,7 +449,11 @@ class VEP(Cisreg_source):
 			return postgap.REST.get(server, ext, data = {"ids" : [snp.rsID for snp in chunk]})
 
 		except requests.exceptions.HTTPError as error:
-			if error.response.status_code == 400 or error.response.status_code == 504:
+			#if error.response.status_code == 400 or error.response.status_code == 504:
+			if \
+				error.response.status_code == requests.codes.bad_request \
+				or error.response.status_code == requests.codes.gateway_timeout:
+
 				if len(chunk) == 1:
 					return []
 				else:
