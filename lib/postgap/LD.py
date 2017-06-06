@@ -97,6 +97,8 @@ def calculate_window(snp, window_len=500000, population='EUR', cutoff=0.7):
 
 			ld_snps.append(SNP(ld_id, snp.chrom, int(ld_pos)))
 
+	# Make sure the snp is among the ld_snps. If it isn't already, it is added.
+	#
 	if any(ld_snp.rsID == snp.rsID for ld_snp in ld_snps):
 		return ld_snps
 	else:
@@ -223,26 +225,43 @@ def get_pairwise_ld(ld_snps, population='EUR'):
 		raise Exception(err)
 
 	### First pass through file: collect rsIDs
+	
+	# It is really 10.
+	number_of_columns_in_data_row = 9
+	
+	# Column count starts at 0
+	column_with_first_variation_id     = 3
+	column_with_second_variation_id    = 5
+	column_with_linkage_disequilibrium = 9
+	
 	observed_snps = set()
 	for line in output.split("\n"):
-		items = line.split('\t')
-		if len(items) < 9:
+		column = line.split('\t')
+		
+		is_not_a_data_column = len(column) < number_of_columns_in_data_row
+		
+		if is_not_a_data_column:
 			continue
-		observed_snps.add(items[3])
-		observed_snps.add(items[5])
+		observed_snps.add(column[column_with_first_variation_id ])
+		observed_snps.add(column[column_with_second_variation_id])
 
 	### Second pass through file: store LD into matrix
 	SNP_ids = [x.rsID for x in ld_snps if x.rsID in observed_snps]
 	snp_order = dict((rsID, rank) for rank, rsID in enumerate(SNP_ids))
 	r2_array = numpy.zeros((len(SNP_ids), len(SNP_ids)))
 	for line in output.split("\n"):
-		items = line.split('\t')
-		if len(items) < 9:
+		column = line.split('\t')
+		
+		is_not_a_data_column = len(column) < number_of_columns_in_data_row
+		
+		if is_not_a_data_column:
 			continue
-		snp_1_rank = snp_order[items[3]]
-		snp_2_rank = snp_order[items[5]]
-		r2_array[snp_1_rank][snp_2_rank] = float(items[9])
-		r2_array[snp_2_rank][snp_1_rank] = float(items[9])
+		
+		snp_1_rank = snp_order[column[ column_with_first_variation_id  ]]
+		snp_2_rank = snp_order[column[ column_with_second_variation_id ]]
+		
+		r2_array[snp_1_rank][snp_2_rank] = float(column[ column_with_linkage_disequilibrium ])
+		r2_array[snp_2_rank][snp_1_rank] = float(column[ column_with_linkage_disequilibrium ])
 
 	### Clean up
 	os.remove(rsID_file_name)
