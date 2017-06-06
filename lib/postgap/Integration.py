@@ -281,28 +281,43 @@ def merge_preclusters(preclusters):
 	logger = logging.getLogger(__name__)
 	
 	clusters = list(preclusters)
+	
+	# A dictionary that maps from snp to merged clusters
 	snp_owner = dict()
 	for cluster in preclusters:
 		for ld_snp in cluster.ld_snps:
+			# If this SNP has been seen in a different cluster
 			if ld_snp in snp_owner and snp_owner[ld_snp] is not cluster:
+				
+				# Set other_cluster to that different cluster
 				other_cluster = snp_owner[ld_snp]
 
 				# Merge data from current cluster into previous cluster
 				merged_gwas_snps = other_cluster.gwas_snps + cluster.gwas_snps
+				
+				#   Create a unique set of ld snps from the current cluster 
+				#   and the other cluster.
 				merged_ld_snps = dict((ld_snp.rsID, ld_snp) for ld_snp in cluster.ld_snps + other_cluster.ld_snps).values()
+				
+				#   Create a new Cluster
 				merged_cluster = GWAS_Cluster(
 					gwas_snps = merged_gwas_snps,
 					ld_snps = merged_ld_snps
 				)
+				
+				#    Remove the two previous clusters and replace them with 
+				#    the merged cluster
 				clusters.remove(cluster)
 				clusters.remove(other_cluster)
 				clusters.append(merged_cluster)
 
+				#    Set the new cluster as the owner of these SNPs.
 				for snp in merged_cluster.ld_snps:
 					snp_owner[snp] = merged_cluster 
 				for snp in cluster.ld_snps:
 					snp_owner[snp] = merged_cluster 
 
+				# Skip the rest of this cluster.
 				break
 			else:
 				snp_owner[ld_snp] = cluster
