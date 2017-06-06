@@ -66,7 +66,8 @@ GWAS_Cluster = collections.namedtuple(
 	'GWAS_Cluster', 
 	[
 		'gwas_snps',
-		'ld_snps'
+		'ld_snps',
+		'finemap_posteriors'
 	]
 )
 Cisregulatory_Evidence = collections.namedtuple('Cisregulatory_Evidence', ['snp','gene','score','source','study','tissue','info'])
