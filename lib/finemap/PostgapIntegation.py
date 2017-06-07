@@ -221,12 +221,12 @@ def print_matrix(matrix):
 	np.set_printoptions(precision=3, suppress=True, linewidth=150)
 	print(np.matrix(matrix))
 
-def set_diagonal(matrix, value=1):
+#def set_diagonal(matrix, value=1):
 	
-	matrix_length = len(matrix[0])
+	#matrix_length = len(matrix[0])
 	
-	for x in range(matrix_length):
-		matrix[x][x] = value
+	#for x in range(matrix_length):
+		#matrix[x][x] = value
 
 def process_ld_snps(ld_snps, gwas_snps):
 
@@ -302,7 +302,7 @@ def process_ld_snps(ld_snps, gwas_snps):
 		print_vector(SNP_ids)
 
 		print "Matrix of pairwise linkage disequilibria:\n"
-		set_diagonal(r2_array)
+		#set_diagonal(r2_array)
 		print_matrix(r2_array)
 		
 		approximated_gwas_zscore = compute_approximated_zscores_for_snps_from_multiple_lead_snps(
