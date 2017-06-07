@@ -46,6 +46,9 @@ def process_GWAS_Cluster(gwas_cluster):
 		ld_snps   = gwas_cluster.ld_snps,
 		gwas_snps = gwas_cluster.gwas_snps
 	)
+
+	if finemap_posteriors is None:
+		raise Exception("Got no finemap results!")
 	
 	return GWAS_Cluster(
 		gwas_snps          = gwas_cluster.gwas_snps,
@@ -268,10 +271,7 @@ def process_ld_snps(ld_snps, gwas_snps):
 				for gwas_snp in gwas_snps 
 		]
 	)
-
 	gwas_cluster_size = len(gwas_snps)
-	if gwas_cluster_size == 1:
-		return
 	
 	print "The cluster has %i gwas members.\n" % gwas_cluster_size
 	print "The cluster has %i gwas members with z scores.\n" % len(gwas_snps_with_z_scores)
@@ -288,46 +288,50 @@ def process_ld_snps(ld_snps, gwas_snps):
 	for snp in snps_from_gwas_snps:
 		print "    %s    %s    %s" % (snp.rsID, snp.chrom, snp.pos)
 
+	# The GWAS SNP is always one of the LD SNPs.
 	print "---- LD SNPs ----"
 	for snp in ld_snps:
 		print "    %s    %s    %s" % (snp.rsID, snp.chrom, snp.pos)
 
-	# The GWAS SNP is always one of the LD SNPs.
-	if ld_cluster_size>1:
-		
-		# LD measures the deviation from the expectation of non-association.
-		(SNP_ids, r2_array) = postgap.LD.get_pairwise_ld(ld_snps)
+	# LD measures the deviation from the expectation of non-association.
+	(SNP_ids, r2_array) = postgap.LD.get_pairwise_ld(ld_snps)
+
+	print "SNPs:\n"
+	print_vector(SNP_ids)
+
+	print "Matrix of pairwise linkage disequilibria:\n"
+	#set_diagonal(r2_array)
+	print_matrix(r2_array)
 	
-		print "SNPs:\n"
-		print_vector(SNP_ids)
+	approximated_gwas_zscore = compute_approximated_zscores_for_snps_from_multiple_lead_snps(
+		ld_correlation_matrix = r2_array,
+		SNP_ids               = SNP_ids,
+		lead_snps             = gwas_snps_with_z_scores,
+	)
+	print "Running finemap"
+	
+	kstart = 3
+	kmax   = 3
+	max_iter = "Not used when kstart == kmax"
 
-		print "Matrix of pairwise linkage disequilibria:\n"
-		#set_diagonal(r2_array)
-		print_matrix(r2_array)
-		
-		approximated_gwas_zscore = compute_approximated_zscores_for_snps_from_multiple_lead_snps(
-			ld_correlation_matrix = r2_array,
-			SNP_ids               = SNP_ids,
-			lead_snps             = gwas_snps_with_z_scores,
-		)
-		print "Running finemap"
-		
-		kstart = 3
-		kmax   = 3
-		max_iter = "Not used when kstart == kmax"
+	import finemap.stochastic_search as sss
+	finemap_posteriors = sss.finemap(
+		z_scores   = approximated_gwas_zscore,
+		cov_matrix = r2_array,
+		n          = len(r2_array),
+		kstart     = kstart,
+		kmax       = kmax,
+		max_iter   = max_iter,
+		prior      = "independence"
+	)
+	pprint.pprint(finemap_posteriors)
+	print "Done running finemap"
+	
+	if finemap_posteriors is None:
+		print "ERROR: Didn't get posteriors!"
+		sys.exit(0)
+	else:
+		print "INFO: Got posteriors!"
 
-		import finemap.stochastic_search as sss
-		finemap_posteriors = sss.finemap(
-			z_scores   = approximated_gwas_zscore,
-			cov_matrix = r2_array,
-			n          = len(r2_array),
-			kstart     = kstart,
-			kmax       = kmax,
-			max_iter   = max_iter,
-			prior      = "independence"
-		)
-		pprint.pprint(finemap_posteriors)
-		print "Done running finemap"
-		
-		return finemap_posteriors
+	return finemap_posteriors
 
