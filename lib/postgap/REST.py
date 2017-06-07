@@ -54,10 +54,10 @@ def get(server, ext, data=None):
 		try:
 			if data is None:
 				headers = { "Content-Type" : "application/json" }
-				r = requests.get(str(server)+str(ext), headers = headers, timeout=200)
+				r = requests.get(server.encode('ascii', 'xmlcharrefreplace')+ext.encode('ascii', 'xmlcharrefreplace'), headers = headers, timeout=200)
 			else:
 				headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
-				r = requests.post(str(server)+str(ext), headers = headers, data = json.dumps(data), timeout=200)
+				r = requests.post(server.encode('ascii', 'xmlcharrefreplace')+ext.encode('ascii', 'xmlcharrefreplace'), headers = headers, data = json.dumps(data), timeout=200)
                 except requests.exceptions.ReadTimeout:
 			continue
 		except requests.exceptions.ConnectionError:
