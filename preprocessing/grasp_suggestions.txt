@@ -1,222 +1,221 @@
-name_in_input	EFO_URI
-Waist:hip ratio	EFO_0004343
-Atopic dermatitis	EFO_0000274
-Iris color	EFO_0003949
-HDL cholesterol	EFO_0004612
-Alcohol dependence	EFO_0003829
-Conduct Disorder	EFO_0004216
-Crohn's disease and Psoriasis	EFO_0000384
-Sleep apnea	EFO_0003877
-Erectile dysfunction in Type 1 Diabetes	EFO_0001359
-Coronary heart disease	EFO_0001645
-Gallbladder cancer	EFO_0004606
-Common variable immunodeficiency	Orphanet_1572
-Creutzfeldt-Jakob disease variant	EFO_0004226
-Cognitive performance	EFO_0003926
-Huntington's disease	Orphanet_399
-Colorectal cancer	EFO_0005842
-Coronary artery calcification	EFO_0004723
-Thyrotoxic periodic paralysis	Orphanet_79102
-Alcohol consumption	EFO_0004329
-Airflow obstruction	EFO_0003892
-Multiple myeloma	EFO_0001378
-Nephropathy	EFO_0003086
-Hair morphology	EFO_0005038
-Asperger disorder	EFO_0003757
-Fibrinogen levels	EFO_0004623
-"""Myopia, pathological"""	EFO_0004207
-Thyroid cancer	EFO_0002892
-Pancreatic adenocarcinoma	EFO_1000044
-Narcolepsy with cataplexy	EFO_0000614
-Ewing sarcoma	EFO_0000174
-Leprosy	EFO_0001054
-Lumiracoxib-related liver injury	EFO_0004228
-Tardive dyskinesia	EFO_0004280
-Lung adenocarcinoma	EFO_0000571
-End-stage renal disease	EFO_0003884
-Waist circumference	EFO_0004342
-Nonalcoholic fatty liver disease	EFO_0003095
-Osteoarthritis (knee)	EFO_0002506
-Ovarian cancer	EFO_0001075
-Intracranial volume	EFO_0004886
-Autism spectrum disorders	EFO_0003756
-Anorexia nervosa	EFO_0004215
-Nephrolithiasis	EFO_0004253
-Dupuytren's disease	EFO_0004229
-Behcet's disease	EFO_0003780
-Hypothyroidism	EFO_0004705
-Left ventricular mass	EFO_0003896
-Alopecia areata	EFO_0004192
-Wilms tumor	Orphanet_654
-Idiopathic pulmonary fibrosis	EFO_0000768
-Tourette's syndrome	EFO_0004895
-Meningioma	Orphanet_2495
-Major depressive disorder	EFO_0003761
-Thoracic aortic aneurysms and aortic dissections	Orphanet_285014
-Sleep duration	EFO_0005271
-Response to platinum-based chemotherapy in small-cell lung cancer	EFO_0003060
-Body fat percentage	EFO_0007800
-Sexual dysfunction (female)	EFO_0004714
-Dilated cardiomyopathy	EFO_0000407
-Beta-thalassemia/hemoglobin E disease	Orphanet_2133
-Crohn's disease and Celiac disease	EFO_0000384
-Mammographic density	EFO_0005941
-Multiple sclerosis	EFO_0003885
-Alzheimer's disease	EFO_0000249
-Skin pigmentation	EFO_0003784
-Birth weight	EFO_0004344
-Moyamoya disease	Orphanet_2573
-Restless leg syndrome	EFO_0004270
-Non-obstructive azoospermia	EFO_0000279
-Malaria	EFO_0001068
-Neuroblastoma	EFO_0000621
-Atrial fibrillation	EFO_0000275
-Retinal vascular caliber	EFO_0004731
-Grave's disease	EFO_0004237
-Hypertriglyceridemia	EFO_0004530
-Spine bone size	EFO_0004508
-"""Systemic lupus erythematosus, rheumatoid arthritis"""	EFO_0000685
-Response to metformin	GO_1901558
-Duodenal ulcer	EFO_0004607
-Rheumatoid arthritis	EFO_0000685
-Psoriasis	EFO_0000676
-Ileal carcinoids	EFO_0004243
-Hearing function	GO_0007605
-Educational attainment	EFO_0004784
-Pericardial fat	EFO_0004564
-Myeloproliferative neoplasm	EFO_0004251
-Response to lithium treatment in bipolar disorder	EFO_0000289
-Myocardial infarction	EFO_0000612
-Barrett's esophagus	EFO_0000280
-Endometriosis	EFO_0001065
-Creutzfeldt-Jakob disease	EFO_0004226
-Resting heart rate	EFO_0004351
-Pulse pressure	EFO_0005763
-Lentiform nucleus volume	EFO_0004913
-Renal cell carcinoma	EFO_0000681
-Familial hypercholesterolemia	EFO_0004911
-Longevity	EFO_0004300
-Celiac disease	EFO_0001060
-Eye color	EFO_0003949
-Hypertension	EFO_0000537
-Atopy	EFO_0002686
-Thyrotoxic hypokalemic periodic paralysis	Orphanet_79102
-Pancreatic cancer	EFO_0002618
-Osteoporosis	EFO_0003882
-Systemic sclerosis	EFO_0000717
-Autism	EFO_0003758
-"""Stroke, pediatric"""	EFO_0000712
-Thyroid function	EFO_0004296
-Venous thromboembolism	EFO_0004286
-HIV-1 replication	EFO_0000180
-"""Multiple sclerosis, severity"""	EFO_0003885
-Bladder cancer	EFO_0000292
-Bipolar disorder	EFO_0000289
-Vitiligo	EFO_0004208
-Nasopharyngeal carcinoma	EFO_0004252
-Otosclerosis	EFO_0004213
-Arterial stiffness	EFO_0004517
-Brachial circumference	EFO_0004589
-Obsessive-compulsive disorder	EFO_0004242
-Joint damage in rheumatoid arthritis	EFO_0000685
-"""Glaucoma, primary open-angle"""	EFO_0004190
-Cervical cancer	EFO_0001061
-Hepatitis C infection	EFO_0003047
-Osteonecrosis of the jaw	EFO_0004259
-Malignant pleural mesothelioma	EFO_0000770
-Ankylosing spondylitis	EFO_0003898
-Abdominal aortic aneurysm	EFO_0004214
-Bronchopulmonary dysplasia	Orphanet_70589
-Osteoarthritis	EFO_0002506
-Refractive errors	HP_0000539
-Sudden cardiac arrest	EFO_0004278
-Temperament	EFO_0004825
-Urinary bladder cancer	EFO_0000292
-Sick sinus syndrome	HP_0011704
-Sudden cardiac death	HP_0001645
-Hepatitis C-induced liver cirrhosis	EFO_0005129
-Crohn's disease	EFO_0000384
-Glaucoma	EFO_0000516
-"""Atrial fibrillation, atrial flutter"""	EFO_0000275
-Helicobacter pylori serologic status	EFO_0005247
-Pulmonary arterial hypertension	EFO_0001361
-"""Stroke, ischemic"""	EFO_0000712
-Self-employment	EFO_0005241
-Glioma	EFO_0000326
-Central corneal thickness	EFO_0004731
-Bilirubin levels	EFO_0004570
-Osteoarthritis (hand)	EFO_0002506
-Hirschsprung's disease	Orphanet_388
-Keloid	EFO_0004212
-Height	EFO_0004339
-Platelet aggregation	GO_0070527
-Schizophrenia	EFO_0000692
-Vascular dementia	EFO_0004718
-Intracranial aneurysm	EFO_0003870
-Fetal hemoglobin levels	EFO_0004576
-Diabetic retinopathy	EFO_0003770
-Response to fenofibrate	GO_1901557
-Periodontitis	EFO_0000649
-Asthma	EFO_0000270
-Glomerulosclerosis	EFO_0004236
-Major mood disorder	EFO_0004247
-Fuch's corneal dystrophy	EFO_0003946
-Handedness	EFO_0003889
-Substance dependence	EFO_0003890
-Retinopathy (non-diabetic)	EFO_0003839
-Emphysema	EFO_0000464
-Corneal astigmatism	HP_0000483
-Narcolepsy	EFO_0000614
-Primary sclerosing cholangitis	EFO_0004268
-Self-rated health	EFO_0004778
-Dengue shock syndrome	EFO_0004227
-Biliary atresia	Orphanet_30391
-"""Obesity, extreme"""	EFO_0001073
-Breast cancer	EFO_0000305
-Erythrocyte sedimentation rate	EFO_0004304
-Meningococcal disease	EFO_0004249
-Peripheral artery disease (PAD)	EFO_0004265
-"""Nephrotic syndrome, acquired"""	EFO_0004255
-Polycystic ovary syndrome	EFO_0000660
-Chronic obstructive pulmonary disease (COPD)	EFO_0000341
-Nevirapine-induced rash	GO_0061479
-Stroke	EFO_0000712
-Coronary spasm	EFO_0004225
-Economic and political preferences	EFO_0004827
-Facial morphology	EFO_0004743
-Corneal curvature	EFO_0004345
-Kawasaki disease	EFO_0004246
-Job-related exhaustion	EFO_0005250
-Hippocampal volume	EFO_0005035
-Paraoxonase activity	EFO_0005126
-Nicotine dependence	EFO_0003768
-Ulcerative colitis	EFO_0000729
-Myopia	HP_0000545
-Capecitabine sensitivity	GO_0097327
-Migraine	EFO_0003821
-Psoriatic arthritis	EFO_0003778
-Dental caries	EFO_0003819
-Iron deficiency	EFO_0004272
-Gaucher disease	Orphanet_355
-Essential tremor	EFO_0003108
-"""Alzheimer's disease, late onset"""	EFO_0000249
-Tetralogy of Fallot	HP_0001636
-Progressive supranuclear palsy	Orphanet_683
-Prostate cancer	EFO_0001663
-Breast size	EFO_0004884
-Response to antidepressants	GO_0036276
-Parkinson's disease	EFO_0002508
-Telomere length	EFO_0004505
-"""Obesity, early onset extreme"""	EFO_0001073
-Glioblastoma	EFO_0000519
-Optic disc parameters	EFO_0004832
-Response to cholinesterase inhibitors in Alzheimer's disease	EFO_0005195
-Sarcoidosis	Orphanet_797
-Cachexia	HP_0004326
-Pelvic organ prolapse	EFO_0004710
-Cleft lip (nonsyndromic cleft lip with or without cleft palate)	EFO_0003959
-Heart rate	EFO_0004326
-Panic disorder	EFO_0004262
-"""Schizophrenia, age at onset"""	EFO_0004847
-Infantile hypertrophic pyloric stenosis	EFO_0004707
-"""Breast cancer, early onset"""	EFO_0000305
+Waist:hip ratio	http://www.ebi.ac.uk/efo/EFO_0004343
+Atopic dermatitis	http://www.ebi.ac.uk/efo/EFO_0000274
+Iris color	http://www.ebi.ac.uk/efo/EFO_0003949
+HDL cholesterol	http://www.ebi.ac.uk/efo/EFO_0004612
+Alcohol dependence	http://www.ebi.ac.uk/efo/EFO_0003829
+Conduct Disorder	http://www.ebi.ac.uk/efo/EFO_0004216
+Crohn's disease and Psoriasis	http://www.ebi.ac.uk/efo/EFO_0000384
+Sleep apnea	http://www.ebi.ac.uk/efo/EFO_0003877
+Erectile dysfunction in Type 1 Diabetes	http://www.ebi.ac.uk/efo/EFO_0001359
+Coronary heart disease	http://www.ebi.ac.uk/efo/EFO_0001645
+Gallbladder cancer	http://www.ebi.ac.uk/efo/EFO_0004606
+Common variable immunodeficiency	http://www.orpha.net/ORDO/Orphanet_1572
+Creutzfeldt-Jakob disease variant	http://www.ebi.ac.uk/efo/EFO_0004226
+Cognitive performance	http://www.ebi.ac.uk/efo/EFO_0003926
+Huntington's disease	http://www.orpha.net/ORDO/Orphanet_399
+Colorectal cancer	http://www.ebi.ac.uk/efo/EFO_0005842
+Coronary artery calcification	http://www.ebi.ac.uk/efo/EFO_0004723
+Thyrotoxic periodic paralysis	http://www.orpha.net/ORDO/Orphanet_79102
+Alcohol consumption	http://www.ebi.ac.uk/efo/EFO_0004329
+Airflow obstruction	http://www.ebi.ac.uk/efo/EFO_0003892
+Multiple myeloma	http://www.ebi.ac.uk/efo/EFO_0001378
+Nephropathy	http://www.ebi.ac.uk/efo/EFO_0003086
+Hair morphology	http://www.ebi.ac.uk/efo/EFO_0005038
+Asperger disorder	http://www.ebi.ac.uk/efo/EFO_0003757
+Fibrinogen levels	http://www.ebi.ac.uk/efo/EFO_0004623
+"""Myopia, pathological"""	http://www.ebi.ac.uk/efo/EFO_0004207
+Thyroid cancer	http://www.ebi.ac.uk/efo/EFO_0002892
+Pancreatic adenocarcinoma	http://www.ebi.ac.uk/efo/EFO_1000044
+Narcolepsy with cataplexy	http://www.ebi.ac.uk/efo/EFO_0000614
+Ewing sarcoma	http://www.ebi.ac.uk/efo/EFO_0000174
+Leprosy	http://www.ebi.ac.uk/efo/EFO_0001054
+Lumiracoxib-related liver injury	http://www.ebi.ac.uk/efo/EFO_0004228
+Tardive dyskinesia	http://www.ebi.ac.uk/efo/EFO_0004280
+Lung adenocarcinoma	http://www.ebi.ac.uk/efo/EFO_0000571
+End-stage renal disease	http://www.ebi.ac.uk/efo/EFO_0003884
+Waist circumference	http://www.ebi.ac.uk/efo/EFO_0004342
+Nonalcoholic fatty liver disease	http://www.ebi.ac.uk/efo/EFO_0003095
+Osteoarthritis (knee)	http://www.ebi.ac.uk/efo/EFO_0002506
+Ovarian cancer	http://www.ebi.ac.uk/efo/EFO_0001075
+Intracranial volume	http://www.ebi.ac.uk/efo/EFO_0004886
+Autism spectrum disorders	http://www.ebi.ac.uk/efo/EFO_0003756
+Anorexia nervosa	http://www.ebi.ac.uk/efo/EFO_0004215
+Nephrolithiasis	http://www.ebi.ac.uk/efo/EFO_0004253
+Dupuytren's disease	http://www.ebi.ac.uk/efo/EFO_0004229
+Behcet's disease	http://www.ebi.ac.uk/efo/EFO_0003780
+Hypothyroidism	http://www.ebi.ac.uk/efo/EFO_0004705
+Left ventricular mass	http://www.ebi.ac.uk/efo/EFO_0003896
+Alopecia areata	http://www.ebi.ac.uk/efo/EFO_0004192
+Wilms tumor	http://www.orpha.net/ORDO/Orphanet_654
+Idiopathic pulmonary fibrosis	http://www.ebi.ac.uk/efo/EFO_0000768
+Tourette's syndrome	http://www.ebi.ac.uk/efo/EFO_0004895
+Meningioma	http://www.orpha.net/ORDO/Orphanet_2495
+Major depressive disorder	http://www.ebi.ac.uk/efo/EFO_0003761
+Thoracic aortic aneurysms and aortic dissections	http://www.orpha.net/ORDO/Orphanet_285014
+Sleep duration	http://www.ebi.ac.uk/efo/EFO_0005271
+Response to platinum-based chemotherapy in small-cell lung cancer	http://www.ebi.ac.uk/efo/EFO_0003060
+Body fat percentage	http://www.ebi.ac.uk/efo/EFO_0007800
+Sexual dysfunction (female)	http://www.ebi.ac.uk/efo/EFO_0004714
+Dilated cardiomyopathy	http://www.ebi.ac.uk/efo/EFO_0000407
+Beta-thalassemia/hemoglobin E disease	http://www.orpha.net/ORDO/Orphanet_2133
+Crohn's disease and Celiac disease	http://www.ebi.ac.uk/efo/EFO_0000384
+Mammographic density	http://www.ebi.ac.uk/efo/EFO_0005941
+Multiple sclerosis	http://www.ebi.ac.uk/efo/EFO_0003885
+Alzheimer's disease	http://www.ebi.ac.uk/efo/EFO_0000249
+Skin pigmentation	http://www.ebi.ac.uk/efo/EFO_0003784
+Birth weight	http://www.ebi.ac.uk/efo/EFO_0004344
+Moyamoya disease	http://www.orpha.net/ORDO/Orphanet_2573
+Restless leg syndrome	http://www.ebi.ac.uk/efo/EFO_0004270
+Non-obstructive azoospermia	http://www.ebi.ac.uk/efo/EFO_0000279
+Malaria	http://www.ebi.ac.uk/efo/EFO_0001068
+Neuroblastoma	http://www.ebi.ac.uk/efo/EFO_0000621
+Atrial fibrillation	http://www.ebi.ac.uk/efo/EFO_0000275
+Retinal vascular caliber	http://www.ebi.ac.uk/efo/EFO_0004731
+Grave's disease	http://www.ebi.ac.uk/efo/EFO_0004237
+Hypertriglyceridemia	http://www.ebi.ac.uk/efo/EFO_0004530
+Spine bone size	http://www.ebi.ac.uk/efo/EFO_0004508
+"""Systemic lupus erythematosus, rheumatoid arthritis"""	http://www.ebi.ac.uk/efo/EFO_0000685
+Response to metformin	http://purl.obolibrary.org/obo/GO_1901558
+Duodenal ulcer	http://www.ebi.ac.uk/efo/EFO_0004607
+Rheumatoid arthritis	http://www.ebi.ac.uk/efo/EFO_0000685
+Psoriasis	http://www.ebi.ac.uk/efo/EFO_0000676
+Ileal carcinoids	http://www.ebi.ac.uk/efo/EFO_0004243
+Hearing function	http://purl.obolibrary.org/obo/GO_0007605
+Educational attainment	http://www.ebi.ac.uk/efo/EFO_0004784
+Pericardial fat	http://www.ebi.ac.uk/efo/EFO_0004564
+Myeloproliferative neoplasm	http://www.ebi.ac.uk/efo/EFO_0004251
+Response to lithium treatment in bipolar disorder	http://www.ebi.ac.uk/efo/EFO_0000289
+Myocardial infarction	http://www.ebi.ac.uk/efo/EFO_0000612
+Barrett's esophagus	http://www.ebi.ac.uk/efo/EFO_0000280
+Endometriosis	http://www.ebi.ac.uk/efo/EFO_0001065
+Creutzfeldt-Jakob disease	http://www.ebi.ac.uk/efo/EFO_0004226
+Resting heart rate	http://www.ebi.ac.uk/efo/EFO_0004351
+Pulse pressure	http://www.ebi.ac.uk/efo/EFO_0005763
+Lentiform nucleus volume	http://www.ebi.ac.uk/efo/EFO_0004913
+Renal cell carcinoma	http://www.ebi.ac.uk/efo/EFO_0000681
+Familial hypercholesterolemia	http://www.ebi.ac.uk/efo/EFO_0004911
+Longevity	http://www.ebi.ac.uk/efo/EFO_0004300
+Celiac disease	http://www.ebi.ac.uk/efo/EFO_0001060
+Eye color	http://www.ebi.ac.uk/efo/EFO_0003949
+Hypertension	http://www.ebi.ac.uk/efo/EFO_0000537
+Atopy	http://www.ebi.ac.uk/efo/EFO_0002686
+Thyrotoxic hypokalemic periodic paralysis	http://www.orpha.net/ORDO/Orphanet_79102
+Pancreatic cancer	http://www.ebi.ac.uk/efo/EFO_0002618
+Osteoporosis	http://www.ebi.ac.uk/efo/EFO_0003882
+Systemic sclerosis	http://www.ebi.ac.uk/efo/EFO_0000717
+Autism	http://www.ebi.ac.uk/efo/EFO_0003758
+"""Stroke, pediatric"""	http://www.ebi.ac.uk/efo/EFO_0000712
+Thyroid function	http://www.ebi.ac.uk/efo/EFO_0004296
+Venous thromboembolism	http://www.ebi.ac.uk/efo/EFO_0004286
+HIV-1 replication	http://www.ebi.ac.uk/efo/EFO_0000180
+"""Multiple sclerosis, severity"""	http://www.ebi.ac.uk/efo/EFO_0003885
+Bladder cancer	http://www.ebi.ac.uk/efo/EFO_0000292
+Bipolar disorder	http://www.ebi.ac.uk/efo/EFO_0000289
+Vitiligo	http://www.ebi.ac.uk/efo/EFO_0004208
+Nasopharyngeal carcinoma	http://www.ebi.ac.uk/efo/EFO_0004252
+Otosclerosis	http://www.ebi.ac.uk/efo/EFO_0004213
+Arterial stiffness	http://www.ebi.ac.uk/efo/EFO_0004517
+Brachial circumference	http://www.ebi.ac.uk/efo/EFO_0004589
+Obsessive-compulsive disorder	http://www.ebi.ac.uk/efo/EFO_0004242
+Joint damage in rheumatoid arthritis	http://www.ebi.ac.uk/efo/EFO_0000685
+"""Glaucoma, primary open-angle"""	http://www.ebi.ac.uk/efo/EFO_0004190
+Cervical cancer	http://www.ebi.ac.uk/efo/EFO_0001061
+Hepatitis C infection	http://www.ebi.ac.uk/efo/EFO_0003047
+Osteonecrosis of the jaw	http://www.ebi.ac.uk/efo/EFO_0004259
+Malignant pleural mesothelioma	http://www.ebi.ac.uk/efo/EFO_0000770
+Ankylosing spondylitis	http://www.ebi.ac.uk/efo/EFO_0003898
+Abdominal aortic aneurysm	http://www.ebi.ac.uk/efo/EFO_0004214
+Bronchopulmonary dysplasia	http://www.orpha.net/ORDO/Orphanet_70589
+Osteoarthritis	http://www.ebi.ac.uk/efo/EFO_0002506
+Refractive errors	http://purl.obolibrary.org/obo/HP_0000539
+Sudden cardiac arrest	http://www.ebi.ac.uk/efo/EFO_0004278
+Temperament	http://www.ebi.ac.uk/efo/EFO_0004825
+Urinary bladder cancer	http://www.ebi.ac.uk/efo/EFO_0000292
+Sick sinus syndrome	http://purl.obolibrary.org/obo/HP_0011704
+Sudden cardiac death	http://purl.obolibrary.org/obo/HP_0001645
+Hepatitis C-induced liver cirrhosis	http://www.ebi.ac.uk/efo/EFO_0005129
+Crohn's disease	http://www.ebi.ac.uk/efo/EFO_0000384
+Glaucoma	http://www.ebi.ac.uk/efo/EFO_0000516
+"""Atrial fibrillation, atrial flutter"""	http://www.ebi.ac.uk/efo/EFO_0000275
+Helicobacter pylori serologic status	http://www.ebi.ac.uk/efo/EFO_0005247
+Pulmonary arterial hypertension	http://www.ebi.ac.uk/efo/EFO_0001361
+"""Stroke, ischemic"""	http://www.ebi.ac.uk/efo/EFO_0000712
+Self-employment	http://www.ebi.ac.uk/efo/EFO_0005241
+Glioma	http://www.ebi.ac.uk/efo/EFO_0000326
+Central corneal thickness	http://www.ebi.ac.uk/efo/EFO_0004731
+Bilirubin levels	http://www.ebi.ac.uk/efo/EFO_0004570
+Osteoarthritis (hand)	http://www.ebi.ac.uk/efo/EFO_0002506
+Hirschsprung's disease	http://www.orpha.net/ORDO/Orphanet_388
+Keloid	http://www.ebi.ac.uk/efo/EFO_0004212
+Height	http://www.ebi.ac.uk/efo/EFO_0004339
+Platelet aggregation	http://purl.obolibrary.org/obo/GO_0070527
+Schizophrenia	http://www.ebi.ac.uk/efo/EFO_0000692
+Vascular dementia	http://www.ebi.ac.uk/efo/EFO_0004718
+Intracranial aneurysm	http://www.ebi.ac.uk/efo/EFO_0003870
+Fetal hemoglobin levels	http://www.ebi.ac.uk/efo/EFO_0004576
+Diabetic retinopathy	http://www.ebi.ac.uk/efo/EFO_0003770
+Response to fenofibrate	http://purl.obolibrary.org/obo/GO_1901557
+Periodontitis	http://www.ebi.ac.uk/efo/EFO_0000649
+Asthma	http://www.ebi.ac.uk/efo/EFO_0000270
+Glomerulosclerosis	http://www.ebi.ac.uk/efo/EFO_0004236
+Major mood disorder	http://www.ebi.ac.uk/efo/EFO_0004247
+Fuch's corneal dystrophy	http://www.ebi.ac.uk/efo/EFO_0003946
+Handedness	http://www.ebi.ac.uk/efo/EFO_0003889
+Substance dependence	http://www.ebi.ac.uk/efo/EFO_0003890
+Retinopathy (non-diabetic)	http://www.ebi.ac.uk/efo/EFO_0003839
+Emphysema	http://www.ebi.ac.uk/efo/EFO_0000464
+Corneal astigmatism	http://purl.obolibrary.org/obo/HP_0000483
+Narcolepsy	http://www.ebi.ac.uk/efo/EFO_0000614
+Primary sclerosing cholangitis	http://www.ebi.ac.uk/efo/EFO_0004268
+Self-rated health	http://www.ebi.ac.uk/efo/EFO_0004778
+Dengue shock syndrome	http://www.ebi.ac.uk/efo/EFO_0004227
+Biliary atresia	http://www.orpha.net/ORDO/Orphanet_30391
+"""Obesity, extreme"""	http://www.ebi.ac.uk/efo/EFO_0001073
+Breast cancer	http://www.ebi.ac.uk/efo/EFO_0000305
+Erythrocyte sedimentation rate	http://www.ebi.ac.uk/efo/EFO_0004304
+Meningococcal disease	http://www.ebi.ac.uk/efo/EFO_0004249
+Peripheral artery disease (PAD)	http://www.ebi.ac.uk/efo/EFO_0004265
+"""Nephrotic syndrome, acquired"""	http://www.ebi.ac.uk/efo/EFO_0004255
+Polycystic ovary syndrome	http://www.ebi.ac.uk/efo/EFO_0000660
+Chronic obstructive pulmonary disease (COPD)	http://www.ebi.ac.uk/efo/EFO_0000341
+Nevirapine-induced rash	http://purl.obolibrary.org/obo/GO_0061479
+Stroke	http://www.ebi.ac.uk/efo/EFO_0000712
+Coronary spasm	http://www.ebi.ac.uk/efo/EFO_0004225
+Economic and political preferences	http://www.ebi.ac.uk/efo/EFO_0004827
+Facial morphology	http://www.ebi.ac.uk/efo/EFO_0004743
+Corneal curvature	http://www.ebi.ac.uk/efo/EFO_0004345
+Kawasaki disease	http://www.ebi.ac.uk/efo/EFO_0004246
+Job-related exhaustion	http://www.ebi.ac.uk/efo/EFO_0005250
+Hippocampal volume	http://www.ebi.ac.uk/efo/EFO_0005035
+Paraoxonase activity	http://www.ebi.ac.uk/efo/EFO_0005126
+Nicotine dependence	http://www.ebi.ac.uk/efo/EFO_0003768
+Ulcerative colitis	http://www.ebi.ac.uk/efo/EFO_0000729
+Myopia	http://purl.obolibrary.org/obo/HP_0000545
+Capecitabine sensitivity	http://purl.obolibrary.org/obo/GO_0097327
+Migraine	http://www.ebi.ac.uk/efo/EFO_0003821
+Psoriatic arthritis	http://www.ebi.ac.uk/efo/EFO_0003778
+Dental caries	http://www.ebi.ac.uk/efo/EFO_0003819
+Iron deficiency	http://www.ebi.ac.uk/efo/EFO_0004272
+Gaucher disease	http://www.orpha.net/ORDO/Orphanet_355
+Essential tremor	http://www.ebi.ac.uk/efo/EFO_0003108
+"""Alzheimer's disease, late onset"""	http://www.ebi.ac.uk/efo/EFO_0000249
+Tetralogy of Fallot	http://purl.obolibrary.org/obo/HP_0001636
+Progressive supranuclear palsy	http://www.orpha.net/ORDO/Orphanet_683
+Prostate cancer	http://www.ebi.ac.uk/efo/EFO_0001663
+Breast size	http://www.ebi.ac.uk/efo/EFO_0004884
+Response to antidepressants	http://purl.obolibrary.org/obo/GO_0036276
+Parkinson's disease	http://www.ebi.ac.uk/efo/EFO_0002508
+Telomere length	http://www.ebi.ac.uk/efo/EFO_0004505
+"""Obesity, early onset extreme"""	http://www.ebi.ac.uk/efo/EFO_0001073
+Glioblastoma	http://www.ebi.ac.uk/efo/EFO_0000519
+Optic disc parameters	http://www.ebi.ac.uk/efo/EFO_0004832
+Response to cholinesterase inhibitors in Alzheimer's disease	http://www.ebi.ac.uk/efo/EFO_0005195
+Sarcoidosis	http://www.orpha.net/ORDO/Orphanet_797
+Cachexia	http://purl.obolibrary.org/obo/HP_0004326
+Pelvic organ prolapse	http://www.ebi.ac.uk/efo/EFO_0004710
+Cleft lip (nonsyndromic cleft lip with or without cleft palate)	http://www.ebi.ac.uk/efo/EFO_0003959
+Heart rate	http://www.ebi.ac.uk/efo/EFO_0004326
+Panic disorder	http://www.ebi.ac.uk/efo/EFO_0004262
+"""Schizophrenia, age at onset"""	http://www.ebi.ac.uk/efo/EFO_0004847
+Infantile hypertrophic pyloric stenosis	http://www.ebi.ac.uk/efo/EFO_0004707
+"""Breast cancer, early onset"""	http://www.ebi.ac.uk/efo/EFO_0000305

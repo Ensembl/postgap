@@ -25,92 +25,52 @@ limitations under the License.
 import sys
 import re
 import requests
+import postgap.EFO
 
-def main():
-	phenotype_column = int(sys.argv[1])
-	cache = dict()
+phenotype_column = int(sys.argv[1])
+cache = dict()
 
-	# Preload cache with precomupted suggestions:
-	for filename in sys.argv[2:]:
-		file = open(filename)
-		for line in file:
-			items = line.strip().split('\t')
-			cache[items[0]] = items[1]
+# Preload cache with precomupted suggestions:
+for filename in sys.argv[2:]:
+	file = open(filename)
+	for line in file:
+		items = line.strip().split('\t')
+		string = items[0]
 
-	for line in sys.stdin:
-		# To comply with Unix standards, the column number is provided as 1-based on the command line
-		phenotype = str(line.strip().split('\t')[phenotype_column - 1])
-
-		if phenotype in cache:
-			efo = cache[phenotype]
+		while string[0] == '"' and string[-1] == '"':
+			string = string[1:-1]
+			
+		if string in cache:
+			cache[string] = cache[string] + "," + items[1]
 		else:
-			efo = efo_suggest(phenotype)
-			cache[phenotype] = efo
-			if efo is None:
-				sys.stderr.write("Could not find EFO for %s\n" % (phenotype))
-			else:
-				sys.stderr.write("Phenotype %s mapped to %s\n" % (phenotype, str(efo)))
+			cache[string] = items[1]
 
+for line in sys.stdin:
+	# To comply with Unix standards, the column number is provided as 1-based on the command line
+	phenotype = str(line.strip().split('\t')[phenotype_column - 1])
+	if phenotype[0] == '"' and phenotype[-1] == '"':
+		phenotype = phenotype[1:-1]
+
+	if phenotype in cache:
+		efo = cache[phenotype]
+	else:
+		sys.stderr.write(phenotype + "\n")
+		try:
+			uni = unicode(phenotype)
+			efo = postgap.EFO.suggest(uni)
+		except UnicodeDecodeError:
+			uni = unicode(phenotype.decode('latin1'))		
+			efo = postgap.EFO.suggest(uni)
+
+		efo = postgap.EFO.suggest(uni)
+
+		cache[phenotype] = efo
 		if efo is None:
-			print "%s\tN/A" % (str(line[:-1]))
+			sys.stderr.write("Could not find EFO for %s\n" % (phenotype))
 		else:
-			print "%s\t%s" % (str(line[:-1]), str(efo))
+			sys.stderr.write("Phenotype %s mapped to %s\n" % (phenotype, str(efo)))
 
-def efo_suggest(term):
-	""" efo_suggest
-		
-		Find most appropriate EFO term for arbitrary string
-		Arg:
-		* string
-		Returntype: string (EFO ID)
-
-	"""
-	server = 'http://www.ebi.ac.uk/spot/zooma/v2/api'
-	url_term = re.sub("%", "", term.decode('latin1').encode('utf8'))
-	url_term = re.sub(" ", "%20", url_term)
-	url_term = re.sub('\(', "", url_term)
-	url_term = re.sub('\)', "", url_term)
-	ext = "/summaries?query=%s" % url_term
-	r = requests.get(server+ext, headers={ "Content-Type" : "application/json"})
-	 
-	if not r.ok:
-		sys.stderr.write("Failure searching for term " + term + " with query " + server + ext + "\n")
-		return None
-
-	try:
-		'''
-			Example search result:
-			[
-				{
-					"id":"00ECD0E64DA2908961D228BF60BB8960C1778F1F",
-					"semanticTags":["http://www.ebi.ac.uk/efo/EFO_0000400"],
-					"annotationURIs":["http://rdf.ebi.ac.uk/resource/zooma/efo/ABF4EFC8B5BF4598775DC1F6F3532B5B"],
-					"annotationSourceURIs":["http://www.ebi.ac.uk/efo/efo.owl"],
-					"annotatedPropertyType":"disease",
-					"annotatedPropertyValue":"Diabetes",
-					"annotatedPropertyUri":"http://rdf.ebi.ac.uk/resource/zooma/5220510DE1D1CF8EEC186E4735AE9BE0",
-					"annotationSummaryTypeName":"disease; EFO_0000400",
-					"quality":72.803116,
-					"uri":"http://rdf.ebi.ac.uk/resource/zooma/annotation_summary/00ECD0E64DA2908961D228BF60BB8960C1778F1F"
-				}
-			]
-		'''
-		
-		hits = r.json()
-		filtered_hits = filter(lambda X: 
-					'annotatedPropertyType' in X 
-					and X['annotatedPropertyType'] is not None 
-					and re.search('disease', X['annotatedPropertyType']) is not None 
-					and 'annotationSummaryTypeName' in X 
-					and X['annotationSummaryTypeName'] is not None 
-					and re.search('EFO', X['annotationSummaryTypeName']) is not None, 
-				hits)
-		if len(filtered_hits) == 0:
-			return None
-		sorted_hits = sorted(filtered_hits, key = lambda X: X['quality']) 
-		selected_hit = sorted_hits[-1]
-		return re.sub(r'^.*(EFO_[0-9]*).*$', r'\1', selected_hit['annotationSummaryTypeName'])
-	except:
-		return None
-
-main()
+	if efo is None:
+		print "%s\tN/A" % (str(line[:-1]))
+	else:
+		print "%s\t%s" % (str(line[:-1]), str(efo))

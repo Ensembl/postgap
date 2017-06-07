@@ -1,0 +1,924 @@
+?2-adrenoceptor-mediated vasoconstriction	http://www.ebi.ac.uk/efo/EFO_0000319
+"?(2) -GPI levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004555
+"5-HTT serotonin transporter levels, in brain"	http://www.ebi.ac.uk/efo/EFO_0004569
+Abdominal subcutaneous and visceral adipose depots	http://www.ebi.ac.uk/efo/EFO_0004340,http://www.ebi.ac.uk/efo/EFO_0004765,http://www.ebi.ac.uk/efo/EFO_0004766,http://www.ebi.ac.uk/efo/EFO_0004767
+Acetaminophen toxicity in blood cell lines	http://purl.obolibrary.org/obo/GO_1901554
+Activated partial thromboplastin time (aPTT) and prothrombin time	http://www.ebi.ac.uk/efo/EFO_0004310
+"Activated partial thromboplastin time (aPTT), in blood"	http://www.ebi.ac.uk/efo/EFO_0004310
+Acute lung injury	http://www.ebi.ac.uk/efo/EFO_0004610
+Acute lung injury following major trauma	http://www.ebi.ac.uk/efo/EFO_0004610
+ADD	http://www.ebi.ac.uk/efo/EFO_0003888
+"Addiction phenotypes (alcohol, nicotine, marijuana, cocaine, opiates, other drugs)"	http://www.ebi.ac.uk/efo/EFO_0003890
+ADHD	http://purl.obolibrary.org/obo/GO_0007610,http://www.ebi.ac.uk/efo/EFO_0003888
+ADHD	http://www.ebi.ac.uk/efo/EFO_0003888
+ADHD	http://www.ebi.ac.uk/efo/EFO_0003888
+ADHD	http://www.ebi.ac.uk/efo/EFO_0003888
+ADHD	http://www.ebi.ac.uk/efo/EFO_0003888
+ADHD	http://www.ebi.ac.uk/efo/EFO_0003888
+ADHD	http://www.ebi.ac.uk/efo/EFO_0003888
+ADHD	http://www.ebi.ac.uk/efo/EFO_0003888
+ADHD and conduct disorder symptoms	http://www.ebi.ac.uk/efo/EFO_0003888,http://www.ebi.ac.uk/efo/EFO_0004216
+ADHD and conduct disorder symptoms	http://www.ebi.ac.uk/efo/EFO_0003888,http://www.ebi.ac.uk/efo/EFO_0004216
+ADHD in adults	http://www.ebi.ac.uk/efo/EFO_0003888
+"ADHD, inattention and hyperactivity-impulsivity tests"	http://www.ebi.ac.uk/efo/EFO_0003888
+"ADHD, methylphenidate treatment response in"	http://www.ebi.ac.uk/efo/EFO_0003888
+"Adiponectin, high molecular weight, in serum"	http://www.ebi.ac.uk/efo/EFO_0004502
+"Adiponectin, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004502
+"Adiponectin, in serum"	http://www.ebi.ac.uk/efo/EFO_0004502
+"Adiponectin, in serum"	http://www.ebi.ac.uk/efo/EFO_0004502
+"Adiponectin, in serum"	http://www.ebi.ac.uk/efo/EFO_0004502
+"Adiponectin levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004502
+"Adiponectin levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004502
+"Adiponectin levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004502
+Adiponectin levels in women	http://www.ebi.ac.uk/efo/EFO_0004502
+Adiposity traits	http://www.ebi.ac.uk/efo/EFO_0004764
+Adiposity traits	http://www.ebi.ac.uk/efo/EFO_0001073
+Adiposity traits	http://www.ebi.ac.uk/efo/EFO_0004342
+"Adolescent idiopathic scoliosis, in women"	http://www.ebi.ac.uk/efo/EFO_0004273
+Advanced age-related macular degeneration subtypes	http://www.ebi.ac.uk/efo/EFO_0001365
+Age at menarche and age at natural menopause	http://www.ebi.ac.uk/efo/EFO_0004703, http://www.ebi.ac.uk/efo/EFO_0004704
+Age at menopause (early menopause)	http://www.ebi.ac.uk/efo/EFO_0004704
+Age at natural menopause	http://www.ebi.ac.uk/efo/EFO_0004704
+"Age-related macular degeneration (AMD), wet neovascular "	http://www.ebi.ac.uk/efo/EFO_0001365
+Aging successfully (longevity and low disease burden)	http://purl.obolibrary.org/obo/GO_0007568
+"Albumin:globin ratio, serum"	http://www.ebi.ac.uk/efo/EFO_0005128
+"Albuminuria, in urine"	http://www.ebi.ac.uk/efo/EFO_0004285
+Alcohol and nicotine co-dependence	http://www.ebi.ac.uk/efo/EFO_0004776
+Alcohol and nicotine co-dependence	http://www.ebi.ac.uk/efo/EFO_0004776
+Alcohol consumption (heavy)	http://www.ebi.ac.uk/efo/EFO_0007878
+Alcohol dependence in bipolar cases and non-bipolar controls	http://www.ebi.ac.uk/efo/EFO_0003829
+Alcohol-related and sporadic pancreatitis	http://www.ebi.ac.uk/efo/EFO_0000278
+Alcohol withdrawal symptoms	http://www.ebi.ac.uk/efo/EFO_0004777
+Alopecia (early-onset androgenetic alopecia)	http://www.ebi.ac.uk/efo/EFO_0004191
+"Alpha-tocopherol after vitamin E supplementation in men, serum"	http://purl.obolibrary.org/obo/GO_0033273
+"Alzheimer's disease, age at onset"	http://www.ebi.ac.uk/efo/EFO_0000249,http://www.ebi.ac.uk/efo/EFO_0004847
+"Alzheimer's disease, MRI atrophy as a QTL for"	http://www.ebi.ac.uk/efo/EFO_0000249,http://www.ebi.ac.uk/efo/EFO_0004464,http://www.ebi.ac.uk/efo/EFO_0004840,http://www.ebi.ac.uk/efo/EFO_0005035,http://www.ebi.ac.uk/efo/EFO_0005089,http://www.ebi.ac.uk/efo/EFO_0005092,http://www.ebi.ac.uk/efo/EFO_0006930
+Alzheimer's disease with psychotic symptoms	http://www.ebi.ac.uk/efo/EFO_0000249,http://www.ebi.ac.uk/efo/EFO_0005940
+"Amygdala activation, in youths, with and without bipolar disorder"	http://www.ebi.ac.uk/efo/EFO_0004550
+Amygdala reactivity	http://www.ebi.ac.uk/efo/EFO_0004550
+"Amyloid A levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004728
+Amyotrophic Lateral Sclerosis (ALS)	http://www.ebi.ac.uk/efo/EFO_0000253
+Amyotrophic Lateral Sclerosis (ALS)	http://www.ebi.ac.uk/efo/EFO_0000253
+Amyotrophic Lateral Sclerosis (ALS)	http://www.ebi.ac.uk/efo/EFO_0000253
+Amyotrophic Lateral Sclerosis (ALS)	http://www.ebi.ac.uk/efo/EFO_0000253
+Amyotrophic Lateral Sclerosis (ALS)	http://www.ebi.ac.uk/efo/EFO_0000253
+Amyotrophic Lateral Sclerosis (ALS)	http://www.ebi.ac.uk/efo/EFO_0000253
+Amyotrophic Lateral Sclerosis (ALS)	http://www.ebi.ac.uk/efo/EFO_0000253
+Amyotrophic Lateral Sclerosis (ALS)	http://www.ebi.ac.uk/efo/EFO_0000253,http://www.ebi.ac.uk/efo/EFO_0004847
+Amyotrophic Lateral Sclerosis (ALS)	http://www.ebi.ac.uk/efo/EFO_0000253
+Amyotrophic Lateral Sclerosis (ALS)	http://www.ebi.ac.uk/efo/EFO_0000253
+"Amyotrophic Lateral Sclerosis (ALS), sporadic"	http://www.ebi.ac.uk/efo/EFO_0000253
+"Amyotrophic Lateral Sclerosis (ALS), sporadic"	http://www.ebi.ac.uk/efo/EFO_0000253
+"Amyotrophic Lateral Sclerosis (ALS), sporadic"	http://www.ebi.ac.uk/efo/EFO_0000253
+"Amyotrophic Lateral Sclerosis (ALS), sporadic"	http://www.ebi.ac.uk/efo/EFO_0000253
+"Amyotrophic Lateral Sclerosis (ALS), sporadic"	http://www.ebi.ac.uk/efo/EFO_0001357
+"Amyotrophic Lateral Sclerosis (ALS), sporadic"	http://www.ebi.ac.uk/efo/EFO_0000253
+"Amyotrophic Lateral Sclerosis (ALS), sporadic"	http://www.ebi.ac.uk/efo/EFO_0000253
+Androgenic alopecia (Male pattern baldness)	http://www.ebi.ac.uk/efo/EFO_0004191
+Androgenic alopecia (Male pattern baldness)	http://www.ebi.ac.uk/efo/EFO_0004191
+Androgenic alopecia (Male pattern baldness)	http://www.ebi.ac.uk/efo/EFO_0004191
+"Androgen levels in men, serum"	http://www.ebi.ac.uk/efo/EFO_0004908,http://www.ebi.ac.uk/efo/EFO_0004909
+"Anemia, ribavirin-induced in hepatitis C treatment"	http://purl.obolibrary.org/obo/GO_1901559,http://www.ebi.ac.uk/efo/EFO_0004272
+"Angiotensin-converting enzyme (ACE) activity, in serum"	http://www.ebi.ac.uk/efo/EFO_0004463
+Ankle-brachial index (ABI)	http://www.ebi.ac.uk/efo/EFO_0003912
+Ankle-brachial index (ABI)	http://www.ebi.ac.uk/efo/EFO_0003912
+"Anthropometric traits (body mass index, waist to hip ratio, height, obesity grade)"	http://www.ebi.ac.uk/efo/EFO_0001073,http://www.ebi.ac.uk/efo/EFO_0004302,http://www.ebi.ac.uk/efo/EFO_0004339,http://www.ebi.ac.uk/efo/EFO_0004340,http://www.ebi.ac.uk/efo/EFO_0004343
+Antibody response to anthrax vaccine adsorbed	http://www.ebi.ac.uk/efo/EFO_0004645
+Antibody response to smallpox vaccine	http://www.ebi.ac.uk/efo/EFO_0004645
+Antibody titer to hepatitis B vaccination	http://www.ebi.ac.uk/efo/EFO_0004645
+Anti-cyclic citrullinated peptide titer	http://www.ebi.ac.uk/efo/EFO_0004733
+Anti-cytomegalovirus antibody response	http://purl.obolibrary.org/obo/GO_0009615
+Antidepressant efficacy in major depressive disorder	http://www.ebi.ac.uk/efo/EFO_0003761
+Antidepressant efficacy in major depressive disorder	http://www.ebi.ac.uk/efo/EFO_0003761
+Antidepressant response in major depressive disorder	http://purl.obolibrary.org/obo/GO_0036276
+Antihypertensive response to an Angiotensin II Receptor Blocker	http://purl.obolibrary.org/obo/GO_1901556,http://www.ebi.ac.uk/efo/EFO_0000537
+Antineutrophil cytoplasmic antibody (ANCA)-associated vasculitis	http://www.ebi.ac.uk/efo/EFO_0004826
+"Antipsychotic drug-induced weight gain, severe"	http://www.ebi.ac.uk/efo/EFO_0004567
+Antipsychotic-induced tardive dyskinesia	http://www.ebi.ac.uk/efo/EFO_0004280
+Antipsychotic treatment outcomes	http://purl.obolibrary.org/obo/GO_0097332,http://purl.obolibrary.org/obo/GO_0097333,http://purl.obolibrary.org/obo/GO_0097335,http://purl.obolibrary.org/obo/GO_0097336,http://purl.obolibrary.org/obo/GO_0097337
+Antisocial behavior	http://www.ebi.ac.uk/efo/EFO_0004890
+Antisocial behavior (adult)	http://www.ebi.ac.uk/efo/EFO_0004890
+"Antithrombin, in plasma"	http://www.ebi.ac.uk/efo/EFO_0007775
+Anxiety (childhood anxiety)	http://www.ebi.ac.uk/efo/EFO_0005230
+Anxiety spectrum disorders	http://www.ebi.ac.uk/efo/EFO_0006788
+Aortic root diameter	http://www.ebi.ac.uk/efo/EFO_0005037
+Asparaginase sensitivity in blood cell lines	http://www.ebi.ac.uk/efo/EFO_0004881
+"Aspartate aminotransferase (AAT) levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004736
+Aspirin-exacerbated respiratory disease	http://purl.obolibrary.org/obo/HP_0012042
+"Aspirin hydrolytic activity, in plasma"	http://www.ebi.ac.uk/efo/EFO_0005211
+Asthma (acute bronchodilator response)	http://purl.obolibrary.org/obo/GO_0097366,http://www.ebi.ac.uk/efo/EFO_0000270
+Asthma (adult)	http://www.ebi.ac.uk/efo/EFO_0000270
+"Asthma, aspirin-intolerant"	http://purl.obolibrary.org/obo/HP_0012042
+"Asthma (childhood asthma, age at onset)"	http://www.ebi.ac.uk/efo/EFO_0004591
+Asthma exacerbation	http://www.ebi.ac.uk/efo/EFO_0007614
+Asthma response to bronchodilators	http://purl.obolibrary.org/obo/GO_0097366,http://www.ebi.ac.uk/efo/EFO_0000270
+Asthma response to inhaled corticosteroids	http://www.ebi.ac.uk/efo/EFO_0000270
+"Asthma, toluene diisocynate induced"	http://www.ebi.ac.uk/efo/EFO_0000270
+Astigmatism	http://purl.obolibrary.org/obo/HP_0000483
+"Atopy, with and without asthma"	http://www.ebi.ac.uk/efo/EFO_0002686
+Atypical cytochrome P450 3A4 (CYP3A4) enzyme activity	http://www.ebi.ac.uk/efo/EFO_0004910
+"Autism, gender differences"	http://www.ebi.ac.uk/efo/EFO_0003758
+Autism spectrum disorders with language delay	http://www.ebi.ac.uk/efo/EFO_0003756
+Autoimmune thyroid disease (Grave's disease and Hashimoto's thyroiditis)	http://www.ebi.ac.uk/efo/EFO_0006812
+Azoospermia and oligozoospermia	http://www.ebi.ac.uk/efo/EFO_0004248
+Beh?et's disease	http://www.ebi.ac.uk/efo/EFO_0003780
+Beh?et's disease	http://www.ebi.ac.uk/efo/EFO_0003780
+Beh?et's disease	http://www.ebi.ac.uk/efo/EFO_0003780
+"Beta-2 microglobulin, in plasma"	http://www.ebi.ac.uk/efo/EFO_0005197
+"Beta-trace protein levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004742
+Bicuspid aortic valve	http://purl.obolibrary.org/obo/HP_0001647
+"Bilirubin levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004570
+"Bilirubin levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004570
+"Bilirubin levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004570
+"Bilirubin levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004570
+"Bilirubin levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004570
+"Bilirubin levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004570
+"Biomarkers (liver function, butrylycholinesterase, CRP, ferritin, glucose, HDL cholesterol, insulin, LDL cholesterol, triglycerides, uric acid), body mass index (BMI)"	http://www.ebi.ac.uk/efo/EFO_0004458,http://www.ebi.ac.uk/efo/EFO_0004459,http://www.ebi.ac.uk/efo/EFO_0004530,http://www.ebi.ac.uk/efo/EFO_0004532,http://www.ebi.ac.uk/efo/EFO_0004571,http://www.ebi.ac.uk/efo/EFO_0004611,http://www.ebi.ac.uk/efo/EFO_0004612,http://www.ebi.ac.uk/efo/EFO_0004736,http://www.ebi.ac.uk/efo/EFO_0004761
+"Biomarkers (natriuretic peptides, vitamin K, vitamin D, CD40L, osteoprotegerin, P-selectin, TNFR2, TNFa, liver function, osteocalcin, CRP, IL6, sICAM, MCP1, myelperoxidase), in plasma or serum"	http://www.ebi.ac.uk/efo/EFO_0004458,http://www.ebi.ac.uk/efo/EFO_0004533,http://www.ebi.ac.uk/efo/EFO_0004570,http://www.ebi.ac.uk/efo/EFO_0004618,http://www.ebi.ac.uk/efo/EFO_0004631,http://www.ebi.ac.uk/efo/EFO_0004684,http://www.ebi.ac.uk/efo/EFO_0004735,http://www.ebi.ac.uk/efo/EFO_0004749,http://www.ebi.ac.uk/efo/EFO_0004789,http://www.ebi.ac.uk/efo/EFO_0004790
+"Bipolar disorder, affective"	http://www.ebi.ac.uk/efo/EFO_0000289,http://www.ebi.ac.uk/efo/EFO_0003821
+"Bipolar disorder, age of onset in"	http://www.ebi.ac.uk/efo/EFO_0000289,http://www.ebi.ac.uk/efo/EFO_0004847,http://www.ebi.ac.uk/efo/EFO_0005940
+Bipolar disorder (mood-incongruent psychotic bipolar disorder)	http://www.ebi.ac.uk/efo/EFO_0000289
+"Bipolar disorder, personality traits within"	http://www.ebi.ac.uk/efo/EFO_0000289,http://www.ebi.ac.uk/efo/EFO_0004365
+Bipolar disorder with irritable or elated mania in severe episodes	http://www.ebi.ac.uk/efo/EFO_0000289
+Bipolar disorder with negative mood delusions	http://www.ebi.ac.uk/efo/EFO_0000289
+Bipolar disorder with seasonal pattern mania	http://www.ebi.ac.uk/efo/EFO_0000289
+"Birth weight, length, head circumference and fat mass"	http://www.ebi.ac.uk/efo/EFO_0001372,http://www.ebi.ac.uk/efo/EFO_0004302,http://www.ebi.ac.uk/efo/EFO_0004344,http://www.ebi.ac.uk/efo/EFO_0005409,http://www.ebi.ac.uk/efo/EFO_0006266
+Bivariate analysis of femoral neck bone mineral density and age at menarche	http://www.ebi.ac.uk/efo/EFO_0004704
+"Bleomycin sensitivity, in blood samples"	http://purl.obolibrary.org/obo/GO_0046677,http://www.ebi.ac.uk/efo/EFO_0007592,http://www.ebi.ac.uk/efo/EFO_0007593
+Blood biomarkers in chronic obstructive pulmonary disease	http://www.ebi.ac.uk/efo/EFO_0000341,http://www.ebi.ac.uk/efo/EFO_0004458,http://www.ebi.ac.uk/efo/EFO_0004623,http://www.ebi.ac.uk/efo/EFO_0004684,http://www.ebi.ac.uk/efo/EFO_0004810,http://www.ebi.ac.uk/efo/EFO_0004811,http://www.ebi.ac.uk/efo/EFO_0005080,http://www.ebi.ac.uk/efo/EFO_0005081
+Blood cell count (monocyte count)	http://www.ebi.ac.uk/efo/EFO_0005091
+Blood cell count (neutrophil count)	http://www.ebi.ac.uk/efo/EFO_0004833
+"Blood cell counts and other traits (platelet count (PLT), red cell count, white cell count, hemoglobin, urate, GGT, alkaline phosphatase, AST, ALT, creatinine kinase, total protein, albumin, blood urea nitrogen, serum creatinine, HDL cholesterol, triglycerides)"	http://www.ebi.ac.uk/efo/EFO_0004305,http://www.ebi.ac.uk/efo/EFO_0004308,http://www.ebi.ac.uk/efo/EFO_0004309,http://www.ebi.ac.uk/efo/EFO_0004348,http://www.ebi.ac.uk/efo/EFO_0004509,http://www.ebi.ac.uk/efo/EFO_0004518,http://www.ebi.ac.uk/efo/EFO_0004526,http://www.ebi.ac.uk/efo/EFO_0004527,http://www.ebi.ac.uk/efo/EFO_0004530,http://www.ebi.ac.uk/efo/EFO_0004531,http://www.ebi.ac.uk/efo/EFO_0004532,http://www.ebi.ac.uk/efo/EFO_0004533,http://www.ebi.ac.uk/efo/EFO_0004534,http://www.ebi.ac.uk/efo/EFO_0004535,http://www.ebi.ac.uk/efo/EFO_0004612,http://www.ebi.ac.uk/efo/EFO_0004735,http://www.ebi.ac.uk/efo/EFO_0004736,http://www.ebi.ac.uk/efo/EFO_0004747,http://www.ebi.ac.uk/efo/EFO_0004761
+"Blood cell counts and traits, in red and white blood cells"	http://www.ebi.ac.uk/efo/EFO_0004305,http://www.ebi.ac.uk/efo/EFO_0004308,http://www.ebi.ac.uk/efo/EFO_0004309,http://www.ebi.ac.uk/efo/EFO_0004526,http://www.ebi.ac.uk/efo/EFO_0004527,http://www.ebi.ac.uk/efo/EFO_0004584
+"Blood cell counts and traits, in red and white blood cells"	http://www.ebi.ac.uk/efo/EFO_0004309,http://www.ebi.ac.uk/efo/EFO_0004526,http://www.ebi.ac.uk/efo/EFO_0004527
+"Blood cell counts and traits, in red and white blood cells"	http://www.ebi.ac.uk/efo/EFO_0004842
+"Blood cell counts and traits, in red and white blood cells"	http://www.ebi.ac.uk/efo/EFO_0004305,http://www.ebi.ac.uk/efo/EFO_0004308,http://www.ebi.ac.uk/efo/EFO_0004309,http://www.ebi.ac.uk/efo/EFO_0004348,http://www.ebi.ac.uk/efo/EFO_0004509,http://www.ebi.ac.uk/efo/EFO_0004526,http://www.ebi.ac.uk/efo/EFO_0004527,http://www.ebi.ac.uk/efo/EFO_0004528
+"Blood cell counts and traits, in red blood cells"	http://www.ebi.ac.uk/efo/EFO_0004842
+"Blood cell counts and traits, in red blood cells"	http://www.ebi.ac.uk/efo/EFO_0004305,http://www.ebi.ac.uk/efo/EFO_0004348,http://www.ebi.ac.uk/efo/EFO_0004509,http://www.ebi.ac.uk/efo/EFO_0004526,http://www.ebi.ac.uk/efo/EFO_0004527,http://www.ebi.ac.uk/efo/EFO_0004528
+"Blood cell counts and traits, in red blood cells"	http://www.ebi.ac.uk/efo/EFO_0004305,http://www.ebi.ac.uk/efo/EFO_0004526,http://www.ebi.ac.uk/efo/EFO_0004527,http://www.ebi.ac.uk/efo/EFO_0004528
+"Blood cell counts and traits, in red blood cells"	http://www.ebi.ac.uk/efo/EFO_0004305,http://www.ebi.ac.uk/efo/EFO_0004306,http://www.ebi.ac.uk/efo/EFO_0004526,http://www.ebi.ac.uk/efo/EFO_0004527,http://www.ebi.ac.uk/efo/EFO_0004528
+"Blood cell counts, in white cells"	http://www.ebi.ac.uk/efo/EFO_0004308,http://www.ebi.ac.uk/efo/EFO_0004587,http://www.ebi.ac.uk/efo/EFO_0004833,http://www.ebi.ac.uk/efo/EFO_0004842,http://www.ebi.ac.uk/efo/EFO_0005090,http://www.ebi.ac.uk/efo/EFO_0005091
+"Blood cell counts, in white cells"	http://www.ebi.ac.uk/efo/EFO_0004308
+"Blood cell counts, in white cells"	http://www.ebi.ac.uk/efo/EFO_0004308
+"Blood cell traits, in red blood cells"	http://www.ebi.ac.uk/efo/EFO_0004842
+"Blood cell traits, in red blood cells"	http://www.ebi.ac.uk/efo/EFO_0004305,http://www.ebi.ac.uk/efo/EFO_0004348,http://www.ebi.ac.uk/efo/EFO_0004509,http://www.ebi.ac.uk/efo/EFO_0004526,http://www.ebi.ac.uk/efo/EFO_0004527,http://www.ebi.ac.uk/efo/EFO_0004528,http://www.ebi.ac.uk/efo/EFO_0005047
+"Blood cell traits, in red blood cells"	http://www.ebi.ac.uk/efo/EFO_0004305,http://www.ebi.ac.uk/efo/EFO_0004348,http://www.ebi.ac.uk/efo/EFO_0004509,http://www.ebi.ac.uk/efo/EFO_0004526,http://www.ebi.ac.uk/efo/EFO_0004527,http://www.ebi.ac.uk/efo/EFO_0004528,http://www.ebi.ac.uk/efo/EFO_0005192
+"Blood cell traits (red blood cell count, hemoglobin, hematocrit)"	http://www.ebi.ac.uk/efo/EFO_0004842
+"Blood phenotypes and cell counts (fibrinogen, FVII, PAI1, vWF, tPA, D-dimer, platelet aggregation, viscosity, hemoglobin, red blood cell counts)"	http://purl.obolibrary.org/obo/GO_0070527,http://www.ebi.ac.uk/efo/EFO_0004301,http://www.ebi.ac.uk/efo/EFO_0004305,http://www.ebi.ac.uk/efo/EFO_0004509,http://www.ebi.ac.uk/efo/EFO_0004527,http://www.ebi.ac.uk/efo/EFO_0004619,http://www.ebi.ac.uk/efo/EFO_0004791,http://www.ebi.ac.uk/efo/EFO_0004792
+Blood pressure and/or hypertension	http://www.ebi.ac.uk/efo/EFO_0004325
+Blood pressure and/or hypertension	http://www.ebi.ac.uk/efo/EFO_0000537
+Blood pressure and/or hypertension	http://www.ebi.ac.uk/efo/EFO_0000537,http://www.ebi.ac.uk/efo/EFO_0006335,http://www.ebi.ac.uk/efo/EFO_0006336
+Blood pressure and/or hypertension	http://www.ebi.ac.uk/efo/EFO_0006335,http://www.ebi.ac.uk/efo/EFO_0006336
+Blood pressure and/or hypertension	http://www.ebi.ac.uk/efo/EFO_0000537
+Blood pressure and/or hypertension	http://www.ebi.ac.uk/efo/EFO_0000537
+Blood pressure and/or hypertension	http://www.ebi.ac.uk/efo/EFO_0000537
+Blood pressure and/or hypertension	http://www.ebi.ac.uk/efo/EFO_0004325
+"Blood pressure, CVD RF and other traits (body mass index (BMI), height, waist circumference, weight, leptin, percent body fat, HDL cholesterol, LDL cholesterol, total cholesterol, triglycerides, fasting glucose, thyroid stimulating hormone, C-reactive protein (CRP))"	http://www.ebi.ac.uk/efo/EFO_0004338,http://www.ebi.ac.uk/efo/EFO_0004339,http://www.ebi.ac.uk/efo/EFO_0004340,http://www.ebi.ac.uk/efo/EFO_0004341,http://www.ebi.ac.uk/efo/EFO_0004342,http://www.ebi.ac.uk/efo/EFO_0004458,http://www.ebi.ac.uk/efo/EFO_0004530,http://www.ebi.ac.uk/efo/EFO_0004574,http://www.ebi.ac.uk/efo/EFO_0004611,http://www.ebi.ac.uk/efo/EFO_0004612,http://www.ebi.ac.uk/efo/EFO_0004748,http://www.ebi.ac.uk/efo/EFO_0006335,http://www.ebi.ac.uk/efo/EFO_0006336
+"Blood pressure, CVD RF and other traits (body mass index (BMI), waist:hip ratio, pulse rate, bone mineral density (BMD))"	http://www.ebi.ac.uk/efo/EFO_0003923,http://www.ebi.ac.uk/efo/EFO_0004326,http://www.ebi.ac.uk/efo/EFO_0004339,http://www.ebi.ac.uk/efo/EFO_0004340,http://www.ebi.ac.uk/efo/EFO_0004343,http://www.ebi.ac.uk/efo/EFO_0006335,http://www.ebi.ac.uk/efo/EFO_0006336
+"Blood pressure, CVD RF and other traits (body mass index (BMI), waist:hip ratio, renin activity in plasma, aldosterone concentration in plasma, BNP levels in plasma, alcohol consumption)"	http://www.ebi.ac.uk/efo/EFO_0000537
+"Blood pressure, early onset hypertension"	http://www.ebi.ac.uk/efo/EFO_0004772
+Body mass index (BMI)	http://www.ebi.ac.uk/efo/EFO_0001073
+Body mass index (BMI)	http://www.ebi.ac.uk/efo/EFO_0004340
+Body mass index (BMI)	http://www.ebi.ac.uk/efo/EFO_0004340
+Body mass index (BMI)	http://www.ebi.ac.uk/efo/EFO_0004340,http://www.ebi.ac.uk/efo/EFO_0004764
+Body mass index (BMI)	http://www.ebi.ac.uk/efo/EFO_0004340
+Body mass index (BMI)	http://www.ebi.ac.uk/efo/EFO_0004340
+Body mass index (BMI)	http://www.ebi.ac.uk/efo/EFO_0001073
+Body mass index (BMI)	http://www.ebi.ac.uk/efo/EFO_0004340
+Body mass index (BMI)	http://www.ebi.ac.uk/efo/EFO_0004340
+Body mass index (BMI)	http://www.ebi.ac.uk/efo/EFO_0001073
+Body mass index (BMI)	http://www.ebi.ac.uk/efo/EFO_0004340
+Body mass index (BMI)	http://www.ebi.ac.uk/efo/EFO_0004340
+Body mass index (BMI)	http://www.ebi.ac.uk/efo/EFO_0004340
+Body mass index (BMI)	http://www.ebi.ac.uk/efo/EFO_0004340
+Body mass index (BMI)	http://www.ebi.ac.uk/efo/EFO_0004340
+Body mass index (BMI)	http://www.ebi.ac.uk/efo/EFO_0004340
+Body mass index (BMI) and asthma	http://www.ebi.ac.uk/efo/EFO_0000270,http://www.ebi.ac.uk/efo/EFO_0004340
+"Body mass index (BMI), height, weight, waist circumference"	http://www.ebi.ac.uk/efo/EFO_0004338,http://www.ebi.ac.uk/efo/EFO_0004339,http://www.ebi.ac.uk/efo/EFO_0004340,http://www.ebi.ac.uk/efo/EFO_0004342
+Body mass index (BMI) in adolescents and young adults	http://www.ebi.ac.uk/efo/EFO_0004340
+Bone mass and geometry	http://www.ebi.ac.uk/efo/EFO_0003923,http://www.ebi.ac.uk/efo/EFO_0004685
+Bone mineral density (BMD)	http://www.ebi.ac.uk/efo/EFO_0003923
+Bone mineral density (BMD)	http://www.ebi.ac.uk/efo/EFO_0003923
+Bone mineral density (BMD)	http://www.ebi.ac.uk/efo/EFO_0003923
+Bone mineral density (BMD)	http://www.ebi.ac.uk/efo/EFO_0003923
+Bone mineral density (BMD)	http://www.ebi.ac.uk/efo/EFO_0003923
+Bone mineral density (BMD)	http://www.ebi.ac.uk/efo/EFO_0003923
+Bone mineral density (BMD)	http://www.ebi.ac.uk/efo/EFO_0003923
+Bone mineral density (BMD)	http://www.ebi.ac.uk/efo/EFO_0003923
+Bone mineral density (BMD)	http://www.ebi.ac.uk/efo/EFO_0003882
+Bone mineral density (BMD)	http://www.ebi.ac.uk/efo/EFO_0003882
+Bone mineral density (BMD)	http://www.ebi.ac.uk/efo/EFO_0003882
+Bone mineral density (BMD)	http://www.ebi.ac.uk/efo/EFO_0003923
+Bone mineral density (BMD) and osteoporosis-related phenotypes	http://www.ebi.ac.uk/efo/EFO_0003882
+"Bone mineral density (BMD), cortical density, in men"	http://www.ebi.ac.uk/efo/EFO_0003923
+"Bone mineral density (BMD), in women"	http://www.ebi.ac.uk/efo/EFO_0003923
+Bone mineral density (BMD) (wrist)	http://www.ebi.ac.uk/efo/EFO_0004512
+"Bone mineral density (hip), in women"	http://www.ebi.ac.uk/efo/EFO_0003923
+Bone mineral density in premenopausal women	http://www.ebi.ac.uk/efo/EFO_0003882
+"Bone mineral density, low-trauma fracture"	http://www.ebi.ac.uk/efo/EFO_0003923
+Bone mineral density of forearm	http://www.ebi.ac.uk/efo/EFO_0003923
+"Bone mineral traits, uni and bivariate analyses, in men"	http://www.ebi.ac.uk/efo/EFO_0003923
+"Bone thickness, bone strength, osteoporotic fracture risk"	http://www.ebi.ac.uk/efo/EFO_0003923,http://www.ebi.ac.uk/efo/EFO_0004840
+"Brain aging, MRI and cognition phenotypes"	http://www.ebi.ac.uk/efo/EFO_0003926,http://www.ebi.ac.uk/efo/EFO_0004868
+Brain A? levels	http://www.ebi.ac.uk/efo/EFO_0000249,http://www.ebi.ac.uk/efo/EFO_0005194
+"Brain infarcts, covert MRI-defined"	http://www.ebi.ac.uk/efo/EFO_0004715
+Brain neural connectivity	http://www.ebi.ac.uk/efo/EFO_0005210
+Brain size	http://www.ebi.ac.uk/efo/EFO_0004577
+Brain white matter hyperintensity	http://www.ebi.ac.uk/efo/EFO_0004464
+Brain white matter integrity	http://www.ebi.ac.uk/efo/EFO_0004641
+Breast and ovarian cancer risk in BRCA1 carriers	http://www.ebi.ac.uk/efo/EFO_0000305,http://www.ebi.ac.uk/efo/EFO_0001075
+"Breast cancer, adverse effects to aromatase inhibitors"	http://purl.obolibrary.org/obo/GO_0061477
+"Breast cancer, BRCA1-positive "	http://www.ebi.ac.uk/efo/EFO_0000305
+"Breast cancer, BRCA2-positive "	http://www.ebi.ac.uk/efo/EFO_0000305
+"Breast cancer, clinical outcomes of adjuvant tamoxifen therapy"	http://purl.obolibrary.org/obo/GO_0097327
+"Breast cancer, ER negative"	http://www.ebi.ac.uk/efo/EFO_0000305
+"Breast cancer, ER negative"	http://www.ebi.ac.uk/efo/EFO_0000305
+"Breast cancer (ER-positive) and post-menopausal estradiol concentrations, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004697
+"Breast cancer, hormonal receptor-positive"	http://www.ebi.ac.uk/efo/EFO_0000305
+Breast cancer in males	http://www.ebi.ac.uk/efo/EFO_0000305
+"Breast cancer, lapatinib-induced hepatotoxicity in"	http://purl.obolibrary.org/obo/GO_0036274
+Breast cancer meta	http://www.ebi.ac.uk/efo/EFO_0000305
+Breast cancer risk	http://www.ebi.ac.uk/efo/EFO_0000305
+Breast cancer risk in Ashkenazi Jewish women without BRCA1/2 mutations	http://www.ebi.ac.uk/efo/EFO_0000305
+Breast cancer risk related to menopausal hormone therapy	http://www.ebi.ac.uk/efo/EFO_0000305,http://www.ebi.ac.uk/efo/EFO_0003961
+"Breast cancer, sporadic post-menopausal "	http://www.ebi.ac.uk/efo/EFO_0000305
+Breast cancer survival (early-onset breast cancer)	http://www.ebi.ac.uk/efo/EFO_0000305
+"Butyrylcholinesterase activity, in serum"	http://www.ebi.ac.uk/efo/EFO_0004571
+"B-vitamin level (Vitamin B6, Vitamin B12) concentrations, folate and homocysteine, in serum"	http://www.ebi.ac.uk/efo/EFO_0004620,http://www.ebi.ac.uk/efo/EFO_0004621,http://www.ebi.ac.uk/efo/EFO_0004843
+"Calcium levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004838
+"Calcium levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004838
+Carbamazepine ADRs	http://purl.obolibrary.org/obo/GO_0036277
+"Cardiac structure and function measurements (LV mass, internal dimensions, wall size, systolic dysfunction, aortic root size, left atrial size)"	http://www.ebi.ac.uk/efo/EFO_0004298,http://www.ebi.ac.uk/efo/EFO_0005037
+Cardiac structure and systolic function	http://www.ebi.ac.uk/efo/EFO_0004298
+Cardiovascular disease events in migraineurs	http://www.ebi.ac.uk/efo/EFO_0000319
+"Carotenoid and tocopherol levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004737,http://www.ebi.ac.uk/efo/EFO_0004738
+Carotid artery intimal-media thickness	http://www.ebi.ac.uk/efo/EFO_0007117
+Carotid atherosclerosis in HIV-infected men	http://www.ebi.ac.uk/efo/EFO_0000180,http://www.ebi.ac.uk/efo/EFO_0003781,http://www.ebi.ac.uk/efo/EFO_0004860,http://www.ebi.ac.uk/efo/EFO_0005053
+Carotid-femoral pulse wave velocity	http://www.ebi.ac.uk/efo/EFO_0004724
+Cataracts (diabetic cataract)	http://www.ebi.ac.uk/efo/EFO_0001059,http://www.ebi.ac.uk/efo/EFO_0001360
+Cataracts in T2D	http://www.ebi.ac.uk/efo/EFO_0004596
+CD4:CD8 T cell ratios	http://www.ebi.ac.uk/efo/EFO_0004839
+"Cell-Free DNA, serum"	http://www.ebi.ac.uk/efo/EFO_0004739
+Central corneal thickness and keratoconus	http://www.ebi.ac.uk/efo/EFO_0004345
+Central cornea thickness	http://www.ebi.ac.uk/efo/EFO_0004731
+Central cornea thickness	http://www.ebi.ac.uk/efo/EFO_0004731
+Central cornea thickness	http://www.ebi.ac.uk/efo/EFO_0004731
+Cerebrospinal fluid tau	http://www.ebi.ac.uk/efo/EFO_0000249,http://www.ebi.ac.uk/efo/EFO_0004760,http://www.ebi.ac.uk/efo/EFO_0004763
+"Ceruloplasmin levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0005139
+"Chemerin levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004573
+"Chemotherapeutic response (cytabarine, 5'deoxyfluorouridine, carboplatin, cisplatin), in blood cell lines"	http://purl.obolibrary.org/obo/GO_0097327
+Chewing tobacco associated oral cancers	http://www.ebi.ac.uk/efo/EFO_0003868,http://www.ebi.ac.uk/efo/EFO_0004744
+Childhood dental caries	http://www.ebi.ac.uk/efo/EFO_0003819
+Chronic fatigue syndrome	http://www.ebi.ac.uk/efo/EFO_0004540
+Chronic hepatitis B progression	http://www.ebi.ac.uk/efo/EFO_0004197
+Chronic kidney disease (CKD)	http://www.ebi.ac.uk/efo/EFO_0003884,http://www.ebi.ac.uk/efo/EFO_0004742
+Chronic kidney disease (CKD)	http://www.ebi.ac.uk/efo/EFO_0003884
+Chronic kidney disease (CKD)	http://www.ebi.ac.uk/efo/EFO_0003884
+Chronic kidney disease (CKD)	http://www.ebi.ac.uk/efo/EFO_0003884
+Chronic kidney disease (CKD)	http://www.ebi.ac.uk/efo/EFO_0005208
+Chronic kidney disease (CKD)	http://www.ebi.ac.uk/efo/EFO_0003884
+Chronic kidney disease (CKD) and kidney stones	http://www.ebi.ac.uk/efo/EFO_0003884,http://www.ebi.ac.uk/efo/EFO_0004518
+Chronic kidney disease (CKD) and renal traits	http://www.ebi.ac.uk/efo/EFO_0003884,http://www.ebi.ac.uk/efo/EFO_0004518,http://www.ebi.ac.uk/efo/EFO_0004617
+Chronic kidney disease (CKD) and renal traits	http://www.ebi.ac.uk/efo/EFO_0004741,http://www.ebi.ac.uk/efo/EFO_0004742,http://www.ebi.ac.uk/efo/EFO_0004761
+"Chronic obstructive pulmonary disease (COPD), smoking behavior in"	http://www.ebi.ac.uk/efo/EFO_0000341,http://www.ebi.ac.uk/efo/EFO_0004319,http://www.ebi.ac.uk/efo/EFO_0005670,http://www.ebi.ac.uk/efo/EFO_0005671
+Chronic widespread pain	http://www.ebi.ac.uk/efo/EFO_0003843
+"Circulating estradiol, testosterone, and sex hormone-binding globulin in postmenopausal women"	http://www.ebi.ac.uk/efo/EFO_0004696,http://www.ebi.ac.uk/efo/EFO_0004697,http://www.ebi.ac.uk/efo/EFO_0004908
+Circulating galectin-3 levels	http://www.ebi.ac.uk/efo/EFO_0004747
+Circulating haptoglobin levels	http://www.ebi.ac.uk/efo/EFO_0004640
+Circulating levels of plasminogen activator inhibitor-1 (PAI-1)	http://www.ebi.ac.uk/efo/EFO_0004792
+Circulating PCSK9 Levels	http://www.ebi.ac.uk/efo/EFO_0006899
+Circulating phospho- and sphingolipid concentrations	http://www.ebi.ac.uk/efo/EFO_0004622,http://www.ebi.ac.uk/efo/EFO_0004639
+Circulating resistin levels	http://www.ebi.ac.uk/efo/EFO_0004819
+Circulating vitamin D levels in children with asthma	http://www.ebi.ac.uk/efo/EFO_0004631
+"Cisplatin and carboplatin cytotoxicity, in blood cell lines"	http://purl.obolibrary.org/obo/GO_0072718,http://purl.obolibrary.org/obo/GO_0097328
+"Cisplatin cytotoxicity, in blood cell lines"	http://www.ebi.ac.uk/efo/EFO_0004647
+"Coagulation factor levels (FVII, FVIII, vWF), in plasma"	http://www.ebi.ac.uk/efo/EFO_0004619,http://www.ebi.ac.uk/efo/EFO_0004629,http://www.ebi.ac.uk/efo/EFO_0004630
+Coagulation factors and fibrin factor levels and ischemic stroke	http://www.ebi.ac.uk/efo/EFO_0004629,http://www.ebi.ac.uk/efo/EFO_0004630,http://www.ebi.ac.uk/efo/EFO_0004634
+Cognition (childhood intelligence)	http://www.ebi.ac.uk/efo/EFO_0004337
+"Cognition, early reading ability"	http://www.ebi.ac.uk/efo/EFO_0005301
+Cognition (information processing speed)	http://www.ebi.ac.uk/efo/EFO_0004363
+Cognition (intelligence)	http://www.ebi.ac.uk/efo/EFO_0004337
+Cognition (mathematical ability)	http://www.ebi.ac.uk/efo/EFO_0004875
+"Cognition, memory (episodic memory)"	http://www.ebi.ac.uk/efo/EFO_0004333
+"Cognition, memory (episodic memory)"	http://www.ebi.ac.uk/efo/EFO_0004874
+"Cognition, memory (memory task performance)"	http://www.ebi.ac.uk/efo/EFO_0004874
+"Cognition, memory (short term memory)"	http://www.ebi.ac.uk/efo/EFO_0004335
+Cognition with anti-psychotic treatment	http://purl.obolibrary.org/obo/GO_0097332,http://www.ebi.ac.uk/efo/EFO_0004335,http://www.ebi.ac.uk/efo/EFO_0004350
+"Cognitive decline, age-related rate of"	http://www.ebi.ac.uk/efo/EFO_0004362
+Cognitive decline (nonpathological)	http://purl.obolibrary.org/obo/HP_0001268
+Cognitive decline (rate in Alzheimer's disease)	http://www.ebi.ac.uk/efo/EFO_0000249
+"Cognitive function, normal and in bipolar disorder and schizophrenia"	http://www.ebi.ac.uk/efo/EFO_0004323
+Cognitive impairment induced by topiramate	http://purl.obolibrary.org/obo/HP_0100543
+Cognitive impairment without dementia	http://purl.obolibrary.org/obo/HP_0100543
+Colorectal adenomas	http://www.ebi.ac.uk/efo/EFO_0005406
+Colorectal cancer (drug response in metastatic colorectal cancer)	http://www.ebi.ac.uk/efo/EFO_0004647
+"Colorectal cancer, efficacy of capecitabine, oxaliplatin and bevacizumab in metastatic colorectal cancer"	http://www.ebi.ac.uk/efo/EFO_0004647
+"Colorectal cancer, severe oxaliplatin-induced chronic peripheral neuropathy in"	http://www.ebi.ac.uk/efo/EFO_0004647
+Comorbid depressive syndrome and alcohol dependence	http://www.ebi.ac.uk/efo/EFO_0003829
+Compressive strength index (CSI) and appendicular lean mass (ALM)	http://www.ebi.ac.uk/efo/EFO_0004515,http://www.ebi.ac.uk/efo/EFO_0004979
+"Concentrations of cancer antigen 19-9 (CA19-9), carcinoembryonic antigen (CEA) and ? fetoprotein (AFP)"	http://www.ebi.ac.uk/efo/EFO_0005127
+Confectionary intake	http://www.ebi.ac.uk/efo/EFO_0003939
+Congenital heart malformations (sporadic non-syndromic)	http://www.ebi.ac.uk/efo/EFO_0005269
+"Congenital heart malformations (with septal, obstructive and cyanotic defects)"	http://www.ebi.ac.uk/efo/EFO_0005207
+"Copper, selenium and zinc levels"	http://www.ebi.ac.uk/efo/EFO_0005266,http://www.ebi.ac.uk/efo/EFO_0005267,http://www.ebi.ac.uk/efo/EFO_0005268
+Coronary artery and aortic artery calcification	http://www.ebi.ac.uk/efo/EFO_0004723
+Coronary artery lesions in Kawasaki disease	http://www.ebi.ac.uk/efo/EFO_0004246,http://www.ebi.ac.uk/efo/EFO_1000881
+"Coronary heart disease and related risk factors (LDL cholesterol, HDL cholesterol, hypertension, smoking, T2D)"	http://www.ebi.ac.uk/efo/EFO_0000537,http://www.ebi.ac.uk/efo/EFO_0001360,http://www.ebi.ac.uk/efo/EFO_0001645,http://www.ebi.ac.uk/efo/EFO_0004611,http://www.ebi.ac.uk/efo/EFO_0004612
+Coronary heart disease (incident CHD)	http://www.ebi.ac.uk/efo/EFO_0004647
+Coronary heart disease (incident CHD)	http://www.ebi.ac.uk/efo/EFO_0004647
+"Cortical thickness, in brain"	http://www.ebi.ac.uk/efo/EFO_0004840
+"Cortisol secretion, in saliva"	http://www.ebi.ac.uk/efo/EFO_0004642
+C-reactive protein (CRP)	http://www.ebi.ac.uk/efo/EFO_0004458
+C-reactive protein (CRP)	http://www.ebi.ac.uk/efo/EFO_0004458
+C-reactive protein (CRP) and white blood cell (WBC)	http://www.ebi.ac.uk/efo/EFO_0004308,http://www.ebi.ac.uk/efo/EFO_0004458
+"C-reactive protein (CRP) levels, in plasma, in women"	http://www.ebi.ac.uk/efo/EFO_0004458
+"C-reactive protein (CRP) levels, in plasma, in women"	http://www.ebi.ac.uk/efo/EFO_0004458
+"C-reactive protein (CRP) levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004458
+"C-reactive protein (CRP) levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004458
+"C-reactive protein (CRP) levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004458
+"C-reactive protein (CRP) levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004458
+"Creatinine level, in serum"	http://www.ebi.ac.uk/efo/EFO_0004518
+"Creatinine level, in serum"	http://www.ebi.ac.uk/efo/EFO_0004518
+Creutzfeldt-Jakob disease and other prion disease variants	http://www.ebi.ac.uk/efo/EFO_0004720
+Crohn's disease (earlier required surgery)	http://www.ebi.ac.uk/efo/EFO_0000384
+"CVD outcomes (CVD, MI, stroke, CHD death, atrial fibrillation, heart failure)"	http://www.ebi.ac.uk/efo/EFO_0000275,http://www.ebi.ac.uk/efo/EFO_0000319,http://www.ebi.ac.uk/efo/EFO_0003144
+"CVD risk factors and quantitative traits (blood pressure, heart rate, LDL cholesterol, HDL cholesterol, total cholesterol, triglycerides, glucose, insulin, height, weight, waist circumference)"	http://www.ebi.ac.uk/efo/EFO_0000319,http://www.ebi.ac.uk/efo/EFO_0004342,http://www.ebi.ac.uk/efo/EFO_0004530,http://www.ebi.ac.uk/efo/EFO_0004611,http://www.ebi.ac.uk/efo/EFO_0004612
+"Cystic fibrosis, severity of"	http://www.orpha.net/ORDO/Orphanet_586
+Cystic fibrosis with meconium ileus	http://www.ebi.ac.uk/efo/EFO_0004608
+Cytokine responses to Pam(3)CSK(4) (N-palmitoyl-S-dipalmitoylglyceryl Cys-Ser-(Lys)(4)) in blood	http://www.ebi.ac.uk/efo/EFO_0004873
+Dabigatran plasma levels	http://www.ebi.ac.uk/efo/EFO_0005205
+"D-dimer levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004507
+"Dehydroepiandrosterone sulphate (DHEAS) levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004730
+Dental caries in permanent dentition	http://www.ebi.ac.uk/efo/EFO_0003819
+Depressive affect	http://www.ebi.ac.uk/efo/EFO_0003761
+Diabetes in cystic fibrosis	http://www.ebi.ac.uk/efo/EFO_0001360,http://www.orpha.net/ORDO/Orphanet_586
+Differential cardiovascular event reduction by pravastatin therapy	http://purl.obolibrary.org/obo/GO_0036273,http://www.ebi.ac.uk/efo/EFO_0001645
+Disordered gambling	http://www.ebi.ac.uk/efo/EFO_0004699
+"DNA methylation (allele-specific methylation), in blood cell lines"	http://purl.obolibrary.org/obo/GO_0006306
+DNA methylation in blood	http://purl.obolibrary.org/obo/GO_0006306
+"DNA methylation, in blood cell lines"	http://purl.obolibrary.org/obo/GO_0006306
+Drug-induced liver injury (>200 drugs included)	http://www.ebi.ac.uk/efo/EFO_0004228
+Drug-induced liver injury with amoxicillin-clavulanate treatment	http://www.ebi.ac.uk/efo/EFO_0004228
+Drug-induced liver injury with flucloxacillin treatment	http://www.ebi.ac.uk/efo/EFO_0004228
+Drug response to interferon-beta therapy in multiple sclerosis (MS)	http://purl.obolibrary.org/obo/GO_0035456
+"ECG dimensions, brachial artery endothelial function, treadmill exercise responses"	http://www.ebi.ac.uk/efo/EFO_0004294,http://www.ebi.ac.uk/efo/EFO_0004295,http://www.ebi.ac.uk/efo/EFO_0004298,http://www.ebi.ac.uk/efo/EFO_0004328
+"ECG (Electrocardiogram measurements), early repolarization pattern"	http://www.ebi.ac.uk/efo/EFO_0004885
+"ECG (Electrocardiogram measurements), PR interval"	http://www.ebi.ac.uk/efo/EFO_0004462
+"ECG (Electrocardiogram measurements), PR interval"	http://www.ebi.ac.uk/efo/EFO_0004311
+"ECG (Electrocardiogram measurements), PR interval"	http://www.ebi.ac.uk/efo/EFO_0004462
+"ECG (Electrocardiogram measurements), PR interval"	http://www.ebi.ac.uk/efo/EFO_0004462
+"ECG (Electrocardiogram measurements), PR interval, QRS duration"	http://www.ebi.ac.uk/efo/EFO_0004327,http://www.ebi.ac.uk/efo/EFO_0004462,http://www.ebi.ac.uk/efo/EFO_0005094,http://www.ebi.ac.uk/efo/EFO_0005095
+"ECG (Electrocardiogram measurements), PR interval, QRS duration"	http://www.ebi.ac.uk/efo/EFO_0004326,http://www.ebi.ac.uk/efo/EFO_0004327,http://www.ebi.ac.uk/efo/EFO_0004462,http://www.ebi.ac.uk/efo/EFO_0004682,http://www.ebi.ac.uk/efo/EFO_0005054,http://www.ebi.ac.uk/efo/EFO_0005055
+"ECG (Electrocardiogram measurements), PR interval, QRS interval, QTc interval"	http://www.ebi.ac.uk/efo/EFO_0004327,http://www.ebi.ac.uk/efo/EFO_0004462,http://www.ebi.ac.uk/efo/EFO_0004682
+"ECG (Electrocardiogram measurements), QRS duration"	http://www.ebi.ac.uk/efo/EFO_0005055
+"ECG (Electrocardiogram measurements), QRS interval"	http://www.ebi.ac.uk/efo/EFO_0004311
+"ECG (Electrocardiogram measurements), QT interval"	http://www.ebi.ac.uk/efo/EFO_0004682
+"ECG (Electrocardiogram measurements), QT interval"	http://www.ebi.ac.uk/efo/EFO_0004682
+"ECG (Electrocardiogram measurements), QT interval"	http://www.ebi.ac.uk/efo/EFO_0004682
+"ECG (Electrocardiogram measurements), QT interval"	http://www.ebi.ac.uk/efo/EFO_0004682
+"ECG (Electrocardiogram measurements), QT interval"	http://www.ebi.ac.uk/efo/EFO_0004682
+"ECG (Electrocardiogram measurements), QT interval"	http://www.ebi.ac.uk/efo/EFO_0004682
+"ECG (Electrocardiogram measurements), QT interval change with iloperidone treatment in schizophrenia"	http://purl.obolibrary.org/obo/GO_0036287
+"ECG (Electrocardiogram measurements), QT interval, PR interval, QRS duration, Heart rate variability"	http://www.ebi.ac.uk/efo/EFO_0004326,http://www.ebi.ac.uk/efo/EFO_0004462,http://www.ebi.ac.uk/efo/EFO_0004682,http://www.ebi.ac.uk/efo/EFO_0005055
+"ECG (Electrocardiogram measurements), QT interval, PR interval, RR interval, Heart rate variability"	http://www.ebi.ac.uk/efo/EFO_0004326,http://www.ebi.ac.uk/efo/EFO_0004327,http://www.ebi.ac.uk/efo/EFO_0004462,http://www.ebi.ac.uk/efo/EFO_0004682
+"ECG (Electrocardiogram measurements), QT interval prolongation with antipsychotic treatment"	http://purl.obolibrary.org/obo/GO_0097332,http://purl.obolibrary.org/obo/GO_0097335,http://purl.obolibrary.org/obo/GO_0097336
+"ECG (Electrocardiogram measurements), RR interval"	http://www.ebi.ac.uk/efo/EFO_0004682,http://www.ebi.ac.uk/efo/EFO_0004831
+"ECG (Electrocardiogram measurements), T-Peak to T-End interval"	http://www.ebi.ac.uk/efo/EFO_0004644
+"EEG measurements, in brain"	http://www.ebi.ac.uk/efo/EFO_0004357
+Effectiveness of iloperidone treatment in schizophrenia	http://purl.obolibrary.org/obo/GO_0036287
+"End-stage renal disease (ESRD), non-diabetic"	http://www.ebi.ac.uk/efo/EFO_0003884
+Epilepsy (genetic generalized epilepsies)	http://www.ebi.ac.uk/efo/EFO_0000474
+Epirubicin-induced leukopenia in cancer patients	http://www.ebi.ac.uk/efo/EFO_0004233
+Erectile dysfunction (ED) among prostate cancer patients treated with radiation therapy	http://purl.obolibrary.org/obo/GO_0009314,http://www.ebi.ac.uk/efo/EFO_0001663,http://www.ebi.ac.uk/efo/EFO_0004234
+Eruption of permanent teeth	http://purl.obolibrary.org/obo/GO_0044691
+Esophageal cancer (esophageal squamous cell carcinoma)	http://www.ebi.ac.uk/efo/EFO_0002916
+Esophageal cancer (esophageal squamous cell carcinoma)	http://www.ebi.ac.uk/efo/EFO_0002916
+Esophageal cancer (esophageal squamous cell carcinoma)	http://www.ebi.ac.uk/efo/EFO_0002916
+Esophageal cancer (esophageal squamous cell carcinoma)	http://www.ebi.ac.uk/efo/EFO_0002916
+Esophageal cancer (esophageal squamous cell carcinoma)	http://www.ebi.ac.uk/efo/EFO_0002916
+Esophageal cancer (esophageal squamous cell carcinoma)	http://www.ebi.ac.uk/efo/EFO_0000707,http://www.ebi.ac.uk/efo/EFO_0002916
+Esophageal cancer (esophageal squamous cell carcinoma) survival	http://www.ebi.ac.uk/efo/EFO_0000707,http://www.ebi.ac.uk/efo/EFO_0002916
+Essential hypersomnia	http://www.ebi.ac.uk/efo/EFO_0005246
+Exercise participation	http://www.ebi.ac.uk/efo/EFO_0000483
+Facial photoaging	http://purl.obolibrary.org/obo/GO_0007568
+"Factor XI Level and activated partial thromboplastin time (aPTT), in plasma"	http://www.ebi.ac.uk/efo/EFO_0004694
+"Fasting glucose and insulin, and response to glucose in plasma"	http://www.ebi.ac.uk/efo/EFO_0004465
+"Fasting glucose, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004465
+"Fasting glucose, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004465
+"Fasting glucose, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004465
+Fasting glycemic traits and insulin resistance	http://www.ebi.ac.uk/efo/EFO_0004340,http://www.ebi.ac.uk/efo/EFO_0004465,http://www.ebi.ac.uk/efo/EFO_0004466
+Fasting insulin; insulin resistance	http://www.ebi.ac.uk/efo/EFO_0002614,http://www.ebi.ac.uk/efo/EFO_0004466,http://www.ebi.ac.uk/efo/EFO_0004467
+Fasting proinsulin levels in non-diabetics	http://www.ebi.ac.uk/efo/EFO_0004467
+"Fasting triglycerides, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004530
+"Fatty acid levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004639
+Fenofibrate effects on circulating adiponectin	http://purl.obolibrary.org/obo/GO_1901557
+"Ferritin and soluble transferrin receptor levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004459,http://www.ebi.ac.uk/efo/EFO_0004460,http://www.ebi.ac.uk/efo/EFO_0004461
+"Ferritin levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004461
+"Ferritin levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004220
+Fetal growth and birth weight	http://www.ebi.ac.uk/efo/EFO_0004344
+Fibrinogen (gamma fibrinogen)	http://www.ebi.ac.uk/efo/EFO_0004623
+"Fibrinogen levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004623
+"Fibrinogen levels, in plasma, in women"	http://www.ebi.ac.uk/efo/EFO_0004623
+Frontal cortex theta oscillations in alcoholism	http://www.ebi.ac.uk/efo/EFO_0003829,http://www.ebi.ac.uk/efo/EFO_0004800
+"Frontotemporal lobar degeneration with TDP-43 inclusions, in brain"	http://www.ebi.ac.uk/efo/EFO_0003096
+"FSH levels, anti-Mullerian hormone levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004770
+FVII levels	http://www.ebi.ac.uk/efo/EFO_0004619
+Gains in maximal O(2) uptake (VO(2max)) after exposure to a standardized 20-wk exercise program	http://www.ebi.ac.uk/efo/EFO_0004887
+Gallstone disease	http://www.ebi.ac.uk/efo/EFO_0004210
+"Gamma-glutamyl transferase (GGT) levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004532
+Gastric cancer (diffuse-type gastric cancer)	http://www.ebi.ac.uk/efo/EFO_0000178
+Gender	http://www.ebi.ac.uk/efo/EFO_0004820
+Gender	http://www.ebi.ac.uk/efo/EFO_0004820
+Glaucoma (central corneal thickness in primary open-angle glaucoma)	http://www.ebi.ac.uk/efo/EFO_0004731
+"Glaucoma, normal tension"	http://www.ebi.ac.uk/efo/EFO_0000516
+Glaucoma (normal tension glaucoma)	http://www.ebi.ac.uk/efo/EFO_0000516
+Glaucoma (optic nerve degeneration in glaucoma)	http://www.ebi.ac.uk/efo/EFO_0004190
+Glaucoma (optic nerve degeneration in glaucoma)	http://www.ebi.ac.uk/efo/EFO_0004190
+Glaucoma-related traits	http://www.ebi.ac.uk/efo/EFO_0000516
+"Glucose homeostasis traits (fasting glucose, fasting insulin, HOMA-B, HOMA-IR)"	http://www.ebi.ac.uk/efo/EFO_0004465,http://www.ebi.ac.uk/efo/EFO_0004466,http://www.ebi.ac.uk/efo/EFO_0004469,http://www.ebi.ac.uk/efo/EFO_0004501
+"Hair, eye and skin pigmentation"	http://www.ebi.ac.uk/efo/EFO_0003924,http://www.ebi.ac.uk/efo/EFO_0003949,http://www.ebi.ac.uk/efo/EFO_0003963,http://www.ebi.ac.uk/efo/EFO_0004795
+"Hair, eye and skin pigmentation"	http://www.ebi.ac.uk/efo/EFO_0003924
+"Hair, eye and skin pigmentation"	http://www.ebi.ac.uk/efo/EFO_0003924,http://www.ebi.ac.uk/efo/EFO_0003949,http://www.ebi.ac.uk/efo/EFO_0003958,http://www.ebi.ac.uk/efo/EFO_0003963,http://www.ebi.ac.uk/efo/EFO_0004795
+"Hair, eye and skin pigmentation"	http://www.ebi.ac.uk/efo/EFO_0003949
+"HDL cholesterol and triglyceride levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004530
+HDL particle features	http://www.ebi.ac.uk/efo/EFO_0004612
+"Health and aging, CVD and cancer age of onset"	http://purl.obolibrary.org/obo/GO_0007568
+Heart failure (incident risk)	http://www.ebi.ac.uk/efo/EFO_0003144
+Heart failure mortality among adults	http://www.ebi.ac.uk/efo/EFO_0003144,http://www.ebi.ac.uk/efo/EFO_0004352
+Heart failure risk and mortality	http://www.ebi.ac.uk/efo/EFO_0002503
+Heart failure with dilated cardiomyopathy	http://www.ebi.ac.uk/efo/EFO_0000407
+Heart rate response to exercise training	http://www.ebi.ac.uk/efo/EFO_0004326
+Height and body mass index (BMI)	http://www.ebi.ac.uk/efo/EFO_0004340
+Height (in Pygmies)	http://www.ebi.ac.uk/efo/EFO_0004339
+Height (pubertal growth)	http://www.ebi.ac.uk/efo/EFO_0001382,http://www.ebi.ac.uk/efo/EFO_0004339,http://www.ebi.ac.uk/efo/EFO_0005201
+"Height, pubertal growth in"	http://www.ebi.ac.uk/efo/EFO_0005201
+Hematological toxicities in cancer patients receiving gemcitabine therapy	http://purl.obolibrary.org/obo/GO_0036272,http://www.ebi.ac.uk/efo/EFO_0002618
+Hemoglobin A2 (HbA2) levels	http://www.ebi.ac.uk/efo/EFO_0005845
+"Hemoglobin (HbA1c, glycated hemoglobin levels)"	http://www.ebi.ac.uk/efo/EFO_0004541
+"Hemoglobin (HbA1c, glycated hemoglobin levels)"	http://www.ebi.ac.uk/efo/EFO_0004541
+"Hemoglobin (HbA1c, glycated hemoglobin levels)"	http://www.ebi.ac.uk/efo/EFO_0004541
+"Hemoglobin (HbA1c, glycated hemoglobin levels)"	http://www.ebi.ac.uk/efo/EFO_0004541
+"Hemoglobin levels, fetal hemoglobin levels in adults (HbF) by F cell levels"	http://www.ebi.ac.uk/efo/EFO_0004576
+"Hemoglobin levels, fetal hemoglobin levels in adults (HbF) by F cell levels"	http://www.ebi.ac.uk/efo/EFO_0004576
+"Hemoglobin levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004461
+Hepatic adverse events with thrombin inhibitor ximelagatran	http://purl.obolibrary.org/obo/GO_0036288,http://www.ebi.ac.uk/efo/EFO_0004735
+Hepatitis B virus (HBV) clearance	http://www.ebi.ac.uk/efo/EFO_0004197
+Hepatitis C virus-induced liver fibrosis	http://www.ebi.ac.uk/efo/EFO_0001422,http://www.ebi.ac.uk/efo/EFO_0003047
+"Hepcidin, in serum"	http://www.ebi.ac.uk/efo/EFO_0004504
+"Hippocampal volume, total cerebral volume, white matter hyperintensities in Alzheimer disease patients"	http://www.ebi.ac.uk/efo/EFO_0005039
+HIV-1 acquisition and viral load at set point	http://www.ebi.ac.uk/efo/EFO_0000180,http://www.ebi.ac.uk/efo/EFO_0006319,http://www.orpha.net/ORDO/Orphanet_391311
+HIV-1/AIDS progression	http://purl.obolibrary.org/obo/GO_0009615
+HIV-1/AIDS progression	http://www.ebi.ac.uk/efo/EFO_0000765
+HIV-1/AIDS progression	http://www.ebi.ac.uk/efo/EFO_0000765
+HIV-1/AIDS progression	http://www.ebi.ac.uk/efo/EFO_0000180
+HIV-1/AIDS progression	http://www.ebi.ac.uk/efo/EFO_0000765
+"HIV-1, mother to child transmission"	http://www.ebi.ac.uk/efo/EFO_0004595
+HIV-1 progression to AIDS and death	http://www.ebi.ac.uk/efo/EFO_0000180
+HIV-1 viral load at set point	http://www.ebi.ac.uk/efo/EFO_0000180
+HIV-1 viral load at set point	http://www.ebi.ac.uk/efo/EFO_0000180
+HIV-1 viral load at set point	http://www.ebi.ac.uk/efo/EFO_0000180
+HIV-associated neurocognitive disorders	http://www.ebi.ac.uk/efo/EFO_0002608
+Hoarding behavior	http://www.ebi.ac.uk/efo/EFO_0004242
+"Homocysteine levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004578
+"Homocysteine levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004578
+"Homocysteine levels, in plasma, in women"	http://www.ebi.ac.uk/efo/EFO_0004578
+Human intelligence or general cognitive ability in ADHD families	http://www.ebi.ac.uk/efo/EFO_0004337
+Human papilloma virus seropositivity	http://www.ebi.ac.uk/efo/EFO_0004510
+Hypertension and blood pressure traits	http://www.ebi.ac.uk/efo/EFO_0000537
+Hypertension (essential hypertension)	http://www.ebi.ac.uk/efo/EFO_0000537
+"Hypertension, salt-sensitive"	http://purl.obolibrary.org/obo/MP_0004217
+Hypertension with short sleep duration	http://www.ebi.ac.uk/efo/EFO_0000537,http://www.ebi.ac.uk/efo/EFO_0004807
+Hypertropic cardiomyopathy	http://www.ebi.ac.uk/efo/EFO_0000538
+Hypothyroidism and thyroid conditions	http://www.ebi.ac.uk/efo/EFO_0004705
+Idiopathic premature ovarian failure	http://www.ebi.ac.uk/efo/EFO_0004266
+IgA deficiency (selective IgA deficiency)	http://www.ebi.ac.uk/efo/EFO_0004747
+"IgA levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004912
+"IgE levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004579
+"IgE levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004579
+"IgE levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004579
+"IgE (total IgE) concentrations, plasma"	http://www.ebi.ac.uk/efo/EFO_0004579
+IgG index in multiple sclerosis	http://www.ebi.ac.uk/efo/EFO_0004565
+"IgG level, in serum"	http://www.ebi.ac.uk/efo/EFO_0004565
+"IgM, in serum"	http://www.ebi.ac.uk/efo/EFO_0004993
+"IL-6, erythrocyte sedimentation rate, MCP-1, C-reactive protein (CRP) "	http://www.ebi.ac.uk/efo/EFO_0004304,http://www.ebi.ac.uk/efo/EFO_0004458,http://www.ebi.ac.uk/efo/EFO_0004749,http://www.ebi.ac.uk/efo/EFO_0004810
+IL-6 levels	http://www.ebi.ac.uk/efo/EFO_0004810
+Implantable cardioverter-defibrillator activation with life-threatening arrhythmias	http://www.ebi.ac.uk/efo/EFO_0004269
+Inflammatory demyelinating disease	http://www.ebi.ac.uk/efo/EFO_0004256
+Insulin like growth factor levels	http://www.ebi.ac.uk/efo/EFO_0004626,http://www.ebi.ac.uk/efo/EFO_0004627
+"Insulin traits (Insulin sensitivity index (ISI), Insulin disposition index (IDI))"	http://www.ebi.ac.uk/efo/EFO_0004467
+Inter-adventitial common carotid artery diameter	http://www.ebi.ac.uk/efo/EFO_0007717
+Interferon-related cytopenia in hepatitis C	http://www.ebi.ac.uk/efo/EFO_0004220
+"Interleukin levels (IL10, IL1Ra, IL6), in plasma"	http://www.ebi.ac.uk/efo/EFO_0004873
+Interleukin levels (IL18 levels)	http://www.ebi.ac.uk/efo/EFO_0004581
+"Intracranial aneurysm, sporadic"	http://www.ebi.ac.uk/efo/EFO_0003870
+Irinotecan-related severe toxicities in patients with advanced non-small-cell lung cancer	http://www.ebi.ac.uk/efo/EFO_0003060,http://www.ebi.ac.uk/efo/EFO_0004829
+Iris patterns	http://www.ebi.ac.uk/efo/EFO_0004731
+"Iron levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004461
+"Iron levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004459,http://www.ebi.ac.uk/efo/EFO_0004461,http://www.ebi.ac.uk/efo/EFO_0006332,http://www.ebi.ac.uk/efo/EFO_0006341
+Keratoconus 	http://www.orpha.net/ORDO/Orphanet_156071
+Keratoconus 	http://www.orpha.net/ORDO/Orphanet_156071
+"Kidney function and endocrine traits (urinary albumin, creatinine, cystatin-C, thyroid stimulating hormone), in serum and in urine"	http://www.ebi.ac.uk/efo/EFO_0004285,http://www.ebi.ac.uk/efo/EFO_0004617,http://www.ebi.ac.uk/efo/EFO_0004748
+Kidney stone disease	http://www.ebi.ac.uk/efo/EFO_0003845
+"Lactate dehydrogenase, in serum"	http://www.ebi.ac.uk/efo/EFO_0004808
+Lamotrigine- and phenytoin-induced hypersensitivity reactions	http://purl.obolibrary.org/obo/GO_0036277
+Late rectal bleeding following chemotherapy for prostate cancer	http://purl.obolibrary.org/obo/GO_0009314
+"LDL cholesterol, coronary artery calcification"	http://www.ebi.ac.uk/efo/EFO_0004574,http://www.ebi.ac.uk/efo/EFO_0004611
+LDL cholesterol in genotype-1 chronic hepatitis C	http://www.ebi.ac.uk/efo/EFO_0004220,http://www.ebi.ac.uk/efo/EFO_0004611
+Left ventricular hypertrophy by electrocardiogram (ECG)	http://www.ebi.ac.uk/efo/EFO_0003896
+Left ventricular (LV) wall thickness	http://www.ebi.ac.uk/efo/EFO_0003896,http://www.ebi.ac.uk/efo/EFO_0004298
+Leukemia (childhood acute lymphoblastic leukemia relapse)	http://www.ebi.ac.uk/efo/EFO_0000220
+Leukemia (pediatric acute lymphoblastic leukemia)	http://www.ebi.ac.uk/efo/EFO_0000220
+Leukemia (pediatric acute lymphoblastic leukemia)	http://www.ebi.ac.uk/efo/EFO_0000220
+"Lipid level measurements, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004529
+"Lipid level measurements, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004529
+"Lipid measurements and other quantitative traits (in serum: sodium, potassium, chloride, urea, creatinine, calcium, albumin, GGT, glucose, urate, total cholesterol, LDL cholesterol, HDL cholesterol, triglycerides; in urine: sodium, potassium, creatinine, albumin)"	http://www.ebi.ac.uk/efo/EFO_0004531,http://www.ebi.ac.uk/efo/EFO_0004611
+Lipoprotein A [Lp(a)] levels and coronary artery disease	http://www.ebi.ac.uk/efo/EFO_0004614
+Lipoprotein A [Lp(a)] levels in plasma	http://www.ebi.ac.uk/efo/EFO_0004614
+"Lipoprotein A [Lp(a)] levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004614
+"Lipoprotein A [Lp(a)] levels in plasma, cardiovascular disease and mortality"	http://www.ebi.ac.uk/efo/EFO_0004614
+Lipoprotein-associated phospholipase A2 mass and activity; coronary heart disease	http://www.ebi.ac.uk/efo/EFO_0004746
+Liver cancer (hepatocellular carcinoma)	http://www.ebi.ac.uk/efo/EFO_0000182
+Liver cancer (hepatocellular carcinoma)	http://www.ebi.ac.uk/efo/EFO_0000182
+Liver cancer (hepatocellular carcinoma) in patients with chronic hepatitis B virus infection	http://www.ebi.ac.uk/efo/EFO_0000182
+Liver cancer (hepatocellular carcinoma) in patients with chronic hepatitis B virus infection	http://www.ebi.ac.uk/efo/EFO_0000182
+Liver cancer (hepatocellular carcinoma) in patients with chronic hepatitis B virus infection	http://www.ebi.ac.uk/efo/EFO_0000182
+Liver cancer (hepatocellular carcinoma) in patients with chronic hepatitis B virus infection	http://www.ebi.ac.uk/efo/EFO_0000182
+"Liver cancer (hepatocellular carcinoma), progresstion to with chronic viral hepatitis"	http://www.ebi.ac.uk/efo/EFO_0004220
+"Liver enzyme concentrations (alanine aminotransaminase, alkaline phosphatase, gamme-glutamyl transferase), in plasma"	http://www.ebi.ac.uk/efo/EFO_0004532,http://www.ebi.ac.uk/efo/EFO_0004533,http://www.ebi.ac.uk/efo/EFO_0004582,http://www.ebi.ac.uk/efo/EFO_0004735
+"Liver enzyme concentrations (alanine aminotransaminase, alkaline phosphatase, gamme-glutamyl transferase), in plasma"	http://www.ebi.ac.uk/efo/EFO_0004532,http://www.ebi.ac.uk/efo/EFO_0004533,http://www.ebi.ac.uk/efo/EFO_0004735
+"Long chain n-3 polyunsaturated fatty acid levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004639
+"Longevity and age-related phenotypes (age at menopause, walking speed, biological age)"	http://purl.obolibrary.org/obo/GO_0007568,http://www.ebi.ac.uk/efo/EFO_0000409,http://www.ebi.ac.uk/efo/EFO_0004328,http://www.ebi.ac.uk/efo/EFO_0004704,http://www.ebi.ac.uk/efo/EFO_0005056
+"Longevity, exceptional"	http://www.ebi.ac.uk/efo/EFO_0004300
+Low thyroid-stimulation hormone (TSH) levels and thyroid cancer	http://www.ebi.ac.uk/efo/EFO_0002892
+Lp-PLA2 activity and mass	http://www.ebi.ac.uk/efo/EFO_0004746
+Lp-PLA(2) mass and activity at baseline and after 12 months of rosuvastatin therapy	http://www.ebi.ac.uk/efo/EFO_0004746
+Lung cancer (DNA-repair capacity in lung cancer)	http://www.ebi.ac.uk/efo/EFO_0001071
+Lung cancer in never smokers	http://www.ebi.ac.uk/efo/EFO_0001071
+Lung cancer in never-smoking women	http://www.ebi.ac.uk/efo/EFO_0001071
+Lung cancer (interstitial lung disease in gefitinib-treated non-small-cell lung cancer)	http://www.ebi.ac.uk/efo/EFO_0004244
+Lung cancer (lung adenocarcinoma)	http://www.ebi.ac.uk/efo/EFO_0000571
+Lung cancer (lung adenocarcinoma)	http://www.ebi.ac.uk/efo/EFO_0000571
+Lung cancer (lung adenocarcinoma stage)	http://www.ebi.ac.uk/efo/EFO_0000571
+"Lung cancer (non-small cell lung cancer), hypertriglyceridemia with bexarotene treatment of "	http://www.ebi.ac.uk/efo/EFO_0003060
+"Lung cancer, non-small cell lung cancer prognosis"	http://www.ebi.ac.uk/efo/EFO_0003060
+"Lung cancer, prognosis in advanced non-small cell lung carcinoma with platinum-based chemotherapy"	http://www.ebi.ac.uk/efo/EFO_0003060,http://www.ebi.ac.uk/efo/EFO_0004647
+Lung cancer (squamous cell carcinoma)	http://www.ebi.ac.uk/efo/EFO_0003060
+"Lung cancer, survival in advanced non-small cell lung cancer with carboplatin and paclitaxel treatment"	http://www.ebi.ac.uk/efo/EFO_0000714,http://www.ebi.ac.uk/efo/EFO_0003060
+"Lung cancer, survival in non-small cell lung carcinoma in never smokers"	http://www.ebi.ac.uk/efo/EFO_0000714,http://www.ebi.ac.uk/efo/EFO_0003060
+"Lung cancer, survival in non-small cell lung carcinoma with platinum-based chemotherapy"	http://www.ebi.ac.uk/efo/EFO_0003060,http://www.ebi.ac.uk/efo/EFO_0004647
+"Lung cancer, survival in small cell lung cancer treated with irinitecan and cisplatin"	http://www.ebi.ac.uk/efo/EFO_0003060,http://www.ebi.ac.uk/efo/EFO_0004829
+Lung function decline in adults with and without asthma	http://www.ebi.ac.uk/efo/EFO_0004314,http://www.ebi.ac.uk/efo/EFO_0004713
+Lung function decline in mild to moderate chronic obstructive pulmonary disease	http://www.ebi.ac.uk/efo/EFO_0000341
+Lung function in textile workers with endotoxin exposure	http://www.ebi.ac.uk/efo/EFO_0003892
+Lung function phenotypes	http://www.ebi.ac.uk/efo/EFO_0003892,http://www.ebi.ac.uk/efo/EFO_0004312
+Lung function with asthma	http://www.ebi.ac.uk/efo/EFO_0003892
+Lymphoma (Hodgkin's lymphoma and Epstein-Barr virus status-defined subgroups)	http://www.ebi.ac.uk/efo/EFO_0000183
+Lymphoma subtypes	http://www.ebi.ac.uk/efo/EFO_0000574
+Lypmhoma (nodular sclerosis Hodgkin lymphoma)	http://www.ebi.ac.uk/efo/EFO_0004708
+"Magnesium levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004845
+Major depression (age of onset)	http://www.ebi.ac.uk/efo/EFO_0000677,http://www.ebi.ac.uk/efo/EFO_0004847
+"Major depression, gender differences"	http://www.ebi.ac.uk/efo/EFO_0003761
+"Major depression, recurrent"	http://www.ebi.ac.uk/efo/EFO_0003761
+"Major depression, recurrent early onset"	http://www.ebi.ac.uk/efo/EFO_0003761
+"Major depression, side-effects of antidepressant treatment"	http://purl.obolibrary.org/obo/GO_0036276,http://www.ebi.ac.uk/efo/EFO_0006320,http://www.ebi.ac.uk/efo/EFO_0006321,http://www.ebi.ac.uk/efo/EFO_0006322,http://www.ebi.ac.uk/efo/EFO_0006323,http://www.ebi.ac.uk/efo/EFO_0006326,http://www.ebi.ac.uk/efo/EFO_0006327,http://www.ebi.ac.uk/efo/EFO_0006329,http://www.ebi.ac.uk/efo/EFO_0006330
+Major depression (suicidal thoughts and behavior)	http://www.ebi.ac.uk/efo/EFO_0004913
+Malarial infection	http://www.ebi.ac.uk/efo/EFO_0001068
+"Male fertility (family size, birth rate)"	http://www.ebi.ac.uk/efo/EFO_0004802,http://www.ebi.ac.uk/efo/EFO_0004803,http://www.ebi.ac.uk/efo/EFO_0004804
+Maternally-mediated genetic effects and parent-of-origin effects on risk of orofacial clefting	http://www.orpha.net/ORDO/Orphanet_139039
+"Matrix metalloproteinase (MMP-1) levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004744
+Metabolic response to hydrochlorothiazide	http://www.ebi.ac.uk/efo/EFO_0004465,http://www.ebi.ac.uk/efo/EFO_0004530,http://www.ebi.ac.uk/efo/EFO_0005202
+Metabolic side effects to antipsychotic drugs	http://purl.obolibrary.org/obo/GO_0097332,http://purl.obolibrary.org/obo/GO_0097333,http://purl.obolibrary.org/obo/GO_0097334,http://purl.obolibrary.org/obo/GO_0097335,http://purl.obolibrary.org/obo/GO_0097336,http://purl.obolibrary.org/obo/GO_0097337,http://purl.obolibrary.org/obo/GO_0097338
+"Metabolic syndrome (HDL cholesterol, plasma glucose, T2D, waist to hip ratio, diastolic blood pressure)"	http://www.ebi.ac.uk/efo/EFO_0000195,http://www.ebi.ac.uk/efo/EFO_0001360,http://www.ebi.ac.uk/efo/EFO_0004343,http://www.ebi.ac.uk/efo/EFO_0004612,http://www.ebi.ac.uk/efo/EFO_0006336
+"Metabolic syndrome (HDL cholesterol, triglycerides, plasma glucose, waist circumference, systolic and diastolic blood pressure)"	http://www.ebi.ac.uk/efo/EFO_0000195
+"Metabolic syndrome (waist circumference, fasting glucose, HDL cholesterol, triglycerides, blood pressure)"	http://www.ebi.ac.uk/efo/EFO_0000195,http://www.ebi.ac.uk/efo/EFO_0004325,http://www.ebi.ac.uk/efo/EFO_0004530,http://www.ebi.ac.uk/efo/EFO_0004612
+"Metabolic traits (triglycerides, HDL cholesterol, LDL cholesterol, fasting plasma glucose, albumin, blood urea nitrogen, gamma-glutaryl transpeptidase, alanine aminotransferase, aspartate aminotransferase)"	http://www.ebi.ac.uk/efo/EFO_0004465,http://www.ebi.ac.uk/efo/EFO_0004530,http://www.ebi.ac.uk/efo/EFO_0004532,http://www.ebi.ac.uk/efo/EFO_0004535,http://www.ebi.ac.uk/efo/EFO_0004611,http://www.ebi.ac.uk/efo/EFO_0004612,http://www.ebi.ac.uk/efo/EFO_0004725,http://www.ebi.ac.uk/efo/EFO_0004735,http://www.ebi.ac.uk/efo/EFO_0004761
+"Metabolite concentrations, gender-specific, in serum"	http://www.ebi.ac.uk/efo/EFO_0005653
+"Metabolites and sphingolipids, circulating concentrations"	http://www.ebi.ac.uk/efo/EFO_0004622
+"Metabolites, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004725
+"Metabolites, in serum"	http://www.ebi.ac.uk/efo/EFO_0004725
+"Metabolites, in serum"	http://www.ebi.ac.uk/efo/EFO_0004725
+"Metabolites, in serum"	http://www.ebi.ac.uk/efo/EFO_0004529,http://www.ebi.ac.uk/efo/EFO_0004725
+"Metabolites, in serum"	http://www.ebi.ac.uk/efo/EFO_0004723
+"Metabolites, in serum in men"	http://www.ebi.ac.uk/efo/EFO_0004529,http://www.ebi.ac.uk/efo/EFO_0004622,http://www.ebi.ac.uk/efo/EFO_0004639,http://www.ebi.ac.uk/efo/EFO_0004846,http://www.ebi.ac.uk/efo/EFO_0004998,http://www.ebi.ac.uk/efo/EFO_0005001,http://www.ebi.ac.uk/efo/EFO_0005002,http://www.ebi.ac.uk/efo/EFO_0005058,http://www.ebi.ac.uk/efo/EFO_0005059
+"Metabolites, in serum in prostate cancer"	http://www.ebi.ac.uk/efo/EFO_0004725
+"Metabolites, in urine"	http://www.ebi.ac.uk/efo/EFO_0004725
+"Metabolites related insulin sensitivity in non-diabetics, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004471
+Methotrexate clearance in acute lymphoblastic leukemia	http://purl.obolibrary.org/obo/GO_0031427
+"Midregional-proadrenomedullin and C-terminal-pro-endothelin-1, in plasma"	http://www.ebi.ac.uk/efo/EFO_0005196
+Monoamine metabolite levels in cerebrospinal fluid	http://www.ebi.ac.uk/efo/EFO_0005131,http://www.ebi.ac.uk/efo/EFO_0005132,http://www.ebi.ac.uk/efo/EFO_0005133
+Monocyte chemoattractant protein-1 (MCP-1) in obese children	http://www.ebi.ac.uk/efo/EFO_0004749
+Monocyte colony-forming units (CFUs)	http://www.ebi.ac.uk/efo/EFO_0004506
+"Multiple cancer types (lung cancer, noncardia gastric cancer, esophageal squamous-cell carcinoma)"	http://www.ebi.ac.uk/efo/EFO_0000178,http://www.ebi.ac.uk/efo/EFO_0000707,http://www.ebi.ac.uk/efo/EFO_0001071
+Multiple sclerosis (brain lesion distribution in multiple sclerosis)	http://www.ebi.ac.uk/efo/EFO_0003885
+"Multiple sclerosis, glutamate concentrations in brains in"	http://www.ebi.ac.uk/efo/EFO_0003885
+"Multiple traits (bipolar disorder, coronary artery disease, Crohn's disease, rheumatoid arthritis, T1D, T2D, hypertension)"	http://www.ebi.ac.uk/efo/EFO_0000289,http://www.ebi.ac.uk/efo/EFO_0000384,http://www.ebi.ac.uk/efo/EFO_0000537,http://www.ebi.ac.uk/efo/EFO_0000685,http://www.ebi.ac.uk/efo/EFO_0001359,http://www.ebi.ac.uk/efo/EFO_0001360,http://www.ebi.ac.uk/efo/EFO_0001645
+"Multiple traits (bipolar disorder, coronary artery disease, Crohn's disease, rheumatoid arthritis, T1D, T2D, hypertension)"	http://www.ebi.ac.uk/efo/EFO_0000384,http://www.ebi.ac.uk/efo/EFO_0001359,http://www.ebi.ac.uk/efo/EFO_0001360
+"Multiple traits (eye color, freckles, hair color, hair curl, asparagus anosmia, photic sneeze reflex, handedness, footedness, attached earlobes, dental work, myopia, taste preference, motion sickness, astigmatism)"	http://purl.obolibrary.org/obo/GO_0007608,http://purl.obolibrary.org/obo/GO_0050909,http://purl.obolibrary.org/obo/HP_0000483,http://purl.obolibrary.org/obo/HP_0009907,http://purl.obolibrary.org/obo/HP_0025095,http://www.ebi.ac.uk/efo/EFO_0003065,http://www.ebi.ac.uk/efo/EFO_0003924,http://www.ebi.ac.uk/efo/EFO_0003947,http://www.ebi.ac.uk/efo/EFO_0003949,http://www.ebi.ac.uk/efo/EFO_0003963,http://www.ebi.ac.uk/efo/EFO_0004290,http://www.ebi.ac.uk/efo/EFO_0004291,http://www.ebi.ac.uk/efo/EFO_0004354,http://www.ebi.ac.uk/efo/EFO_0005038
+"Multiple traits (lipids, glucose, obesity, blood pressure)"	http://www.ebi.ac.uk/efo/EFO_0001360,http://www.ebi.ac.uk/efo/EFO_0004530
+Myopia (high myopia)	http://www.ebi.ac.uk/efo/EFO_0004207
+Myopia (high myopia)	http://www.ebi.ac.uk/efo/EFO_0004207
+Nasion Position	http://www.ebi.ac.uk/efo/EFO_0004743
+"Natural anticoagulant inhibitors and protein C anticoagulant pathway in venous thrombosis, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004503,http://www.ebi.ac.uk/efo/EFO_0004633,http://www.ebi.ac.uk/efo/EFO_0004637
+Nephropathy (Immunoglobulin A (IgA) nephropathy)	http://www.ebi.ac.uk/efo/EFO_0003086
+Nephropathy (Immunoglobulin A (IgA) nephropathy)	http://www.ebi.ac.uk/efo/EFO_0003086
+Nephropathy (Immunoglobulin A (IgA) nephropathy)	http://www.ebi.ac.uk/efo/EFO_0004194
+Neuroblastoma (in low-risk cases)	http://www.ebi.ac.uk/efo/EFO_0000621
+"Neurofibrillary tangles in non-demented elderly subjects, in brain"	http://www.ebi.ac.uk/efo/EFO_0000249
+"Neuropsychological treatments and metabolic and cardiovascular risk factors (HDL cholesterol, BMI)"	http://purl.obolibrary.org/obo/GO_0042493,http://www.ebi.ac.uk/efo/EFO_0004340,http://www.ebi.ac.uk/efo/EFO_0004574
+Neutropenia or leukopenia in response to chemotherapeutic agents	http://purl.obolibrary.org/obo/GO_0036272,http://purl.obolibrary.org/obo/GO_0036275,http://purl.obolibrary.org/obo/GO_0072718,http://purl.obolibrary.org/obo/GO_0072758,http://purl.obolibrary.org/obo/GO_0097327,http://purl.obolibrary.org/obo/GO_0097328,http://purl.obolibrary.org/obo/GO_0097329,http://purl.obolibrary.org/obo/GO_1901555,http://purl.obolibrary.org/obo/GO_1901563,http://purl.obolibrary.org/obo/GO_1902518,http://purl.obolibrary.org/obo/GO_1902519,http://purl.obolibrary.org/obo/GO_190252,http://purl.obolibrary.org/obo/GO_1902520,http://purl.obolibrary.org/obo/GO_1902522,http://www.ebi.ac.uk/efo/EFO_0004647,http://www.ebi.ac.uk/efo/EFO_0005257,http://www.ebi.ac.uk/efo/EFO_0005260
+Nevus count	http://www.ebi.ac.uk/efo/EFO_0004632
+"N-glycan levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004999
+"N-glycan levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004999
+N-glycosylation of IgG in plasma	http://www.ebi.ac.uk/efo/EFO_0005193
+"Nicotine dependence, cigarettes per day"	http://www.ebi.ac.uk/efo/EFO_0003768
+"Nicotine dependence, cigarettes per day"	http://www.ebi.ac.uk/efo/EFO_0003768
+"Nicotine dependence, relapse"	http://www.ebi.ac.uk/efo/EFO_0003768
+Nicotine smoking	http://www.ebi.ac.uk/efo/EFO_0004318
+Nicotine smoking	http://www.ebi.ac.uk/efo/EFO_0004318
+Nicotine smoking	http://www.ebi.ac.uk/efo/EFO_0004318
+"Nicotine, smoking behavior"	http://www.ebi.ac.uk/efo/EFO_0004318
+"Nicotine, smoking behavior"	http://www.ebi.ac.uk/efo/EFO_0004318
+"Nicotine, smoking behavior"	http://www.ebi.ac.uk/efo/EFO_0004318
+"Nicotine, smoking behavior"	http://www.ebi.ac.uk/efo/EFO_0004318
+"Nicotine, smoking behavior"	http://www.ebi.ac.uk/efo/EFO_0004318
+"Nicotine, smoking cessation"	http://www.ebi.ac.uk/efo/EFO_0004319
+"Nicotine, smoking cessation"	http://www.ebi.ac.uk/efo/EFO_0004319
+"Nicotine, smoking quantity"	http://www.ebi.ac.uk/efo/EFO_0003768
+"Nicotine, smoking quantity"	http://www.ebi.ac.uk/efo/EFO_0004318
+Nonobstructive Azoospermia	http://www.ebi.ac.uk/efo/EFO_0000279
+Nonsyndromic sagittal craniosynostosis	http://www.orpha.net/ORDO/Orphanet_35093
+Nonsyndromic striae distensae	http://purl.obolibrary.org/obo/HP_0001065
+"Obesity, childhood"	http://www.ebi.ac.uk/efo/EFO_0001073
+"Obesity, childhood"	http://www.ebi.ac.uk/efo/EFO_0003923,http://www.ebi.ac.uk/efo/EFO_0003939,http://www.ebi.ac.uk/efo/EFO_0003940,http://www.ebi.ac.uk/efo/EFO_0004326,http://www.ebi.ac.uk/efo/EFO_0004338,http://www.ebi.ac.uk/efo/EFO_0004339,http://www.ebi.ac.uk/efo/EFO_0004340,http://www.ebi.ac.uk/efo/EFO_0004342,http://www.ebi.ac.uk/efo/EFO_0004344,http://www.ebi.ac.uk/efo/EFO_0004458,http://www.ebi.ac.uk/efo/EFO_0004465,http://www.ebi.ac.uk/efo/EFO_0004466,http://www.ebi.ac.uk/efo/EFO_0004471,http://www.ebi.ac.uk/efo/EFO_0004501,http://www.ebi.ac.uk/efo/EFO_0004502,http://www.ebi.ac.uk/efo/EFO_0004520,http://www.ebi.ac.uk/efo/EFO_0004530,http://www.ebi.ac.uk/efo/EFO_0004574,http://www.ebi.ac.uk/efo/EFO_0004578,http://www.ebi.ac.uk/efo/EFO_0004611,http://www.ebi.ac.uk/efo/EFO_0004612,http://www.ebi.ac.uk/efo/EFO_0004620,http://www.ebi.ac.uk/efo/EFO_0004626,http://www.ebi.ac.uk/efo/EFO_0004627,http://www.ebi.ac.uk/efo/EFO_0004642,http://www.ebi.ac.uk/efo/EFO_0004684,http://www.ebi.ac.uk/efo/EFO_0004697,http://www.ebi.ac.uk/efo/EFO_0004730,http://www.ebi.ac.uk/efo/EFO_0004735,http://www.ebi.ac.uk/efo/EFO_0004736,http://www.ebi.ac.uk/efo/EFO_0004741,http://www.ebi.ac.uk/efo/EFO_0004747,http://www.ebi.ac.uk/efo/EFO_0004748,http://www.ebi.ac.uk/efo/EFO_0004749,http://www.ebi.ac.uk/efo/EFO_0004810,http://www.ebi.ac.uk/efo/EFO_0004818,http://www.ebi.ac.uk/efo/EFO_0004870,http://www.ebi.ac.uk/efo/EFO_0004887,http://www.ebi.ac.uk/efo/EFO_0004908,http://www.ebi.ac.uk/efo/EFO_0004995,http://www.ebi.ac.uk/efo/EFO_0005000,http://www.ebi.ac.uk/efo/EFO_0005093,http://www.ebi.ac.uk/efo/EFO_0005106,http://www.ebi.ac.uk/efo/EFO_0005108,http://www.ebi.ac.uk/efo/EFO_0005109,http://www.ebi.ac.uk/efo/EFO_0005110,http://www.ebi.ac.uk/efo/EFO_0005111,http://www.ebi.ac.uk/efo/EFO_0005112,http://www.ebi.ac.uk/efo/EFO_0005114,http://www.ebi.ac.uk/efo/EFO_0005115,http://www.ebi.ac.uk/efo/EFO_0005116,http://www.ebi.ac.uk/efo/EFO_0005117,http://www.ebi.ac.uk/efo/EFO_0005118,http://www.ebi.ac.uk/efo/EFO_0005119,http://www.ebi.ac.uk/efo/EFO_0005134,http://www.ebi.ac.uk/efo/EFO_0005187,http://www.ebi.ac.uk/efo/EFO_0005188,http://www.ebi.ac.uk/efo/EFO_0005189,http://www.ebi.ac.uk/efo/EFO_0005190,http://www.ebi.ac.uk/efo/EFO_0005191,http://www.ebi.ac.uk/efo/EFO_0006335,http://www.ebi.ac.uk/efo/EFO_0006336
+"Obesity, early onset in children and adolescents"	http://www.ebi.ac.uk/efo/EFO_0001073
+"Obesity-related traits, body mass index (BMI), blood pressure"	http://www.ebi.ac.uk/efo/EFO_0004340,http://www.ebi.ac.uk/efo/EFO_0004342,http://www.ebi.ac.uk/efo/EFO_0000537
+"Obesity-related traits (body mass index (BMI), waist circumference, weight change, height, adiposity)"	http://www.ebi.ac.uk/efo/EFO_0004340,http://www.ebi.ac.uk/efo/EFO_0004342
+"Obesity-related traits (body mass index (BMI), weight)"	http://www.ebi.ac.uk/efo/EFO_0004338,http://www.ebi.ac.uk/efo/EFO_0004340
+"Obesity-related traits (body mass index (BMI), weight)"	http://www.ebi.ac.uk/efo/EFO_0004338,http://www.ebi.ac.uk/efo/EFO_0004340
+"Obesity-related traits (body mass index (BMI), weight, hip circumference)"	http://www.ebi.ac.uk/efo/EFO_0004338,http://www.ebi.ac.uk/efo/EFO_0004340,http://www.ebi.ac.uk/efo/EFO_0004343
+"Obesity-related traits (body mass index (BMI), weight, hip circumference, waist circumference, brachial circumference, height)"	http://www.ebi.ac.uk/efo/EFO_0004302,http://www.ebi.ac.uk/efo/EFO_0004338,http://www.ebi.ac.uk/efo/EFO_0004339,http://www.ebi.ac.uk/efo/EFO_0004340,http://www.ebi.ac.uk/efo/EFO_0004342,http://www.ebi.ac.uk/efo/EFO_0004589,http://www.ebi.ac.uk/efo/EFO_0005093
+"Obesity traits (body mass index (BMI), total fat mass), blood pressure"	http://www.ebi.ac.uk/efo/EFO_0001073,http://www.ebi.ac.uk/efo/EFO_0004340,http://www.ebi.ac.uk/efo/EFO_0005409
+Obesity traits in postmenopausal women	http://www.ebi.ac.uk/efo/EFO_0004340,http://www.ebi.ac.uk/efo/EFO_0004343
+Ocular axial length and high myopia	http://www.ebi.ac.uk/efo/EFO_0004207
+Opiates addiction	http://www.ebi.ac.uk/efo/EFO_0003890
+Opioid sensitivity in healthy subjects	http://purl.obolibrary.org/obo/GO_0014072
+Optic nerve assessment	http://www.ebi.ac.uk/efo/EFO_0004832
+Osteoarthritis (hip) and joint-space width (cartilage thickness)	http://www.ebi.ac.uk/efo/EFO_0002506
+"Osteoarthritis (knee), in women"	http://www.ebi.ac.uk/efo/EFO_0004616
+Osteoporotic fracture	http://www.ebi.ac.uk/efo/EFO_0003882
+Osteoporotic fracture	http://www.ebi.ac.uk/efo/EFO_0003882
+Ovarian cancer survival	http://www.ebi.ac.uk/efo/EFO_0001075,http://www.ebi.ac.uk/efo/EFO_0000714
+Ovarian follicle number and menopause	http://www.ebi.ac.uk/efo/EFO_0004704
+Oxidized LDL cholesterol levels	http://www.ebi.ac.uk/efo/EFO_0004611
+Paclitaxel-induced sensory peripheral neuropathy	http://purl.obolibrary.org/obo/GO_1901555,http://www.ebi.ac.uk/efo/EFO_0004149
+Paclitaxel-induced sensory peripheral neuropathy	http://purl.obolibrary.org/obo/GO_1901555,http://www.ebi.ac.uk/efo/EFO_0004149
+Paclitaxel sensitivity in NCI60 cancer cell lines	http://purl.obolibrary.org/obo/GO_1905705
+Paget's disease of bone	http://www.ebi.ac.uk/efo/EFO_0004261
+Paget's disease of bone	http://www.ebi.ac.uk/efo/EFO_0004261
+"Pancreatic cancer, survival with gemcitabine treatment"	http://purl.obolibrary.org/obo/GO_0036272,http://www.ebi.ac.uk/efo/EFO_0002618
+Paraoxonase and arylesterase activities in serum	http://www.ebi.ac.uk/efo/EFO_0005126
+"Parkinsonism in schizophrenia patients, antipsychotic-induced"	http://purl.obolibrary.org/obo/GO_0097332
+Parkinson's disease motor and cognitive outcomes	http://www.ebi.ac.uk/efo/EFO_0002508
+Pemphigus vulgaris	http://www.ebi.ac.uk/efo/EFO_0004719
+Perception of the odorants androstenone and galaxolide	http://purl.obolibrary.org/obo/GO_0007608
+Periodontal pathogen colonization	http://www.ebi.ac.uk/efo/EFO_0000649
+Peripartum cardiomyopathy	http://www.ebi.ac.uk/efo/EFO_0002628
+Personality (temperament scales)	http://www.ebi.ac.uk/efo/EFO_0004365
+Personality traits and mood states	http://www.ebi.ac.uk/efo/EFO_0004365
+Personality traits and mood states (depressive affects)	http://www.ebi.ac.uk/efo/EFO_0003761
+"Phosphorous concentrations, in serum"	http://www.ebi.ac.uk/efo/EFO_0004861
+"Phytosterol levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004862
+Pit-and-fissure- and smooth-surface carries	http://www.ebi.ac.uk/efo/EFO_0006338,http://www.ebi.ac.uk/efo/EFO_0006339
+Placental abruption	http://www.ebi.ac.uk/efo/EFO_1001754
+Plasma uric acid level in obese and never-overweight individuals	http://www.ebi.ac.uk/efo/EFO_0004761
+"Plasminogen activator inhibitor-1 (PAI1) levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004792
+"Platelet aggregation, pre-aspirin and post-aspirin"	http://purl.obolibrary.org/obo/GO_0070527
+Platelet count (PLT) and platelet volume (MPV)	http://www.ebi.ac.uk/efo/EFO_0004584
+Platelet count (PLT) and platelet volume (MPV)	http://www.ebi.ac.uk/efo/EFO_0004309,http://www.ebi.ac.uk/efo/EFO_0004584
+Platelet count (PLT) and platelet volume (MPV)	http://www.ebi.ac.uk/efo/EFO_0004309,http://www.ebi.ac.uk/efo/EFO_0004584
+"Platelet response, antiplatelets and cardiovascular outcomes"	http://purl.obolibrary.org/obo/GO_0042493
+Platelet thrombus formation under high shear stress	http://www.ebi.ac.uk/efo/EFO_0004985,http://www.ebi.ac.uk/efo/EFO_0007615
+Platelet volume (MPV)	http://www.ebi.ac.uk/efo/EFO_0004584
+Podoconiosis	http://www.ebi.ac.uk/efo/EFO_0004712
+Polycystic ovary syndrome through obesity-related condition	http://www.ebi.ac.uk/efo/EFO_0000660
+"Polyunsaturated fatty acid levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004529
+Post-operative nausea and vomiting	http://www.ebi.ac.uk/efo/EFO_0004888
+Post-traumatic stress disorder (PTSD)	http://www.ebi.ac.uk/efo/EFO_0001358
+Post-traumatic stress disorder (PTSD)	http://www.ebi.ac.uk/efo/EFO_0001358
+Pre-eclampsia	http://www.ebi.ac.uk/efo/EFO_0000668
+Pre-eclampsia	http://www.ebi.ac.uk/efo/EFO_0000668
+Pre-eclampsia	http://www.ebi.ac.uk/efo/EFO_0000668
+Primary rhegmatogenous retinal detachment	http://www.ebi.ac.uk/efo/EFO_0005240
+Primary tooth development during infancy	http://purl.obolibrary.org/obo/GO_0042476
+Primary tooth eruption	http://purl.obolibrary.org/obo/GO_0042476,http://purl.obolibrary.org/obo/GO_0044691
+"Progranulin levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004625
+"Prostate cancer, advanced"	http://www.ebi.ac.uk/efo/EFO_0001663
+Prostate cancer and Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001663
+Prostate cancer gene 3 (PCA3) mRNA levels	http://www.ebi.ac.uk/efo/EFO_0005127
+Prostate cancer mortality	http://www.ebi.ac.uk/efo/EFO_0000196,http://www.ebi.ac.uk/efo/EFO_0000714
+"Prostate-specific antigen (free-to-total, %fPSA), in serum"	http://www.ebi.ac.uk/efo/EFO_0004624
+"Prostate-specific antigen levels in men, in serum"	http://www.ebi.ac.uk/efo/EFO_0004624
+"Protein C levels and protein S levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004633,http://www.ebi.ac.uk/efo/EFO_0004634,http://www.ebi.ac.uk/efo/EFO_0004637
+"Protein-C levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004633
+"Protein quantitative traits (42 protein levels in fasting serum and plasma: including C-reactive protein (CRP), IL6R, IL18, Lipoprotein A (LPA), GGT, IL1RN, TNFa, adiponectin, albumin, alkaline phosphatase, fibrinogen, ferritin, hemoglobin, insulin, leptin, SHBG, transferrin, thyroid stimulating hormone, MCP1)"	http://www.ebi.ac.uk/efo/EFO_0004458,http://www.ebi.ac.uk/efo/EFO_0004459,http://www.ebi.ac.uk/efo/EFO_0004460,http://www.ebi.ac.uk/efo/EFO_0004467,http://www.ebi.ac.uk/efo/EFO_0004502,http://www.ebi.ac.uk/efo/EFO_0004509,http://www.ebi.ac.uk/efo/EFO_0004532,http://www.ebi.ac.uk/efo/EFO_0004533,http://www.ebi.ac.uk/efo/EFO_0004535,http://www.ebi.ac.uk/efo/EFO_0004555,http://www.ebi.ac.uk/efo/EFO_0004581,http://www.ebi.ac.uk/efo/EFO_0004614,http://www.ebi.ac.uk/efo/EFO_0004623,http://www.ebi.ac.uk/efo/EFO_0004628,http://www.ebi.ac.uk/efo/EFO_0004684,http://www.ebi.ac.uk/efo/EFO_0004696,http://www.ebi.ac.uk/efo/EFO_0004730,http://www.ebi.ac.uk/efo/EFO_0004736,http://www.ebi.ac.uk/efo/EFO_0004748,http://www.ebi.ac.uk/efo/EFO_0004749,http://www.ebi.ac.uk/efo/EFO_0004750,http://www.ebi.ac.uk/efo/EFO_0004751,http://www.ebi.ac.uk/efo/EFO_0004752,http://www.ebi.ac.uk/efo/EFO_0004753,http://www.ebi.ac.uk/efo/EFO_0004754,http://www.ebi.ac.uk/efo/EFO_0004808,http://www.ebi.ac.uk/efo/EFO_0004809,http://www.ebi.ac.uk/efo/EFO_0004810,http://www.ebi.ac.uk/efo/EFO_0004811,http://www.ebi.ac.uk/efo/EFO_0004812,http://www.ebi.ac.uk/efo/EFO_0004813,http://www.ebi.ac.uk/efo/EFO_0004814,http://www.ebi.ac.uk/efo/EFO_0004815,http://www.ebi.ac.uk/efo/EFO_0004818,http://www.ebi.ac.uk/efo/EFO_0004819,http://www.ebi.ac.uk/efo/EFO_0005000,http://www.ebi.ac.uk/efo/EFO_0005057
+Psoriasis risk prediction	http://www.ebi.ac.uk/efo/EFO_0000676
+"Psychiatric disorders (Autism, ADHD, Bipolar disorder, Schizophrenia, Depression)"	http://www.ebi.ac.uk/efo/EFO_0000289,http://www.ebi.ac.uk/efo/EFO_0000692,http://www.ebi.ac.uk/efo/EFO_0003756,http://www.ebi.ac.uk/efo/EFO_0003761,http://www.ebi.ac.uk/efo/EFO_0003888
+Pulmonary fibrosis (fibrotic idiopathic interstitial pneumonias)	http://www.ebi.ac.uk/efo/EFO_0004244
+Radiation-induced damage on blood cell lines	http://purl.obolibrary.org/obo/GO_0009314
+Recipient kidney allograft function	http://www.ebi.ac.uk/efo/EFO_0005199
+Renal cancer	http://www.ebi.ac.uk/efo/EFO_0000681
+Renal sinus fat accumulation	http://www.ebi.ac.uk/efo/EFO_0004864
+Response to antidepressants (citalopram-induced side effects)	http://purl.obolibrary.org/obo/GO_0036276
+"Response to antidepressants (escitaloprim, nortriptyline)"	http://purl.obolibrary.org/obo/GO_0036276
+Response to antidepressants (selective serotonin reuptake inhibitors (SSRIs))	http://purl.obolibrary.org/obo/GO_0036276
+Response to antidepressants (sustained antidepressant response)	http://purl.obolibrary.org/obo/GO_0036276
+Response to antipsychotics in schizophrenia (treatment refractory)	http://www.ebi.ac.uk/efo/EFO_0004609
+"Response to antipsychotics (olanzapine, quetiapine, risperidone, ziprasidone, perhpenazine)"	http://purl.obolibrary.org/obo/GO_0097332,http://purl.obolibrary.org/obo/GO_0097333,http://purl.obolibrary.org/obo/GO_0097336,http://purl.obolibrary.org/obo/GO_0097337
+Response to anti-TNF treatment in arthritis	http://www.ebi.ac.uk/efo/EFO_0004653
+Response to anti-TNF treatment in arthritis	http://www.ebi.ac.uk/efo/EFO_0000685,http://www.ebi.ac.uk/efo/EFO_0004653
+Response to atorvastatin	http://purl.obolibrary.org/obo/GO_0036273
+Response to citalopram in major depressive disorder	http://www.ebi.ac.uk/efo/EFO_0006329
+"Response to clopidogrel (anti-platelet), variation in"	http://purl.obolibrary.org/obo/GO_0061478
+Response to fenofibrate treatment on inflammation biomarkers	http://purl.obolibrary.org/obo/GO_1901557
+Response to gemcitabine or arabinosylcytosin in blood cell lines	http://purl.obolibrary.org/obo/GO_0036272
+Response to glucose and GLP-1-infusion on insulin secretion	http://www.ebi.ac.uk/efo/EFO_0004307
+Response to glucose and insulin	http://www.ebi.ac.uk/efo/EFO_0004307
+Response to glucose in plasma	http://www.ebi.ac.uk/efo/EFO_0001360
+Response to methylphenidate treatment	http://purl.obolibrary.org/obo/GO_0036271
+Response to pegylated interferon-alpha and ribavirin treatment in chronic hepatitis C	http://www.ebi.ac.uk/efo/EFO_0004220
+Response to pegylated interferon-alpha and ribavirin treatment in chronic hepatitis C	http://www.ebi.ac.uk/efo/EFO_0004220
+Response to pegylated interferon-alpha and ribavirin treatment in chronic hepatitis C	http://www.ebi.ac.uk/efo/EFO_0004220
+Response to pegylated interferon-alpha and ribavirin treatment in chronic hepatitis C	http://www.ebi.ac.uk/efo/EFO_0004220
+Response to pegylated interferon-alpha and ribavirin treatment in chronic hepatitis C	http://www.ebi.ac.uk/efo/EFO_0004220
+"Response to statins (simvastatin, lovastatin) in NCI60 cancer cell lines"	http://purl.obolibrary.org/obo/GO_0036273
+"Response to statin treatment (atorvastatin), change in cholesterol levels"	http://purl.obolibrary.org/obo/GO_0036273
+"Response to statin treatment (simvastatin, pravastatin, atorvastatin), change in cholesterol levels"	http://purl.obolibrary.org/obo/GO_0036273
+Response to TNF? inhibitors in patients with rheumatoid arthritis	http://www.ebi.ac.uk/efo/EFO_0000685,http://www.ebi.ac.uk/efo/EFO_0004653
+Response to TNF? inhibitors in patients with rheumatoid arthritis	http://www.ebi.ac.uk/efo/EFO_0000685,http://www.ebi.ac.uk/efo/EFO_0004653
+Response to tocilizumab for the treatment of rheumatoid arthritis	http://purl.obolibrary.org/obo/GO_0042493,http://www.ebi.ac.uk/efo/EFO_0000685
+Response to treatment and survival on dialysis in T2D patients	http://www.ebi.ac.uk/efo/EFO_0003884
+"Response to treatment (fludarabine, chlorambucil, combination) in chronic lymphocytic leukemia"	http://purl.obolibrary.org/obo/GO_0097327
+Response to treatment in pediatric acute lymphoblastic leukemia	http://purl.obolibrary.org/obo/GO_0097327,http://www.ebi.ac.uk/efo/EFO_0000220
+"Response to treatment with analgesics (midazolam, lidocaine)"	http://www.ebi.ac.uk/efo/EFO_0003843
+Restenosis after percutaneous coronary intervention (PCI)	http://www.ebi.ac.uk/efo/EFO_0004224
+"Rheumatoid arthritis, anti-TNF response in "	http://www.ebi.ac.uk/efo/EFO_0004653
+"Rheumatoid arthritis, cyclic citrullinated peptide (CCP) positive"	http://www.ebi.ac.uk/efo/EFO_0000685
+"Schizophrenia symptoms (positive, negative/disorganized, mood)"	http://www.ebi.ac.uk/efo/EFO_0000692
+Schizophrenia with formal thought disorder (disorganized speech)	http://www.ebi.ac.uk/efo/EFO_0004805
+Schizophrenia with negative symptoms	http://www.ebi.ac.uk/efo/EFO_0000692
+Second to fourth digit length ratio	http://www.ebi.ac.uk/efo/EFO_0004841
+Second to fourth digit length ratio	http://www.ebi.ac.uk/efo/EFO_0004841
+"Selenium concentration, serum"	http://www.ebi.ac.uk/efo/EFO_0005266
+Sex hormone-binding globulin (SHBG) concentrations	http://www.ebi.ac.uk/efo/EFO_0004696
+Sickle cell anemia (haemolytic anemia)	http://www.orpha.net/ORDO/Orphanet_232
+"Sickle cell anemia, severity"	http://www.orpha.net/ORDO/Orphanet_232
+Sickle cell anemia total bilirubin and cholelithiasis risk	http://www.ebi.ac.uk/efo/EFO_0004570,http://www.ebi.ac.uk/efo/EFO_0004799,http://www.orpha.net/ORDO/Orphanet_232
+Sickle cell anemia with elevated tricuspid regurgitation velocity	http://www.orpha.net/ORDO/Orphanet_232
+Skin cancer (basal cell carcinoma)	http://www.ebi.ac.uk/efo/EFO_0004193
+Skin cancer (cutaneous basal cell carcinoma)	http://www.ebi.ac.uk/efo/EFO_0004193
+Skin cancer (cutaneous basal cell carcinoma and squamous cell carcinoma)	http://www.ebi.ac.uk/efo/EFO_0004193
+Skin cancer (cutaneous melanoma)	http://www.ebi.ac.uk/efo/EFO_0000756
+Skin cancer (cutaneous nevi and melanoma risk)	http://www.ebi.ac.uk/efo/EFO_0000625
+Skin naphthyl-keratin adduct levels in workers exposed to naphthalene	http://www.ebi.ac.uk/efo/EFO_0004585
+Sleep and circadian phenotypes	http://www.ebi.ac.uk/efo/EFO_0004870
+Smallpox vaccine cytokine responses	http://www.ebi.ac.uk/efo/EFO_0004645,http://www.ebi.ac.uk/efo/EFO_0004873
+"Soluble E-selectin levels, in plasma, in women"	http://www.ebi.ac.uk/efo/EFO_0004575
+"Soluble E-selectin levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004575
+"Soluble ICAM-1 levels, in women"	http://www.ebi.ac.uk/efo/EFO_0004520
+"Soluble ICAM1 (sICAM) levels, in plasma, in women"	http://www.ebi.ac.uk/efo/EFO_0004520
+"Soluble leptin receptor (sOB-R) levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004635
+Soluble P-selectin levels and soluble ICAM-1 levles	http://www.ebi.ac.uk/efo/EFO_0004519,http://www.ebi.ac.uk/efo/EFO_0004520,http://www.ebi.ac.uk/efo/EFO_0004522
+Spontaneous resolution of hepatitis C virus	http://www.ebi.ac.uk/efo/EFO_0004220
+SSRI/SNRI-induced sexual dysfunction in depression	http://www.ebi.ac.uk/efo/EFO_0004714
+Statin-induced (cerivastatin) rhabdomyolysis	http://purl.obolibrary.org/obo/GO_0036273,http://www.ebi.ac.uk/efo/EFO_0003867
+Statin-induced myopathy	http://purl.obolibrary.org/obo/GO_0036273
+Statin-induced myopathy	http://purl.obolibrary.org/obo/GO_0036273
+"Stroke, atherothrombotic"	http://www.ebi.ac.uk/efo/EFO_0006919
+"Stroke, large vessel ischemic"	http://www.ebi.ac.uk/efo/EFO_0000712
+"Subclinical atherosclerosis (coronary artery calcium, abdominal artery calcium, ankle-brachial index, carotid intimal media thickness)"	http://www.ebi.ac.uk/efo/EFO_0003912,http://www.ebi.ac.uk/efo/EFO_0004723,http://www.ebi.ac.uk/efo/EFO_0004859,http://www.ebi.ac.uk/efo/EFO_0004860,http://www.ebi.ac.uk/efo/EFO_0005053
+Subcutaneous adipose tissue volume in HIV-infected men	http://www.ebi.ac.uk/efo/EFO_0000180,http://www.ebi.ac.uk/efo/EFO_0004341
+Subjective response to d-amphetamine in healthy subjects	http://purl.obolibrary.org/obo/GO_0042493
+"Suicidal ideation with antidepressant (escitaloprim, nortriptyline) treatment"	http://www.ebi.ac.uk/efo/EFO_0004320
+Suicidal ideation with antidepressant treatment	http://www.ebi.ac.uk/efo/EFO_0004913
+Suicidal ideation with citalopram treatment	http://purl.obolibrary.org/obo/GO_0036276
+Suicide attempts in bipolar disorder patients	http://www.ebi.ac.uk/efo/EFO_0000677,http://www.ebi.ac.uk/efo/EFO_0004321
+Suicide attempts in bipolar disorder patients	http://www.ebi.ac.uk/efo/EFO_0000289,http://www.ebi.ac.uk/efo/EFO_0004321
+"Suicide, with and without major depression"	http://www.ebi.ac.uk/efo/EFO_0007624
+"Systemic lupus erythematosus, in women"	http://www.ebi.ac.uk/efo/EFO_0002690
+"Systemic lupus erythematosus, serologic and cytokine (interferon gamma) profiles in serum in"	http://www.ebi.ac.uk/efo/EFO_0002690
+t(11;14)(q13;q32) translocation in multiple myeloma	http://www.ebi.ac.uk/efo/EFO_0001378
+Tamsulosin hydrochloride pharmacokinetics in benign prostatic hyperplasia	http://purl.obolibrary.org/obo/GO_1901905
+Tanning ability	http://www.ebi.ac.uk/efo/EFO_0004279
+Taste perception	http://purl.obolibrary.org/obo/GO_0050913
+Taste perception	http://purl.obolibrary.org/obo/GO_0050913
+"Tau protein levels, in cerebrospinal fluid (CSF)"	http://www.ebi.ac.uk/efo/EFO_0004670,http://www.ebi.ac.uk/efo/EFO_0004760,http://www.ebi.ac.uk/efo/EFO_0004763
+Taxane response in lymphoblastoid cell lines and taxane-treated lung cancer survival	http://purl.obolibrary.org/obo/GO_0097327,http://purl.obolibrary.org/obo/GO_1901555
+Telomere length (mean telomere length)	http://www.ebi.ac.uk/efo/EFO_0004505
+Temozolomide response in lymphoblastoid cell lines	http://purl.obolibrary.org/obo/GO_1990054
+Temperament in bipolar disorder	http://www.ebi.ac.uk/efo/EFO_0000289,http://www.ebi.ac.uk/efo/EFO_0004365,http://www.ebi.ac.uk/efo/EFO_0004782
+Testicular dysgenesis syndrome	http://www.ebi.ac.uk/efo/EFO_0004893
+Testicular germ cell carcinoma	http://www.ebi.ac.uk/efo/EFO_0005088
+Testicular germ cell carcinoma	http://www.ebi.ac.uk/efo/EFO_0005088
+Testicular germ cell carcinoma	http://www.ebi.ac.uk/efo/EFO_0005088
+Testicular germ cell carcinoma	http://www.ebi.ac.uk/efo/EFO_0005088
+"Testosterone concentration in men, in serum"	http://www.ebi.ac.uk/efo/EFO_0004730,http://www.ebi.ac.uk/efo/EFO_0004908
+Theta band oscillations and alcohol dependence	http://www.ebi.ac.uk/efo/EFO_0004358
+Thyroid volume and goiter risk	http://www.ebi.ac.uk/efo/EFO_0004865
+"Thyrotropin and thyroid function, in serum"	http://www.ebi.ac.uk/efo/EFO_0004296
+Toxicity after 5-fluorouracil or FOLFOX administration for colorectal cancer	http://purl.obolibrary.org/obo/GO_0036275
+"Trabecular and cortical volumetric BMD, bone microstructure"	http://www.ebi.ac.uk/efo/EFO_0003923
+"Transferrin glycosylation, in serum"	http://www.ebi.ac.uk/efo/EFO_0004329
+Transmission distortion	http://purl.obolibrary.org/obo/MP_0004179
+Treatment responses in severe sepsis	http://purl.obolibrary.org/obo/GO_0042493
+"Tremors, antipsychotic-induced"	http://purl.obolibrary.org/obo/GO_0097332
+"Triglycerides levels, in serum, in men"	http://www.ebi.ac.uk/efo/EFO_0004530
+"Troponin levels (highly sensitive cardiac troponin-T levels), in plasma"	http://www.ebi.ac.uk/efo/EFO_0005043
+Tuberculosis (early age of onset)	http://www.orpha.net/ORDO/Orphanet_3389
+"Type I Diabetes, autoantibody positivity in"	http://www.ebi.ac.uk/efo/EFO_0001359,http://www.ebi.ac.uk/efo/EFO_0004866
+"Type I Diabetes, serum ZnT8 autoantibody levels in"	http://www.ebi.ac.uk/efo/EFO_0001359,http://www.ebi.ac.uk/efo/EFO_0004866
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0003884
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360,http://www.ebi.ac.uk/efo/EFO_0004467,http://www.ebi.ac.uk/efo/EFO_0004468
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0000400,http://www.ebi.ac.uk/efo/EFO_0002614,http://www.ebi.ac.uk/efo/EFO_0004465,http://www.ebi.ac.uk/efo/EFO_0004466,http://www.ebi.ac.uk/efo/EFO_0004471,http://www.ebi.ac.uk/efo/EFO_0004541
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360,http://www.ebi.ac.uk/efo/EFO_0004866
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus	http://www.ebi.ac.uk/efo/EFO_0001360
+Type II Diabetes Mellitus (gestational diabetes)	http://www.ebi.ac.uk/efo/EFO_0004593
+"Ulcerative colitis, refractory"	http://www.ebi.ac.uk/efo/EFO_0000729
+Upper airway tract cancer	http://www.ebi.ac.uk/efo/EFO_0004284
+"Urate (in serum), gout"	http://www.ebi.ac.uk/efo/EFO_0004274,http://www.ebi.ac.uk/efo/EFO_0004531
+"Urate (in serum), gout"	http://www.ebi.ac.uk/efo/EFO_0004531
+"Urate (in serum), gout"	http://www.ebi.ac.uk/efo/EFO_0004531
+"Urate (in serum), gout"	http://www.ebi.ac.uk/efo/EFO_0004274,http://www.ebi.ac.uk/efo/EFO_0004761
+"Urate (in serum), gout"	http://www.ebi.ac.uk/efo/EFO_0004274,http://www.ebi.ac.uk/efo/EFO_0004531
+"Uric acid levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004531
+"Uric acid levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004531
+"Uric acid levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004531
+"Uric acid levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004761
+"Uric acid levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004531
+"Uric acid levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004761
+"Uric acid levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004761
+"Uric acid levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004761
+Urinary symptoms following radiotherapy for prostate cancer	http://purl.obolibrary.org/obo/GO_0009314,http://www.ebi.ac.uk/efo/EFO_0001663
+Uterine fibroids (benign tumors)	http://www.ebi.ac.uk/efo/EFO_0000731
+Uterine leiomyomata	http://www.ebi.ac.uk/efo/EFO_0000731
+Valvular calcification and aortic stenosis	http://www.ebi.ac.uk/efo/EFO_0005239,http://www.ebi.ac.uk/efo/EFO_0005262
+"Vascular endothelial growth factor (VEGF) levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004762
+Venous thrombosis	http://www.ebi.ac.uk/efo/EFO_0004572
+Venous thrombosis	http://www.ebi.ac.uk/efo/EFO_0004286
+Venous thrombosis	http://www.ebi.ac.uk/efo/EFO_0004286
+Ventricular dysfunction after primary coronary artery bypass graft surgery	http://www.ebi.ac.uk/efo/EFO_0004889
+Ventricular fibrillation in acute MI	http://www.ebi.ac.uk/efo/EFO_0004287
+Visceral adipose tissue-derived serine protease inhibitor (vaspin)	http://www.ebi.ac.uk/efo/EFO_0004915
+Visual cortical surface area	http://www.ebi.ac.uk/efo/EFO_0004771
+"Vitamin A (retinol), circulating levels"	http://www.ebi.ac.uk/efo/EFO_0004857
+"Vitamin B12, in serum"	http://www.ebi.ac.uk/efo/EFO_0004620
+"Vitamin B12 levels, in plasma, in women"	http://www.ebi.ac.uk/efo/EFO_0004620
+"Vitamin D (25(OH)D), circulating levels"	http://www.ebi.ac.uk/efo/EFO_0004631
+Vitamin D concentrations	http://www.ebi.ac.uk/efo/EFO_0003762
+Vitamin D concentrations	http://www.ebi.ac.uk/efo/EFO_0004631
+"Vitamin E, circulating levels"	http://www.ebi.ac.uk/efo/EFO_0004867
+"VLDL, LDL and HDL cholesterol particle size"	http://www.orpha.net/ORDO/Orphanet_70589
+"vWF levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004634
+"vWF levels, in plasma"	http://www.ebi.ac.uk/efo/EFO_0004634
+Warfarin dose	http://purl.obolibrary.org/obo/GO_0061476
+Warfarin dose	http://purl.obolibrary.org/obo/GO_0061476
+Warfarin dose (acenocoumarol)	http://purl.obolibrary.org/obo/GO_0061476
+Warfarin responsiveness	http://purl.obolibrary.org/obo/GO_0061476
+Weight loss after Roux-en-Y gastric bypass surgery	http://www.ebi.ac.uk/efo/EFO_0005244,http://www.ebi.ac.uk/efo/EFO_0005245
+Weight loss after Roux-en-Y gastric bypass surgery	http://www.ebi.ac.uk/efo/EFO_0005244,http://www.ebi.ac.uk/efo/EFO_0005245
+Wheezing after influenza vaccination in children	http://www.ebi.ac.uk/efo/EFO_0004645
+"YKL-40 levels, in serum"	http://www.ebi.ac.uk/efo/EFO_0004869

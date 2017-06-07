@@ -45,7 +45,7 @@ def suggest(term):
 
 	"""
 	server = 'http://www.ebi.ac.uk/spot/zooma/v2/api'
-	url_term = re.sub(" ", "%20", term)
+	url_term = re.sub(" ", "%20", re.sub("[%&]", "", term))
 	ext = "/services/annotate?propertyValue=%s&filter=required:[none],ontologies:[efo]" % (url_term)
 	result = postgap.REST.get(server, ext)
 	'''
@@ -310,12 +310,12 @@ def term(efo):
 		known_terms[efo] = lookup_term(efo)
 	return known_terms[efo]
 
-def lookup_term(efo):
+def lookup_term(iri):
 	"""
 
-	Return term associated to EFO ID
+	Return term associated to ontology IRI
 	Arg:
-	* string (EFO ID)
+	* string (EFO IRI)
 	Returntype: string (term)
 
 	"""
@@ -325,7 +325,7 @@ def lookup_term(efo):
 	server = 'http://www.ebi.ac.uk'
 
 	import urllib
-	double_quoted_iri = urllib.quote_plus(urllib.quote_plus(query_iris_for_efo_short_form(efo)[0]))
+	double_quoted_iri = urllib.quote_plus(urllib.quote_plus(iri))
 
 	# E.g.: http://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_0000400
 	ext = "/ols/api/ontologies/efo/terms/" + double_quoted_iri

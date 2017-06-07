@@ -44,13 +44,13 @@ import sys
 
 
 class GWAS_source(object):
-	def run(self, diseases, efos):
+	def run(self, diseases, iris):
 		"""
 
 			Returns all GWAS SNPs associated to a disease in this source
 			Args:
 			* [ string ] (trait descriptions)
-			* [ string ] (trait EFO identifiers)
+			* [ string ] (trait Ontology IRIs)
 			Returntype: [ GWAS_Association ]
 
 		"""
@@ -59,23 +59,23 @@ class GWAS_source(object):
 class GWASCatalog(GWAS_source):
 	display_name = 'GWAS Catalog'
 
-	def run(self, diseases, efos):
+	def run(self, diseases, iris):
 		"""
 			Returns all GWAS SNPs associated to a disease in GWAS Catalog
 			Args:
 			* [ string ] (trait descriptions)
-			* [ string ] (trait EFO identifiers)
+			* [ string ] (trait Ontology IRIs)
 			Returntype: [ GWAS_Association ]
 		"""
 
 		logger = logging.getLogger(__name__)
 
-		if efos is not None and len(efos) > 0:
-			res = concatenate(self.query(query) for query in efos)
+		if iris is not None and len(iris) > 0:
+			res = concatenate(self.query(query) for query in iris)
 		else:
 			res = concatenate(self.query(query) for query in diseases)
 
-		logger.debug("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GWAS Catalog" % (len(res), ", ".join(diseases), ", ".join(efos)))
+		logger.debug("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GWAS Catalog" % (len(res), ", ".join(diseases), ", ".join(iris)))
 
 		return res
 
@@ -157,30 +157,27 @@ class GWASCatalog(GWAS_source):
 
 class GRASP(GWAS_source):
 	display_name = "GRASP"
-	def run(self, diseases, efos):
+	def run(self, diseases, iris):
 		"""
 
 			Returns all GWAS SNPs associated to a disease in GRASP
 			Args:
 			* [ string ] (trait descriptions)
-			* [ string ] (trait EFO identifiers)
+			* [ string ] (trait Ontology IRIs)
 			Returntype: [ GWAS_Association ]
 
 		"""
 		logger = logging.getLogger(__name__)
-
-		# Temporary hack: current files have IDs, not IRIs:
-		efos = [re.sub('.*/',"", efo) for efo in efos]
 		
 		file = open(postgap.Globals.DATABASES_DIR+"/GRASP.txt")
-		res = [ self.get_association(line, diseases, efos) for line in file ]
+		res = [ self.get_association(line, diseases, iris) for line in file ]
 		res = filter(lambda X: X is not None, res)
 
-		logger.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GRASP" % (len(res), ", ".join(diseases), ", ".join(efos)))
+		logger.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GRASP" % (len(res), ", ".join(diseases), ", ".join(iris)))
 
 		return res
 
-	def get_association(self, line, diseases, efos):
+	def get_association(self, line, diseases, iris):
 		'''
 
 			GRASP file format:
@@ -258,44 +255,53 @@ class GRASP(GWAS_source):
 
 		'''
 		items = line.rstrip().split('\t')
-		if items[12] in diseases or items[70] in efos:
-			try:
+		for iri in items[70].split(','):
+			if iri in iris:
 				return GWAS_Association(
 					pvalue = float(items[10]),
 					snp = "rs" + items[4],
-					disease = Disease(name = postgap.EFO.term(items[70]), efo = items[70]),
-					reported_trait = items[12],
+					disease = Disease(name = postgap.EFO.term(iri), efo = iri),
+					reported_trait = items[12].decode('latin1'),
 					source = self.display_name,
 					study = items[7]
 				)
-			except:
-				return None
-		else:
-			return None
+
+		if items[12] in diseases:
+			iri = items[70].split(',')[0]
+			return GWAS_Association(
+				pvalue = float(items[10]),
+				snp = "rs" + items[4],
+				disease = Disease(name = postgap.EFO.term(iri), efo = iri),
+				reported_trait = items[12].decode('latin1'),
+				source = self.display_name,
+				study = items[7]
+			)
+
+		return None
 
 class Phewas_Catalog(GWAS_source):
 	display_name = "Phewas Catalog"
 	logger = logging.getLogger(__name__)
 	
-	def run(self, diseases, efos):
+	def run(self, diseases, iris):
 		"""
 
 			Returns all GWAS SNPs associated to a disease in PhewasCatalog
 			Args:
 			* [ string ] (trait descriptions)
-			* [ string ] (trait EFO identifiers)
+			* [ string ] (trait Ontology IRIs)
 			Returntype: [ GWAS_Association ]
 
 		"""
 		file = open(postgap.Globals.DATABASES_DIR+"/Phewas_Catalog.txt")
-		res = [ self.get_association(line, diseases, efos) for line in file ]
+		res = [ self.get_association(line, diseases, iris) for line in file ]
 		res = filter(lambda X: X is not None, res)
 
-		self.logger.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in Phewas Catalog" % (len(res), ", ".join(diseases), ", ".join(efos)))
+		self.logger.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in Phewas Catalog" % (len(res), ", ".join(diseases), ", ".join(iris)))
 
 		return res
 
-	def get_association(self, line, diseases, efos):
+	def get_association(self, line, diseases, iris):
 		'''
 
 			Phewas Catalog format:
@@ -312,47 +318,54 @@ class Phewas_Catalog(GWAS_source):
 
 		'''
 		items = line.rstrip().split('\t')
-		# Temporary hack: current files have IDs, not IRIs:
-		efos = [re.sub('.*/',"", efo) for efo in efos]
-		if items[2] in diseases or items[9] in efos:
+		for iri in items[9].split(','):
+			if iri in iris:
+				return GWAS_Association (
+					pvalue = float(items[4]),
+					snp = items[1],
+					disease = Disease(name = postgap.EFO.term(iri), efo = iri), 
+					reported_trait = items[2],
+					source = self.display_name,
+					study = "None"
+				)
+
+		if items[2] in diseases: 
+			iri = items[9].split(',')[0]
 			return GWAS_Association (
 				pvalue = float(items[4]),
 				snp = items[1],
-				disease = Disease(name = postgap.EFO.term(items[9]), efo = items[9]), 
+				disease = Disease(name = postgap.EFO.term(iri), efo = iri), 
 				reported_trait = items[2],
 				source = self.display_name,
 				study = "None"
 			)
-		else:
-			return None
+
+		return None
 
 class GWAS_DB(GWAS_source):
 	display_name = "GWAS DB"
 	logger = logging.getLogger(__name__)
 	
-	def run(self, diseases, efos):
+	def run(self, diseases, iris):
 		"""
 
 			Returns all GWAS SNPs associated to a disease in GWAS_DB
 			Args:
 			* [ string ] (trait descriptions)
-			* [ string ] (trait EFO identifiers)
+			* [ string ] (trait Ontology IRIs)
 			Returntype: [ GWAS_Association ]
 
 		"""
 		file = open(postgap.Globals.DATABASES_DIR+"/GWAS_DB.txt")
-
-		# Note the format of the EFO strings is modified in this file format, so we need to change the queries
-		efos2 = [re.sub("_", "ID:", re.sub(".*/","", efo)) for efo in efos]
 	
-		res = [ self.get_association(line, diseases, efos) for line in file ]
+		res = [ self.get_association(line, diseases, iris) for line in file ]
 		res = filter(lambda X: X is not None, res)
 
-		self.logger.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GWAS DB" % (len(res), ", ".join(diseases), ", ".join(efos)))
+		self.logger.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GWAS DB" % (len(res), ", ".join(diseases), ", ".join(iris)))
 
 		return res
 
-	def get_association(self, line, diseases, efos):
+	def get_association(self, line, diseases, iris):
 		'''
 
 			GWAS DB data
@@ -366,16 +379,28 @@ class GWAS_DB(GWAS_source):
 
 		'''
 		items = line.rstrip().split('\t')
-		if items[5] in diseases or items[6] in efos:
+		for iri in items[6].split(','):
+			if iri in iris:
+				return GWAS_Association(
+					pvalue = float(items[3]),
+					snp = items[2],
+					disease = Disease(name = postgap.EFO.term(iri), efo = iri),
+					reported_trait = items[5].decode('latin1'),
+					source = self.display_name,
+					study = items[4]
+				)
+
+		if items[5] in diseases:
+			iri = items[6].split(',')[0]
 			return GWAS_Association(
 				pvalue = float(items[3]),
 				snp = items[2],
-				disease = Disease(name = postgap.EFO.term(items[6]), efo = items[6]),
+				disease = Disease(name = postgap.EFO.term(iri), efo = iri),
 				reported_trait = items[5].decode('latin1'),
 				source = self.display_name,
 				study = items[4]
 			)
-		else:
-			return None
+
+		return None
 
 sources = GWAS_source.__subclasses__()
