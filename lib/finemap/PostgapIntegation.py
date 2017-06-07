@@ -328,10 +328,7 @@ def process_ld_snps(ld_snps, gwas_snps):
 	print "Done running finemap"
 	
 	if finemap_posteriors is None:
-		print "ERROR: Didn't get posteriors!"
-		sys.exit(0)
-	else:
-		print "INFO: Got posteriors!"
+		raise Exception ("ERROR: Didn't get posteriors!")
 
 	return finemap_posteriors
 
