@@ -241,7 +241,11 @@ def gwas_snp_to_precluster(gwas_snp, populations):
     
     mapped_ld_snps = postgap.LD.calculate_window(gwas_snp.snp)
     logger.info("Found %i SNPs in the vicinity of %s" % (len(mapped_ld_snps), gwas_snp.snp.rsID))
-    return GWAS_Cluster(gwas_snps = [ gwas_snp ],ld_snps = mapped_ld_snps)
+    return GWAS_Cluster(
+		gwas_snps = [ gwas_snp ],
+		ld_snps = mapped_ld_snps,
+		finemap_posteriors = None
+	)
 
 def get_gwas_snp_locations(gwas_snps):
 	"""
@@ -302,7 +306,8 @@ def merge_preclusters(preclusters):
 				#   Create a new Cluster
 				merged_cluster = GWAS_Cluster(
 					gwas_snps = merged_gwas_snps,
-					ld_snps = merged_ld_snps
+					ld_snps = merged_ld_snps,
+					finemap_posteriors = None
 				)
 				
 				#    Remove the two previous clusters and replace them with 
