@@ -362,8 +362,8 @@ def process_ld_snps(ld_snps, gwas_snps):
 	)
 	print "Running finemap"
 	
-	kstart = 3
-	kmax   = 3
+	kstart = 1
+	kmax   = 1
 	max_iter = "Not used when kstart == kmax"
 
 	import finemap.stochastic_search as sss
