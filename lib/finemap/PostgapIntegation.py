@@ -35,6 +35,15 @@ import postgap.Globals
 from postgap.DataModel import GWAS_Cluster
 import pprint, pickle
 
+class ZScoreComputationException(Exception):
+	pass
+
+class FinemapFailedException(Exception):
+	pass
+
+class IntegrityCheckException(Exception):
+	pass
+
 def process_GWAS_Clusters(gwas_clusters):
 	
 	assert(GWAS_Clusters_ok(gwas_clusters))
@@ -65,13 +74,18 @@ def ld_snps_contain_gwas_snps(gwas_cluster):
 
 def process_GWAS_Cluster(gwas_cluster):
 	
-	finemap_posteriors = process_ld_snps(
-		ld_snps   = gwas_cluster.ld_snps,
-		gwas_snps = gwas_cluster.gwas_snps
-	)
+	try:
+		finemap_posteriors = process_ld_snps(
+			ld_snps   = gwas_cluster.ld_snps,
+			gwas_snps = gwas_cluster.gwas_snps
+		)
+		if finemap_posteriors is None:
+			raise FinemapFailedException("Got no finemap results!")
 
-	if finemap_posteriors is None:
-		raise Exception("Got no finemap results!")
+	except ZScoreComputationException, z:
+		print "WARNING: " + str(z)
+		print "WARNING: Skipping this cluster."
+		return
 	
 	return GWAS_Cluster(
 		gwas_snps          = gwas_cluster.gwas_snps,
@@ -177,11 +191,11 @@ def compute_approximated_zscores_for_snps_from_lead_snp(
 	try:
 		index_of_gwas_snp = SNP_ids.index(lead_snp.snp_id)
 	except ValueError:
-		print "ERROR: The lead SNP wasn't found in SNP ids!"
-		print "ERROR: lead SNP: %s" % lead_snp.snp_id
-		print "ERROR: SNP_ids:"
-		print json.dumps(SNP_ids)
-		raise ValueError
+		error_message = "The lead SNP wasn't found in SNP ids!\n" \
+			+ "ERROR: lead SNP: %s" % lead_snp.snp_id + "\n" \
+			+ "ERROR: SNP_ids:" \
+			+ json.dumps(SNP_ids)
+		raise IntegrityCheckException(error_message)
 	
 	return compute_approximated_effect_size_from_ld(
 		ld_correlation_matrix = ld_correlation_matrix,
@@ -300,8 +314,7 @@ def process_ld_snps(ld_snps, gwas_snps):
 	print "The cluster has %i gwas members with z scores.\n" % len(gwas_snps_with_z_scores)
 
 	if len(gwas_snps_with_z_scores) == 0:
-		print "WARNING: Couldn't compute a z score for any of the gwas snps. Skipping this cluster."
-		return
+		raise ZScoreComputationException("Couldn't compute a z score for any of the gwas snps.")
 
 	print "Location of the SNPs:"
 	
