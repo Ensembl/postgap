@@ -37,8 +37,31 @@ import pprint, pickle
 
 def process_GWAS_Clusters(gwas_clusters):
 	
+	assert(GWAS_Clusters_ok(gwas_clusters))
+	
 	gwas_clusters_with_posteriors = [ process_GWAS_Cluster(gwas_cluster) for gwas_cluster in gwas_clusters ]
 	return gwas_clusters_with_posteriors
+
+def GWAS_Clusters_ok(gwas_clusters):
+	for gwas_cluster in gwas_clusters:
+		if not(ld_snps_contain_gwas_snps(gwas_cluster)):
+			return False, "Gwas snps not among ld snps"
+	return True, ""
+
+def ld_snps_contain_gwas_snps(gwas_cluster):
+	
+	gwas_snps = gwas_cluster.gwas_snps
+	ld_snps   = gwas_cluster.ld_snps
+	
+	for gwas_snp in gwas_snps:
+		
+		snp  = gwas_snp.snp
+		rsID = snp.rsID
+		
+		if not( any([ ld_snp.rsID == rsID for ld_snp in ld_snps ]) ):
+			return False
+	return True
+
 
 def process_GWAS_Cluster(gwas_cluster):
 	
@@ -151,7 +174,14 @@ def compute_approximated_zscores_for_snps_from_lead_snp(
 		SNP_ids
 	):
 	
-	index_of_gwas_snp = SNP_ids.index(lead_snp.snp_id)
+	try:
+		index_of_gwas_snp = SNP_ids.index(lead_snp.snp_id)
+	except ValueError:
+		print "ERROR: The lead SNP wasn't found in SNP ids!"
+		print "ERROR: lead SNP: %s" % lead_snp.snp_id
+		print "ERROR: SNP_ids:"
+		print json.dumps(SNP_ids)
+		raise ValueError
 	
 	return compute_approximated_effect_size_from_ld(
 		ld_correlation_matrix = ld_correlation_matrix,
@@ -303,6 +333,22 @@ def process_ld_snps(ld_snps, gwas_snps):
 	#set_diagonal(r2_array)
 	print_matrix(r2_array)
 	
+	for gwas_snps_with_z_score in gwas_snps_with_z_scores:
+		
+		found_in_list = None
+		try:
+			SNP_ids.index(gwas_snps_with_z_score.snp_id)
+			found_in_list = True
+		except ValueError:
+			found_in_list = False
+			
+		if not(found_in_list):
+			print "ERROR: The lead SNP wasn't found in SNP ids!"
+			print "ERROR: lead SNP: %s" % gwas_snps_with_z_score.snp_id
+			print "ERROR: SNP_ids:"
+			print json.dumps(SNP_ids)
+			sys.exit(1)
+	
 	approximated_gwas_zscore = compute_approximated_zscores_for_snps_from_multiple_lead_snps(
 		ld_correlation_matrix = r2_array,
 		SNP_ids               = SNP_ids,
@@ -324,7 +370,7 @@ def process_ld_snps(ld_snps, gwas_snps):
 		max_iter   = max_iter,
 		prior      = "independence"
 	)
-	pprint.pprint(finemap_posteriors)
+	#pprint.pprint(finemap_posteriors)
 	print "Done running finemap"
 	
 	if finemap_posteriors is None:
