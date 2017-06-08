@@ -33,7 +33,7 @@ import json
 import postgap.LD
 import postgap.Globals
 from postgap.DataModel import GWAS_Cluster
-import pprint, pickle
+import logging
 
 class ZScoreComputationException(Exception):
 	pass
@@ -83,8 +83,9 @@ def process_GWAS_Cluster(gwas_cluster):
 			raise FinemapFailedException("Got no finemap results!")
 
 	except ZScoreComputationException, z:
-		print "WARNING: " + str(z)
-		print "WARNING: Skipping this cluster."
+		logger = logging.getLogger(__name__)
+		logger.warning(str(z))
+		logger.warning("Skipping this cluster.")
 		return
 	
 	return GWAS_Cluster(
@@ -258,37 +259,29 @@ def compute_approximated_effect_size_from_ld(ld_correlation_matrix, index_of_gwa
 
 #sys.exit(0)
 
-def print_vector(vector):
-	print json.dumps(vector, indent=4)
+def stringify_vector(vector):
+	return json.dumps(vector, indent=4)
 	
-def print_matrix(matrix):
+def stringify_matrix(matrix):
 	
 	import numpy as np
 	# https://docs.scipy.org/doc/numpy/reference/generated/numpy.set_printoptions.html
 	np.set_printoptions(precision=3, suppress=True, linewidth=150)
-	print(np.matrix(matrix))
+	return str(np.matrix(matrix))
 
 def process_ld_snps(ld_snps, gwas_snps):
 
-	if len(gwas_snps)!=1:
-		print "WARNING: Got a cluster with more than one (%i) gwas SNP, but only looking at the first!" % len(gwas_snps)
-
+	logger = logging.getLogger(__name__)
+	
 	ld_cluster_size = len(ld_snps)
 
 	if ld_cluster_size==1:
-		print "The cluster size was one!"
+		logger.debug("The cluster size was one!")
+
 	if ld_cluster_size==0:
-		print "ERROR: The cluster size was zero!"
+		logger.error("The cluster size was zero!")
 
-	print "The cluster has %i ld members.\n" % ld_cluster_size
-
-	#gwas_snp = gwas_snps[0]
-	#print "gwas snp: %s" % gwas_snp.snp.rsID
-	#print "  - pvalue:                     %s" % gwas_snp.pvalue
-	#print "  - odds_ratio:                 %s" % gwas_snp.odds_ratio
-	#print "  - beta_coefficient:           %s" % gwas_snp.beta_coefficient
-	#print "  - beta_coefficient_unit:      %s" % gwas_snp.beta_coefficient_unit
-	#print "  - beta_coefficient_direction: %s" % gwas_snp.beta_coefficient_direction
+	logger.debug("The cluster has %i ld members.\n" % ld_cluster_size)
 		
 	import collections
 	snp_with_zscore = collections.namedtuple(
@@ -310,34 +303,33 @@ def process_ld_snps(ld_snps, gwas_snps):
 	)
 	gwas_cluster_size = len(gwas_snps)
 	
-	print "The cluster has %i gwas members.\n" % gwas_cluster_size
-	print "The cluster has %i gwas members with z scores.\n" % len(gwas_snps_with_z_scores)
+	logger.debug("The cluster has %i gwas members.\n" % gwas_cluster_size)
+	logger.debug("The cluster has %i gwas members with z scores.\n" % len(gwas_snps_with_z_scores))
 
 	if len(gwas_snps_with_z_scores) == 0:
 		raise ZScoreComputationException("Couldn't compute a z score for any of the gwas snps.")
 
-	print "Location of the SNPs:"
+	logger.info("Location of the SNPs:")
 	
 	snps_from_gwas_snps = [ gwas_snp.snp for gwas_snp in gwas_snps ]
 	
-	print "---- Gwas SNPs ----"
+	logger.debug("---- Gwas SNPs ----")
 	for snp in snps_from_gwas_snps:
-		print "    %s    %s    %s" % (snp.rsID, snp.chrom, snp.pos)
+		logger.debug("    %s    %s    %s" % (snp.rsID, snp.chrom, snp.pos))
 
 	# The GWAS SNP is always one of the LD SNPs.
-	print "---- LD SNPs ----"
+	logger.debug("---- LD SNPs ----")
 	for snp in ld_snps:
-		print "    %s    %s    %s" % (snp.rsID, snp.chrom, snp.pos)
+		logger.debug("    %s    %s    %s" % (snp.rsID, snp.chrom, snp.pos))
 
 	# LD measures the deviation from the expectation of non-association.
 	(SNP_ids, r2_array) = postgap.LD.get_pairwise_ld(ld_snps)
 
-	print "SNPs:\n"
-	print_vector(SNP_ids)
+	logger.info("SNPs:")
+	logger.info("\n" + stringify_vector(SNP_ids))
 
-	print "Matrix of pairwise linkage disequilibria:\n"
-	#set_diagonal(r2_array)
-	print_matrix(r2_array)
+	logger.info("Matrix of pairwise linkage disequilibria:")
+	logger.info("\n" + stringify_matrix(r2_array))
 	
 	for gwas_snps_with_z_score in gwas_snps_with_z_scores:
 		
@@ -349,18 +341,18 @@ def process_ld_snps(ld_snps, gwas_snps):
 			found_in_list = False
 			
 		if not(found_in_list):
-			print "ERROR: The lead SNP wasn't found in SNP ids!"
-			print "ERROR: lead SNP: %s" % gwas_snps_with_z_score.snp_id
-			print "ERROR: SNP_ids:"
-			print json.dumps(SNP_ids)
-			sys.exit(1)
+			raise Error("ERROR: The lead SNP wasn't found in SNP ids!\n" \
+				+ "lead SNP: " + gwas_snps_with_z_score.snp_id + "\n" \
+				+ "SNP_ids:" + "\n" \
+				+ json.dumps(SNP_ids) \
+			)
 	
 	approximated_gwas_zscore = compute_approximated_zscores_for_snps_from_multiple_lead_snps(
 		ld_correlation_matrix = r2_array,
 		SNP_ids               = SNP_ids,
 		lead_snps             = gwas_snps_with_z_scores,
 	)
-	print "Running finemap"
+	logger.info("Running finemap")
 	
 	kstart = 1
 	kmax   = 1
@@ -376,8 +368,7 @@ def process_ld_snps(ld_snps, gwas_snps):
 		max_iter   = max_iter,
 		prior      = "independence"
 	)
-	#pprint.pprint(finemap_posteriors)
-	print "Done running finemap"
+	logger.info("Done running finemap")
 	
 	if finemap_posteriors is None:
 		raise Exception ("ERROR: Didn't get posteriors!")
