@@ -118,7 +118,7 @@ def get(server, ext, data=None):
 		try:
 			if data is None:
 				headers = { "Content-Type" : "application/json" }
-				r = requests.get(server.encode('ascii', 'xmlcharrefreplace')+ext.encode('ascii', 'xmlcharrefreplace'), headers = headers, timeout=200)
+				r = get_request_with_timeout(server.encode('ascii', 'xmlcharrefreplace')+ext.encode('ascii', 'xmlcharrefreplace'), headers = headers, timeout=200)
 			else:
 				headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
 				r = post_request_with_timeout(server.encode('ascii', 'xmlcharrefreplace')+ext.encode('ascii', 'xmlcharrefreplace'), headers = headers, data = json.dumps(data), timeout=200)
