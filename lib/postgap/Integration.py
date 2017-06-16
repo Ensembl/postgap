@@ -199,15 +199,26 @@ def cluster_gwas_snps(gwas_snps, populations):
 	clusters = merge_preclusters(filtered_preclusters)
 	
 	if len(clusters)>0:
-		from pprint import pformat
 		import pickle
-		logger.info("Writing %i clusters from %i GWAS SNP locations to gwas_snps_all.pickle" % (len(clusters), len(gwas_snp_locations)))
-		f = open('gwas_snps.merged_preclusters.pickle', 'a')
-		pickle.dump(clusters, f)
-		f.close
-		import sys
-		sys.exit(0);
+		
+		from postgap.Globals import finemap_gwas_clusters_directory
+		
+		logger.info("Writing %i clusters from %i GWAS SNP locations to %s" % (len(clusters), len(gwas_snp_locations), finemap_gwas_clusters_directory))
+		
+		import os
+		if not os.path.exists(finemap_gwas_clusters_directory):
+			os.makedirs(finemap_gwas_clusters_directory)
+		
+		for cluster_index in range(len(clusters)):
+			
+			cluster_file_name = finemap_gwas_clusters_directory + "/gwas_cluster_" + str(cluster_index) + ".pickle"
+			
+			f = open(cluster_file_name, 'w')
+			pickle.dump(clusters[cluster_index], f)
+			f.close
 
+		#import sys
+		#sys.exit(0);
 
 	logger.info("Found %i clusters from %i GWAS SNP locations" % (len(clusters), len(gwas_snp_locations)))
 
@@ -453,13 +464,109 @@ def ld_snps_to_genes(ld_snps, tissues):
 	"""
 	# Search for SNP-Gene pairs:
 	cisreg = cisregulatory_evidence(ld_snps, tissues)
-
+	
 	# Extract SNP specific info:
 	reg = regulatory_evidence(cisreg.keys(), tissues)
+	
+	logger = logging.getLogger(__name__)
+	import pickle
+	
+	from postgap.Globals import finemap_eqtl_clusters_directory
+	
+	#logger.info("Writing %i clusters from %i GWAS SNP locations to %s" % (len(clusters), len(gwas_snp_locations), finemap_gwas_clusters_directory))
+	
+	import os
+	if not os.path.exists(finemap_eqtl_clusters_directory):
+		os.makedirs(finemap_eqtl_clusters_directory)
+
+	tissue_gene_eqtl = rehash_cisregulatory_evidence(cisreg)
+
+	for tissue in tissues:
+		
+		genes = tissue_gene_eqtl[tissue].keys()
+		
+		for gene in genes:
+			
+			gene_stable_id = gene.id		
+			cluster_file_name = finemap_eqtl_clusters_directory + "/eqtl_snps_linked_to_" + gene_stable_id + "_in_"  + tissue + ".pickle"
+			f = open(cluster_file_name, 'w')
+			pickle.dump(tissue_gene_eqtl[tissue][gene], f)
+			f.close
+
+	import sys
+	sys.exit(0);
 
 	# Create objects
-	return concatenate((create_SNP_GeneSNP_Associations(snp, reg[snp], cisreg[snp]) for snp in cisreg))
+	SNP_GeneSNP_Associations = concatenate((create_SNP_GeneSNP_Associations(snp, reg[snp], cisreg[snp]) for snp in cisreg))
+	
+	return SNP_GeneSNP_Associations
 
+def rehash_cisregulatory_evidence(snp_to_gene_and_evidence_dict):
+	
+	from postgap.DataModel import SNP, Gene, Cisregulatory_Evidence
+	
+	#
+	# rehash snp_to_gene_and_evidence_dict which is a:
+	#
+	# dict[snp] -> dict( gene -> list (cisregulatory_evidence) )
+	#
+	# to tissue_gene_eqtl which is:
+	#
+	# dict[tissue][gene] -> list(snp)
+	#
+	
+	import collections
+	tissue_gene_eqtl = collections.defaultdict(generate_default)
+	
+	for snp in snp_to_gene_and_evidence_dict.keys():
+		assert type(snp) is SNP, "snp is a SNP"
+		
+		gene_to_cisregulatory_evidence_list = snp_to_gene_and_evidence_dict[snp]
+		
+		for gene in gene_to_cisregulatory_evidence_list.keys():
+			assert type(gene) is Gene, "gene is a Gene"
+			
+			cisregulatory_evidence_list = gene_to_cisregulatory_evidence_list[gene]
+			assert type(cisregulatory_evidence_list) is list, "cisregulatory_evidence_list is a list"
+			
+			for cisregulatory_evidence in cisregulatory_evidence_list:					
+				assert type(cisregulatory_evidence) is Cisregulatory_Evidence, "cisregulatory_evidence is Cisregulatory_Evidence"
+				
+				tissue_gene_eqtl[cisregulatory_evidence.tissue][gene].append(cisregulatory_evidence)
+	
+	return tissue_gene_eqtl
+
+def find_gene_snp_association_with_source(GeneSNP_Association_list, source):
+	
+	from postgap.DataModel import GeneSNP_Association
+	
+	gene_snp_association_with_source = []
+	
+	for gene_snp_association in GeneSNP_Association_list:
+		
+		assert type(gene_snp_association) is GeneSNP_Association, "Type is GeneSNP_Association"
+		
+		if gene_snp_association_has_cisregulatory_evidence_from_source(gene_snp_association, source):
+			gene_snp_association_with_source.append(gene_snp_association)
+
+	return gene_snp_association_with_source
+
+def gene_snp_association_has_cisregulatory_evidence_from_source(gene_snp_association, source):
+	
+	cisregulatory_evidence_list = gene_snp_association.cisregulatory_evidence
+	assert type(cisregulatory_evidence_list) is list, "Type is list"
+	return cisregulatory_evidence_has_source(cisregulatory_evidence_list, source)
+	
+	
+def cisregulatory_evidence_has_source(cisregulatory_evidence_list, source):
+	
+	for cisregulatory_evidence in cisregulatory_evidence_list:
+		
+		assert type(cisregulatory_evidence) is list, "Type is cisregulatory_evidence"
+		
+		if cisregulatory_evidence.source == source:
+			return True
+	return False
 
 def create_SNP_GeneSNP_Associations(snp, reg, cisreg):
 	"""
@@ -533,8 +640,6 @@ def cisregulatory_evidence(ld_snps, tissues):
 	"""
 	logger = logging.getLogger(__name__)
 	
-
-
 	if postgap.Globals.Cisreg_adaptors == None:
 		logger.info("Searching for cis-regulatory data on %i SNPs in all databases" % (len(ld_snps)))
 		evidence = concatenate(source().run(ld_snps, tissues) for source in postgap.Cisreg.sources)
@@ -545,7 +650,8 @@ def cisregulatory_evidence(ld_snps, tissues):
 	filtered_evidence = filter(lambda association: association.gene is not None and association.gene.biotype == "protein_coding", evidence)
 
 	# Group by snp, then gene:
-	res = collections.defaultdict(lambda: collections.defaultdict(list))
+	#res = collections.defaultdict(lambda: collections.defaultdict(list))
+	res = collections.defaultdict(generate_default)
 	for association in filtered_evidence:
 		res[association.snp][association.gene].append(association)
 
@@ -555,6 +661,9 @@ def cisregulatory_evidence(ld_snps, tissues):
 		else:
 			logger.info(("Found %i cis-regulatory interactions in (%s)" % (len(res), ", ".join(postgap.Globals.Cisreg_adaptors))))
 	return res
+
+def generate_default():
+	return collections.defaultdict(list)
 
 def regulatory_evidence(snps, tissues):
 	"""

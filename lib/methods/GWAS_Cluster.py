@@ -27,13 +27,21 @@ limitations under the License.
 	<http://www.ensembl.org/Help/Contact>.
 
 """
-
 import sys
 import json
 import postgap.LD
 import postgap.Globals
 from postgap.DataModel import GWAS_Cluster
 import logging
+
+import collections
+snp_with_zscore = collections.namedtuple(
+	'snp_with_zscore', 
+	[
+		'snp_id',
+		'z_score'
+	]
+)
 
 class ZScoreComputationException(Exception):
 	pass
@@ -44,12 +52,6 @@ class FinemapFailedException(Exception):
 class IntegrityCheckException(Exception):
 	pass
 
-def process_GWAS_Clusters(gwas_clusters):
-	
-	assert(GWAS_Clusters_ok(gwas_clusters))
-	
-	gwas_clusters_with_posteriors = [ process_GWAS_Cluster(gwas_cluster) for gwas_cluster in gwas_clusters ]
-	return gwas_clusters_with_posteriors
 
 def GWAS_Clusters_ok(gwas_clusters):
 	for gwas_cluster in gwas_clusters:
@@ -57,28 +59,11 @@ def GWAS_Clusters_ok(gwas_clusters):
 			return False, "Gwas snps not among ld snps"
 	return True, ""
 
-def ld_snps_contain_gwas_snps(gwas_cluster):
-	
-	gwas_snps = gwas_cluster.gwas_snps
-	ld_snps   = gwas_cluster.ld_snps
-	
-	for gwas_snp in gwas_snps:
-		
-		snp  = gwas_snp.snp
-		rsID = snp.rsID
-		
-		if not( any([ ld_snp.rsID == rsID for ld_snp in ld_snps ]) ):
-			return False
-	return True
-
-
-def process_GWAS_Cluster(gwas_cluster):
+def compute_gwas_cluster_with_finemap_posteriors(gwas_cluster):
 	
 	try:
-		finemap_posteriors = process_ld_snps(
-			ld_snps   = gwas_cluster.ld_snps,
-			gwas_snps = gwas_cluster.gwas_snps
-		)
+		finemap_posteriors = compute_finemap_posteriors(gwas_cluster)
+		
 		if finemap_posteriors is None:
 			raise FinemapFailedException("Got no finemap results!")
 
@@ -94,64 +79,119 @@ def process_GWAS_Cluster(gwas_cluster):
 		finemap_posteriors = finemap_posteriors
 	)
 
-def compute_z_score_from_pvalue_and_sign(pvalue, sign):
-
-	from scipy.stats import norm
+def compute_finemap_posteriors(gwas_cluster):
 	
-	if sign is None:
-		return None
-
-	# norm.ppf means:
-	# Percent point function (inverse of cdf) at q of the given RV.
-	#
-	# See:
-	# https://docs.scipy.org/doc/scipy-0.14.0/reference/stats.html
+	ld_snps   = gwas_cluster.ld_snps
+	gwas_snps = gwas_cluster.gwas_snps
 	
-	z_score = - norm.ppf(pvalue/2) * sign
-	
-	return z_score
-
-def compute_z_score_sign(odds_ratio, beta_coefficient):
-	'''
-		where the gwas_sign comes from
-
-		beta > 0 gwas_sign = +1
-		beta < 0 gwas_sign = -1
-
-		or > 1 gwas_sign = +1
-		or < 1 gwas_sign = -1
-	'''
-	
-	if beta_coefficient>0:
-		return 1
-	
-	# None<0 is true, so must test for that separately.
-	if beta_coefficient is not None and beta_coefficient<0:
-		return -1
-	
-	if odds_ratio>0:
-		return 1
-	
-	# None<0 is true, so must test for that separately.
-	if odds_ratio is not None and odds_ratio<0:
-		return -1
-	
-	return None;
-
-def compute_z_score_from_pvalue_and_odds_ratio_or_beta_coefficient(pvalue, odds_ratio=None, beta_coefficient=None):
-	
-	return compute_z_score_from_pvalue_and_sign(
-		pvalue,
-		compute_z_score_sign(odds_ratio, beta_coefficient)
+	(approximated_gwas_zscores, r2_array) = compute_approximated_gwas_zscores(
+		gwas_snps = gwas_snps,
+		ld_snps   = ld_snps
 	)
-
-def compute_z_score_for_gwas_snp(gwas_snp):
+	logger = logging.getLogger(__name__)
+	logger.info("Running finemap")
 	
-	return compute_z_score_from_pvalue_and_odds_ratio_or_beta_coefficient(
-		pvalue           = gwas_snp.pvalue,
-		odds_ratio       = gwas_snp.odds_ratio,
-		beta_coefficient = gwas_snp.beta_coefficient,
+	kstart = 1
+	kmax   = 1
+	max_iter = "Not used when kstart == kmax"
+
+	import finemap.stochastic_search as sss
+	finemap_posteriors = sss.finemap(
+		z_scores   = approximated_gwas_zscores,
+		cov_matrix = r2_array,
+		n          = len(r2_array),
+		kstart     = kstart,
+		kmax       = kmax,
+		max_iter   = max_iter,
+		prior      = "independence"
 	)
+	logger.info("Done running finemap")
+	
+	if finemap_posteriors is None:
+		raise Exception ("ERROR: Didn't get posteriors!")
+
+	return finemap_posteriors
+
+def compute_gwas_snps_with_z_scores(gwas_snps):
+	
+	from methods.GWAS_SNP import compute_z_score_for_gwas_snp
+	
+	gwas_snps_with_z_scores = filter (
+		lambda X: X.z_score is not None, [ 
+			snp_with_zscore(
+				snp_id  = gwas_snp.snp.rsID,
+				z_score = compute_z_score_for_gwas_snp(gwas_snp)
+			)
+				for gwas_snp in gwas_snps 
+		]
+	)
+	gwas_cluster_size = len(gwas_snps)
+	
+	logger = logging.getLogger(__name__)
+	
+	if len(gwas_snps_with_z_scores) == 0:
+		raise ZScoreComputationException("Couldn't compute a z score for any of the gwas snps.")
+	
+	return gwas_snps_with_z_scores
+
+def compute_approximated_gwas_zscores(gwas_snps, ld_snps):
+	# LD measures the deviation from the expectation of non-association.
+	(SNP_ids, r2_array) = postgap.LD.get_pairwise_ld(ld_snps)
+
+	logger = logging.getLogger(__name__)
+	
+	ld_cluster_size = len(ld_snps)
+
+	if ld_cluster_size==0:
+		raise Exception("The cluster size was zero!")
+
+	logger.info("SNPs:")
+	logger.info("\n" + stringify_vector(SNP_ids))
+
+	logger.info("Matrix of pairwise linkage disequilibria:")
+	logger.info("\n" + stringify_matrix(r2_array))
+	
+	gwas_snps_with_z_scores = compute_gwas_snps_with_z_scores(gwas_snps)
+	
+	# This loop is just a healthcheck
+	for gwas_snps_with_z_score in gwas_snps_with_z_scores:
+		
+		found_in_list = None
+		try:
+			SNP_ids.index(gwas_snps_with_z_score.snp_id)
+			found_in_list = True
+		except ValueError:
+			found_in_list = False
+			
+		if not(found_in_list):
+			raise Error("ERROR: The lead SNP wasn't found in SNP ids!\n" \
+				+ "lead SNP: " + gwas_snps_with_z_score.snp_id + "\n" \
+				+ "SNP_ids:" + "\n" \
+				+ json.dumps(SNP_ids) \
+			)
+	
+	from methods.GWAS_Cluster import compute_approximated_zscores_for_snps_from_multiple_lead_snps
+	
+	approximated_gwas_zscores = compute_approximated_zscores_for_snps_from_multiple_lead_snps(
+		ld_correlation_matrix = r2_array,
+		SNP_ids               = SNP_ids,
+		lead_snps             = gwas_snps_with_z_scores,
+	)
+	return approximated_gwas_zscores, r2_array
+
+def ld_snps_contain_gwas_snps(gwas_cluster):
+	
+	gwas_snps = gwas_cluster.gwas_snps
+	ld_snps   = gwas_cluster.ld_snps
+	
+	for gwas_snp in gwas_snps:
+		
+		snp  = gwas_snp.snp
+		rsID = snp.rsID
+		
+		if not( any([ ld_snp.rsID == rsID for ld_snp in ld_snps ]) ):
+			return False
+	return True
 
 def compute_approximated_zscores_for_snps_from_multiple_lead_snps(
 		ld_correlation_matrix, 
@@ -268,110 +308,3 @@ def stringify_matrix(matrix):
 	# https://docs.scipy.org/doc/numpy/reference/generated/numpy.set_printoptions.html
 	np.set_printoptions(precision=3, suppress=True, linewidth=150)
 	return str(np.matrix(matrix))
-
-def process_ld_snps(ld_snps, gwas_snps):
-
-	logger = logging.getLogger(__name__)
-	
-	ld_cluster_size = len(ld_snps)
-
-	if ld_cluster_size==1:
-		logger.debug("The cluster size was one!")
-
-	if ld_cluster_size==0:
-		logger.error("The cluster size was zero!")
-
-	logger.debug("The cluster has %i ld members.\n" % ld_cluster_size)
-		
-	import collections
-	snp_with_zscore = collections.namedtuple(
-		'snp_with_zscore', 
-		[
-			'snp_id',
-			'z_score'
-		]
-	)
-	
-	gwas_snps_with_z_scores = filter (
-		lambda X: X.z_score is not None, [ 
-			snp_with_zscore(
-				snp_id  = gwas_snp.snp.rsID,
-				z_score = compute_z_score_for_gwas_snp(gwas_snp)
-			)
-				for gwas_snp in gwas_snps 
-		]
-	)
-	gwas_cluster_size = len(gwas_snps)
-	
-	logger.debug("The cluster has %i gwas members.\n" % gwas_cluster_size)
-	logger.debug("The cluster has %i gwas members with z scores.\n" % len(gwas_snps_with_z_scores))
-
-	if len(gwas_snps_with_z_scores) == 0:
-		raise ZScoreComputationException("Couldn't compute a z score for any of the gwas snps.")
-
-	logger.info("Location of the SNPs:")
-	
-	snps_from_gwas_snps = [ gwas_snp.snp for gwas_snp in gwas_snps ]
-	
-	logger.debug("---- Gwas SNPs ----")
-	for snp in snps_from_gwas_snps:
-		logger.debug("    %s    %s    %s" % (snp.rsID, snp.chrom, snp.pos))
-
-	# The GWAS SNP is always one of the LD SNPs.
-	logger.debug("---- LD SNPs ----")
-	for snp in ld_snps:
-		logger.debug("    %s    %s    %s" % (snp.rsID, snp.chrom, snp.pos))
-
-	# LD measures the deviation from the expectation of non-association.
-	(SNP_ids, r2_array) = postgap.LD.get_pairwise_ld(ld_snps)
-
-	logger.info("SNPs:")
-	logger.info("\n" + stringify_vector(SNP_ids))
-
-	logger.info("Matrix of pairwise linkage disequilibria:")
-	logger.info("\n" + stringify_matrix(r2_array))
-	
-	for gwas_snps_with_z_score in gwas_snps_with_z_scores:
-		
-		found_in_list = None
-		try:
-			SNP_ids.index(gwas_snps_with_z_score.snp_id)
-			found_in_list = True
-		except ValueError:
-			found_in_list = False
-			
-		if not(found_in_list):
-			raise Error("ERROR: The lead SNP wasn't found in SNP ids!\n" \
-				+ "lead SNP: " + gwas_snps_with_z_score.snp_id + "\n" \
-				+ "SNP_ids:" + "\n" \
-				+ json.dumps(SNP_ids) \
-			)
-	
-	approximated_gwas_zscore = compute_approximated_zscores_for_snps_from_multiple_lead_snps(
-		ld_correlation_matrix = r2_array,
-		SNP_ids               = SNP_ids,
-		lead_snps             = gwas_snps_with_z_scores,
-	)
-	logger.info("Running finemap")
-	
-	kstart = 1
-	kmax   = 1
-	max_iter = "Not used when kstart == kmax"
-
-	import finemap.stochastic_search as sss
-	finemap_posteriors = sss.finemap(
-		z_scores   = approximated_gwas_zscore,
-		cov_matrix = r2_array,
-		n          = len(r2_array),
-		kstart     = kstart,
-		kmax       = kmax,
-		max_iter   = max_iter,
-		prior      = "independence"
-	)
-	logger.info("Done running finemap")
-	
-	if finemap_posteriors is None:
-		raise Exception ("ERROR: Didn't get posteriors!")
-
-	return finemap_posteriors
-
