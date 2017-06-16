@@ -70,6 +70,7 @@ class GTEx(Cisreg_source):
 		start = min(snp.pos for snp in snps)
 		end = max(snp.pos for snp in snps)
 		chrom = snps[0].chrom
+		
 
 		server = 'http://grch37.rest.ensembl.org'
 		ext = '/overlap/region/%s/%s:%i-%i?feature=gene;content-type=application/json' % (postgap.Globals.SPECIES, chrom, max(0, start - 1e6), end + 1e6)
@@ -88,8 +89,10 @@ class GTEx(Cisreg_source):
 		else:
 			res = concatenate((self.snp(snp, tissues) for snp in snps))
 
-		self.logger.info("\tFound %i interactions in GTEx" % (len(res)))
-
+		logger = logging.getLogger(__name__)
+		logger.info("\tFound %i interactions in GTEx" % (len(res)))
+		print "\tFound %i interactions in GTEx" % (len(res))
+		#raise Exception("Being called!")
 		return res
 
 	def gene(self, gene, tissues, snp_hash):
@@ -121,9 +124,60 @@ class GTEx(Cisreg_source):
 
 		"""
 
-
 		server = "http://rest.ensembl.org"
 		ext = "/eqtl/id/%s/%s?content-type=application/json;statistic=p-value;tissue=%s" % ('homo_sapiens', gene.id, tissue);
+		try:
+
+			eQTLs = postgap.REST.get(server, ext)
+
+			'''
+				Example return object:
+				[
+					{
+						'value': '0.804108648395327',
+						'snp': 'rs142557973'
+					},
+				]
+			'''
+			res = [
+				Cisregulatory_Evidence(
+					snp = snp_hash[eQTL['snp']],
+					gene = gene,
+					tissue = tissue,
+					score = 1,
+					source = self.display_name,
+					study = None,
+					info = None,
+					pvalue = eQTL['value'],
+					beta = None
+				)
+				for eQTL in eQTLs 
+				if eQTL['snp'] in snp_hash
+				if eQTL['value'] < 2.5e-5 
+			]
+
+			self.logger.info("\tFound %i SNPs associated to gene %s in tissue %s in GTEx" % (len(res), gene.id, tissue))
+
+			return res
+		except Exception as e:
+			self.logger.warning("Got exception when querying %s%s" % (server, ext))
+			self.logger.warning("The exception is %s" % (e))
+			self.logger.warning("Returning 'None' and pretending this didn't happen.")
+			return None
+
+	def gene_tissue_betas(self, gene, tissue, snp_hash):
+		"""
+
+			Returns all SNPs associated to a gene in GTEx in a given tissue
+			Args:
+			* Gene
+			* string, tissue
+			* { rsID: SNP }
+			Returntype: [ Cisregulatory_Evidence ]
+
+		"""
+		server = "http://rest.ensembl.org"
+		ext = "/eqtl/id/%s/%s?content-type=application/json;statistic=beta;tissue=%s" % ('homo_sapiens', gene.id, tissue);
 		try:
 			eQTLs = postgap.REST.get(server, ext)
 
@@ -136,7 +190,6 @@ class GTEx(Cisreg_source):
 					},
 				]
 			'''
-
 			res = [
 				Cisregulatory_Evidence(
 					snp = snp_hash[eQTL['snp']],
@@ -145,14 +198,15 @@ class GTEx(Cisreg_source):
 					score = 1,
 					source = self.display_name,
 					study = None,
-					info = None
+					info = None,
+					pvalue = None,
+					beta = eQTL['value']
 				)
 				for eQTL in eQTLs 
 				if eQTL['snp'] in snp_hash
-				if eQTL['value'] < 2.5e-5 
 			]
 
-			self.logger.info("\tFound %i SNPs associated to gene %s in tissue %s in GTEx" % (len(res), gene.id, tissue))
+			self.logger.info("\tFound %i SNPs with betas associated to gene %s in tissue %s in GTEx" % (len(res), gene.id, tissue))
 
 			return res
 		except Exception as e:

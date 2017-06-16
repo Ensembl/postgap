@@ -8,13 +8,13 @@ import unittest
 import logging
 import logging.config
 
-class Blabladiblupp(unittest.TestCase):
+class finemap_postgap_integration(unittest.TestCase):
  
 	def setUp(self):
 		logging.config.fileConfig('configuration/logging.conf')
 		pass
  
-	def test_foooooo(self):
+	def test_finemap_postgap_integration(self):
 		
 		logger = logging.getLogger(__name__)
 		
@@ -33,8 +33,10 @@ class Blabladiblupp(unittest.TestCase):
 		for x in range(len(clusters)):
 			logger.info("Cluster %s has %s members." % ( x, len(clusters[x].ld_snps) ))
 
-		import finemap.PostgapIntegation
-		gwas_clusters_with_posteriors = finemap.PostgapIntegation.process_GWAS_Clusters(clusters)
+		from finemap.GwasIntegation import compute_gwas_clusters_with_finemap_posteriors
+		
+		gwas_clusters_with_posteriors = compute_gwas_clusters_with_finemap_posteriors(clusters)
+		
 		logger.info("Got %i gwas clusters with posteriors." % len(gwas_clusters_with_posteriors))
 
 

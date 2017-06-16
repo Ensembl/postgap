@@ -83,7 +83,7 @@ def main():
 
 	options = get_options()
 	
-	logger.info("Starting postagp with the following options:")
+	logger.info("Starting postgap with the following options:")
 	logger.info(pformat(options))
 
 	efo_iris = []
@@ -206,6 +206,11 @@ def get_options():
     postgap.Globals.DATABASES_DIR = options.databases
     postgap.Globals.SPECIES = options.species
     postgap.Globals.DEBUG = postgap.Globals.DEBUG or options.debug
+    
+    postgap.Globals.efo_accession = "_".join(options.efos)
+    
+    postgap.Globals.finemap_gwas_clusters_directory = "finemap/" + postgap.Globals.efo_accession + "/gwas_clusters"
+    postgap.Globals.finemap_eqtl_clusters_directory = "finemap/" + postgap.Globals.efo_accession + "/eqtl_clusters"
 
     assert postgap.Globals.DATABASES_DIR is not None
     assert options.rsID is None or (options.efos is None and options.diseases is None)
