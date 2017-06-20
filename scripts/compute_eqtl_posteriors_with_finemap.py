@@ -40,28 +40,22 @@ logger = logging.getLogger(__name__)
 
 def main():
 	'''
-		python scripts/run_finemap.py --gwas_cluster_file lib/t/test-data/gwas_snps.merged_preclusters.pickle
-		python scripts/run_finemap.py --gwas_cluster_file finemap/EFO_0000203/merged_gwas_clusters/merged_cluster_0.pickle
-		
-         python scripts/run_finemap.py \
-            --gwas_cluster_file      finemap/EFO_0000203/gwas_clusters/gwas_cluster_0.pickle \
-            --eqtl_cluster_file      finemap/EFO_0000203/eqtl_clusters/eqtl_snps_linked_to_ENSG00000168038_in_Whole_Blood.pickle \
-            --output_posteriors_file finemap/EFO_0000203/posteriors/gwas_cluster_0__eqtl_snps_linked_to_ENSG00000168038_in_Whole_Blood.pickle
+
+python scripts/compute_eqtl_posteriors_with_finemap.py \
+    --eqtl_cluster_file      finemap/EFO_0000203/eqtl_clusters/eqtl_snps_linked_to_ENSG00000168038_in_Whole_Blood.pickle \
+    --output_posteriors_file finemap/EFO_0000203/eqtl_clusters/eqtl_snps_linked_to_ENSG00000168038_in_Whole_Blood.posteriors.pickle
+
 	'''
 	
 	import postgap.Globals
 	postgap.Globals.DATABASES_DIR = '/nfs/nobackup/ensembl/mnuhn/postgap/databases/'
 
-	logger.info( "Hello world!" )
-	
 	parser = argparse.ArgumentParser(description='Run finemap')
-	parser.add_argument('--gwas_cluster_file')
 	parser.add_argument('--eqtl_cluster_file')
 	parser.add_argument('--output_posteriors_file')
 	
 	options = parser.parse_args()
 
-	logger.info( "gwas_cluster_file      = " + options.gwas_cluster_file      )
 	logger.info( "eqtl_cluster_file      = " + options.eqtl_cluster_file      )
 	logger.info( "output_posteriors_file = " + options.output_posteriors_file )
 	
@@ -70,14 +64,7 @@ def main():
 	pickle_fh       = open(options.eqtl_cluster_file, 'rb')
 	eqtl_cluster    = pickle.load(pickle_fh)
 	
-	pickle_fh       = open(options.gwas_cluster_file, 'rb')
-	gwas_cluster    = pickle.load(pickle_fh)	
-
-	eqtl_posteriors  = process_eqtl_cluster(eqtl_cluster)
-	gwas_posteriors  = process_gwas_cluster(gwas_cluster)
-	
-	logging.info("Computing joint posteriors")
-	fm2d_sss = gwas_posteriors.joint_posterior(eqtl_posteriors)
+	eqtl_posteriors = process_eqtl_cluster(eqtl_cluster)
 	
 	import os
 	output_posteriors_file = options.output_posteriors_file
@@ -87,46 +74,12 @@ def main():
 		os.makedirs(output_directory)
 
 	pickle_fh = open(output_posteriors_file, 'w')
-	pickle.dump(fm2d_sss, pickle_fh)
+	pickle.dump(eqtl_posteriors, pickle_fh)
 	pickle_fh.close
 	
 	logging.info("Posteriors have been written to " + output_posteriors_file)
 
-	coloc_evidence = fm2d_sss[0]
-	res_final      = fm2d_sss[1]
-	
-	configurations = res_final.configurations
-	posterior      = res_final.posterior
-
-	from pprint import pformat
-
-	logging.info("coloc_evidence: %s"     % coloc_evidence)
-	logging.info("Got %s configurations." % len(configurations))
-	logging.info("configurations: "       + pformat(configurations))
-	logging.info("Got %s posteriors: "    % len(posterior))
-	logging.info("posterior: "            + pformat(posterior))
-
 	logging.info("All done.");
-
-def process_gwas_cluster(gwas_cluster):
-
-	gwas_clusters = [ gwas_cluster ]
-
-	logger.info(type(gwas_clusters))
-	logger.info("Got %s gwas_clusters." % len(gwas_clusters))
-
-	for x in range(len(gwas_clusters)):
-		logger.info("Cluster %s has %s members." % ( x, len(gwas_clusters[x].ld_snps) ))
-
-	from finemap.GwasIntegation import compute_gwas_clusters_with_finemap_posteriors
-	gwas_clusters_with_posteriors = compute_gwas_clusters_with_finemap_posteriors(gwas_clusters)
-	
-	logger.info("Got %i gwas clusters with posteriors." % len(gwas_clusters_with_posteriors))
-	
-	assert len(gwas_clusters_with_posteriors)==1, "Only one is processed"
-	
-	return gwas_clusters_with_posteriors[0].finemap_posteriors
-
 
 def process_eqtl_cluster(eqtl_cluster):
 	
@@ -238,30 +191,4 @@ def stringify_matrix(matrix):
 
 if __name__ == "__main__":
 	main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

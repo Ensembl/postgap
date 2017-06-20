@@ -39,10 +39,12 @@ logger = logging.getLogger(__name__)
 def main():
 	'''
 	
-python scripts/create_gwas_eqtl_file_pairs.py \
+python scripts/create_finemap_pipeline_commands.py \
     --gwas_directory              finemap/EFO_0000203/gwas_clusters \
+    --gwas_posteriors_directory   finemap/EFO_0000203/gwas_posteriors \
     --eqtl_directory              finemap/EFO_0000203/eqtl_clusters \
-    --output_posteriors_directory finemap/EFO_0000203/posteriors \
+    --eqtl_posteriors_directory   finemap/EFO_0000203/eqtl_posteriors \
+    --output_posteriors_directory finemap/EFO_0000203/joint_posteriors \
     --output_commands_file        finemap/EFO_0000203/compute_all_posteriors.bash
 
 	'''
@@ -52,14 +54,18 @@ python scripts/create_gwas_eqtl_file_pairs.py \
 
 	parser = argparse.ArgumentParser(description='Run finemap')
 	parser.add_argument('--gwas_directory')
+	parser.add_argument('--gwas_posteriors_directory')
 	parser.add_argument('--eqtl_directory')
+	parser.add_argument('--eqtl_posteriors_directory')
 	parser.add_argument('--output_posteriors_directory')
 	parser.add_argument('--output_commands_file')
 	
 	options = parser.parse_args()
 
 	gwas_directory              = options.gwas_directory
+	gwas_posteriors_directory   = options.gwas_posteriors_directory
 	eqtl_directory              = options.eqtl_directory
+	eqtl_posteriors_directory   = options.eqtl_posteriors_directory
 	output_posteriors_directory = options.output_posteriors_directory
 	output_commands_file        = options.output_commands_file
 
@@ -74,17 +80,35 @@ python scripts/create_gwas_eqtl_file_pairs.py \
 	import json
 	logger.info( "Got gwas cluster files: " + json.dumps(gwas_files) )
 	logger.info( "Got eqtl files: "         + json.dumps(eqtl_files) )
+
+	cmd = "python scripts/compute_gwas_posteriors_with_finemap.py" \
+		+ " --gwas_cluster_file %s/%s" \
+		+ " --output_posteriors_file %s/%s"
 	
-	finemap_run_parameters = collections.namedtuple(
-		'finemap_run_parameters', [
-			'gwas_cluster_file', 
-			'eqtl_cluster_file',
-			'posteriors_file'
-		]
-	)
+	output_commands_fh = open(output_commands_file, 'w')
 	
-	finemap_run_parameters_list = []
-	
+	for gwas_file in gwas_files:
+		command = cmd % (gwas_directory, gwas_file, gwas_posteriors_directory, gwas_file)
+		output_commands_fh.write(command)
+		output_commands_fh.write("\n")
+		print command
+
+
+	cmd = "python scripts/compute_eqtl_posteriors_with_finemap.py" \
+		+ " --eqtl_cluster_file %s/%s" \
+		+ " --output_posteriors_file %s/%s"
+
+	for eqtl_file in eqtl_files:
+		command = cmd % (eqtl_directory, eqtl_file, eqtl_posteriors_directory, eqtl_file)
+		output_commands_fh.write(command)
+		output_commands_fh.write("\n")
+		print command
+
+	cmd = "python scripts/compute_joint_posteriors.py" \
+		+ " --gwas_posterior %s/%s" \
+		+ " --eqtl_posterior %s/%s" \
+		+ " --output_joint_posteriors %s/%s"
+
 	for gwas_file in gwas_files:
 		for eqtl_file in eqtl_files:
 			
@@ -92,38 +116,15 @@ python scripts/create_gwas_eqtl_file_pairs.py \
 			gwas_file_base = os.path.splitext(gwas_file)[0]
 			eqtl_file_base = os.path.splitext(eqtl_file)[0]
 			
-			posteriors_file = gwas_file_base + "__" + eqtl_file_base + ".pickle"
+			join_posteriors_file = eqtl_file_base + "__" + gwas_file_base + ".joint_posteriors.pickle"
 			
-			current_finemap_run_parameters = finemap_run_parameters(
-				gwas_cluster_file = gwas_directory              + "/" + gwas_file,
-				eqtl_cluster_file = eqtl_directory              + "/" + eqtl_file,
-				posteriors_file   = output_posteriors_directory + "/" + posteriors_file
-			)
-			
-			#from pprint import pformat
-			#logger.info( "Parameter set: " + pformat(current_finemap_run_parameters))
-			
-			finemap_run_parameters_list.append(current_finemap_run_parameters)
-	
-	run_finemap_cmd = "python scripts/run_finemap.py --gwas_cluster_file %s --eqtl_cluster_file %s --output_posteriors_file %s"
-	
-	output_commands_fh = open(output_commands_file, 'w')
-	
-	for finemap_run_parameters in finemap_run_parameters_list:
-		
-		command = run_finemap_cmd % (
-			finemap_run_parameters.gwas_cluster_file,
-			finemap_run_parameters.eqtl_cluster_file,
-			finemap_run_parameters.posteriors_file
-		
-		)
-		logger.info("Generated: " + command)
-		output_commands_fh.write(command)
-		output_commands_fh.write("\n")
-	
+			command = cmd % (gwas_posteriors_directory, gwas_file, eqtl_posteriors_directory, eqtl_file, output_posteriors_directory, join_posteriors_file)
+			output_commands_fh.write(command)
+			output_commands_fh.write("\n")
+			print command
+
 	output_commands_fh.close()
 	logger.info("Commands have been written to: " + output_commands_file)
-	
 	logging.info("All done.");
 
 def ls_files_from_directory(directory):
