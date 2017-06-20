@@ -15,7 +15,7 @@ from scipy.stats import norm
 from sklearn import preprocessing
 from collections import namedtuple
 
-OneDConfigurationSample_prototype = namedtuple('OneDConfigurationSample', ['configurations', 'posterior', 'log_BF', 'configuration_size', 'log_prior'])
+OneDConfigurationSample_prototype = namedtuple('OneDConfigurationSample', ['configurations', 'posterior', 'log_BF', 'configuration_size', 'log_prior', 'labels'])
 class OneDConfigurationSample(OneDConfigurationSample_prototype):
 	'''
 		Stores finemapping data on a set of configurations:
@@ -39,7 +39,8 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 				posterior = self.posterior / sum_calib,
 				log_BF = self.log_BF,
 				configuration_size = self.configuration_size,
-				log_prior = self.log_prior
+				log_prior = self.log_prior,
+				labels = self.labels
 			)
 
 	def marginals(self, singleton_count):
@@ -171,7 +172,7 @@ TwoDConfigurationSample = namedtuple('TwoDConfigurationSample', ['configurations
 	log_prior2: numpy.array (1D)
 '''
 
-def finemap(z_scores, cov_matrix, n, kstart=1, kmax=5, max_iter=100000, output="configuration", prior="independence", v_scale=0.0025, g="BRIC", verbose=False):
+def finemap(z_scores, cov_matrix, n, labels, kstart=1, kmax=5, max_iter=100000, output="configuration", prior="independence", v_scale=0.0025, g="BRIC", verbose=False):
 	'''
 		Main function for fine-mapping using stochastic search for one trait #
 		Arg1: z-scores: numpy.array
@@ -198,7 +199,18 @@ def finemap(z_scores, cov_matrix, n, kstart=1, kmax=5, max_iter=100000, output="
 	score_cache = dict()
 	neighbourhood_cache = dict()
 	configurations = [config for config_size in range(1, kstart + 1) for config in it.combinations(range(len(z_scores)), config_size)]
-	results = compare_neighborhood(configurations, z_scores, cov_matrix, kmax, n, score_cache, prior, v_scale, g)
+	results = compare_neighborhood(
+		configs  = configurations, 
+		z_scores = z_scores, 
+		cov_matrix = cov_matrix, 
+		kmax = kmax, 
+		n = n, 
+		score_cache = score_cache, 
+		prior = prior, 
+		v_scale = v_scale, 
+		g = g, 
+		labels=labels
+	)
 
 	# Simple search
 	if kstart == kmax:
@@ -223,7 +235,7 @@ def finemap(z_scores, cov_matrix, n, kstart=1, kmax=5, max_iter=100000, output="
 			new_configs = create_neighborhood(current_config, len(z_scores), kstart, kmax, neighbourhood_cache)
 
 			# Evaluate probabilities of these configs
-			results_nh = compare_neighborhood(new_configs, z_scores, cov_matrix, kmax, n, score_cache, prior, v_scale=v_scale, g=g)
+			results_nh = compare_neighborhood(new_configs, z_scores, cov_matrix, kmax, n, score_cache, prior, v_scale=v_scale, g=g, labels=labels)
 
 			# Add new entries into the results list
 			result_list.append(results_nh)
@@ -316,7 +328,7 @@ def create_neighborhood(current_config, m, kstart, kmax, neighbourhood_cache):
 	neighbourhood_cache[tuple(current_config)] = new_configs	
 	return new_configs
 
-def compare_neighborhood(configs, z_scores, cov_matrix, kmax, n, score_cache, prior="independence", v_scale=0.0025, g="BRIC"):
+def compare_neighborhood(configs, z_scores, cov_matrix, kmax, n, score_cache, labels, prior="independence", v_scale=0.0025, g="BRIC"):
 	'''
 		Compare the moves with respect to the unscaled log posterior probability
 		Arg1: array of arrays
@@ -358,7 +370,8 @@ def compare_neighborhood(configs, z_scores, cov_matrix, kmax, n, score_cache, pr
 			posterior = numpy.exp(log_BF + log_prior),
 			log_BF = log_BF,
 			configuration_size = configuration_size,
-			log_prior = log_prior
+			log_prior = log_prior,
+			labels = labels
 		)
 
 def calc_logBF(z, cov, v, n):
