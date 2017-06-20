@@ -66,6 +66,8 @@ python scripts/compute_eqtl_posteriors_with_finemap.py \
 	
 	eqtl_posteriors = process_eqtl_cluster(eqtl_cluster)
 	
+	logger.info( "eQTL posteriors have been computed:\n" + str(eqtl_posteriors) )
+	
 	import os
 	output_posteriors_file = options.output_posteriors_file
 	output_directory = os.path.dirname(output_posteriors_file)

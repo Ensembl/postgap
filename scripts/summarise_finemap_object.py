@@ -50,35 +50,13 @@ python scripts/summarise_finemap_object.py --finemap_pickle_file finemap/EFO_000
 	
 	options = parser.parse_args()
 
-	logger.info( "gwas_cluster_file = " + options.finemap_pickle_file )
+	logger.info( "finemap_pickle_file = " + options.finemap_pickle_file )
 	
 	import pickle
-	
 	pickle_fh       = open(options.finemap_pickle_file, 'rb')
-	
-	#from postgap import DataModel
-	finemap_object  = pickle.load(pickle_fh)	
+	finemap_object  = pickle.load(pickle_fh)
 
-	#from pprint import pformat
-	import pprint
-	pp = pprint.PrettyPrinter(indent=4, width=80)
-
-	configurations     = finemap_object.configurations
-	posterior          = finemap_object.posterior
-	log_BF             = finemap_object.log_BF
-	configuration_size = finemap_object.configuration_size
-	log_prior          = finemap_object.log_prior
-	labels             = finemap_object.labels
-	
-	logging.info( "configurations = " + pp.pformat(configurations) )
-	logging.info( "posterior = " + pp.pformat(posterior) )
-	logging.info( "log_BF = " + pp.pformat(log_BF) )
-	logging.info( "configuration_size = " + pp.pformat(configuration_size) )
-	logging.info( "log_prior = " + pp.pformat(log_prior) )
-	logging.info( "labels = " + pp.pformat(labels) )
-	
-	#pp.pformat(finemap_object);
-
+	logging.info(finemap_object);
 	logging.info("All done.");
 
 if __name__ == "__main__":

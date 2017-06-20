@@ -66,6 +66,8 @@ python scripts/compute_gwas_posteriors_with_finemap.py \
 
 	gwas_posteriors = process_gwas_cluster(gwas_cluster)
 	
+	logger.info( "Gwas posteriors have been computed:\n" + str(gwas_posteriors) )
+	
 	import os
 	output_posteriors_file = options.output_posteriors_file
 	output_directory = os.path.dirname(output_posteriors_file)
