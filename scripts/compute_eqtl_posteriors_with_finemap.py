@@ -162,6 +162,7 @@ def process_eqtl_cluster(eqtl_cluster):
 
 	import finemap.stochastic_search as sss
 	finemap_posteriors = sss.finemap(
+		labels     = SNP_ids,
 		z_scores   = zscore_vector,
 		cov_matrix = r2_array,
 		n          = len(r2_array),
