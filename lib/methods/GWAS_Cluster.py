@@ -84,7 +84,7 @@ def compute_finemap_posteriors(gwas_cluster):
 	ld_snps   = gwas_cluster.ld_snps
 	gwas_snps = gwas_cluster.gwas_snps
 	
-	(approximated_gwas_zscores, r2_array) = compute_approximated_gwas_zscores(
+	(approximated_gwas_zscores, r2_array, SNP_ids) = compute_approximated_gwas_zscores(
 		gwas_snps = gwas_snps,
 		ld_snps   = ld_snps
 	)
@@ -97,6 +97,7 @@ def compute_finemap_posteriors(gwas_cluster):
 
 	import finemap.stochastic_search as sss
 	finemap_posteriors = sss.finemap(
+		labels     = SNP_ids,
 		z_scores   = approximated_gwas_zscores,
 		cov_matrix = r2_array,
 		n          = len(r2_array),
@@ -177,7 +178,8 @@ def compute_approximated_gwas_zscores(gwas_snps, ld_snps):
 		SNP_ids               = SNP_ids,
 		lead_snps             = gwas_snps_with_z_scores,
 	)
-	return approximated_gwas_zscores, r2_array
+	
+	return approximated_gwas_zscores, r2_array, SNP_ids
 
 def ld_snps_contain_gwas_snps(gwas_cluster):
 	
