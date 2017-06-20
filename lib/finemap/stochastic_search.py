@@ -16,6 +16,18 @@ from sklearn import preprocessing
 from collections import namedtuple
 
 OneDConfigurationSample_prototype = namedtuple('OneDConfigurationSample', ['configurations', 'posterior', 'log_BF', 'configuration_size', 'log_prior', 'labels'])
+
+import collections
+finemap_summary_prototype = collections.namedtuple(
+	'finemap_summary', [
+		'labels', 
+		'prior',
+		'posterior',
+		'log_BF',
+		'BF',
+	]
+)
+
 class OneDConfigurationSample(OneDConfigurationSample_prototype):
 	'''
 		Stores finemapping data on a set of configurations:
@@ -25,6 +37,92 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 		log_prior: numpy.array (1D)
 		configuration_size: numpy.array (1D), number of SNPs in the corresponding vector
 	'''
+	def __str__(self):
+		return self.finemap_object_to_english()
+
+	def finemap_object_to_english(self, max_show_at_top = 5, max_show_at_end = 2):
+		
+		finemap_summary_list = self.compute_finemap_summaries()
+		
+		total_configurations = len(finemap_summary_list)
+			
+		finemap_summary_list_sorted = sorted(
+			finemap_summary_list, 
+			cmp = lambda x,y: cmp(x.BF, y.BF),
+			reverse = True
+		)
+		
+		num_show_at_top = min(total_configurations, max_show_at_top)
+		num_show_at_end = min(total_configurations, max_show_at_end)
+		
+		indentation = "    "
+		
+		summary_lines = [ "A total of %i configurations have been investigated:" % total_configurations ]
+		
+		for index in range(num_show_at_top):
+			summary_lines.append(indentation + "- " + self.finemap_summary_object_to_english(finemap_summary_list_sorted[index]))
+
+		if num_show_at_top<total_configurations:
+
+			summary_lines.append(indentation +  "...")
+
+			for index in range(total_configurations-num_show_at_end, total_configurations):
+				summary_lines.append(indentation + "- " + self.finemap_summary_object_to_english(finemap_summary_list_sorted[index]))
+
+		return "\n".join(summary_lines)
+
+	def finemap_summary_object_to_english(self, finemap_summary):
+		
+		snps_stringified = ', '.join(finemap_summary.labels)
+		
+		english_in_one_snp_case      = "snp %-12s has"
+		english_in_multiple_snp_case = "snps %-12s have"
+		
+		english_snp_part = english_in_one_snp_case
+		if len(finemap_summary.labels) > 1:
+			english_snp_part = english_in_multiple_snp_case
+		
+		prior     = finemap_summary.prior
+		posterior = finemap_summary.posterior
+		BF        = finemap_summary.BF
+		
+		sentence = ( 
+			"The " + english_snp_part + " a prior probability of %.4f. The posterior probability is %.4f. The base factor is: %.2f"
+		) % (snps_stringified, prior, posterior, BF)
+		
+		return sentence
+
+	def compute_finemap_summaries(self):
+		
+		configurations     = self.configurations
+		posterior          = self.posterior
+		log_BF             = self.log_BF
+		configuration_size = self.configuration_size
+		log_prior          = self.log_prior
+		labels             = self.labels
+		
+		finemap_summary_list = []
+		
+		for current_configuration in configurations.keys():
+			
+			index_of_current_configuration = configurations[current_configuration]
+			
+			current_labels = []
+			
+			for position, configuration_index in enumerate(current_configuration):
+				current_labels.append(labels[configuration_index])
+			
+			import math
+			current_finemap_summary = finemap_summary_prototype(
+				labels    = current_labels,
+				posterior = posterior[index_of_current_configuration],
+				prior     = math.exp(log_prior[index_of_current_configuration]),
+				log_BF    = log_BF[index_of_current_configuration],
+				BF        = math.exp(log_BF[index_of_current_configuration]),
+			)
+			finemap_summary_list.append(current_finemap_summary)
+		return finemap_summary_list
+
 
 	def normalise_posteriors(self):
 		'''
