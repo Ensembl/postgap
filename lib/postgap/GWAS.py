@@ -106,6 +106,36 @@ class GWASCatalog(GWAS_source):
 				association_response = postgap.REST.get(association_url, "")
 			except:
 				continue
+			"""
+			Example response:
+			{
+				_embedded: {
+					associations: [
+							{
+								riskFrequency: "0.05",
+								pvalueDescription: "(Triglyceride, sum)",
+								pvalueMantissa: 4,
+								pvalueExponent: -6,
+								multiSnpHaplotype: false,
+								snpInteraction: false,
+								snpType: "novel",
+								standardError: null,
+								range: null,
+								description: null,
+								orPerCopyNum: null,
+								betaNum: null,
+								betaUnit: null,
+								betaDirection: null,
+								lastMappingDate: "2016-12-25T03:48:35.000+0000",
+								lastUpdateDate: null,
+								pvalue: 0.000004,
+								_links: {}
+							}
+						]
+				},
+				_links: {}
+			}
+			"""
 			associations = association_response["_embedded"]["associations"]
 
 			logger.info("Received " + str(len(associations)) + " associations with SNPs.")
@@ -115,6 +145,23 @@ class GWASCatalog(GWAS_source):
 
 				snp_url = current_association["_links"]["snps"]["href"]
 				snp_response = postgap.REST.get(snp_url, "")
+				"""
+				Example response:
+				{
+					_embedded: {
+						singleNucleotidePolymorphisms: [
+								{
+									rsId: "rs3757057",
+									merged: 0,
+									functionalClass: "intron_variant",
+									lastUpdateDate: "2016-12-25T03:48:35.194+0000",
+									_links: {}
+									}
+								]
+					},
+					_links: {}
+				}
+				"""
 				singleNucleotidePolymorphisms = snp_response["_embedded"]["singleNucleotidePolymorphisms"]
 
 				if (len(singleNucleotidePolymorphisms) == 0):
@@ -123,14 +170,63 @@ class GWASCatalog(GWAS_source):
 
 				study_url = current_association["_links"]["study"]["href"]
 				study_response = postgap.REST.get(study_url, "")
+				"""
+				Example response:
+				{
+					author: "Barber MJ",
+					publicationDate: "2010-03-22T00:00:00.000+0000",
+					publication: "PLoS One",
+					title: "Genome-wide association of lipid-lowering response to statins in combined study populations.",
+					initialSampleSize: "3,928 European ancestry individuals",
+					replicateSampleSize: "NA",
+					pubmedId: "20339536",
+					gxe: false,
+					gxg: false,
+					genomewideArray: true,
+					targetedArray: false,
+					snpCount: 2500000,
+					qualifier: "~",
+					imputed: true,
+					pooled: false,
+					studyDesignComment: null,
+					accessionId: "GCST000635",
+					fullPvalueSet: false,
+					_links: {}
+				}
+				"""
 				pubmedId = study_response["pubmedId"]
 
 				diseaseTrait_url = study_response["_links"]["diseaseTrait"]["href"]
 				diseaseTrait_response = postgap.REST.get(diseaseTrait_url, "")
+				"""
+				Example response:
+				{
+					trait: "Response to statin therapy",
+					_links: {}
+				}
+				"""
 				diseaseTrait = diseaseTrait_response['trait']
 
 				ancestries_url = study_response["_links"]["ancestries"]["href"]
 				ancestries_response = postgap.REST.get(ancestries_url, "")
+				"""
+				Example response:
+				{
+					_embedded: {
+						ancestries: [
+								{
+									type: "initial",
+									numberOfIndividuals: 3928,
+									description: "Los Angeles, CA; ",
+									previouslyReported: null,
+									notes: null,
+									_links: {}
+									}
+								]
+						},
+						_links: {}
+				}
+				"""
 				sample_size = sum(int(ancestry['numberOfIndividuals']) for ancestry in ancestries_response['_embedded']['ancestries'])
 
 				for current_snp in singleNucleotidePolymorphisms:
