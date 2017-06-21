@@ -129,6 +129,10 @@ class GWASCatalog(GWAS_source):
 				diseaseTrait_response = postgap.REST.get(diseaseTrait_url, "")
 				diseaseTrait = diseaseTrait_response['trait']
 
+				ancestries_url = study_response["_links"]["ancestries"]["href"]
+				ancestries_response = postgap.REST.get(ancestries_url, "")
+				sample_size = sum(int(ancestry['numberOfIndividuals']) for ancestry in ancestries_response['_embedded']['ancestries'])
+
 				for current_snp in singleNucleotidePolymorphisms:
 					if current_snp["rsId"] == '6':
 						continue
@@ -144,6 +148,7 @@ class GWASCatalog(GWAS_source):
 							reported_trait = diseaseTrait,
 							snp     = current_snp["rsId"],
 							pvalue  = current_association["pvalue"],
+							sample_size = sample_size,
 							source  = 'GWAS Catalog',
 							study   = 'PMID' + pubmedId
 						)
@@ -263,7 +268,8 @@ class GRASP(GWAS_source):
 					disease = Disease(name = postgap.EFO.term(iri), efo = iri),
 					reported_trait = items[12].decode('latin1'),
 					source = self.display_name,
-					study = items[7]
+					study = items[7],
+					sample_size = int(items[24])
 				)
 
 		if items[12] in diseases:
@@ -274,7 +280,8 @@ class GRASP(GWAS_source):
 				disease = Disease(name = postgap.EFO.term(iri), efo = iri),
 				reported_trait = items[12].decode('latin1'),
 				source = self.display_name,
-				study = items[7]
+				study = items[7],
+				sample_size = int(items[24])
 			)
 
 		return None
@@ -326,7 +333,8 @@ class Phewas_Catalog(GWAS_source):
 					disease = Disease(name = postgap.EFO.term(iri), efo = iri), 
 					reported_trait = items[2],
 					source = self.display_name,
-					study = "None"
+					study = "N/A",
+					sample_size = int(items[3])
 				)
 
 		if items[2] in diseases: 
@@ -337,7 +345,8 @@ class Phewas_Catalog(GWAS_source):
 				disease = Disease(name = postgap.EFO.term(iri), efo = iri), 
 				reported_trait = items[2],
 				source = self.display_name,
-				study = "None"
+				study = "N/A",
+				sample_size = int(items[3])
 			)
 
 		return None
@@ -387,7 +396,8 @@ class GWAS_DB(GWAS_source):
 					disease = Disease(name = postgap.EFO.term(iri), efo = iri),
 					reported_trait = items[5].decode('latin1'),
 					source = self.display_name,
-					study = items[4]
+					study = items[4],
+					sample_size = "N/A"
 				)
 
 		if items[5] in diseases:
@@ -398,7 +408,8 @@ class GWAS_DB(GWAS_source):
 				disease = Disease(name = postgap.EFO.term(iri), efo = iri),
 				reported_trait = items[5].decode('latin1'),
 				source = self.display_name,
-				study = items[4]
+				study = items[4],
+				sample_size = "N/A"
 			)
 
 		return None

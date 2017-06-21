@@ -199,7 +199,7 @@ def pretty_output(associations):
 		Returntype: String
 
 	"""
-	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'disease_name', 'disease_efo_id', 'score', 'rank', 'r2', 'gwas_source', 'gwas_snp', 'gwas_pvalue', 'gwas_pmid', 'gwas_reported_trait', 'ls_snp_is_gwas_snp', 'vep_terms', 'vep_max', 'vep_mean'] + [source.display_name for source in postgap.Cisreg.sources + postgap.Reg.sources])
+	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'disease_name', 'disease_efo_id', 'score', 'rank', 'r2', 'gwas_source', 'gwas_snp', 'gwas_pvalue', 'gwas_size', 'gwas_pmid', 'gwas_reported_trait', 'ls_snp_is_gwas_snp', 'vep_terms', 'vep_max', 'vep_mean'] + [source.display_name for source in postgap.Cisreg.sources + postgap.Reg.sources])
 	content = map(pretty_cluster_association, associations)
 	return "\n".join([header] + content)
 
@@ -237,10 +237,11 @@ def db_output(db, associations):
 		rank INT,
 		r2 real,
 		gwas_source TEXT,
-		gwas_snp TEXT,
-		gwas_pvalue TEXT,
-		gwas_pmid TEXT,
-		gwas_reported_trait TEXT,
+		gwas_snps TEXT,
+		gwas_pvalues TEXT,
+		gwas_sizes TEXT,
+		gwas_pmids TEXT,
+		gwas_reported_traits TEXT,
 		ls_snp_is_gwas_snp INT,
 		vep_terms TEXT,''' + ",".join([re.sub(" ", "_", source.display_name) + " INT\n" for source in postgap.GWAS.sources + postgap.Cisreg.sources + postgap.Reg.sources]) + ")"
 	conn.execute(table_sql)
@@ -285,6 +286,7 @@ def genecluster_association_table(association):
 		gwas_sources = [gwas_association.source for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
 		gwas_snps = [gwas_association.snp for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
 		gwas_pvalues = [gwas_association.pvalue for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
+		gwas_sizes = [gwas_association.sample_size for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
 		gwas_studies = [gwas_association.study for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
 		gwas_reported_traits = [gwas_association.reported_trait for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
 
@@ -304,6 +306,7 @@ def genecluster_association_table(association):
 				"|".join(gwas_sources),
 				"|".join(gwas_snps),
 				"|".join(map(str, gwas_pvalues)),
+				"|".join(map(str, gwas_sizes)),
 				"|".join(gwas_studies),
 				"|".join(gwas_reported_traits),
 				int(gene_snp_association.snp.rsID in gwas_snps),
