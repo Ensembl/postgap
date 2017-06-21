@@ -29,6 +29,7 @@ limitations under the License.
 """
 import sys
 import argparse
+from argparse import RawTextHelpFormatter
 import collections
 import json
 import sqlite3
@@ -134,7 +135,58 @@ def get_options():
             }
 
     """
-    parser = argparse.ArgumentParser(description='Search GWAS/Regulatory/Cis-regulatory databases for causal genes')
+    parser = argparse.ArgumentParser(description=
+    """
+    Search GWAS/Regulatory/Cis-regulatory databases for causal genes. 
+    
+    Tab delimited format:
+    1	ld_snp_rsID	rsID of putative causal SNP (LD SNP) being tested
+    2	chrom		chromosome name of LD SNP
+    3	pos		position of LD SNP on chromosome
+    4	gene_symbol	HGNC symbol of gene being tested
+    5	gene_id		Ensembl ID of gene being tested
+    6	gene_chrom	Chromosome name of gene being tested
+    7	gene_tss	Position on the chromosome of TSS of gene being tested
+    8	disease_name	Normalised name of disease or trait being tested
+    9	disease_efo_id	Ontology ID of disease or trait being tested
+    10	score		Stopgap V2G score tying LD SNP to gene	
+    11	rank		Rank of gene's V2G score among other genes tied to LD SNP
+    12	r2		Pearson correlation of LD SNP to the GWAS SNP with lowest p-value
+    13	gwas_source	Source database of GWAS SNPs
+    14	gwas_snp	SNPs associated to disease by GWAS
+    15	gwas_pvalue	P-values of reported associations
+    16	gwas_size	Sample sizes of reported associations
+    17	gwas_pmid	Source publication PubmedID of reported associations
+    18	gwas_reported_trait	Disease or trait of reported association
+    19	ls_snp_is_gwas_snp	1 if LD SNP is one of the GWAS SNPs, 0 otherwise
+    20	vep_terms	VEP consequence terms associated to LD_SNP
+    21	vep_max		Max of consequence impacts of LD SNP across all transcripts of gene:
+				'HIGH': 4,
+				'MEDIUM': 3,
+				'LOW': 2,
+				'MODIFIER': 1,
+				'MODERATE': 1
+    22	vep_mean	Mean of consequence impacts of LD SNP across all transcripts of gene:
+				'HIGH': 4,
+				'MEDIUM': 3,
+				'LOW': 2,
+				'MODIFIER': 1,
+				'MODERATE': 1
+    23	GTEx		1 if LD SNP is an eQTL to the gene, with p-value < 2.5e-5 
+    24	VEP		Sum of consequence impacts of LD SNP across all transcripts of gene:
+				'HIGH': 4,
+				'MEDIUM': 3,
+				'LOW': 2,
+				'MODIFIER': 1,
+				'MODERATE': 1
+    25	Fantom5		Score of FANTOM5 link between LD SNP and gene, normalised for FDR
+    26	DHS		Score of ENCODE DHS link between LD SNP and gene, normalised for FDR
+    27	PCHiC		Sum of scores of CHiCAGO links between LD SNP and gene across tissues, normalised for FDR
+    28	Nearest		1 if gene has the nearest protein-coding TSS to LD SNP, 0 otherwise	
+    29	Regulome	2 if LD SNP is of Category 1 or 2, 2 if LD SNP in Category 3
+    """,
+    formatter_class = RawTextHelpFormatter
+		    )
     parser.add_argument('--efos', nargs='*')
     parser.add_argument('--diseases', nargs='*')
     parser.add_argument('--rsID')
