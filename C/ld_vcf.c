@@ -235,8 +235,16 @@ void calculate_pairwise_stats(Locus_info *first, Locus_info *second, FILE* fh){
 
   /*Calculate r2*/
   double tmp = (f_A*f_B*(1-f_A)*(1-f_B));
-  double r = tmp > 0 ? D /sqrt(tmp) : 0;
-  double r2 = r * r;
+  double r2 = tmp > 0 ? D * D / tmp : 0;
+
+  /* Calculate r */
+  /* NOTE: 
+  r2 above is derived from D; r below is strict Pearson correlation coefficient 
+  The justification for the formulas of D above is not clear, and the correlation matrices 
+  created were not definite positive, we therefore corrected the formula for r without 
+  touching the definitions of D or r2.
+   */
+  double r = nAB / N;
 
   double Dmax;
   if (D < 0){
