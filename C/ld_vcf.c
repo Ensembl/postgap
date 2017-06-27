@@ -277,7 +277,7 @@ void calculate_pairwise_stats(Locus_info *first, Locus_info *second, FILE* fh, i
       first->var_id,
       r2,
       d_prime,
-      N,
+      (int) N,
       r
     );
   else 
@@ -290,7 +290,7 @@ void calculate_pairwise_stats(Locus_info *first, Locus_info *second, FILE* fh, i
       second->var_id,
       r2,
       d_prime,
-      N,
+      (int) N,
       r
     );
 }
