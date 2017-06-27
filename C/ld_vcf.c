@@ -202,7 +202,7 @@ void extract_locus_haplotypes(Locus_info *first, Locus_info *second, Haplotype *
   haplotypes->number_haplotypes = z;
 }
 
-void calculate_pairwise_stats(Locus_info *first, Locus_info *second, FILE* fh){
+void calculate_pairwise_stats(Locus_info *first, Locus_info *second, FILE* fh, int exhaustive){
   Haplotype haplotypes;
   int allele_counters[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
@@ -214,7 +214,7 @@ void calculate_pairwise_stats(Locus_info *first, Locus_info *second, FILE* fh){
   int naB = 2*aaBB + AaBB + aaBb;
   double N = nAB + nab + nAb + naB + 2*AaBb;
 
-  if (N < MIN_GENOTYPES_LOCUS){
+  if (!exhaustive && N < MIN_GENOTYPES_LOCUS){
     /*not enough individuals, return */
     return;
   }
@@ -264,7 +264,7 @@ void calculate_pairwise_stats(Locus_info *first, Locus_info *second, FILE* fh){
 
   free(haplotypes.haplotype);
 
-  if ((float) r2 < MIN_R2 || N < MIN_GENOTYPES_LOCUS || (float) r2 > 1 || (float) d_prime > 1)
+  if (!exhaustive && (r2 < MIN_R2 || r2 > 1 || d_prime > 1))
     return;
 
   if (second->position <= first->position)
@@ -295,7 +295,7 @@ void calculate_pairwise_stats(Locus_info *first, Locus_info *second, FILE* fh){
     );
 }
 
-void calculate_ld(const Locus_list *ll, FILE *fh, int windowsize, int variant_index){
+void calculate_ld(const Locus_list *ll, FILE *fh, int windowsize, int variant_index, int exhaustive){
   Locus_info * variant_locus = &ll->locus[variant_index];
   Locus_info * first = &ll->locus[ll->head];
   Locus_info * end= &ll->locus[ll->tail] + 1;
@@ -310,7 +310,7 @@ void calculate_ld(const Locus_list *ll, FILE *fh, int windowsize, int variant_in
       continue;
     }
 
-    calculate_pairwise_stats(locus, variant_locus, fh);
+    calculate_pairwise_stats(locus, variant_locus, fh, exhaustive);
   }
 }
 
@@ -398,7 +398,7 @@ int get_genotypes(Locus_list *locus_list, bcf_hdr_t *hdr, bcf1_t *line, int posi
   return 1;
 }
 
-void process_window(Locus_list *locus_list, int windowsize, FILE *fh, int position) {
+void process_window(Locus_list *locus_list, int windowsize, FILE *fh, int position, int exhaustive) {
   /*check if the new position is farther than the limit.*/
   /*if so, calculate the ld information for the values in the array*/
   while(
@@ -406,7 +406,7 @@ void process_window(Locus_list *locus_list, int windowsize, FILE *fh, int positi
     (abs(locus_list->locus[locus_list->head].position - position) > windowsize)
   ) {
 
-    calculate_ld(locus_list, fh, windowsize, locus_list->head);
+    calculate_ld(locus_list, fh, windowsize, locus_list->head, exhaustive);
     dequeue(locus_list);  
   }
   if (locus_list->tail < locus_list->head) {
@@ -504,6 +504,7 @@ int main(int argc, char *argv[]) {
   int numfiles = 0;
   int numregions = 0;
   int windowsize = WINDOW_SIZE;
+  int exhaustive = 0; 
 
   while(1) {
     static struct option long_options[] = {
@@ -559,6 +560,10 @@ int main(int argc, char *argv[]) {
 
       case 'n':
         variants_file = optarg;
+        break;
+
+      case 'x':
+        exhaustive = 1;
         break;
 
       case '?':
@@ -690,7 +695,7 @@ int main(int argc, char *argv[]) {
 
           if (get_genotypes(&locus_list, hdr, line, position)) {
             if (!variant) {
-              process_window(&locus_list, windowsize, fh, position);
+              process_window(&locus_list, windowsize, fh, position, exhaustive);
             } else if (!strcmp(variant, locus_list.locus[locus_list.tail].var_id)) {
               variant_index = locus_list.tail;
             }
@@ -732,7 +737,7 @@ int main(int argc, char *argv[]) {
 
         if (get_genotypes(&locus_list, hdr, line, position)) {
           if (!variant) {
-            process_window(&locus_list, windowsize, fh, position);
+            process_window(&locus_list, windowsize, fh, position, exhaustive);
           } else if (!strcmp(variant, locus_list.locus[locus_list.tail].var_id)) {
             variant_index = locus_list.tail;
           }
@@ -758,10 +763,10 @@ int main(int argc, char *argv[]) {
 
   if (!variant) {
     // process any remaining buffer
-    process_window(&locus_list, 0, fh, position);
+    process_window(&locus_list, 0, fh, position, exhaustive);
   } else if (variant_index >= 0) {
     // Compute LD around variant of interest
-    calculate_ld(&locus_list, fh, windowsize, variant_index);
+    calculate_ld(&locus_list, fh, windowsize, variant_index, exhaustive);
   }
   return 0;
 }
