@@ -244,7 +244,21 @@ void calculate_pairwise_stats(Locus_info *first, Locus_info *second, FILE* fh, i
   created were not definite positive, we therefore corrected the formula for r without 
   touching the definitions of D or r2.
    */
-  double r = nAB / N;
+  int nAA = AABB + AABb + AAbb;
+  int nAa = AaBB + AaBb + Aabb;
+  double meanA = (2 * nAA + nAa) / N;
+  double sdA = sqrt((4* nAA + nAa)/N - (2*nAA + nAa)*(2*nAA + nAa)/(N*N));
+  double AAscore = (2 - meanA) / sdA;
+  double Aascore = (1 - meanA) / sdA;
+
+  int nBB = AABB + AaBB + aaBB;
+  int nBb = AABb + AaBb + aaBb;
+  double meanB = (2 * nBB + nBb) / N;
+  double sdB = sqrt((4* nBB + nBb)/N - (2*nBB + nBb)*(2*nBB + nBb)/(N*N));
+  double BBscore = (2 - meanB) / sdB;
+  double Bbscore = (1 - meanB) / sdB;
+
+  double r = (AABB * AAscore * BBscore + AaBB * Aascore * BBscore + AABb * AAscore * Bbscore + AaBb * Aascore * Bbscore) / (N-1);
 
   double Dmax;
   if (D < 0){
