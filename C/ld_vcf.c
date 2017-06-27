@@ -212,7 +212,7 @@ void calculate_pairwise_stats(Locus_info *first, Locus_info *second, FILE* fh){
   int nab = 2*aabb + Aabb + aaBb;
   int nAb = 2*AAbb + Aabb + AABb;
   int naB = 2*aaBB + AaBB + aaBb;
-  int N = nAB + nab + nAb + naB + 2*AaBb;
+  double N = nAB + nab + nAb + naB + 2*AaBb;
 
   if (N < MIN_GENOTYPES_LOCUS){
     /*not enough individuals, return */
