@@ -219,6 +219,11 @@ void calculate_pairwise_stats(Locus_info *first, Locus_info *second, FILE* fh, i
     return;
   }
 
+  if (N < 2){
+    /*not enough individuals in absolute, return */
+    return;
+  }
+
   /*Calculate theta*/
   double theta = 0.5;
   double thetaprev = 2.0;
@@ -278,8 +283,13 @@ void calculate_pairwise_stats(Locus_info *first, Locus_info *second, FILE* fh, i
 
   free(haplotypes.haplotype);
 
-  if (!exhaustive && (r2 < MIN_R2 || r2 > 1 || d_prime > 1))
+  if (!exhaustive && r2 < MIN_R2)
     return;
+
+  if (r2 > 1)
+    r2 = 1;
+  if (d_prime > 1)
+    d_prime = 1;
 
   if (second->position <= first->position)
     fprintf(fh, "%d\t%d\t%d\t%s\t%d\t%s\t%f\t%f\t%d\t%f\n",
