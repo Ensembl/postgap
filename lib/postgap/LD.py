@@ -242,4 +242,4 @@ def get_pairwise_ld(ld_snps, population='EUR'):
 	os.remove(rsID_file_name)
 	os.close(rsID_file)
 
-	return SNP_ids, r2_array
+	return SNP_ids, r2_array + numpy.identity(len(SNP_ids))
