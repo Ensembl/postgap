@@ -219,7 +219,7 @@ void calculate_pairwise_stats(Locus_info *first, Locus_info *second, FILE* fh, i
     return;
   }
 
-  if (N < 2){
+  if (N < 1){
     /*not enough individuals in absolute, return */
     return;
   }
@@ -276,7 +276,7 @@ void calculate_pairwise_stats(Locus_info *first, Locus_info *second, FILE* fh, i
 	+ AAbb * AAscore * bbscore 
 	+ Aabb * Aascore * bbscore
 	+ aabb * aascore * bbscore
-	) / (individuals-1);
+	) / individuals;
 
   // Basic sanity filters:
   if (r > 1)
