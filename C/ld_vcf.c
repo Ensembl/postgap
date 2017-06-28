@@ -32,8 +32,8 @@
 #include <getopt.h>
 #include <unistd.h>
 
-#include "tbx.h"
-#include "vcf.h"
+#include "htslib/tbx.h"
+#include "htslib/vcf.h"
 
 #define WINDOW_SIZE 100000
 #define INITIAL_LIST_SIZE 256
