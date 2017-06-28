@@ -249,21 +249,34 @@ void calculate_pairwise_stats(Locus_info *first, Locus_info *second, FILE* fh, i
   created were not definite positive, we therefore corrected the formula for r without 
   touching the definitions of D or r2.
    */
+  double individuals = AABB + AABb + AAbb + AaBB + AaBb + Aabb + aaBB + aaBb + aabb;
   int nAA = AABB + AABb + AAbb;
   int nAa = AaBB + AaBb + Aabb;
-  double meanA = (2 * nAA + nAa) / N;
-  double sdA = sqrt((4* nAA + nAa)/N - (2*nAA + nAa)*(2*nAA + nAa)/(N*N));
+  double meanA = (2 * nAA + nAa) / individuals;
+  double sdA = sqrt((4* nAA + nAa)/individuals - (2*nAA + nAa)*(2*nAA + nAa)/(individuals*individuals));
   double AAscore = (2 - meanA) / sdA;
   double Aascore = (1 - meanA) / sdA;
+  double aascore = (0 - meanA) / sdA;
 
   int nBB = AABB + AaBB + aaBB;
   int nBb = AABb + AaBb + aaBb;
-  double meanB = (2 * nBB + nBb) / N;
-  double sdB = sqrt((4* nBB + nBb)/N - (2*nBB + nBb)*(2*nBB + nBb)/(N*N));
+  double meanB = (2 * nBB + nBb) / individuals;
+  double sdB = sqrt((4* nBB + nBb)/individuals - (2*nBB + nBb)*(2*nBB + nBb)/(individuals*individuals));
   double BBscore = (2 - meanB) / sdB;
   double Bbscore = (1 - meanB) / sdB;
+  double bbscore = (0 - meanB) / sdB;
 
-  double r = (AABB * AAscore * BBscore + AaBB * Aascore * BBscore + AABb * AAscore * Bbscore + AaBb * Aascore * Bbscore) / (N-1);
+  double r = (
+	  AABB * AAscore * BBscore 
+	+ AaBB * Aascore * BBscore 
+	+ aaBB * aascore * BBscore 
+	+ AABb * AAscore * Bbscore 
+	+ AaBb * Aascore * Bbscore
+	+ aaBb * aascore * Bbscore
+	+ AAbb * AAscore * bbscore 
+	+ Aabb * Aascore * bbscore
+	+ aabb * aascore * bbscore
+	) / (individuals-1);
 
   double Dmax;
   if (D < 0){
