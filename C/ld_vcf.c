@@ -278,6 +278,12 @@ void calculate_pairwise_stats(Locus_info *first, Locus_info *second, FILE* fh, i
 	+ aabb * aascore * bbscore
 	) / (individuals-1);
 
+  // Basic sanity filters:
+  if (r > 1)
+    r = 1;
+  else if (r < -1)
+    r = -1;
+
   double Dmax;
   if (D < 0){
     if (f_A*f_B < ((1-f_A)*(1-f_B))) 
