@@ -539,6 +539,7 @@ int main(int argc, char *argv[]) {
       {"samples", required_argument, 0, 'l'},
       {"window",  required_argument, 0, 'w'},
       {"variant", required_argument, 0, 'v'},
+      {"exhaustive", optional_argument, 0, 'x'},
       {"include_variants", required_argument, 0, 'n'},
       {0, 0, 0, 0}
     };
@@ -546,7 +547,7 @@ int main(int argc, char *argv[]) {
     /* getopt_long stores the option index here. */
     int option_index = 0;
 
-    c = getopt_long (argc, argv, "f:g:l:r:s:w:v:n:", long_options, &option_index);
+    c = getopt_long (argc, argv, "f:g:l:r:s:w:v:n:x", long_options, &option_index);
 
     /* Detect the end of the options. */
     if (c == -1)
