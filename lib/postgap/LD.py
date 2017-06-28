@@ -206,7 +206,8 @@ def get_pairwise_ld(ld_snps, population='EUR'):
 		"-f", chrom_file,
 		"-r", "%s:%i-%i" % (chrom, start, end),
 		"-n", rsID_file_name,
-		"-w", str((end - start) + 1)
+		"-w", str((end - start) + 1),
+ 		"-x"
 	]
 	sys.stderr.write(" ".join(ld_comm) + "\n")
 
