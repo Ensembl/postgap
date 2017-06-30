@@ -158,7 +158,7 @@ def get_options():
     16	gwas_size	Sample sizes of reported associations
     17	gwas_pmid	Source publication PubmedID of reported associations
     18	gwas_reported_trait	Disease or trait of reported association
-    19	ls_snp_is_gwas_snp	1 if LD SNP is one of the GWAS SNPs, 0 otherwise
+    19	ld_snp_is_gwas_snp	1 if LD SNP is one of the GWAS SNPs, 0 otherwise
     20	vep_terms	VEP consequence terms associated to LD_SNP
     21	vep_max		Max of consequence impacts of LD SNP across all transcripts of gene:
 				'HIGH': 4,
@@ -183,7 +183,7 @@ def get_options():
     26	DHS		Score of ENCODE DHS link between LD SNP and gene, normalised for FDR
     27	PCHiC		Sum of scores of CHiCAGO links between LD SNP and gene across tissues, normalised for FDR
     28	Nearest		1 if gene has the nearest protein-coding TSS to LD SNP, 0 otherwise	
-    29	Regulome	2 if LD SNP is of Category 1 or 2, 2 if LD SNP in Category 3
+    29	Regulome	2 if LD SNP is of Category 1 or 2, 1 if LD SNP in Category 3
     """,
     formatter_class = RawTextHelpFormatter
 		    )
