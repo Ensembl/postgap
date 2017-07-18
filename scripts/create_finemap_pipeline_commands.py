@@ -121,7 +121,7 @@ python scripts/create_finemap_pipeline_commands.py \
 			command = cmd % (gwas_posteriors_directory, gwas_file, eqtl_posteriors_directory, eqtl_file, output_posteriors_directory, join_posteriors_file)
 			output_commands_fh.write(command)
 			output_commands_fh.write("\n")
-			print command
+			#print command
 
 	output_commands_fh.close()
 	logger.info("Commands have been written to: " + output_commands_file)
