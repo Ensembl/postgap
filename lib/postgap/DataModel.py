@@ -47,7 +47,12 @@ GWAS_Association = collections.namedtuple(
 		'odds_ratio',
 		'beta_coefficient',
 		'beta_coefficient_unit',
-		'beta_coefficient_direction'
+		'beta_coefficient_direction',
+		# rest_hash is no longer needed, risk_alleles_present_in_reference 
+		# gets set when the object is created and that is all that is ever 
+		# needed.
+		'rest_hash',
+		'risk_alleles_present_in_reference'
 	]
 )
 GWAS_SNP = collections.namedtuple(
@@ -56,10 +61,6 @@ GWAS_SNP = collections.namedtuple(
 		'snp',
 		'pvalue',
 		'evidence',
-		'odds_ratio',
-		'beta_coefficient',
-		'beta_coefficient_unit',
-		'beta_coefficient_direction'
    ]
 )
 
