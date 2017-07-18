@@ -27,37 +27,32 @@ limitations under the License.
 	<http://www.ensembl.org/Help/Contact>.
 
 """
-import sys
-import argparse
-import collections
-import json
-import sqlite3
-import logging
-import logging.config
 
-logging.config.fileConfig('configuration/logging.conf')
-logger = logging.getLogger(__name__)
+import argparse
 
 def main():
 	'''
-
-python scripts/summarise_finemap_object.py --finemap_pickle_file finemap/EFO_0000203/gwas_posteriors/gwas_cluster_0.pickle
-
+	
+		Loads a pickle file, stringifies and prints it.
+		
+		Useful when investigating pickled objects that create summaries of themselves like the finemap objects.
+		
+		E.g.:
+		
+			python scripts/stringify_pickle_object.py --pickle_file finemap/EFO_0000203/joint_posteriors/eqtl_snps_linked_to_ENSG00000168038_in_Adipose_Subcutaneous__gwas_cluster_0.joint_posteriors.pickle
+	
 	'''
 	
-	parser = argparse.ArgumentParser(description='Run finemap')
-	parser.add_argument('--finemap_pickle_file')
+	parser = argparse.ArgumentParser(description='Load and print')
+	parser.add_argument('--pickle_file')
 	
 	options = parser.parse_args()
 
-	logger.info( "finemap_pickle_file = " + options.finemap_pickle_file )
-	
 	import pickle
-	pickle_fh       = open(options.finemap_pickle_file, 'rb')
+	pickle_fh       = open(options.pickle_file, 'rb')
 	finemap_object  = pickle.load(pickle_fh)
 
-	logging.info(finemap_object);
-	logging.info("All done.");
+	print(str(finemap_object));
 
 if __name__ == "__main__":
 	main()
