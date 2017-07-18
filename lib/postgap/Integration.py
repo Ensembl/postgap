@@ -110,12 +110,6 @@ def scan_disease_databases(diseases, efos):
 			associations_by_snp[gwas_association.snp] = GWAS_SNP(
 				snp = gwas_association.snp,
 				pvalue = gwas_association.pvalue,
-
-				odds_ratio                 = gwas_association.odds_ratio,
-				beta_coefficient           = gwas_association.beta_coefficient,
-				beta_coefficient_unit      = gwas_association.beta_coefficient_unit,
-				beta_coefficient_direction = gwas_association.beta_coefficient_direction,
-
 				# A GWAS association is its own evidence.
 				evidence = [ gwas_association ]
 			)
@@ -141,6 +135,10 @@ def gwas_snps_to_genes(gwas_snps, populations, tissue_weights):
 
 	"""
 	logger = logging.getLogger(__name__)
+	
+	for gwas_snp in gwas_snps:
+		assert type(gwas_snp) is GWAS_SNP
+	
 	# Must set the tissue settings before separating out the gwas_snps
 	if tissue_weights is None:
 		tissue_weights = gwas_snps_to_tissue_weights(gwas_snps)
@@ -164,6 +162,9 @@ def gwas_snps_to_tissue_weights(gwas_snps):
 		Returntype: [ string ]
 
 	"""
+	for gwas_snp in gwas_snps:
+		assert type(gwas_snp) is GWAS_SNP
+		
 	return ['Whole_Blood'] # See FORGE??
 
 def cluster_gwas_snps(gwas_snps, populations):
@@ -177,6 +178,9 @@ def cluster_gwas_snps(gwas_snps, populations):
 	"""
 	
 	logger = logging.getLogger(__name__)
+	
+	for gwas_snp in gwas_snps:
+		assert type(gwas_snp) is GWAS_SNP
 	
 	gwas_snp_locations = get_gwas_snp_locations(gwas_snps)
 
@@ -260,12 +264,6 @@ def get_gwas_snp_locations(gwas_snps):
 			snp = mapped_snp,
 			pvalue = original_gwas_snp[mapped_snp.rsID].pvalue,
 			evidence = original_gwas_snp[mapped_snp.rsID].evidence,
-
-			odds_ratio                 = original_gwas_snp[mapped_snp.rsID].odds_ratio,
-			beta_coefficient           = original_gwas_snp[mapped_snp.rsID].beta_coefficient,
-			beta_coefficient_unit      = original_gwas_snp[mapped_snp.rsID].beta_coefficient_unit,
-			beta_coefficient_direction = original_gwas_snp[mapped_snp.rsID].beta_coefficient_direction,
-
 		)
 		for mapped_snp in mapped_snps
 		if mapped_snp.rsID in original_gwas_snp
