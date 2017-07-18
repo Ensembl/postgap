@@ -59,10 +59,10 @@ def GWAS_Clusters_ok(gwas_clusters):
 			return False, "Gwas snps not among ld snps"
 	return True, ""
 
-def compute_gwas_cluster_with_finemap_posteriors(gwas_cluster):
+def compute_gwas_cluster_with_finemap_posteriors(gwas_cluster, cluster_name="Unnamed cluster"):
 	
 	try:
-		finemap_posteriors = compute_finemap_posteriors(gwas_cluster)
+		finemap_posteriors = compute_finemap_posteriors(gwas_cluster, cluster_name = cluster_name)
 		
 		if finemap_posteriors is None:
 			raise FinemapFailedException("Got no finemap results!")
@@ -79,7 +79,7 @@ def compute_gwas_cluster_with_finemap_posteriors(gwas_cluster):
 		finemap_posteriors = finemap_posteriors
 	)
 
-def compute_finemap_posteriors(gwas_cluster):
+def compute_finemap_posteriors(gwas_cluster, cluster_name="Unnamed cluster"):
 	
 	ld_snps   = gwas_cluster.ld_snps
 	gwas_snps = gwas_cluster.gwas_snps
@@ -97,14 +97,15 @@ def compute_finemap_posteriors(gwas_cluster):
 
 	import finemap.stochastic_search as sss
 	finemap_posteriors = sss.finemap(
-		labels     = SNP_ids,
-		z_scores   = approximated_gwas_zscores,
-		cov_matrix = r2_array,
-		n          = len(r2_array),
-		kstart     = kstart,
-		kmax       = kmax,
-		max_iter   = max_iter,
-		prior      = "independence"
+		labels       = SNP_ids,
+		z_scores     = approximated_gwas_zscores,
+		cov_matrix   = r2_array,
+		n            = len(r2_array),
+		kstart       = kstart,
+		kmax         = kmax,
+		max_iter     = max_iter,
+		prior        = "independence",
+		sample_label = cluster_name
 	)
 	logger.info("Done running finemap")
 	
