@@ -62,9 +62,31 @@ python scripts/compute_gwas_posteriors_with_finemap.py \
 	import pickle
 	
 	pickle_fh       = open(options.gwas_cluster_file, 'rb')
-	gwas_cluster    = pickle.load(pickle_fh)	
-
-	gwas_posteriors = process_gwas_cluster(gwas_cluster)
+	gwas_cluster    = pickle.load(pickle_fh)
+	
+	from pprint import pformat
+	
+	#for gwas_snp in gwas_cluster.gwas_snps:
+		#for gwas_association in gwas_snp.evidence:
+			##print json.dumps(gwas_association.rest_hash["_links"]["riskAlleles"]["href"])
+			#print pformat(gwas_association)
+			
+	#sys.exit();
+	
+	#
+	# finemap/EFO_0000203/gwas_clusters/gwas_cluster_0.posteriors.pickle -> gwas_cluster_0.posteriors
+	#
+	import os
+	# base = gwas_cluster_0.posteriors.pickle
+	base = os.path.basename(options.gwas_cluster_file)
+	# temp = gwas_cluster_0.posteriors
+	temp = os.path.splitext(base)[0]
+	# title = gwas_cluster_0
+	title = os.path.splitext(temp)[0]
+	
+	logger.info("Cluster title: " + title)
+	
+	gwas_posteriors = process_gwas_cluster(gwas_cluster, cluster_name = title)
 	
 	logger.info( "Gwas posteriors have been computed:\n" + str(gwas_posteriors) )
 	
@@ -83,7 +105,7 @@ python scripts/compute_gwas_posteriors_with_finemap.py \
 
 	logging.info("All done.");
 
-def process_gwas_cluster(gwas_cluster):
+def process_gwas_cluster(gwas_cluster, cluster_name="Unnamed cluster"):
 
 	gwas_clusters = [ gwas_cluster ]
 
@@ -93,14 +115,12 @@ def process_gwas_cluster(gwas_cluster):
 	for x in range(len(gwas_clusters)):
 		logger.info("Cluster %s has %s members." % ( x, len(gwas_clusters[x].ld_snps) ))
 
-	from finemap.GwasIntegation import compute_gwas_clusters_with_finemap_posteriors
-	gwas_clusters_with_posteriors = compute_gwas_clusters_with_finemap_posteriors(gwas_clusters)
+	from methods.GWAS_Cluster import compute_gwas_cluster_with_finemap_posteriors
+	gwas_clusters_with_posteriors = compute_gwas_cluster_with_finemap_posteriors(gwas_cluster, cluster_name = cluster_name)
 	
 	logger.info("Got %i gwas clusters with posteriors." % len(gwas_clusters_with_posteriors))
 	
-	assert len(gwas_clusters_with_posteriors)==1, "Only one is processed"
-	
-	return gwas_clusters_with_posteriors[0].finemap_posteriors
+	return gwas_clusters_with_posteriors.finemap_posteriors
 
 if __name__ == "__main__":
 	main()
