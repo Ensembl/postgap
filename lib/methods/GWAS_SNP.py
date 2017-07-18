@@ -28,6 +28,11 @@ limitations under the License.
 
 """
 
+import logging
+import logging.config
+logging.config.fileConfig('configuration/logging.conf')
+logger = logging.getLogger(__name__)
+
 def compute_z_score_from_pvalue_and_sign(pvalue, sign):
 
 	from scipy.stats import norm
@@ -94,9 +99,36 @@ def compute_z_score_from_pvalue_and_odds_ratio_or_beta_coefficient(pvalue, odds_
 
 def compute_z_score_for_gwas_snp(gwas_snp):
 	
-	return compute_z_score_from_pvalue_and_odds_ratio_or_beta_coefficient(
+	evidence_list = gwas_snp.evidence
+	
+	if len(evidence_list) != 1:
+		raise Exception("Unhandled special case: The same SNP was found via more than one GWAS Association!")
+	
+	evidence = evidence_list[0]
+	
+	from postgap.DataModel import GWAS_Association
+	assert type(evidence) is GWAS_Association, "Object is GWAS_Association"
+	
+	# If the gwas risk allele is present in the reference, then the sign
+	# for the zscore has to be inverted.
+	risk_alleles_present_in_reference = evidence.risk_alleles_present_in_reference
+	
+	z_score_from_pvalue_and_odds_ratio_or_beta_coefficient = compute_z_score_from_pvalue_and_odds_ratio_or_beta_coefficient(
 		pvalue           = gwas_snp.pvalue,
 		odds_ratio       = gwas_snp.odds_ratio,
 		beta_coefficient = gwas_snp.beta_coefficient,
 	)
+	
+	if risk_alleles_present_in_reference:
+		logger.info("The zscore will be inverted, because the risk allele is present in the reference.")
+		zscore = -1 * z_score_from_pvalue_and_odds_ratio_or_beta_coefficient
+		return zscore
+	
+	if not(risk_alleles_present_in_reference):
+		logger.info("The risk allele is not present in the reference, so the zscore is not affected.")
+		zscore = z_score_from_pvalue_and_odds_ratio_or_beta_coefficient
+		return zscore
+	
+	# Should never happen
+	raise Exception
 
