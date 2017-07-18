@@ -63,8 +63,19 @@ python scripts/compute_eqtl_posteriors_with_finemap.py \
 	
 	pickle_fh       = open(options.eqtl_cluster_file, 'rb')
 	eqtl_cluster    = pickle.load(pickle_fh)
-	
-	eqtl_posteriors = process_eqtl_cluster(eqtl_cluster)
+
+	#
+	# finemap/EFO_0000203/gwas_clusters/gwas_cluster_0.posteriors.pickle -> gwas_cluster_0.posteriors
+	#
+	import os
+	# base = gwas_cluster_0.posteriors.pickle
+	base = os.path.basename(options.eqtl_cluster_file)
+	# temp = gwas_cluster_0.posteriors
+	temp = os.path.splitext(base)[0]
+	# title = gwas_cluster_0
+	title = os.path.splitext(temp)[0]
+
+	eqtl_posteriors = process_eqtl_cluster(eqtl_cluster, cluster_name = title)
 	
 	logger.info( "eQTL posteriors have been computed:\n" + str(eqtl_posteriors) )
 	
@@ -83,7 +94,7 @@ python scripts/compute_eqtl_posteriors_with_finemap.py \
 
 	logging.info("All done.");
 
-def process_eqtl_cluster(eqtl_cluster):
+def process_eqtl_cluster(eqtl_cluster, cluster_name = "Unnamed cluster"):
 	
 	import pprint
 	pp = pprint.PrettyPrinter(indent=4, width=80)
@@ -156,22 +167,25 @@ def process_eqtl_cluster(eqtl_cluster):
 	logger.info("Matrix of pairwise linkage disequilibria:")
 	logger.info("\n" + stringify_matrix(r2_array))
 
+	logger.info("Cluster name: " + cluster_name)
+
 	logger.info("Running finemap")
-	
+
 	kstart = 1
 	kmax   = 1
 	max_iter = "Not used when kstart == kmax"
 
 	import finemap.stochastic_search as sss
 	finemap_posteriors = sss.finemap(
-		labels     = SNP_ids,
-		z_scores   = zscore_vector,
-		cov_matrix = r2_array,
-		n          = len(r2_array),
-		kstart     = kstart,
-		kmax       = kmax,
-		max_iter   = max_iter,
-		prior      = "independence"
+		labels       = SNP_ids,
+		z_scores     = zscore_vector,
+		cov_matrix   = r2_array,
+		n            = len(r2_array),
+		kstart       = kstart,
+		kmax         = kmax,
+		max_iter     = max_iter,
+		prior        = "independence",
+		sample_label = cluster_name
 	)
 	logger.info("Done running finemap")
 	
