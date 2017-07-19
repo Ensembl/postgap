@@ -225,6 +225,10 @@ def cluster_gwas_snps(gwas_snps, populations):
 			
 			cluster_file_name = finemap_gwas_clusters_directory + "/gwas_cluster_" + str(cluster_index) + ".pickle"
 			
+			import os.path
+			if os.path.isfile(cluster_file_name):
+				raise Exception("File " + cluster_file_name + " already exists!")
+
 			f = open(cluster_file_name, 'w')
 			pickle.dump(clusters[cluster_index], f)
 			f.close
@@ -495,6 +499,12 @@ def ld_snps_to_genes(ld_snps, tissues):
 			
 			gene_stable_id = gene.id		
 			cluster_file_name = finemap_eqtl_clusters_directory + "/eqtl_snps_linked_to_" + gene_stable_id + "_in_"  + tissue + ".pickle"
+			
+			import os.path
+			if os.path.isfile(cluster_file_name):
+				# Probably have to include name of lead snp, if this happens.
+				raise Exception("File " + cluster_file_name + " already exists!")
+			
 			f = open(cluster_file_name, 'w')
 			pickle.dump(tissue_gene_eqtl[tissue][gene], f)
 			f.close
