@@ -209,7 +209,11 @@ def compute_risk_allele_orientations(riskAlleles):
 	'''
 	rs_id = assert_risk_alleles_are_from_same_snp(riskAlleles)
 	
-	base_at_snp_in_reference, ensembl_source_url = fetch_base_at_snp_in_reference(rs_id)
+	try:
+		base_at_snp_in_reference, ensembl_source_url = fetch_base_at_snp_in_reference(rs_id)
+	except requests.exceptions.HTTPError, e:
+		import json
+		raise gwas_data_integrity_exception("Got an HTTPError " + str(e) + " for snp" + rs_id + " and risk alleles:\n\n" + json.dumps(riskAlleles))
 	
 	risk_allele_orientations = []
 
@@ -247,7 +251,13 @@ def assert_risk_alleles_are_from_same_snp(riskAlleles):
 	for riskAllele in riskAlleles:
 		
 		riskAlleleName = riskAllele["riskAlleleName"]
-		(raw_rs_id, nucleotide_in_risk_allele) = riskAlleleName.split("-")
+		
+		try:
+			(raw_rs_id, nucleotide_in_risk_allele) = riskAlleleName.split("-")
+		except ValueError, e:
+			import json
+			raise gwas_data_integrity_exception("Got a ValueError " + str(e) + " for snp" + raw_rs_id + " and risk alleles:\n\n" + json.dumps(riskAlleles))
+
 		
 		# E.g.: On
 		# http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/singleNucleotidePolymorphisms/6167/riskAlleles
