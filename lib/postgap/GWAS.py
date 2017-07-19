@@ -309,14 +309,14 @@ class GWASCatalog(GWAS_source):
 					hash = postgap.REST.get(risk_alleles_href, ext="")
 					riskAlleles = hash["_embedded"]["riskAlleles"]
 					
-					from methods.GWAS_Lead_Snp_Orientation                 \
-					import                                                 \
-					gwas_risk_alleles_present_in_reference,                \
-					none_of_the_risk_alleles_is_a_substitution_exception,  \
-					variant_mapping_is_ambiguous_exception,                \
-					some_alleles_present_others_not_exception,             \
-					no_dbsnp_accession_for_snp_exception,                  \
-					base_in_allele_missing_exception,                      \
+					from methods.GWAS_Lead_Snp_Orientation                  \
+					import                                                  \
+					gwas_risk_alleles_present_in_reference,                 \
+					none_of_the_risk_alleles_is_a_substitution_exception,   \
+					variant_mapping_is_ambiguous_exception,                 \
+					some_alleles_present_in_reference_others_not_exception, \
+					no_dbsnp_accession_for_snp_exception,                   \
+					base_in_allele_missing_exception,                       \
 					cant_determine_base_at_snp_in_reference_exception
 					
 					try:
@@ -338,13 +338,13 @@ class GWASCatalog(GWAS_source):
 						logger.warning("Skipping this snp.")
 						continue
 					
-					except some_alleles_present_others_not_exception as e:
+					except some_alleles_present_in_reference_others_not_exception as e:
 						logger.warning(str(e));
 						logger.warning("Skipping this snp.")
 						continue
 					
 					except no_dbsnp_accession_for_snp_exception as e:
-						logger.warning(str(e));
+						logger.warning(str(e))
 						logger.warning("Skipping this snp.")
 						continue
 
