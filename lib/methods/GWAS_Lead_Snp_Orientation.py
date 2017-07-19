@@ -121,6 +121,9 @@ class gwas_data_integrity_exception(Exception):
 class ensembl_data_integrity_exception(Exception):
 	pass
 
+class cant_determine_base_at_snp_in_reference_exception(Exception):
+	pass
+
 def gwas_risk_alleles_present_in_reference(riskAlleles):
 	
 	risk_allele_orientations = compute_risk_allele_orientations(riskAlleles)
@@ -236,7 +239,13 @@ def compute_risk_allele_orientations(riskAlleles):
 			raise no_dbsnp_accession_for_snp_exception("The snp " + rs_id + " has no dbSNP accession.")
 		
 		import json
-		raise gwas_data_integrity_exception("Got an HTTPError " + str(e) + " for snp" + rs_id + " and risk alleles:\n\n" + json.dumps(riskAlleles))
+		
+		# It seems to manifest as a "Bad Request" like this:
+		#
+		# Got an HTTPError 400 Client Error: Bad Request for url: 
+		# http://grch37.rest.ensembl.org/variation/homo_sapiens/rs24449894?content-type=application/json for snprs24449894
+		#
+		raise cant_determine_base_at_snp_in_reference_exception("Got an HTTPError " + str(e) + " for snp " + rs_id + " and risk alleles:\n\n" + json.dumps(riskAlleles))
 	
 	risk_allele_orientations = []
 
@@ -417,7 +426,13 @@ def fetch_variant_mappings(rs_id):
 
 		}
 	'''
-	if hash["name"] != rs_id:
+	
+	reported_name = hash["name"]
+	synonyms      = hash["synonyms"]
+	
+	response_matches_query = rs_id == reported_name or rs_id in synonyms
+	
+	if not(response_matches_query):
 		raise ensembl_data_integrity_exception("For snp " + rs_id + " the url " + variant_mappings_rest_call_url + " reports a different name("+hash["name"]+")!")
 		
 	mappings = hash["mappings"]
