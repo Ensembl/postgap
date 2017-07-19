@@ -247,13 +247,24 @@ def assert_risk_alleles_are_from_same_snp(riskAlleles):
 	for riskAllele in riskAlleles:
 		
 		riskAlleleName = riskAllele["riskAlleleName"]
-		(rs_id, nucleotide_in_risk_allele) = riskAlleleName.split("-")
+		(raw_rs_id, nucleotide_in_risk_allele) = riskAlleleName.split("-")
+		
+		# E.g.: On
+		# http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/singleNucleotidePolymorphisms/6167/riskAlleles
+		#
+		# The alleles are from the snp rs4420638. But one of them is: "
+		# rs4420638 -?", so the rs_id will appear as  "rs4420638 " with an extra space a the end.
+		#
+		# The extra whitespace can trip up this assertion.
+		#
+		rs_id = raw_rs_id.strip()
 		
 		if seen_rs_id == "":
 			seen_rs_id = rs_id
 		
 		if seen_rs_id != rs_id:
-			raise gwas_data_integrity_exception("More than one snp reported for the same gwas association!")
+			import json
+			raise gwas_data_integrity_exception("More than one snp reported for the same gwas association! One snp is: " + seen_rs_id + " another is: " + rs_id + " \n\n" + json.dumps(riskAlleles))
 	
 	return seen_rs_id
 
