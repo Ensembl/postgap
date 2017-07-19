@@ -209,6 +209,7 @@ def compute_risk_allele_orientations(riskAlleles):
 	'''
 	rs_id = assert_risk_alleles_are_from_same_snp(riskAlleles)
 	
+	import requests
 	try:
 		base_at_snp_in_reference, ensembl_source_url = fetch_base_at_snp_in_reference(rs_id)
 	except requests.exceptions.HTTPError, e:
