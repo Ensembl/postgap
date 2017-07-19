@@ -119,6 +119,9 @@ def compute_z_score_for_gwas_snp(gwas_snp):
 		beta_coefficient = evidence.beta_coefficient,
 	)
 	
+	if z_score_from_pvalue_and_odds_ratio_or_beta_coefficient is None:
+		return None
+	
 	if risk_alleles_present_in_reference:
 		logger.info("The zscore will be inverted, because the risk allele is present in the reference.")
 		zscore = -1 * z_score_from_pvalue_and_odds_ratio_or_beta_coefficient
