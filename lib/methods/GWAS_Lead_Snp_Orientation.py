@@ -95,7 +95,7 @@ class _exception_with_risk_allele_orientations(Exception):
 
 		return msg
 
-class some_alleles_present_others_not_exception(_exception_with_risk_allele_orientations):
+class some_alleles_present_in_reference_others_not_exception(_exception_with_risk_allele_orientations):
 	def description(self):
 		return "Some alleles are present in the reference, others aren't."
 
@@ -174,11 +174,11 @@ def compute_risk_allele_orientation_consensus(risk_allele_orientations):
 		base should be. If none of the gwas associations have a base assigned,
 		a "none_of_the_risk_alleles_is_a_substitution_exception" is raised.
 		
-		some_alleles_present_others_not_exception:
+		some_alleles_present_in_reference_others_not_exception:
 		
 		It is possible to have multiple risk alleles in an association. Some 
 		may be present in the reference, others not. This is an inconsistent 
-		case. If it arises, a "some_alleles_present_others_not_exception" is
+		case. If it arises, a "some_alleles_present_in_reference_others_not_exception" is
 		raised.
 	'''
 	
@@ -210,7 +210,7 @@ def compute_risk_allele_orientation_consensus(risk_allele_orientations):
 	if no_gwas_risk_allele_present_in_reference:
 		return Risk_Allele_Orientation_Consensus.no_gwas_risk_allele_present_in_reference
 	
-	raise some_alleles_present_others_not_exception(risk_allele_orientations)
+	raise some_alleles_present_in_reference_others_not_exception(risk_allele_orientations)
 
 def compute_risk_allele_orientations(riskAlleles):
 	'''
