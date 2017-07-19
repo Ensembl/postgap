@@ -112,7 +112,13 @@ class variant_mapping_is_ambiguous_exception(Exception):
 class no_dbsnp_accession_for_snp_exception(Exception):
 	pass
 
+class base_in_allele_missing_exception(Exception):
+	pass
+
 class gwas_data_integrity_exception(Exception):
+	pass
+
+class ensembl_data_integrity_exception(Exception):
 	pass
 
 def gwas_risk_alleles_present_in_reference(riskAlleles):
@@ -272,7 +278,26 @@ def assert_risk_alleles_are_from_same_snp(riskAlleles):
 		try:
 			(raw_rs_id, nucleotide_in_risk_allele) = riskAlleleName.split("-")
 		except ValueError, e:
+			
 			import json
+			
+			if "-" not in riskAlleleName:
+				
+				# Happens here:
+				# http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/singleNucleotidePolymorphisms/6167/riskAlleles
+				#
+				# One of the risk alleles is:
+				#
+				#	{
+				#		"riskAlleleName": "rs4420638", 
+				#		...
+				#	}
+				#
+				# Including all riskAlleles in the error messages, because 
+				# the context might be useful.
+				#
+				raise base_in_allele_missing_exception("One of the risk alleles in " + json.dumps(riskAlleles) + " has no base given!")
+			
 			raise gwas_data_integrity_exception("Got a ValueError " + str(e) + " for risk allele " + riskAlleleName + ":\n\n" + json.dumps(riskAlleles))
 
 		
@@ -392,7 +417,9 @@ def fetch_variant_mappings(rs_id):
 
 		}
 	'''
-	assert hash["name"] == rs_id
+	if hash["name"] != rs_id:
+		raise ensembl_data_integrity_exception("For snp " + rs_id + " the url " + variant_mappings_rest_call_url + " reports a different name("+hash["name"]+")!")
+		
 	mappings = hash["mappings"]
 	
 	return mappings, variant_mappings_rest_call_url

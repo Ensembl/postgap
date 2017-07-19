@@ -301,7 +301,8 @@ class GWASCatalog(GWAS_source):
 					none_of_the_risk_alleles_is_a_substitution_exception,  \
 					variant_mapping_is_ambiguous_exception,                \
 					some_alleles_present_others_not_exception,             \
-					no_dbsnp_accession_for_snp_exception
+					no_dbsnp_accession_for_snp_exception,                  \
+					base_in_allele_missing_exception
 					
 					try:
 					
@@ -327,7 +328,12 @@ class GWASCatalog(GWAS_source):
 						logger.warning("Skipping this snp.")
 						continue
 					
-					except no_dbsnp_accession_for_snp_exception:
+					except no_dbsnp_accession_for_snp_exception as e:
+						logger.warning(str(e));
+						logger.warning("Skipping this snp.")
+						continue
+
+					except base_in_allele_missing_exception as e:
 						logger.warning(str(e));
 						logger.warning("Skipping this snp.")
 						continue
