@@ -114,9 +114,9 @@ def compute_z_score_for_gwas_snp(gwas_snp):
 	risk_alleles_present_in_reference = evidence.risk_alleles_present_in_reference
 	
 	z_score_from_pvalue_and_odds_ratio_or_beta_coefficient = compute_z_score_from_pvalue_and_odds_ratio_or_beta_coefficient(
-		pvalue           = gwas_snp.pvalue,
-		odds_ratio       = gwas_snp.odds_ratio,
-		beta_coefficient = gwas_snp.beta_coefficient,
+		pvalue           = evidence.pvalue,
+		odds_ratio       = evidence.odds_ratio,
+		beta_coefficient = evidence.beta_coefficient,
 	)
 	
 	if risk_alleles_present_in_reference:
