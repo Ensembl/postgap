@@ -118,7 +118,10 @@ def process_gwas_cluster(gwas_cluster, cluster_name="Unnamed cluster"):
 	from methods.GWAS_Cluster import compute_gwas_cluster_with_finemap_posteriors
 	gwas_clusters_with_posteriors = compute_gwas_cluster_with_finemap_posteriors(gwas_cluster, cluster_name = cluster_name)
 	
-	logger.info("Got %i gwas clusters with posteriors." % len(gwas_clusters_with_posteriors))
+	if not(gwas_clusters_with_posteriors is None):
+		logger.info("Got %i gwas clusters with posteriors." % len(gwas_clusters_with_posteriors))
+	else:
+		logger.warning("Got no gwas clusters with posteriors!")
 	
 	return gwas_clusters_with_posteriors.finemap_posteriors
 
