@@ -314,7 +314,8 @@ class GWASCatalog(GWAS_source):
 					gwas_risk_alleles_present_in_reference,                \
 					none_of_the_risk_alleles_is_a_substitution_exception,  \
 					variant_mapping_is_ambiguous_exception,                \
-					some_alleles_present_others_not_exception
+					some_alleles_present_others_not_exception,             \
+					no_dbsnp_accession_for_snp_exception
 					
 					try:
 					
@@ -326,15 +327,23 @@ class GWASCatalog(GWAS_source):
 							logging.info("Risk allele is not present in reference");
 					
 					except none_of_the_risk_alleles_is_a_substitution_exception as e:
-						logger.info(str(e))
+						logger.warning(str(e))
+						logger.warning("Skipping this snp.")
 						continue
 					
 					except variant_mapping_is_ambiguous_exception:
-						logger.info("The variant mapping is ambiguous.")
+						logger.warning("The variant mapping is ambiguous.")
+						logger.warning("Skipping this snp.")
 						continue
 					
 					except some_alleles_present_others_not_exception as e:
-						logger.info(str(e));
+						logger.warning(str(e));
+						logger.warning("Skipping this snp.")
+						continue
+					
+					except no_dbsnp_accession_for_snp_exception:
+						logger.warning(str(e));
+						logger.warning("Skipping this snp.")
 						continue
 
 					list_of_GWAS_Associations.append(

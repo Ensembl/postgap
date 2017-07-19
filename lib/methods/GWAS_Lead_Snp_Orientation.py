@@ -109,6 +109,9 @@ class variant_mapping_is_ambiguous_exception(Exception):
 	def description(self):
 		return "The variant was mapped to more than one location in the reference. (This never seems to happen.)"
 
+class no_dbsnp_accession_for_snp_exception(Exception):
+	pass
+
 class gwas_data_integrity_exception(Exception):
 	pass
 
@@ -213,6 +216,19 @@ def compute_risk_allele_orientations(riskAlleles):
 	try:
 		base_at_snp_in_reference, ensembl_source_url = fetch_base_at_snp_in_reference(rs_id)
 	except requests.exceptions.HTTPError, e:
+		
+		looks_like_dbSNP_accession = rs_id.startswith("rs")
+		
+		if not(looks_like_dbSNP_accession):
+		
+			# This can happen, e.g. here:
+			#
+			# http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/riskAlleles/16576159/snp 
+			#
+			# (Might have been unpublished by the time you read this)
+			#
+			raise no_dbsnp_accession_for_snp_exception("The snp " + rs_id + " has no dbSNP accession.")
+		
 		import json
 		raise gwas_data_integrity_exception("Got an HTTPError " + str(e) + " for snp" + rs_id + " and risk alleles:\n\n" + json.dumps(riskAlleles))
 	
@@ -257,7 +273,7 @@ def assert_risk_alleles_are_from_same_snp(riskAlleles):
 			(raw_rs_id, nucleotide_in_risk_allele) = riskAlleleName.split("-")
 		except ValueError, e:
 			import json
-			raise gwas_data_integrity_exception("Got a ValueError " + str(e) + " for snp" + raw_rs_id + " and risk alleles:\n\n" + json.dumps(riskAlleles))
+			raise gwas_data_integrity_exception("Got a ValueError " + str(e) + " for risk allele " + riskAlleleName + ":\n\n" + json.dumps(riskAlleles))
 
 		
 		# E.g.: On
