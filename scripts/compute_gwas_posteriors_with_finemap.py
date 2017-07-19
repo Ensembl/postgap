@@ -122,6 +122,7 @@ def process_gwas_cluster(gwas_cluster, cluster_name="Unnamed cluster"):
 		logger.info("Got %i gwas clusters with posteriors." % len(gwas_clusters_with_posteriors))
 	else:
 		logger.warning("Got no gwas clusters with posteriors!")
+		sys.exit(1)
 	
 	return gwas_clusters_with_posteriors.finemap_posteriors
 
