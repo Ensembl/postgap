@@ -46,3 +46,5 @@ EVIDENCE_WEIGHTS = {
 	'PCHIC': 1,
 	'nearest_gene': 1
 }
+
+work_directory = "notset"
