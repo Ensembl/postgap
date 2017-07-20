@@ -61,18 +61,11 @@ def GWAS_Clusters_ok(gwas_clusters):
 
 def compute_gwas_cluster_with_finemap_posteriors(gwas_cluster, cluster_name="Unnamed cluster"):
 	
-	try:
-		finemap_posteriors = compute_finemap_posteriors(gwas_cluster, cluster_name = cluster_name)
-		
-		if finemap_posteriors is None:
-			raise FinemapFailedException("Got no finemap results!")
-
-	except ZScoreComputationException, z:
-		logger = logging.getLogger(__name__)
-		logger.warning(str(z))
-		logger.warning("Skipping this cluster.")
-		return
+	finemap_posteriors = compute_finemap_posteriors(gwas_cluster, cluster_name = cluster_name)
 	
+	if finemap_posteriors is None:
+		raise FinemapFailedException("Got no finemap results!")
+
 	return GWAS_Cluster(
 		gwas_snps          = gwas_cluster.gwas_snps,
 		ld_snps            = gwas_cluster.ld_snps,
@@ -116,6 +109,8 @@ def compute_finemap_posteriors(gwas_cluster, cluster_name="Unnamed cluster"):
 
 def compute_gwas_snps_with_z_scores(gwas_snps):
 	
+	logger = logging.getLogger(__name__)
+	
 	from methods.GWAS_SNP import compute_z_score_for_gwas_snp
 	
 	gwas_snps_with_z_scores = filter (
@@ -127,9 +122,8 @@ def compute_gwas_snps_with_z_scores(gwas_snps):
 				for gwas_snp in gwas_snps 
 		]
 	)
-	gwas_cluster_size = len(gwas_snps)
 	
-	logger = logging.getLogger(__name__)
+	gwas_cluster_size = len(gwas_snps)
 	
 	if len(gwas_snps_with_z_scores) == 0:
 		raise ZScoreComputationException("Couldn't compute a z score for any of the gwas snps.")
@@ -166,7 +160,7 @@ def compute_approximated_gwas_zscores(gwas_snps, ld_snps):
 			found_in_list = False
 			
 		if not(found_in_list):
-			raise Error("ERROR: The lead SNP wasn't found in SNP ids!\n" \
+			raise Exception("ERROR: The lead SNP wasn't found in SNP ids!\n" \
 				+ "lead SNP: " + gwas_snps_with_z_score.snp_id + "\n" \
 				+ "SNP_ids:" + "\n" \
 				+ json.dumps(SNP_ids) \
@@ -201,7 +195,9 @@ def compute_approximated_zscores_for_snps_from_multiple_lead_snps(
 		lead_snps,
 		SNP_ids
 	):
-
+	
+	logger = logging.getLogger(__name__)
+	
 	number_of_ld_snps = len(SNP_ids)
 	
 	import numpy
@@ -213,16 +209,10 @@ def compute_approximated_zscores_for_snps_from_multiple_lead_snps(
 			SNP_ids               = SNP_ids,
 			lead_snp              = lead_snp,
 		)
-
-		#print "approximated_zscores_for_snps_from_lead_snp = "
-		#pprint.pprint(approximated_zscores_for_snps_from_lead_snp)
 		
 		for x in range(number_of_ld_snps):
 			if abs(approximated_zscores_for_snps_from_lead_snp[x]) > abs(maximum_zscores[x]):
 				maximum_zscores[x] = approximated_zscores_for_snps_from_lead_snp[x]
-
-	#print "final zscores = "
-	#pprint.pprint(maximum_zscores)
 	
 	return maximum_zscores
 
@@ -294,13 +284,6 @@ def compute_approximated_effect_size_from_ld(ld_correlation_matrix, index_of_gwa
 	z_c = numpy.dot(ld_correlation_matrix, z_causal)
 	
 	return z_c
-
-#print compute_z_score_from_pvalue_and_odds_ratio_or_beta_coefficient(0.0001, -1)
-#print compute_z_score_from_pvalue_and_odds_ratio_or_beta_coefficient(0.0001, beta_coefficient=-1)
-#print compute_z_score_from_pvalue_and_odds_ratio_or_beta_coefficient(0.001, beta_coefficient=-1)
-#print compute_z_score_from_pvalue_and_odds_ratio_or_beta_coefficient(0.001)
-
-#sys.exit(0)
 
 def stringify_vector(vector):
 	return json.dumps(vector, indent=4)

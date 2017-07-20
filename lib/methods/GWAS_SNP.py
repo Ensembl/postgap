@@ -97,12 +97,16 @@ def compute_z_score_from_pvalue_and_odds_ratio_or_beta_coefficient(pvalue, odds_
 		compute_z_score_sign(odds_ratio, beta_coefficient)
 	)
 
+class snp_in_multiple_gwas_associations_exception(Exception):
+	pass
+
 def compute_z_score_for_gwas_snp(gwas_snp):
 	
 	evidence_list = gwas_snp.evidence
 	
 	if len(evidence_list) != 1:
-		raise Exception("Unhandled special case: The same SNP was found via more than one GWAS Association!")
+		from pprint import pformat
+		raise snp_in_multiple_gwas_associations_exception("This GWAS SNP was found via more than one GWAS Association:\n\n" + pformat(gwas_snp))
 	
 	evidence = evidence_list[0]
 	
