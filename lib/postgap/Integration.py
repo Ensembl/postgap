@@ -501,8 +501,8 @@ def ld_snps_to_genes(ld_snps, tissues):
 			pickle.dump(tissue_gene_eqtl[tissue][gene], f)
 			f.close
 
-	import sys
-	sys.exit(0);
+	#import sys
+	#sys.exit(0);
 
 	# Create objects
 	SNP_GeneSNP_Associations = concatenate((create_SNP_GeneSNP_Associations(snp, reg[snp], cisreg[snp]) for snp in cisreg))
