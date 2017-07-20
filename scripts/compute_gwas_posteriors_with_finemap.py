@@ -29,9 +29,6 @@ limitations under the License.
 """
 import sys
 import argparse
-import collections
-import json
-import sqlite3
 import logging
 import logging.config
 
@@ -55,23 +52,14 @@ python scripts/compute_gwas_posteriors_with_finemap.py \
 	parser.add_argument('--output_posteriors_file')
 	
 	options = parser.parse_args()
-
+	
 	logger.info( "gwas_cluster_file      = " + options.gwas_cluster_file      )
 	logger.info( "output_posteriors_file = " + options.output_posteriors_file )
 	
 	import pickle
 	
-	pickle_fh       = open(options.gwas_cluster_file, 'rb')
-	gwas_cluster    = pickle.load(pickle_fh)
-	
-	from pprint import pformat
-	
-	#for gwas_snp in gwas_cluster.gwas_snps:
-		#for gwas_association in gwas_snp.evidence:
-			##print json.dumps(gwas_association.rest_hash["_links"]["riskAlleles"]["href"])
-			#print pformat(gwas_association)
-			
-	#sys.exit();
+	pickle_fh    = open(options.gwas_cluster_file, 'rb')
+	gwas_cluster = pickle.load(pickle_fh)
 	
 	#
 	# finemap/EFO_0000203/gwas_clusters/gwas_cluster_0.posteriors.pickle -> gwas_cluster_0.posteriors
@@ -86,8 +74,29 @@ python scripts/compute_gwas_posteriors_with_finemap.py \
 	
 	logger.info("Cluster title: " + title)
 	
-	gwas_posteriors = process_gwas_cluster(gwas_cluster, cluster_name = title)
+	from methods.GWAS_Cluster import ZScoreComputationException
+	from methods.GWAS_SNP     import snp_in_multiple_gwas_associations_exception
 	
+	try:
+		
+		gwas_posteriors = process_gwas_cluster(gwas_cluster, cluster_name = title)
+		
+	except ZScoreComputationException as z:
+		
+		#
+		# "logger.info" no longer works here, no idea, why. "logging" does 
+		# work somehow, so going with that.
+		#
+		logging.warning(str(z))
+		logging.warning("Skipping this cluster.")
+		return
+	
+	except snp_in_multiple_gwas_associations_exception as e:
+
+		logging.warning(str(e))
+		logging.warning("Skipping this cluster.")
+		return
+		
 	logger.info( "Gwas posteriors have been computed:\n" + str(gwas_posteriors) )
 	
 	import os
@@ -102,28 +111,13 @@ python scripts/compute_gwas_posteriors_with_finemap.py \
 	pickle_fh.close
 	
 	logging.info("Posteriors have been written to " + output_posteriors_file)
-
 	logging.info("All done.");
 
 def process_gwas_cluster(gwas_cluster, cluster_name="Unnamed cluster"):
 
-	gwas_clusters = [ gwas_cluster ]
-
-	logger.info(type(gwas_clusters))
-	logger.info("Got %s gwas_clusters." % len(gwas_clusters))
-
-	for x in range(len(gwas_clusters)):
-		logger.info("Cluster %s has %s members." % ( x, len(gwas_clusters[x].ld_snps) ))
-
 	from methods.GWAS_Cluster import compute_gwas_cluster_with_finemap_posteriors
 	gwas_clusters_with_posteriors = compute_gwas_cluster_with_finemap_posteriors(gwas_cluster, cluster_name = cluster_name)
-	
-	if not(gwas_clusters_with_posteriors is None):
-		logger.info("Got %i gwas clusters with posteriors." % len(gwas_clusters_with_posteriors))
-	else:
-		logger.warning("Got no gwas clusters with posteriors!")
-		sys.exit(1)
-	
+	logger.info("Got %i gwas clusters with posteriors." % len(gwas_clusters_with_posteriors))
 	return gwas_clusters_with_posteriors.finemap_posteriors
 
 if __name__ == "__main__":
