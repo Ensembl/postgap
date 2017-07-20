@@ -229,10 +229,14 @@ def get_options():
     postgap.Globals.SPECIES = options.species
     postgap.Globals.DEBUG = postgap.Globals.DEBUG or options.debug
     
-    postgap.Globals.efo_accession = "_".join(options.efos)
+    if options.efos is not None:
+        postgap.Globals.work_directory = "finemap/" + "_".join(options.efos)
     
-    postgap.Globals.finemap_gwas_clusters_directory = "finemap/" + postgap.Globals.efo_accession + "/gwas_clusters"
-    postgap.Globals.finemap_eqtl_clusters_directory = "finemap/" + postgap.Globals.efo_accession + "/eqtl_clusters"
+    if options.diseases is not None:
+        postgap.Globals.work_directory = "finemap/" + "_".join(options.diseases)
+    
+    postgap.Globals.finemap_gwas_clusters_directory = postgap.Globals.work_directory + "/gwas_clusters"
+    postgap.Globals.finemap_eqtl_clusters_directory = postgap.Globals.work_directory + "/eqtl_clusters"
 
     assert postgap.Globals.DATABASES_DIR is not None
     assert options.rsID is None or (options.efos is None and options.diseases is None)
