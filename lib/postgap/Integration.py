@@ -223,18 +223,29 @@ def cluster_gwas_snps(gwas_snps, populations):
 		
 		for cluster_index in range(len(clusters)):
 			
-			cluster_file_name = finemap_gwas_clusters_directory + "/gwas_cluster_" + str(cluster_index) + ".pickle"
+			current_cluster = clusters[cluster_index]
+			assert type(current_cluster) is postgap.DataModel.GWAS_Cluster, "The current_cluster is a GWAS_Cluster "
+			
+			gwas_snps = current_cluster.gwas_snps
+			assert type(gwas_snps) is list, "We have a list."
+			assert len(gwas_snps) > 0, "We have a list with something in it."
+			
+			gwas_snp = gwas_snps[0]
+			assert type(gwas_snp) is postgap.DataModel.GWAS_SNP, "The gwas_snp is a GWAS_SNP."
+			
+			snp = gwas_snp.snp
+			assert type(snp) is postgap.DataModel.SNP, "snp is a SNP (and not its dbSNP accession)."
+			
+			rsID = snp.rsID
+			cluster_file_name = finemap_gwas_clusters_directory + "/gwas_cluster_" +  str(cluster_index).zfill(4) + "_around_snp_" + rsID + ".pickle"
 			
 			import os.path
 			if os.path.isfile(cluster_file_name):
 				raise Exception("File " + cluster_file_name + " already exists!")
 
 			f = open(cluster_file_name, 'w')
-			pickle.dump(clusters[cluster_index], f)
+			pickle.dump(current_cluster, f)
 			f.close
-
-		#import sys
-		#sys.exit(0);
 
 	logger.info("Found %i clusters from %i GWAS SNP locations" % (len(clusters), len(gwas_snp_locations)))
 
@@ -497,21 +508,28 @@ def ld_snps_to_genes(ld_snps, tissues):
 		
 		for gene in genes:
 			
-			gene_stable_id = gene.id		
-			cluster_file_name = finemap_eqtl_clusters_directory + "/eqtl_snps_linked_to_" + gene_stable_id + "_in_"  + tissue + ".pickle"
+			cis_regulatory_evidence_list = tissue_gene_eqtl[tissue][gene]
+			assert type(cis_regulatory_evidence_list) is list, "We have a list."
+			
+			first_piece_of_cis_regulatory_evidence = cis_regulatory_evidence_list[0]
+			assert type(first_piece_of_cis_regulatory_evidence) is postgap.DataModel.Cisregulatory_Evidence, "The cis_regulatory_evidence is Cisregulatory_Evidence"
+			
+			snp = first_piece_of_cis_regulatory_evidence.snp
+			assert type(snp) is postgap.DataModel.SNP, "snp is a SNP (and not its dbSNP accession)."
+			
+			rsID = snp.rsID
+			
+			gene_stable_id = gene.id
+			cluster_file_name = finemap_eqtl_clusters_directory + "/eqtl_snp_" + rsID + "_linked_to_" + gene_stable_id + "_in_"  + tissue + ".pickle"
 			
 			import os.path
 			if os.path.isfile(cluster_file_name):
-				# Probably have to include name of lead snp, if this happens.
 				raise Exception("File " + cluster_file_name + " already exists!")
 			
 			f = open(cluster_file_name, 'w')
-			pickle.dump(tissue_gene_eqtl[tissue][gene], f)
+			pickle.dump(first_piece_of_cis_regulatory_evidence, f)
 			f.close
-
-	#import sys
-	#sys.exit(0);
-
+	
 	# Create objects
 	SNP_GeneSNP_Associations = concatenate((create_SNP_GeneSNP_Associations(snp, reg[snp], cisreg[snp]) for snp in cisreg))
 	
