@@ -425,7 +425,7 @@ def create_SNP_GeneSNP_Associations(snp, reg, cisreg):
 		regulatory_evidence = reg,
 		intermediary_scores = intermediary_scores[gene],
 		score = gene_scores[gene],
-		rank = rank[gene_scores[gene]])
+		rank = rank[gene_scores[gene]] + 1)
 	for gene in cisreg ]
 
 def compute_v2g_scores(reg, cisreg):
