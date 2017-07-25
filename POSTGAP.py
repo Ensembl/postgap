@@ -160,7 +160,7 @@ def get_options():
     18	gwas_reported_trait	Disease or trait of reported association
     19	ld_snp_is_gwas_snp	1 if LD SNP is one of the GWAS SNPs, 0 otherwise
     20	vep_terms	VEP consequence terms associated to LD_SNP
-    21	vep_max		Max of consequence impacts of LD SNP across all transcripts of gene:
+    21	vep_sum		Sum of consequence impacts of LD SNP across all transcripts of gene:
 				'HIGH': 4,
 				'MEDIUM': 3,
 				'LOW': 2,
@@ -173,7 +173,7 @@ def get_options():
 				'MODIFIER': 1,
 				'MODERATE': 1
     23	GTEx		1 if LD SNP is an eQTL to the gene, with p-value < 2.5e-5 
-    24	VEP		Sum of consequence impacts of LD SNP across all transcripts of gene:
+    24	VEP		Max of consequence impacts of LD SNP across all transcripts of gene:
 				'HIGH': 4,
 				'MEDIUM': 3,
 				'LOW': 2,
@@ -251,7 +251,7 @@ def pretty_output(associations):
 		Returntype: String
 
 	"""
-	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'disease_name', 'disease_efo_id', 'score', 'rank', 'r2', 'gwas_source', 'gwas_snp', 'gwas_pvalue', 'gwas_size', 'gwas_pmid', 'gwas_reported_trait', 'ls_snp_is_gwas_snp', 'vep_terms', 'vep_max', 'vep_mean'] + [source.display_name for source in postgap.Cisreg.sources + postgap.Reg.sources])
+	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'disease_name', 'disease_efo_id', 'score', 'rank', 'r2', 'gwas_source', 'gwas_snp', 'gwas_pvalue', 'gwas_size', 'gwas_pmid', 'gwas_reported_trait', 'ls_snp_is_gwas_snp', 'vep_terms', 'vep_sum', 'vep_mean'] + [source.display_name for source in postgap.Cisreg.sources + postgap.Reg.sources])
 	content = map(pretty_cluster_association, associations)
 	return "\n".join([header] + content)
 
@@ -331,7 +331,7 @@ def genecluster_association_table(association):
 				break
 
 		if gene_snp_association.intermediary_scores['VEP_count'] > 0:
-			vep_mean = gene_snp_association.intermediary_scores['VEP'] / gene_snp_association.intermediary_scores['VEP_count']
+			vep_mean = gene_snp_association.intermediary_scores['VEP_sum'] / gene_snp_association.intermediary_scores['VEP_count']
 		else:
 			vep_mean = 0
 
@@ -363,7 +363,7 @@ def genecluster_association_table(association):
 				"|".join(gwas_reported_traits),
 				int(gene_snp_association.snp.rsID in gwas_snps),
 				vep_terms,
-				gene_snp_association.intermediary_scores['VEP_max'],
+				gene_snp_association.intermediary_scores['VEP_sum'],
 				vep_mean
 			]
 

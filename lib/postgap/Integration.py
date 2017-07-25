@@ -455,6 +455,11 @@ def compute_v2g_scores(reg, cisreg):
 		# PCHiC
 		intermediary_scores[gene]['PCHiC'] = min(intermediary_scores[gene]['PCHiC'], 1)
 
+		# VEP
+		if 'VEP' in intermediary_scores[gene]:
+			intermediary_scores[gene]['VEP_sum'] = intermediary_scores[gene]['VEP']
+			intermediary_scores[gene]['VEP'] = intermediary_scores[gene]['VEP_max']
+
 		gene_scores[gene] = sum(intermediary_scores[gene].values())
 
 
