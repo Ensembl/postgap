@@ -323,6 +323,16 @@ def genecluster_association_table(association):
 
 	"""
 	results = []
+	ld_snp_ids, r2_matrix = postgap.LD.get_pairwise_ld(association.cluster.ld_snps)
+	r2_index = dict((snp, index) for index, snp in enumerate(ld_snp_ids))
+
+	gwas_sources = [gwas_association.source for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
+	gwas_snps = [gwas_association.snp for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
+	gwas_pvalues = [gwas_association.pvalue for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
+	gwas_sizes = [gwas_association.sample_size for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
+	gwas_studies = [gwas_association.study for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
+	gwas_reported_traits = [gwas_association.reported_trait for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
+
 	for gene_snp_association in association.evidence:
 		vep_terms = "N/A"
 		for evidence in gene_snp_association.cisregulatory_evidence:
@@ -335,12 +345,9 @@ def genecluster_association_table(association):
 		else:
 			vep_mean = 0
 
-		gwas_sources = [gwas_association.source for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
-		gwas_snps = [gwas_association.snp for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
-		gwas_pvalues = [gwas_association.pvalue for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
-		gwas_sizes = [gwas_association.sample_size for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
-		gwas_studies = [gwas_association.study for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
-		gwas_reported_traits = [gwas_association.reported_trait for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
+
+		r2_distances = [read_pairwise_ld(gene_snp_association.snp, gwas_snp.snp, r2_matrix, r2_index)  for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
+
 
 		row = [
 				gene_snp_association.snp.rsID, 
@@ -354,7 +361,7 @@ def genecluster_association_table(association):
 				re.sub(".*/", "", gwas_association.disease.efo),
 				gene_snp_association.score, 
 				gene_snp_association.rank,
-				association.r2,
+				"|".join(map(str, r2_distances)),
 				"|".join(gwas_sources),
 				"|".join(gwas_snps),
 				"|".join(map(str, gwas_pvalues)),
@@ -371,6 +378,20 @@ def genecluster_association_table(association):
 		results.append(row)
 
 	return results
+
+def read_pairwise_ld(snp1, snp2, matrix, index):
+	"""
+		Returns r2 between two SNPs using matrix precomputed by LD.get_pairwise_ld
+		Arg1: SNP
+		Arg2: SNP
+		Arg3: numpy.matrix
+		Arg4: dict(SNP => int)
+		Returntype: float:w
+	"""
+	if snp1.rsID not in index or snp2.rsID not in index:
+		return 0
+	else:
+		return matrix.item((index[snp1.rsID], index[snp2.rsID]))
 
 if __name__ == "__main__":
 	main()
