@@ -227,7 +227,7 @@ class GWASCatalog(GWAS_source):
 						_links: {}
 				}
 				"""
-				sample_size = sum(int(ancestry['numberOfIndividuals']) for ancestry in ancestries_response['_embedded']['ancestries'])
+				sample_size = sum(int(ancestry['numberOfIndividuals']) for ancestry in ancestries_response['_embedded']['ancestries'] if ancestry['numberOfIndividuals'] is not None)
 
 				for current_snp in singleNucleotidePolymorphisms:
 					if current_snp["rsId"] == '6':
