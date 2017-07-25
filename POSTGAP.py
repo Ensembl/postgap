@@ -340,11 +340,15 @@ def genecluster_association_table(association):
 				vep_terms = ",".join(evidence.info['consequence_terms'])
 				break
 
-		if gene_snp_association.intermediary_scores['VEP_count'] > 0:
-			vep_mean = gene_snp_association.intermediary_scores['VEP_sum'] / gene_snp_association.intermediary_scores['VEP_count']
+		if 'VEP_mean' in gene_snp_association.intermediary_scores:
+			vep_mean = gene_snp_association.intermediary_scores['VEP_mean']
 		else:
 			vep_mean = 0
 
+		if 'VEP_sum' in gene_snp_association.intermediary_scores:
+			vep_sum = gene_snp_association.intermediary_scores['VEP_sum']
+		else:
+			vep_sum = 0
 
 		r2_distances = [read_pairwise_ld(gene_snp_association.snp, gwas_snp.snp, r2_matrix, r2_index)  for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
 
@@ -370,7 +374,7 @@ def genecluster_association_table(association):
 				"|".join(gwas_reported_traits),
 				int(gene_snp_association.snp.rsID in gwas_snps),
 				vep_terms,
-				gene_snp_association.intermediary_scores['VEP_sum'],
+				vep_sum,
 				vep_mean
 			]
 

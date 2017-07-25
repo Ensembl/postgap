@@ -459,6 +459,7 @@ def compute_v2g_scores(reg, cisreg):
 		if 'VEP' in intermediary_scores[gene]:
 			intermediary_scores[gene]['VEP_sum'] = intermediary_scores[gene]['VEP']
 			intermediary_scores[gene]['VEP'] = intermediary_scores[gene]['VEP_max']
+			intermediary_scores[gene]['VEP_mean'] = intermediary_scores[gene]['VEP_sum'] / intermediary_scores[gene]['VEP_count']
 
 		gene_scores[gene] = sum(intermediary_scores[gene].values())
 
