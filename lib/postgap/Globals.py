@@ -36,3 +36,13 @@ DEBUG = True
 BLACKLISTED_REGIONS = [
 	Region(chrom = '6', start=28477797, end=33448354) # MHC
 ]
+
+EVIDENCE_WEIGHTS = {
+	'Regulome': 1,
+	'VEP': 1,
+	'GTEx': 1,
+	'Fantom5': 1,
+	'DHS': 1,
+	'PCHIC': 1,
+	'nearest_gene': 1
+}

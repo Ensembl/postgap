@@ -461,9 +461,8 @@ def compute_v2g_scores(reg, cisreg):
 			intermediary_scores[gene]['VEP'] = intermediary_scores[gene]['VEP_max']
 			intermediary_scores[gene]['VEP_mean'] = intermediary_scores[gene]['VEP_sum'] / intermediary_scores[gene]['VEP_count']
 
-		gene_scores[gene] = sum(intermediary_scores[gene].values())
-
-
+		# Weighted sum
+		gene_scores[gene] = sum(intermediary_scores[gene][source] * postgap.Globals.EVIDENCE_WEIGHTS[source] for source in intermediary_scores[gene] if source in postgap.Globals.EVIDENCE_WEIGHTS)
 
 	return intermediary_scores, gene_scores
 
