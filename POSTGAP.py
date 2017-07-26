@@ -32,7 +32,6 @@ import argparse
 from argparse import RawTextHelpFormatter
 import collections
 import json
-import sqlite3
 import re
 import logging
 import logging.config
@@ -106,22 +105,19 @@ def main():
 			options.tissues = ["Whole_Blood"]
 		res = postgap.Integration.ld_snps_to_genes([snp], options.tissues)
 
-	if options.db is None:
-		if options.output is None:
-			output = sys.stdout
-		else:
-			output = open(options.output, "w")
-
-		if options.json_output:
-			formatted_results = json.dumps(objectToDict(res))
-		elif options.rsID is None and options.coords is None:
-			formatted_results = pretty_output(res)
-		else:
-			formatted_results = pretty_snp_output(res)
-
-		output.write(formatted_results + "\n")
+	if options.output is None:
+		output = sys.stdout
 	else:
-		db_output(options.db, res)
+		output = open(options.output, "w")
+
+	if options.json_output:
+		formatted_results = json.dumps(objectToDict(res))
+	elif options.rsID is None and options.coords is None:
+		formatted_results = pretty_output(res)
+	else:
+		formatted_results = pretty_snp_output(res)
+
+	output.write(formatted_results + "\n")
 
 def get_options():
     """
@@ -194,7 +190,6 @@ def get_options():
     # parser.add_argument('--populations', nargs='*', default=['1000GENOMES:phase_3:GBR'])
     parser.add_argument('--tissues', nargs='*')
     parser.add_argument('--output')
-    parser.add_argument('--db')
     parser.add_argument('--species', nargs='*', default = 'Human')
     parser.add_argument('--database_dir', dest = 'databases', default = 'databases')
     parser.add_argument('--debug', '-g', action = 'store_true')
@@ -265,54 +260,6 @@ def pretty_cluster_association(association):
 	"""
 	results = genecluster_association_table(association)
 	return "\n".join("\t".join([unicode(element).encode('utf-8') for element in row]) for row in results)
-
-def db_output(db, associations):
-	"""
-
-		Writes association stats into DB 
-		Args1: string, DB name
-		Args2: [ GeneCluster_Association ]
-
-	"""
-	conn = sqlite3.connect(db)
-	table_sql = '''CREATE TABLE IF NOT EXISTS results (
-		ld_snp_rsID TEXT, 
-		chrom TEXT, 
-		pos INT,
-		gene_symbol TEXT,
-		gene_id TEXT,
-		gene_chrom TEXT,
-		gene_tss INT,
-		disease_name TEXT,
-		disease_efo_id TEXT, 
-		score REAL,
-		rank INT,
-		r2 real,
-		gwas_source TEXT,
-		gwas_snps TEXT,
-		gwas_pvalues TEXT,
-		gwas_sizes TEXT,
-		gwas_pmids TEXT,
-		gwas_reported_traits TEXT,
-		ls_snp_is_gwas_snp INT,
-		vep_terms TEXT,''' + ",".join([re.sub(" ", "_", source.display_name) + " INT\n" for source in postgap.GWAS.sources + postgap.Cisreg.sources + postgap.Reg.sources]) + ")"
-	conn.execute(table_sql)
-	map(lambda association: db_output_association(conn, association), associations)
-	conn.commit()
-	conn.close()
-
-def db_output_association(conn, association):
-	"""
-
-		Prints association stats in roughly the same format as STOPGAP for a cluster of SNPs
-		Arg1: SQLITE3 connection 
-		Arg2: GeneCluster_Association
-		Returntype: String
-
-	"""
-	results = genecluster_association_table(association)
-	sql_cmd = "INSERT INTO results VALUES (%s)" % ",".join("?" for item in results)
-	conn.execute(sql_cmd, results)
 
 def genecluster_association_table(association):
 	"""
