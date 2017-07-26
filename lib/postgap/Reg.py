@@ -31,6 +31,7 @@ limitations under the License.
 import Globals
 from postgap.DataModel import *
 import postgap.BedTools
+from postgap.Utils import *
 import logging
 
 class Reg_source(object):
@@ -96,7 +97,142 @@ class Regulome(Reg_source):
 				source = self.display_name,
 				score = 2 if feature[3][0] == '1' or feature[3][0] == '2' else 1,
 				study = None,
-				tissue = None
+				tissue = None,
+				info = None
 			)
+
+class VEP_reg(Reg_source):
+	display_name = 'VEP_reg'
+	def run(self, snps, tissues):
+		"""
+
+			Returns all genes associated to a set of SNPs in VEP
+			Args:
+			* [ SNP ]
+			* [ string ] (tissues)
+			Returntype: [ Regulatory_Evidence ]
+
+		"""
+		list = concatenate(self.get(chunk) for chunk in chunks(snps, 199))
+		'''
+
+			Example output from VEP:
+			[
+				{
+					'colocated_variants': [
+						{
+							'phenotype_or_disease': 1,
+							'seq_region_name': '9',
+							'eas_allele': 'C',
+							'amr_maf': '0.4553',
+							'strand': 1,
+							'sas_allele': 'C',
+							'id': 'rs1333049',
+							'allele_string': 'G/C',
+							'sas_maf': '0.4908',
+							'amr_allele': 'C',
+							'minor_allele_freq': '0.4181',
+							'afr_allele': 'C',
+							'eas_maf': '0.5367',
+							'afr_maf': '0.2133',
+							'end': 22125504,
+							'eur_maf': '0.4722',
+							'eur_allele': 'C',
+							'minor_allele': 'C',
+							'pubmed': [
+								24262325,
+							],
+							'start': 22125504
+						}
+					],
+					'assembly_name': 'GRCh38',
+					'end': 22125504,
+					'seq_region_name': '9',
+					'transcript_consequences': [
+						{
+							'gene_id': 'ENSG00000240498',
+							'variant_allele': 'C',
+							'distance': 4932,
+							'biotype': 'antisense',
+							'gene_symbol_source': 'HGNC',
+							'consequence_terms': [
+								'downstream_gene_variant'
+							],
+							'strand': 1,
+							'hgnc_id': 'HGNC:34341',
+							'gene_symbol': 'CDKN2B-AS1',
+							'transcript_id': 'ENST00000584020',
+							'impact': 'MODIFIER'
+						},
+					],
+					'strand': 1,
+					'id': 'rs1333049',
+					'most_severe_consequence': 'downstream_gene_variant',
+					'allele_string': 'G/C',
+					'start': 22125504
+				}
+			]
+
+		'''
+
+		snp_hash = dict( (snp.rsID, snp) for snp in snps)
+		res = []
+		for hit in list:
+			MAFs = None
+			for variant in hit['colocated_variants']:
+				if variant['id'] == hit['id']:
+					 MAFs = variant
+					 break
+
+			if MAFs is not None:
+				res.append(Regulatory_Evidence(
+					snp = snp_hash[hit['input']],
+					score = 0,
+					source = self.display_name,
+					study = None,
+					tissue = None,
+					info = {
+						'MAFs': MAFs
+					}
+				))
+
+		self.logger.info("\tFound %i interactions in VEP" % (len(res)))
+
+		return res
+
+	def remove_none_elements(self, list):
+		return filter(self.exists, list)
+
+	def exists(self, it):
+		return (it is not None)
+
+	def get(self, chunk_param):
+		"""
+
+			Queries Ensembl servers. Recursively breaks down query if error code 400 is returned
+			Args:
+			* [ SNP ]
+			Returntype: [ Regulatory_Evidence ]
+
+		"""
+
+		# 
+		chunk = self.remove_none_elements(chunk_param)
+
+		if len(chunk) == 0:
+			return []
+
+		try:
+			server = "http://grch37.rest.ensembl.org"
+			ext = "/vep/%s/id" % (postgap.Globals.SPECIES)
+			return postgap.REST.get(server, ext, data = {"ids" : [snp.rsID for snp in chunk]})
+
+		except requests.exceptions.HTTPError as error:
+			if error.response.status_code == 400 or error.response.status_code == 504:
+				if len(chunk) == 1:
+					return []
+				else:
+					return self.get(chunk[:len(chunk)/2]) + self.get(chunk[len(chunk)/2:])
+			raise
 
 sources = Reg_source.__subclasses__()

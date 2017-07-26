@@ -246,7 +246,7 @@ def pretty_output(associations):
 		Returntype: String
 
 	"""
-	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'disease_name', 'disease_efo_id', 'score', 'rank', 'r2', 'gwas_source', 'gwas_snp', 'gwas_pvalue', 'gwas_size', 'gwas_pmid', 'gwas_reported_trait', 'ls_snp_is_gwas_snp', 'vep_terms', 'vep_sum', 'vep_mean'] + [source.display_name for source in postgap.Cisreg.sources + postgap.Reg.sources])
+	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'afr_maf', 'amr_maf', 'eas_maf', 'eur_maf', 'sas_maf', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'disease_name', 'disease_efo_id', 'score', 'rank', 'r2', 'gwas_source', 'gwas_snp', 'gwas_pvalue', 'gwas_size', 'gwas_pmid', 'gwas_reported_trait', 'ls_snp_is_gwas_snp', 'vep_terms', 'vep_sum', 'vep_mean'] + [source.display_name for source in postgap.Cisreg.sources + postgap.Reg.sources])
 	content = map(pretty_cluster_association, associations)
 	return "\n".join([header] + content)
 
@@ -281,11 +281,38 @@ def genecluster_association_table(association):
 	gwas_reported_traits = [gwas_association.reported_trait for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
 
 	for gene_snp_association in association.evidence:
+		afr_maf = 'N/A'
+		amr_maf = 'N/A'
+		eas_maf = 'N/A'
+		eur_maf = 'N/A'
+		sas_maf = 'N/A'
+
 		vep_terms = "N/A"
 		for evidence in gene_snp_association.cisregulatory_evidence:
 			if evidence.source == "VEP":
 				vep_terms = ",".join(evidence.info['consequence_terms'])
-				break
+
+		for evidence in gene_snp_association.regulatory_evidence:
+			if evidence.source == "VEP_reg":
+				MAFs = evidence.info['MAFs']
+				print MAFs
+				if MAFs is not None:
+					if 'afr_maf' in MAFs:
+						afr_maf = MAFs['afr_maf']
+						print 'HIT'
+					if 'amr_maf' in MAFs:
+						amr_maf = MAFs['amr_maf']
+						print 'HIT'
+					if 'eas_maf' in MAFs:
+						eas_maf = MAFs['eas_maf']
+						print 'HIT'
+					if 'eur_maf' in MAFs:
+						eur_maf = MAFs['eur_maf']
+						print 'HIT'
+					if 'sas_maf' in MAFs:
+						sas_maf = MAFs['sas_maf']
+						print 'HIT'
+					break
 
 		if 'VEP_mean' in gene_snp_association.intermediary_scores:
 			vep_mean = gene_snp_association.intermediary_scores['VEP_mean']
@@ -301,29 +328,34 @@ def genecluster_association_table(association):
 
 
 		row = [
-				gene_snp_association.snp.rsID, 
-				gene_snp_association.snp.chrom, 
-				gene_snp_association.snp.pos, 
-				association.gene.name, 
-				association.gene.id, 
-				association.gene.chrom, 
-				association.gene.tss, 
-				gwas_association.disease.name,
-				re.sub(".*/", "", gwas_association.disease.efo),
-				gene_snp_association.score, 
-				gene_snp_association.rank,
-				"|".join(map(str, r2_distances)),
-				"|".join(gwas_sources),
-				"|".join(gwas_snps),
-				"|".join(map(str, gwas_pvalues)),
-				"|".join(map(str, gwas_sizes)),
-				"|".join(gwas_studies),
-				"|".join(gwas_reported_traits),
-				int(gene_snp_association.snp.rsID in gwas_snps),
-				vep_terms,
-				vep_sum,
-				vep_mean
-			]
+			gene_snp_association.snp.rsID, 
+			gene_snp_association.snp.chrom, 
+			gene_snp_association.snp.pos, 
+			afr_maf,
+			amr_maf,
+			eas_maf,
+			eur_maf,
+			sas_maf,
+			association.gene.name, 
+			association.gene.id, 
+			association.gene.chrom, 
+			association.gene.tss, 
+			gwas_association.disease.name,
+			re.sub(".*/", "", gwas_association.disease.efo),
+			gene_snp_association.score, 
+			gene_snp_association.rank,
+			"|".join(map(str, r2_distances)),
+			"|".join(gwas_sources),
+			"|".join(gwas_snps),
+			"|".join(map(str, gwas_pvalues)),
+			"|".join(map(str, gwas_sizes)),
+			"|".join(gwas_studies),
+			"|".join(gwas_reported_traits),
+			int(gene_snp_association.snp.rsID in gwas_snps),
+			vep_terms,
+			vep_sum,
+			vep_mean
+		]
 
 		row += [gene_snp_association.intermediary_scores[functional_source.display_name] for functional_source in postgap.Cisreg.sources + postgap.Reg.sources]
 		results.append(row)

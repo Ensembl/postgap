@@ -303,18 +303,27 @@ class VEP(Cisreg_source):
 
 		snp_hash = dict( (snp.rsID, snp) for snp in snps)
 		transcript_consequences = filter(lambda X: 'transcript_consequences' in X, list)
-		res = [
-			Cisregulatory_Evidence(
-				snp = snp_hash[hit['input']],
-				gene = postgap.Ensembl_lookup.get_ensembl_gene(consequence['gene_id']),
-				score = VEP_impact_to_score[consequence['impact']],
-				source = self.display_name,
-				study = None,
-				tissue = None,
-				info = {'consequence_terms': consequence['consequence_terms']}
-			)
-			for hit in transcript_consequences for consequence in hit['transcript_consequences']
-		]
+		res = []
+		for hit in transcript_consequences:
+			for consequence in hit['transcript_consequences']:
+				MAFs = None
+				for variant in hit['colocated_variants']:
+					if variant['id'] == hit['id']:
+						 MAFs = variant
+						 break
+
+				res.append(Cisregulatory_Evidence(
+					snp = snp_hash[hit['input']],
+					gene = postgap.Ensembl_lookup.get_ensembl_gene(consequence['gene_id']),
+					score = VEP_impact_to_score[consequence['impact']],
+					source = self.display_name,
+					study = None,
+					tissue = None,
+					info = {
+						'consequence_terms': consequence['consequence_terms'], 
+						'MAFs': MAFs
+					}
+				))
 
 		self.logger.info("\tFound %i interactions in VEP" % (len(res)))
 
