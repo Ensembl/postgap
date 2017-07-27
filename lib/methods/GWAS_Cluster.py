@@ -60,7 +60,14 @@ def GWAS_Clusters_ok(gwas_clusters):
 	return True, ""
 
 def compute_gwas_cluster_with_finemap_posteriors(gwas_cluster, cluster_name="Unnamed cluster"):
-	
+	"""
+		Computes finemap posteriors for a gwas cluster.
+		
+		The output is a GWAS_Cluster like the input, but with the 
+		finemap_posteriors attribute set.
+		
+		Returns: GWAS_Cluster
+	"""
 	finemap_posteriors = compute_finemap_posteriors(gwas_cluster, cluster_name = cluster_name)
 	
 	if finemap_posteriors is None:
@@ -73,7 +80,12 @@ def compute_gwas_cluster_with_finemap_posteriors(gwas_cluster, cluster_name="Unn
 	)
 
 def compute_finemap_posteriors(gwas_cluster, cluster_name="Unnamed cluster"):
-	
+	"""
+		Computes finemap posteriors for a gwas cluster.
+		
+		Returns the finemap_posteriors returned by the as computed by the 
+		stochastic search in finemap.
+	"""
 	ld_snps   = gwas_cluster.ld_snps
 	gwas_snps = gwas_cluster.gwas_snps
 	
