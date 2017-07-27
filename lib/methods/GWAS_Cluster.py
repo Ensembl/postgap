@@ -143,8 +143,12 @@ def compute_gwas_snps_with_z_scores(gwas_snps):
 	return gwas_snps_with_z_scores
 
 def compute_approximated_gwas_zscores(gwas_snps, ld_snps):
+	
+	from postgap.DataModel import GWAS_SNP
+	snps_with_right_type = [ snp.snp if type(snp) is GWAS_SNP else snp for snp in ld_snps ]
+	
 	# LD measures the deviation from the expectation of non-association.
-	(SNP_ids, r2_array) = postgap.LD.get_pairwise_ld(ld_snps)
+	(SNP_ids, r2_array) = postgap.LD.get_pairwise_ld(snps_with_right_type)
 
 	logger = logging.getLogger(__name__)
 	
