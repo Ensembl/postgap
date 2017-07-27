@@ -217,12 +217,10 @@ def get_options():
     parser.add_argument('--debug', '-g', action = 'store_true')
     parser.add_argument('--json_output', '-j', action = 'store_true')
     parser.add_argument('--child_terms', action = 'store_true')
-
     parser.add_argument('--GWAS', default=None, nargs='*', choices=(GWAS_options))
     parser.add_argument('--Cisreg', default=None, nargs='*', choices=(CisReg_options))
     parser.add_argument('--Reg', default=None, nargs='*', choices=(Reg_options))
-
-
+    parser.add_argument('--work_dir', default = 'postgap_temp_work_dir')
     options = parser.parse_args()
 
     postgap.Globals.DATABASES_DIR = options.databases
@@ -230,10 +228,10 @@ def get_options():
     postgap.Globals.DEBUG = postgap.Globals.DEBUG or options.debug
     
     if options.efos is not None:
-        postgap.Globals.work_directory = "finemap/" + "_".join(options.efos)
+        postgap.Globals.work_directory = options.work_dir + "/" + "_".join(options.efos)
     
     if options.diseases is not None:
-        postgap.Globals.work_directory = "finemap/" + "_".join(options.diseases)
+        postgap.Globals.work_directory = options.work_dir + "/" + "_".join(options.diseases)
     
     postgap.Globals.finemap_gwas_clusters_directory = postgap.Globals.work_directory + "/gwas_clusters"
     postgap.Globals.finemap_eqtl_clusters_directory = postgap.Globals.work_directory + "/eqtl_clusters"
