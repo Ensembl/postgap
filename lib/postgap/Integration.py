@@ -211,46 +211,87 @@ def cluster_gwas_snps(gwas_snps, populations):
 	clusters = merge_preclusters(filtered_preclusters)
 	
 	if len(clusters)>0:
-		import pickle
 		
-		from postgap.Globals import finemap_gwas_clusters_directory
-		
+		from postgap.Globals import finemap_gwas_clusters_directory		
 		logger.info("Writing %i clusters from %i GWAS SNP locations to %s" % (len(clusters), len(gwas_snp_locations), finemap_gwas_clusters_directory))
-		
+		write_gwas_clusters_to_files(clusters, finemap_gwas_clusters_directory)
+	
+	logger.info("Found %i clusters from %i GWAS SNP locations" % (len(clusters), len(gwas_snp_locations)))
+
+	return clusters
+
+def write_gwas_clusters_to_files(clusters, directory_name_for_storing_the_gwas_clusters):
 		import os
-		if not os.path.exists(finemap_gwas_clusters_directory):
-			os.makedirs(finemap_gwas_clusters_directory)
+		if not os.path.exists(directory_name_for_storing_the_gwas_clusters):
+			os.makedirs(directory_name_for_storing_the_gwas_clusters)
 		
-		for cluster_index in range(len(clusters)):
-			
-			current_cluster = clusters[cluster_index]
-			assert type(current_cluster) is postgap.DataModel.GWAS_Cluster, "The current_cluster is a GWAS_Cluster "
-			
-			gwas_snps = current_cluster.gwas_snps
-			assert type(gwas_snps) is list, "We have a list."
-			assert len(gwas_snps) > 0, "We have a list with something in it."
-			
-			gwas_snp = gwas_snps[0]
-			assert type(gwas_snp) is postgap.DataModel.GWAS_SNP, "The gwas_snp is a GWAS_SNP."
-			
-			snp = gwas_snp.snp
-			assert type(snp) is postgap.DataModel.SNP, "snp is a SNP (and not its dbSNP accession)."
-			
-			rsID = snp.rsID
-			cluster_file_name = finemap_gwas_clusters_directory + "/gwas_cluster_" +  str(cluster_index).zfill(4) + "_around_snp_" + rsID + ".pickle"
+		for cluster in clusters:
+
+			cluster_file_name = create_file_name_for_gwas_cluster(cluster)
 			
 			import os.path
 			if os.path.isfile(cluster_file_name):
 				raise Exception("File " + cluster_file_name + " already exists!")
 
 			f = open(cluster_file_name, 'w')
-			pickle.dump(current_cluster, f)
+			
+			import pickle
+			pickle.dump(cluster, f)
 			f.close
+	
+def create_file_name_for_gwas_cluster(gwas_cluster):
+	
+	production_name = create_production_name_for_gwas_cluster(gwas_cluster)
+	
+	from postgap.Globals import finemap_gwas_clusters_directory
+	cluster_file_name = finemap_gwas_clusters_directory + "/" +  production_name + ".pickle"
+	
+	return cluster_file_name
 
-	logger.info("Found %i clusters from %i GWAS SNP locations" % (len(clusters), len(gwas_snp_locations)))
+def create_directory_name_for_storing_the_eqtl_cluster(gwas_cluster):
+	
+	assert type(gwas_cluster) is postgap.DataModel.GWAS_Cluster, "The gwas_cluster is a GWAS_Cluster "
+	
+	production_name = create_production_name_for_gwas_cluster(gwas_cluster)
+	
+	from postgap.Globals import finemap_gwas_clusters_directory
+	directory_name_for_storing_the_eqtl_cluster = finemap_gwas_clusters_directory + "/" +  production_name
+	
+	return directory_name_for_storing_the_eqtl_cluster
+	
+# def create_file_name_for_eqtl_cluster(gwas_cluster):
+# 	
+# 	production_name = create_production_name_for_gwas_cluster(gwas_cluster)
+# 	
+# 	from postgap.Globals import finemap_gwas_clusters_directory
+# 	cluster_file_name = finemap_gwas_clusters_directory + "/" +  production_name + "/.pickle"
+# 	
+# 	return cluster_file_name
 
-	return clusters
-
+def create_production_name_for_gwas_cluster(gwas_cluster):
+	"""
+		Create a production name for a gwas cluster.
+		
+		Within a run, no other gwas cluster should be given this name, so 
+		this should be usable for generating file or directory names. 
+	"""
+	assert type(gwas_cluster) is postgap.DataModel.GWAS_Cluster, "The gwas_cluster is a GWAS_Cluster "
+	
+	gwas_snps = gwas_cluster.gwas_snps
+	assert type(gwas_snps) is list, "We have a list."
+	assert len(gwas_snps) > 0, "We have a list with something in it."
+	
+	gwas_snp = gwas_snps[0]
+	assert type(gwas_snp) is postgap.DataModel.GWAS_SNP, "The gwas_snp is a GWAS_SNP."
+	
+	snp = gwas_snp.snp
+	assert type(snp) is postgap.DataModel.SNP, "snp is a SNP (and not its dbSNP accession)."
+	
+	rsID = snp.rsID
+	production_name = "gwas_cluster_around_snp_" + rsID
+	
+	return production_name
+	
 def gwas_snp_to_precluster(gwas_snp, populations):
     """
 
@@ -349,6 +390,83 @@ def merge_preclusters(preclusters):
 
 	return clusters
 
+def write_geneSNP_Associations_to_files(geneSNP_Associations, directory_name_for_storing_the_eqtl_cluster):
+	
+	tissue_gene_to_cisregulatory_evidence_list = create_tissue_gene_to_cisreg_dictionary_from_geneSNP_Associations(geneSNP_Associations)
+	
+	list_of_files_created = []
+	
+	tissues = tissue_gene_to_cisregulatory_evidence_list.keys()
+	for tissue in tissues:
+		
+		gene_stable_ids = tissue_gene_to_cisregulatory_evidence_list[tissue].keys()		
+		for gene_stable_id in gene_stable_ids:
+			
+			cis_regulatory_evidence_list = tissue_gene_to_cisregulatory_evidence_list[tissue][gene_stable_id]
+			assert type(cis_regulatory_evidence_list) is list, "We have a list."
+			
+			for cis_regulatory_evidence in cis_regulatory_evidence_list:
+				
+				import postgap.DataModel
+				assert type(cis_regulatory_evidence) is postgap.DataModel.Cisregulatory_Evidence, "The cis_regulatory_evidence is Cisregulatory_Evidence"
+				
+				snp = cis_regulatory_evidence.snp
+				assert type(snp) is postgap.DataModel.SNP, "snp is a SNP (and not its dbSNP accession)."
+				
+				rsID = snp.rsID
+				
+				cluster_file_name = directory_name_for_storing_the_eqtl_cluster + "/cis_regulatory_evidence_from_eqtl_snp_" + rsID + "_linked_to_" + gene_stable_id + "_in_"  + tissue + ".pickle"
+				
+				list_of_files_created.append(cluster_file_name)
+				
+				import os.path
+				if os.path.isfile(cluster_file_name):
+					raise Exception("File " + cluster_file_name + " already exists!")
+				
+				import os
+				if not os.path.exists(directory_name_for_storing_the_eqtl_cluster):
+					os.makedirs(directory_name_for_storing_the_eqtl_cluster)
+
+				f = open(cluster_file_name, 'w')
+				import pickle
+				pickle.dump(cis_regulatory_evidence, f)
+				f.close
+	
+	return list_of_files_created
+				
+def create_tissue_gene_to_cisreg_dictionary_from_geneSNP_Associations(geneSNP_Associations):
+	
+	import collections
+	def generate_default():
+		return collections.defaultdict(list)
+
+	tissue_gene_to_cisregulatory_evidence_list = collections.defaultdict(generate_default)
+	
+	for geneSNP_Association in geneSNP_Associations:
+		
+		import postgap.DataModel
+		assert type(geneSNP_Association) is postgap.DataModel.GeneSNP_Association, "geneSNP_Association is a postgap.DataModel.GeneSNP_Association"
+		
+		gene = geneSNP_Association.gene
+		assert type(gene) is postgap.DataModel.Gene, "gene is a postgap.DataModel.Gene"
+		
+		gene_stable_id = gene.id
+		
+		snp = geneSNP_Association.snp
+		assert type(snp) is postgap.DataModel.SNP, "snp is a postgap.DataModel.SNP"
+		
+		cisregulatory_evidence_list = geneSNP_Association.cisregulatory_evidence
+		assert type(cisregulatory_evidence_list) is list, "cisregulatory_evidence_list is a list"
+		
+		for cisregulatory_evidence in cisregulatory_evidence_list:
+			
+			assert type(cisregulatory_evidence) is postgap.DataModel.Cisregulatory_Evidence, "cisregulatory_evidence is postgap.DataModel.Cisregulatory_Evidence"
+			
+			tissue = cisregulatory_evidence.tissue
+			
+			tissue_gene_to_cisregulatory_evidence_list[tissue][gene_stable_id].append(cisregulatory_evidence)
+	
+	return tissue_gene_to_cisregulatory_evidence_list
 
 def cluster_to_genes(cluster, tissues, populations):
     """
@@ -367,6 +485,12 @@ def cluster_to_genes(cluster, tissues, populations):
 
     # Obtain interaction data from LD snps
     associations = ld_snps_to_genes([snp for snp in cluster.ld_snps if snp in ld], tissues)
+    
+    if len(associations) > 0:
+	    list_of_files_created = write_geneSNP_Associations_to_files(
+			associations, 
+			directory_name_for_storing_the_eqtl_cluster = create_directory_name_for_storing_the_eqtl_cluster(cluster)
+		)
     
     # Compute gene score
     gene_scores = dict(
@@ -472,7 +596,7 @@ def rsIDs_to_genes(snp, tissues):
 		tissues = ["Whole_Blood"]
 	return ld_snps_to_genes(postgap.Ensembl_lookup.get_snp_locations([snp]), tissues)
 
-def ld_snps_to_genes(ld_snps, tissues):
+def ld_snps_to_genes(ld_snps, tissues, directory_name_for_storing_the_eqtl_cluster=None):
 	"""
 
 		Associates genes to LD linked SNPs
@@ -488,49 +612,17 @@ def ld_snps_to_genes(ld_snps, tissues):
 	
 	# Extract SNP specific info:
 	reg = regulatory_evidence(cisreg.keys(), tissues)
-	
-	logger = logging.getLogger(__name__)
-	import pickle
-	
-	from postgap.Globals import finemap_eqtl_clusters_directory
-	
-	#logger.info("Writing %i clusters from %i GWAS SNP locations to %s" % (len(clusters), len(gwas_snp_locations), finemap_gwas_clusters_directory))
-	
-	import os
-	if not os.path.exists(finemap_eqtl_clusters_directory):
-		os.makedirs(finemap_eqtl_clusters_directory)
-
-	tissue_gene_eqtl = rehash_cisregulatory_evidence(cisreg)
-
-	for tissue in tissues:
 		
-		genes = tissue_gene_eqtl[tissue].keys()
-		
-		for gene in genes:
-			
-			cis_regulatory_evidence_list = tissue_gene_eqtl[tissue][gene]
-			assert type(cis_regulatory_evidence_list) is list, "We have a list."
-			
-			first_piece_of_cis_regulatory_evidence = cis_regulatory_evidence_list[0]
-			assert type(first_piece_of_cis_regulatory_evidence) is postgap.DataModel.Cisregulatory_Evidence, "The cis_regulatory_evidence is Cisregulatory_Evidence"
-			
-			snp = first_piece_of_cis_regulatory_evidence.snp
-			assert type(snp) is postgap.DataModel.SNP, "snp is a SNP (and not its dbSNP accession)."
-			
-			rsID = snp.rsID
-			
-			gene_stable_id = gene.id
-			cluster_file_name = finemap_eqtl_clusters_directory + "/eqtl_snp_" + rsID + "_linked_to_" + gene_stable_id + "_in_"  + tissue + ".pickle"
-			
-			import os.path
-			if os.path.isfile(cluster_file_name):
-				raise Exception("File " + cluster_file_name + " already exists!")
-			
-			f = open(cluster_file_name, 'w')
-			pickle.dump(first_piece_of_cis_regulatory_evidence, f)
-			f.close
-	
-	# Create objects
+	# Create postgap.DataModel.GeneSNP_Association objects:
+	#
+	#   cisreg is a dictionary of dictionaries that map to a list of cis regulatory evidence:
+	#
+	#    dict(postgap.DataModel.SNP -> dict( postgap.DataModel.Gene -> [ postgap.DataModel.Cisregulatory_Evidence ] )
+	#
+	#   so cisreg[snp] is a dictionary:
+	#
+	#     dict(postgap.DataModel.Gene -> [ postgap.DataModel.Cisregulatory_Evidence ])
+	#
 	SNP_GeneSNP_Associations = concatenate((create_SNP_GeneSNP_Associations(snp, reg[snp], cisreg[snp]) for snp in cisreg))
 	
 	return SNP_GeneSNP_Associations
@@ -680,15 +772,18 @@ def cisregulatory_evidence(ld_snps, tissues):
 	#evidence = concatenate(source().run(ld_snps, tissues) for source in postgap.Cisreg.sources)
 	
 	GTEx = postgap.Cisreg.GTEx()
-	evidence = GTEx.run(ld_snps, tissues)
+	evidence_list = GTEx.run(ld_snps, tissues)
 	
+	for evidence in evidence_list:
+		assert type(evidence) is postgap.DataModel.Cisregulatory_Evidence, "evidence is Cisregulatory_Evidence"
 
-	filtered_evidence = filter(lambda association: association.gene is not None and association.gene.biotype == "protein_coding", evidence)
+	filtered_evidence = filter(lambda association: association.gene is not None and association.gene.biotype == "protein_coding", evidence_list)
 
 	# Group by snp, then gene:
 	#res = collections.defaultdict(lambda: collections.defaultdict(list))
 	res = collections.defaultdict(generate_default)
 	for association in filtered_evidence:
+		assert type(association) is postgap.DataModel.Cisregulatory_Evidence, "association is Cisregulatory_Evidence"
 		res[association.snp][association.gene].append(association)
 
 	logger.info(("Found %i cis-regulatory interactions in all databases" % (len(res))))
