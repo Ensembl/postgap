@@ -47,4 +47,8 @@ EVIDENCE_WEIGHTS = {
 	'nearest_gene': 1
 }
 
+# These get set in POSTGAP.py
 work_directory = "notset"
+
+finemap_gwas_clusters_directory = None
+finemap_eqtl_clusters_directory = None
