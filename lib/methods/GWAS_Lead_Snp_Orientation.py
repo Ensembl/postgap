@@ -55,7 +55,7 @@ class Risk_Allele_Orientation(Risk_Allele_Orientation_Prototype):
 		Risk_Allele_Orientation is used to store the orientation of a risk 
 		allele from gwas.
 		
-		The interesting bit it in the field "risk_allele_present_in_reference",
+		The interesting bit is in the field "risk_allele_present_in_reference",
 		the other fields are used for generating meaningful messages when
 		exceptions are thrown.
 	'''
@@ -143,9 +143,22 @@ class Risk_Allele_Orientation_Consensus:
 		This class is used like an enum to report the outcome of analysing the
 		orientation of the gwas risk alleles belonging to the same association.
 		
-		It handles the two expected cases that are straightforward to report.
+		It handles the two expected cases that are straightforward to report:
+		
+		- all_gwas_risk_alleles_present_in_reference and
+		- no_gwas_risk_allele_present_in_reference
 		
 		Exceptions to these are handled by raising exceptions.
+		
+		There are only two possibilities, so it might be tempting to replace 
+		them with a boolean, however, this has not been done, because the two
+		outcomes are not the opposite of each other.
+		
+		The opposite of "all_gwas_risk_alleles_present_in_reference" is not 
+		that "no_gwas_risk_allele_present_in_reference". The opposite would 
+		be: that "at least one risk allele is not present in the reference, but 
+		others may be". This case, however means that the there may be no 
+		consensus on the orientation and this has to be handled differently.  
 	'''
 	all_gwas_risk_alleles_present_in_reference, \
 	no_gwas_risk_allele_present_in_reference    \
@@ -161,9 +174,11 @@ def compute_risk_allele_orientation_consensus(risk_allele_orientations):
 		
 		Return type: A value from the "enum" Risk_Allele_Orientation_Consensus
 		
-		Returns True, if all risk alleles from gwas are present in the 
-		reference, False, if none of the risk alleles are present in the
-		reference.
+		Returns 
+		  - all_gwas_risk_alleles_present_in_reference, if all risk alleles 
+		    from gwas are present in the reference, 
+		  - no_gwas_risk_allele_present_in_reference, if none of the risk 
+		    alleles are present in the reference.
 		
 		Exceptions:
 		
@@ -180,6 +195,20 @@ def compute_risk_allele_orientation_consensus(risk_allele_orientations):
 		may be present in the reference, others not. This is an inconsistent 
 		case. If it arises, a "some_alleles_present_in_reference_others_not_exception" is
 		raised.
+		
+		no_dbsnp_accession_for_snp_exception: 
+		
+		If snp reported by GWAS doesn't have a dbSNP accession. 
+		(e.g.: http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/riskAlleles/16576159/snp)
+		
+		cant_determine_base_at_snp_in_reference_exception:
+		
+		Other possible exceptions:
+		- base_in_allele_missing_exception,
+		- gwas_data_integrity_exception (Not necessarily gwas's fault, just more weird stuff),
+		- variant_mapping_is_ambiguous_exception and
+		- ensembl_data_integrity_exception.
+		
 	'''
 	
 	# Flags for keeping track, if any of these outcomes it true for all risk 
