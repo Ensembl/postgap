@@ -42,8 +42,11 @@ def main():
 	'''
 
 python scripts/compute_eqtl_posteriors_with_finemap.py \
-    --eqtl_cluster_file      finemap/EFO_0000203/eqtl_clusters/eqtl_snps_linked_to_ENSG00000168038_in_Whole_Blood.pickle \
-    --output_posteriors_file finemap/EFO_0000203/eqtl_clusters/eqtl_snps_linked_to_ENSG00000168038_in_Whole_Blood.posteriors.pickle
+    --gwas_cluster_file      /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir_for_diabetes5/diabetes/gwas_clusters/gwas_cluster_around_snp_rs10510110.pickle \
+    --eqtl_cluster_file      /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir_for_diabetes5/diabetes/gwas_clusters/gwas_cluster_around_snp_rs10510110/cis_regulatory_evidence_from_eqtl_snp_rs11200594_linked_to_ENSG00000107679_in_Whole_Blood.pickle \
+    --output_posteriors_file /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir_for_diabetes5/diabetes/gwas_clusters/gwas_cluster_around_snp_rs10510110/cis_regulatory_evidence_from_eqtl_snp_rs11200594_linked_to_ENSG00000107679_in_Whole_Blood.posteriors.pickle
+
+python scripts/stringify_pickle_object.py --pickle_file /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir_for_diabetes5/diabetes/gwas_clusters/gwas_cluster_around_snp_rs10510110/cis_regulatory_evidence_from_eqtl_snp_rs2034245_linked_to_ENSG00000155542_in_Whole_Blood.pickle
 
 	'''
 	
@@ -51,18 +54,47 @@ python scripts/compute_eqtl_posteriors_with_finemap.py \
 	postgap.Globals.DATABASES_DIR = '/nfs/nobackup/ensembl/mnuhn/postgap/databases/'
 
 	parser = argparse.ArgumentParser(description='Run finemap')
+	parser.add_argument('--gwas_cluster_file')
 	parser.add_argument('--eqtl_cluster_file')
 	parser.add_argument('--output_posteriors_file')
 	
 	options = parser.parse_args()
 
-	logger.info( "eqtl_cluster_file      = " + options.eqtl_cluster_file      )
-	logger.info( "output_posteriors_file = " + options.output_posteriors_file )
+	logging.info( "gwas_cluster_file      = " + options.gwas_cluster_file      )
+	logging.info( "eqtl_cluster_file      = " + options.eqtl_cluster_file      )
+	logging.info( "output_posteriors_file = " + options.output_posteriors_file )
 	
 	import pickle
 	
-	pickle_fh       = open(options.eqtl_cluster_file, 'rb')
-	eqtl_cluster    = pickle.load(pickle_fh)
+	pickle_fh       = open(options.gwas_cluster_file, 'rb')
+	gwas_cluster    = pickle.load(pickle_fh)
+	
+	assert type(gwas_cluster) is postgap.DataModel.GWAS_Cluster, "gwas_cluster is a GWAS_Cluster"
+
+	#pickle_fh       = open(options.eqtl_cluster_file, 'rb')
+	#eqtl_cluster    = pickle.load(pickle_fh)
+	
+	eqtl_clusters = []
+	
+	with open(options.eqtl_cluster_file, 'rb') as pickle_fh:
+		try:
+			while True:
+				eqtl_cluster = pickle.load(pickle_fh)
+				assert type(eqtl_cluster) is postgap.DataModel.Cisregulatory_Evidence, "eqtl_cluster is a Cisregulatory_Evidence"
+				eqtl_clusters.append(eqtl_cluster)
+		except EOFError:
+			logger.info("Got " + str(len(eqtl_clusters)) + " eqtl clusters.")
+	
+	for eqtl_cluster in eqtl_clusters:
+		from pprint import pformat
+		logger.info(pformat(eqtl_cluster))
+	
+	logger.info(pformat(gwas_cluster))
+	
+	assert_all_eqtl_snps_are_in_gwas_cluster(
+		eqtl_clusters = eqtl_clusters,
+		gwas_cluster = gwas_cluster
+	)
 
 	#
 	# finemap/EFO_0000203/gwas_clusters/gwas_cluster_0.posteriors.pickle -> gwas_cluster_0.posteriors
@@ -75,9 +107,13 @@ python scripts/compute_eqtl_posteriors_with_finemap.py \
 	# title = gwas_cluster_0
 	title = os.path.splitext(temp)[0]
 
-	eqtl_posteriors = process_eqtl_cluster(eqtl_cluster, cluster_name = title)
+	eqtl_posteriors = process_eqtl_cluster(
+		cisregulatory_evidence = eqtl_cluster, 
+		gwas_cluster = gwas_cluster,
+		cluster_name = title
+	)
 	
-	logger.info( "eQTL posteriors have been computed:\n" + str(eqtl_posteriors) )
+	logging.info( "eQTL posteriors have been computed:\n" + str(eqtl_posteriors) )
 	
 	import os
 	output_posteriors_file = options.output_posteriors_file
@@ -94,82 +130,52 @@ python scripts/compute_eqtl_posteriors_with_finemap.py \
 
 	logging.info("All done.");
 
-def process_eqtl_cluster(eqtl_cluster, cluster_name = "Unnamed cluster"):
+def assert_all_eqtl_snps_are_in_gwas_cluster(gwas_cluster, eqtl_clusters):
+	
+	all_snp_ids_in_gwas_cluster = dict()
+	
+	for gwas_snp in gwas_cluster.gwas_snps:
+		all_snp_ids_in_gwas_cluster[gwas_snp.snp.rsID] = 1
+	
+	for ld_snp in gwas_cluster.ld_snps:
+		all_snp_ids_in_gwas_cluster[ld_snp.rsID] = 1
+	
+	for eqtl_cluster in eqtl_clusters:
+
+		if not(eqtl_cluster.snp.rsID in all_snp_ids_in_gwas_cluster):
+			raise Exception("Found id in eqtl cluster that is not in the gwas cluster!")
+		
+		#print "Ok " + eqtl_cluster.snp.rsID	
+
+def process_eqtl_cluster(cisregulatory_evidence, gwas_cluster, cluster_name = "Unnamed cluster"):
 	
 	import pprint
 	pp = pprint.PrettyPrinter(indent=4, width=80)
-	pp.pprint(eqtl_cluster)
+	pp.pprint(cisregulatory_evidence)
 	
-	snps_correlated_to_current_tissue_and_gene = []
-
-	for cisregulatory_evidence in eqtl_cluster:
-		snps_correlated_to_current_tissue_and_gene.append(cisregulatory_evidence.snp)
+	ld_snps   = gwas_cluster.ld_snps
+	gwas_snps = gwas_cluster.gwas_snps
 	
-	# Finemap needs zscores.
-	#
-	# In order to compute zscores the betas are needed in addition 
-	# to the pvalues.
-	#
-	# The betas are fetched from the rest server.
-	#
-	zscore_vector = []
+	snps_from_gwas_snps = [ gwas_snp.snp for gwas_snp in gwas_snps ]
 	
-	snp_hash = dict( (snp.rsID, snp) for snp in snps_correlated_to_current_tissue_and_gene)
-	
-	from postgap.Cisreg import GTEx
-	GTEx = GTEx()
-	#
-	# At this point all cisregulatory evidence should be GTEx and from the 
-	# same snp and tissue.
-	#
-	gene   = eqtl_cluster[0].gene
-	tissue = eqtl_cluster[0].tissue
-	cisregulatory_evidence_with_betas = GTEx.gene_tissue_betas(gene, tissue, snp_hash)
-	
-	snp_to_beta = dict(
-		(cisregulatory_evidence_with_beta.snp.rsID, cisregulatory_evidence_with_beta.beta) 
-			for cisregulatory_evidence_with_beta in cisregulatory_evidence_with_betas
+	from methods.GWAS_Cluster import compute_approximated_gwas_zscores
+	(approximated_gwas_zscores, r2_array, SNP_ids) = compute_approximated_gwas_zscores(
+		gwas_snps = [ cisregulatory_evidence ],
+		ld_snps   = ld_snps + snps_from_gwas_snps
 	)
 	
-	# The betas are in snp_to_beta now.
+	logging.info("SNPs:")
+	logging.info("\n" + stringify_vector(SNP_ids))
 	
-	print "snp_to_beta:"
-	pp.pprint(snp_to_beta)
+	logging.info("zscores " + str(type(approximated_gwas_zscores)) + ":")
+	logging.info("\n" + stringify_vector(approximated_gwas_zscores))
 	
-	# Compute vector of zscores.
-	#
-	
-	from methods.GWAS_SNP import compute_z_score_from_pvalue_and_sign, sign
-	
-	for cisregulatory_evidence in eqtl_cluster:
-		pvalue = cisregulatory_evidence.pvalue
-		zscore = compute_z_score_from_pvalue_and_sign(
-			pvalue, 
-			sign(snp_to_beta[cisregulatory_evidence.snp.rsID])
-		)
-		zscore_vector.append(zscore)
-	
-	print "zscore_vector:"
-	pp.pprint(zscore_vector)
-	
-	print "snps_correlated_to_current_tissue_and_gene:"
-	pp.pprint(snps_correlated_to_current_tissue_and_gene)
-	
-	from postgap.LD import get_pairwise_ld
-	(SNP_ids, r2_array) = get_pairwise_ld(snps_correlated_to_current_tissue_and_gene)
-	
-	logger.info("SNPs:")
-	logger.info("\n" + stringify_vector(SNP_ids))
-	
-	logger.info("zscores:")
-	logger.info("\n" + stringify_vector(zscore_vector))
-	
-	logger.info("Matrix of pairwise linkage disequilibria:")
-	logger.info("\n" + stringify_matrix(r2_array))
+	logging.info("Matrix of pairwise linkage disequilibria:")
+	logging.info("\n" + stringify_matrix(r2_array))
 
-	logger.info("Cluster name: " + cluster_name)
+	logging.info("Cluster name: " + cluster_name)
 
-	logger.info("Running finemap")
+	logging.info("Running finemap")
 
 	kstart = 1
 	kmax   = 1
@@ -178,7 +184,7 @@ def process_eqtl_cluster(eqtl_cluster, cluster_name = "Unnamed cluster"):
 	import finemap.stochastic_search as sss
 	finemap_posteriors = sss.finemap(
 		labels       = SNP_ids,
-		z_scores     = zscore_vector,
+		z_scores     = approximated_gwas_zscores,
 		cov_matrix   = r2_array,
 		n            = len(r2_array),
 		kstart       = kstart,
@@ -187,7 +193,7 @@ def process_eqtl_cluster(eqtl_cluster, cluster_name = "Unnamed cluster"):
 		prior        = "independence",
 		sample_label = cluster_name
 	)
-	logger.info("Done running finemap")
+	logging.info("Done running finemap")
 	
 	if finemap_posteriors is None:
 		raise Exception ("ERROR: Didn't get posteriors!")
@@ -195,8 +201,10 @@ def process_eqtl_cluster(eqtl_cluster, cluster_name = "Unnamed cluster"):
 	return finemap_posteriors
 
 def stringify_vector(vector):
-	import json
-	return json.dumps(vector, indent=4)
+	#import json
+	#return json.dumps(vector, indent=4)
+	from pprint import pformat
+	return pformat(vector)
 	
 def stringify_matrix(matrix):
 	
