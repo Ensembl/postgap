@@ -17,6 +17,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 """
+from macpath import basename
+from postgap.Integration import cisregulatory_evidence
 
 """
 
@@ -36,16 +38,14 @@ import logging.config
 logging.config.fileConfig('configuration/logging.conf')
 logger = logging.getLogger(__name__)
 
+from os.path import * 
+
 def main():
 	'''
 	
 python scripts/create_finemap_pipeline_commands.py \
-    --gwas_directory              finemap/EFO_0000203/gwas_clusters \
-    --gwas_posteriors_directory   finemap/EFO_0000203/gwas_posteriors \
-    --eqtl_directory              finemap/EFO_0000203/eqtl_clusters \
-    --eqtl_posteriors_directory   finemap/EFO_0000203/eqtl_posteriors \
-    --output_posteriors_directory finemap/EFO_0000203/joint_posteriors \
-    --output_commands_file        finemap/EFO_0000203/compute_all_posteriors.bash
+    --gwas_clusters_directory        /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir_for_diabetes8/diabetes/gwas_clusters/ \
+    --output_commands_file /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir_for_diabetes8/diabetes/gwas_clusters/compute_all_posteriors.bash
 
 	'''
 	
@@ -53,84 +53,108 @@ python scripts/create_finemap_pipeline_commands.py \
 	postgap.Globals.DATABASES_DIR = '/nfs/nobackup/ensembl/mnuhn/postgap/databases/'
 
 	parser = argparse.ArgumentParser(description='Run finemap')
-	parser.add_argument('--gwas_directory')
-	parser.add_argument('--gwas_posteriors_directory')
-	parser.add_argument('--eqtl_directory')
-	parser.add_argument('--eqtl_posteriors_directory')
-	parser.add_argument('--output_posteriors_directory')
+	parser.add_argument('--gwas_clusters_directory')
 	parser.add_argument('--output_commands_file')
 	
 	options = parser.parse_args()
 
-	gwas_directory              = options.gwas_directory
-	gwas_posteriors_directory   = options.gwas_posteriors_directory
-	eqtl_directory              = options.eqtl_directory
-	eqtl_posteriors_directory   = options.eqtl_posteriors_directory
-	output_posteriors_directory = options.output_posteriors_directory
-	output_commands_file        = options.output_commands_file
+	gwas_clusters_directory = options.gwas_clusters_directory
+	output_commands_file    = options.output_commands_file
 
-	logger.info( "gwas_directory              = " + gwas_directory )
-	logger.info( "eqtl_directory              = " + eqtl_directory )
-	logger.info( "output_posteriors_directory = " + output_posteriors_directory )
-	logger.info( "output_commands_file        = " + output_commands_file )
-	
-	gwas_files = ls_files_from_directory(gwas_directory)
-	eqtl_files = ls_files_from_directory(eqtl_directory)
-	
-	import json
-	logger.info( "Got gwas cluster files: " + json.dumps(gwas_files) )
-	logger.info( "Got eqtl files: "         + json.dumps(eqtl_files) )
-
-	cmd = "python scripts/compute_gwas_posteriors_with_finemap.py" \
-		+ " --gwas_cluster_file %s/%s" \
-		+ " --output_posteriors_file %s/%s"
+	logger.info( "gwas_clusters_directory = " + gwas_clusters_directory )
+	logger.info( "output_commands_file    = " + output_commands_file )
 	
 	output_commands_fh = open(output_commands_file, 'w')
 	
-	for gwas_file in gwas_files:
-		command = cmd % (gwas_directory, gwas_file, gwas_posteriors_directory, gwas_file)
-		output_commands_fh.write(command)
+	gwas_files = ls_files_from_directory(gwas_clusters_directory)
+		
+	for gwas_cluster_file in gwas_files:
+		
+		(gwas_cluster_file_basename, gwas_cluster_file_extension) = splitext(gwas_cluster_file)
+		
+		if gwas_cluster_file_extension == ".bash":
+			continue
+		
+		if gwas_cluster_file_extension != ".pickle":
+			raise Exception("File " + gwas_cluster_file_extension + " does not end in .pickle")
+		
+		gwas_cluster_posteriors_output_file = gwas_clusters_directory + "/" + gwas_cluster_file_basename + ".posteriors" + gwas_cluster_file_extension
+		
+		cmd = create_command_for_gwas_cluster_posteriors(
+			gwas_cluster_file                   = gwas_clusters_directory + "/" + gwas_cluster_file, 
+			gwas_cluster_posteriors_output_file = gwas_cluster_posteriors_output_file,
+		)
+
+		output_commands_fh.write(cmd)
 		output_commands_fh.write("\n")
-		print command
-
-
-	cmd = "python scripts/compute_eqtl_posteriors_with_finemap.py" \
-		+ " --eqtl_cluster_file %s/%s" \
-		+ " --output_posteriors_file %s/%s"
-
-	for eqtl_file in eqtl_files:
-		command = cmd % (eqtl_directory, eqtl_file, eqtl_posteriors_directory, eqtl_file)
-		output_commands_fh.write(command)
-		output_commands_fh.write("\n")
-		print command
-
-	cmd = "python scripts/compute_joint_posteriors.py" \
-		+ " --gwas_posterior %s/%s" \
-		+ " --eqtl_posterior %s/%s" \
-		+ " --output_joint_posteriors %s/%s"
-
-	for gwas_file in gwas_files:
-		for eqtl_file in eqtl_files:
+				
+		cisregulatory_evidence_directory = gwas_clusters_directory + "/" + gwas_cluster_file_basename
+		
+		if isdir(cisregulatory_evidence_directory):
 			
-			import os
-			gwas_file_base = os.path.splitext(gwas_file)[0]
-			eqtl_file_base = os.path.splitext(eqtl_file)[0]
+			cisreg_files = ls_files_from_directory(cisregulatory_evidence_directory)
 			
-			join_posteriors_file = eqtl_file_base + "__" + gwas_file_base + ".joint_posteriors.pickle"
-			
-			command = cmd % (gwas_posteriors_directory, gwas_file, eqtl_posteriors_directory, eqtl_file, output_posteriors_directory, join_posteriors_file)
-			output_commands_fh.write(command)
-			output_commands_fh.write("\n")
-			#print command
-
-	output_commands_fh.close()
+			for cisreg_file in cisreg_files:
+				
+				(cisreg_file_basename, cisreg_file_extension) = splitext(cisreg_file)
+				
+				eqtl_posteriors_output_file = cisregulatory_evidence_directory + "/" + cisreg_file_basename + ".posteriors" + cisreg_file_extension
+				
+				cmd = create_command_for_eqtl_posteriors(
+					gwas_cluster_file           = gwas_clusters_directory          + "/" + gwas_cluster_file,
+					eqtl_file                   = cisregulatory_evidence_directory + "/" + cisreg_file,
+					eqtl_posteriors_output_file = eqtl_posteriors_output_file,  
+				)
+				
+				output_commands_fh.write(cmd)
+				output_commands_fh.write("\n")
+				
+				joint_posteriors_output_file = cisregulatory_evidence_directory + "/" + cisreg_file_basename + "_and_" + gwas_cluster_file_basename + ".joint_posteriors" + cisreg_file_extension
+				
+				cmd = create_command_for_joint_posteriors(
+					gwas_cluster_posteriors_file = gwas_cluster_posteriors_output_file,
+					eqtl_posteriors_file         = eqtl_posteriors_output_file,  
+					joint_posteriors_file        = joint_posteriors_output_file,
+				)
+				
+				output_commands_fh.write(cmd)
+				output_commands_fh.write("\n")
+				
 	logger.info("Commands have been written to: " + output_commands_file)
 	logging.info("All done.");
+				
+
+def create_command_for_gwas_cluster_posteriors(gwas_cluster_file, gwas_cluster_posteriors_output_file):
+	
+	cmd = "python scripts/compute_gwas_posteriors_with_finemap.py \\\n" \
+		+ "    --gwas_cluster_file      " + gwas_cluster_file + " \\\n" \
+		+ "    --output_posteriors_file " + gwas_cluster_posteriors_output_file + "\n"
+	
+	return cmd
+
+def create_command_for_eqtl_posteriors(gwas_cluster_file, eqtl_file, eqtl_posteriors_output_file):
+	
+	cmd = "python scripts/compute_eqtl_posteriors_with_finemap.py \\\n" \
+		+ "    --gwas_cluster_file       " + gwas_cluster_file + " \\\n" \
+		+ "    --eqtl_cluster_file       " + eqtl_file + " \\\n" \
+		+ "    --output_posteriors_file  " + eqtl_posteriors_output_file + "\n"
+
+	return cmd
+
+def create_command_for_joint_posteriors(gwas_cluster_posteriors_file, eqtl_posteriors_file, joint_posteriors_file):
+	
+	cmd = "python scripts/compute_joint_posteriors.py" \
+		+ " --gwas_posterior " 		    + gwas_cluster_posteriors_file + " \\\n" \
+		+ " --eqtl_posterior "          + eqtl_posteriors_file + " \\\n" \
+		+ " --output_joint_posteriors " + joint_posteriors_file + "\n"
+
+	return cmd
 
 def ls_files_from_directory(directory):
 	
 	from os import listdir
 	from os.path import isfile, join
+
 	
 	onlyfiles = [f for f in listdir(directory) if isfile(join(directory, f))]
 	onlyfiles.sort()
