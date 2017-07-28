@@ -221,23 +221,30 @@ def cluster_gwas_snps(gwas_snps, populations):
 	return clusters
 
 def write_gwas_clusters_to_files(clusters, directory_name_for_storing_the_gwas_clusters):
-		import os
-		if not os.path.exists(directory_name_for_storing_the_gwas_clusters):
-			os.makedirs(directory_name_for_storing_the_gwas_clusters)
 		
-		for cluster in clusters:
+	import os
+	if not os.path.exists(directory_name_for_storing_the_gwas_clusters):
+		os.makedirs(directory_name_for_storing_the_gwas_clusters)
+	
+	list_of_files_created = []
+	
+	for cluster in clusters:
 
-			cluster_file_name = create_file_name_for_gwas_cluster(cluster)
-			
-			import os.path
-			if os.path.isfile(cluster_file_name):
-				raise Exception("File " + cluster_file_name + " already exists!")
+		cluster_file_name = create_file_name_for_gwas_cluster(cluster)
+		
+		import os.path
+		if os.path.isfile(cluster_file_name):
+			raise Exception("File " + cluster_file_name + " already exists!")
 
-			f = open(cluster_file_name, 'w')
-			
-			import pickle
-			pickle.dump(cluster, f)
-			f.close
+		f = open(cluster_file_name, 'w')
+		
+		import pickle
+		pickle.dump(cluster, f)
+		f.close
+		
+		list_of_files_created.append(cluster_file_name)
+	
+	return list_of_files_created
 	
 def create_file_name_for_gwas_cluster(gwas_cluster):
 	
@@ -259,15 +266,6 @@ def create_directory_name_for_storing_the_eqtl_cluster(gwas_cluster):
 	
 	return directory_name_for_storing_the_eqtl_cluster
 	
-# def create_file_name_for_eqtl_cluster(gwas_cluster):
-# 	
-# 	production_name = create_production_name_for_gwas_cluster(gwas_cluster)
-# 	
-# 	from postgap.Globals import finemap_gwas_clusters_directory
-# 	cluster_file_name = finemap_gwas_clusters_directory + "/" +  production_name + "/.pickle"
-# 	
-# 	return cluster_file_name
-
 def create_production_name_for_gwas_cluster(gwas_cluster):
 	"""
 		Create a production name for a gwas cluster.
@@ -287,8 +285,10 @@ def create_production_name_for_gwas_cluster(gwas_cluster):
 	snp = gwas_snp.snp
 	assert type(snp) is postgap.DataModel.SNP, "snp is a SNP (and not its dbSNP accession)."
 	
+	cluster_size = len(gwas_snps) + len(gwas_cluster.ld_snps)
+	
 	rsID = snp.rsID
-	production_name = "gwas_cluster_around_snp_" + rsID
+	production_name = "gwas_cluster_with_" + str(cluster_size) + "_snps_around_" + rsID
 	
 	return production_name
 	
@@ -405,32 +405,34 @@ def write_geneSNP_Associations_to_files(geneSNP_Associations, directory_name_for
 			cis_regulatory_evidence_list = tissue_gene_to_cisregulatory_evidence_list[tissue][gene_stable_id]
 			assert type(cis_regulatory_evidence_list) is list, "We have a list."
 			
+			number_of_snps_linked_to_this_gene_and_tissue = len(cis_regulatory_evidence_list)
+			
+			cluster_file_name = directory_name_for_storing_the_eqtl_cluster + "/cis_regulatory_evidence_from_eqtl_" + str(number_of_snps_linked_to_this_gene_and_tissue) + "_snps_linked_to_" + gene_stable_id + "_in_"  + tissue + ".pickle"
+			
+			list_of_files_created.append(cluster_file_name)
+			
+			import os.path
+			if os.path.isfile(cluster_file_name):
+				raise Exception("File " + cluster_file_name + " already exists!")
+			
+			import os
+			if not os.path.exists(directory_name_for_storing_the_eqtl_cluster):
+				os.makedirs(directory_name_for_storing_the_eqtl_cluster)
+
+			f = open(cluster_file_name, 'w')
+			import pickle
+
 			for cis_regulatory_evidence in cis_regulatory_evidence_list:
 				
 				import postgap.DataModel
 				assert type(cis_regulatory_evidence) is postgap.DataModel.Cisregulatory_Evidence, "The cis_regulatory_evidence is Cisregulatory_Evidence"
 				
-				snp = cis_regulatory_evidence.snp
-				assert type(snp) is postgap.DataModel.SNP, "snp is a SNP (and not its dbSNP accession)."
+				#snp = cis_regulatory_evidence.snp
+				#assert type(snp) is postgap.DataModel.SNP, "snp is a SNP (and not its dbSNP accession)."
 				
-				rsID = snp.rsID
-				
-				cluster_file_name = directory_name_for_storing_the_eqtl_cluster + "/cis_regulatory_evidence_from_eqtl_snp_" + rsID + "_linked_to_" + gene_stable_id + "_in_"  + tissue + ".pickle"
-				
-				list_of_files_created.append(cluster_file_name)
-				
-				import os.path
-				if os.path.isfile(cluster_file_name):
-					raise Exception("File " + cluster_file_name + " already exists!")
-				
-				import os
-				if not os.path.exists(directory_name_for_storing_the_eqtl_cluster):
-					os.makedirs(directory_name_for_storing_the_eqtl_cluster)
-
-				f = open(cluster_file_name, 'w')
-				import pickle
 				pickle.dump(cis_regulatory_evidence, f)
-				f.close
+				
+			f.close
 	
 	return list_of_files_created
 				
@@ -596,7 +598,7 @@ def rsIDs_to_genes(snp, tissues):
 		tissues = ["Whole_Blood"]
 	return ld_snps_to_genes(postgap.Ensembl_lookup.get_snp_locations([snp]), tissues)
 
-def ld_snps_to_genes(ld_snps, tissues, directory_name_for_storing_the_eqtl_cluster=None):
+def ld_snps_to_genes(ld_snps, tissues):
 	"""
 
 		Associates genes to LD linked SNPs
@@ -626,41 +628,6 @@ def ld_snps_to_genes(ld_snps, tissues, directory_name_for_storing_the_eqtl_clust
 	SNP_GeneSNP_Associations = concatenate((create_SNP_GeneSNP_Associations(snp, reg[snp], cisreg[snp]) for snp in cisreg))
 	
 	return SNP_GeneSNP_Associations
-
-def rehash_cisregulatory_evidence(snp_to_gene_and_evidence_dict):
-	
-	from postgap.DataModel import SNP, Gene, Cisregulatory_Evidence
-	
-	#
-	# rehash snp_to_gene_and_evidence_dict which is a:
-	#
-	# dict[snp] -> dict( gene -> list (cisregulatory_evidence) )
-	#
-	# to tissue_gene_eqtl which is:
-	#
-	# dict[tissue][gene] -> list(snp)
-	#
-	
-	import collections
-	tissue_gene_eqtl = collections.defaultdict(generate_default)
-	
-	for snp in snp_to_gene_and_evidence_dict.keys():
-		assert type(snp) is SNP, "snp is a SNP"
-		
-		gene_to_cisregulatory_evidence_list = snp_to_gene_and_evidence_dict[snp]
-		
-		for gene in gene_to_cisregulatory_evidence_list.keys():
-			assert type(gene) is Gene, "gene is a Gene"
-			
-			cisregulatory_evidence_list = gene_to_cisregulatory_evidence_list[gene]
-			assert type(cisregulatory_evidence_list) is list, "cisregulatory_evidence_list is a list"
-			
-			for cisregulatory_evidence in cisregulatory_evidence_list:					
-				assert type(cisregulatory_evidence) is Cisregulatory_Evidence, "cisregulatory_evidence is Cisregulatory_Evidence"
-				
-				tissue_gene_eqtl[cisregulatory_evidence.tissue][gene].append(cisregulatory_evidence)
-	
-	return tissue_gene_eqtl
 
 def find_gene_snp_association_with_source(GeneSNP_Association_list, source):
 	
