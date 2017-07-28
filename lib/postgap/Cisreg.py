@@ -116,8 +116,57 @@ class GTEx(Cisreg_source):
 		self.logger.info("\tFound %i SNPs associated to gene %s in GTEx" % (len(res), gene.id))
 
 		return res
-
+	
 	def gene_tissue(self, gene, tissue, snp_hash):
+		
+		cisreg_with_pvalues = self._gene_tissue_pvalue(gene, tissue, snp_hash)
+		
+		if cisreg_with_pvalues is None:
+			return None
+		
+		if len(cisreg_with_pvalues) == 0:
+			# Empty list
+			return cisreg_with_pvalues
+		
+		cisreg_betas = self._gene_tissue_betas(gene, tissue, snp_hash)
+		
+		# Where there are pvalues, there must be betas
+		if cisreg_betas is None:
+			raise Exception
+		
+		if len(cisreg_betas) == 0:
+			raise Exception
+		
+		# Match them up:
+		
+		combined_cisreg_evidence_list = []
+		
+		for cisreg_with_pvalue in cisreg_with_pvalues:
+			
+			matching_cisreg_betas = filter(lambda X: X.snp.rsID == cisreg_with_pvalue.snp.rsID, cisreg_betas)
+			
+			if len(matching_cisreg_betas) != 1:
+				raise Exception
+			
+			cisreg_with_beta = matching_cisreg_betas[0]
+			
+			combined_cisreg_evidence = Cisregulatory_Evidence(
+				snp    = cisreg_with_pvalue.snp,
+				gene   = cisreg_with_pvalue.gene,
+				tissue = cisreg_with_pvalue.tissue,
+				score  = 1,
+				source = cisreg_with_pvalue.source,
+				study  = None,
+				info   = None,
+				pvalue = cisreg_with_pvalue.pvalue,
+				beta   = cisreg_with_beta.beta
+			)
+			combined_cisreg_evidence_list.append(combined_cisreg_evidence)
+		
+		return combined_cisreg_evidence_list
+			
+		
+	def _gene_tissue_pvalue(self, gene, tissue, snp_hash):
 		"""
 
 			Returns all SNPs associated to a gene in GTEx in a given tissue
@@ -211,7 +260,7 @@ class GTEx(Cisreg_source):
 
 		return res
 
-	def gene_tissue_betas(self, gene, tissue, snp_hash):
+	def _gene_tissue_betas(self, gene, tissue, snp_hash):
 		"""
 
 			Returns all SNPs associated to a gene in GTEx in a given tissue
