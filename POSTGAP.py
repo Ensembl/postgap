@@ -298,23 +298,17 @@ def genecluster_association_table(association):
 		for evidence in gene_snp_association.regulatory_evidence:
 			if evidence.source == "VEP_reg":
 				MAFs = evidence.info['MAFs']
-				print MAFs
 				if MAFs is not None:
 					if 'afr_maf' in MAFs:
 						afr_maf = MAFs['afr_maf']
-						print 'HIT'
 					if 'amr_maf' in MAFs:
 						amr_maf = MAFs['amr_maf']
-						print 'HIT'
 					if 'eas_maf' in MAFs:
 						eas_maf = MAFs['eas_maf']
-						print 'HIT'
 					if 'eur_maf' in MAFs:
 						eur_maf = MAFs['eur_maf']
-						print 'HIT'
 					if 'sas_maf' in MAFs:
 						sas_maf = MAFs['sas_maf']
-						print 'HIT'
 					break
 
 		if 'VEP_mean' in gene_snp_association.intermediary_scores:
