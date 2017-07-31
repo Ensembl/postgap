@@ -88,12 +88,14 @@ def main():
 
 	if options.efos is not None:
 		efo_iris = postgap.EFO.query_iris_for_efo_short_form_list(options.efos)
-
-	if options.efos is None:
+	else:
 		efo_iris = filter(lambda X: X is not None, (postgap.EFO.suggest(disease) for disease in options.diseases))
 
-	# Expand list of EFOs to children, concatenate, remove duplicates
-	expanded_efo_iris = efo_iris + concatenate(map(postgap.EFO.children, efo_iris))
+	if options.child_terms:
+		# Expand list of EFOs to children, concatenate, remove duplicates
+		expanded_efo_iris = efo_iris + concatenate(map(postgap.EFO.children, efo_iris))
+	else:
+		expanded_efo_iris = efo_iris
 
 	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0:
 		res = postgap.Integration.diseases_to_genes(options.diseases, expanded_efo_iris, "CEPH", options.tissues)
@@ -194,6 +196,7 @@ def get_options():
     parser.add_argument('--database_dir', dest = 'databases', default = 'databases')
     parser.add_argument('--debug', '-g', action = 'store_true')
     parser.add_argument('--json_output', '-j', action = 'store_true')
+    parser.add_argument('--child_terms', action = 'store_true')
     options = parser.parse_args()
 
     postgap.Globals.DATABASES_DIR = options.databases
