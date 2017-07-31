@@ -306,12 +306,6 @@ class VEP(Cisreg_source):
 		res = []
 		for hit in transcript_consequences:
 			for consequence in hit['transcript_consequences']:
-				MAFs = None
-				for variant in hit['colocated_variants']:
-					if variant['id'] == hit['id']:
-						 MAFs = variant
-						 break
-
 				res.append(Cisregulatory_Evidence(
 					snp = snp_hash[hit['input']],
 					gene = postgap.Ensembl_lookup.get_ensembl_gene(consequence['gene_id']),
@@ -321,7 +315,6 @@ class VEP(Cisreg_source):
 					tissue = None,
 					info = {
 						'consequence_terms': consequence['consequence_terms'], 
-						'MAFs': MAFs
 					}
 				))
 

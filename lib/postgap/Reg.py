@@ -178,23 +178,20 @@ class VEP_reg(Reg_source):
 		snp_hash = dict( (snp.rsID, snp) for snp in snps)
 		res = []
 		for hit in list:
-			MAFs = None
-			for variant in hit['colocated_variants']:
-				if variant['id'] == hit['id']:
-					 MAFs = variant
-					 break
-
-			if MAFs is not None:
-				res.append(Regulatory_Evidence(
-					snp = snp_hash[hit['input']],
-					score = 0,
-					source = self.display_name,
-					study = None,
-					tissue = None,
-					info = {
-						'MAFs': MAFs
-					}
-				))
+			if 'colocated_variants' in hit:
+				for variant in hit['colocated_variants']:
+					if variant['id'] == hit['id']:
+						res.append(Regulatory_Evidence(
+							snp = snp_hash[hit['input']],
+							score = 0,
+							source = self.display_name,
+							study = None,
+							tissue = None,
+							info = {
+								'MAFs': variant
+							}
+						))
+						break
 
 		self.logger.info("\tFound %i interactions in VEP" % (len(res)))
 
