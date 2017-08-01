@@ -351,7 +351,11 @@ class GWASCatalog(GWAS_source):
 								efo  = efo
 							),
 							reported_trait = diseaseTrait,
-							snp     = current_snp["rsId"],
+							snp     = SNP(
+								rsID  = current_snp["rsId"],
+								chrom = None,
+								pos   = None
+							),
 							pvalue  = current_association["pvalue"],
 							pvalue_description  = current_association["pvalueDescription"],
 							sample_size = sample_size,
@@ -621,6 +625,231 @@ class Phewas_Catalog(GWAS_source):
 			)
 
 		return None
+
+class GWAS_File(GWAS_source):
+	display_name = "GWAS File"
+	logger = logging.getLogger(__name__)
+	
+	def find_gwas_data_file(self, diseases, iris):
+		
+		alzheimers_gwas_file = "/nfs/production/panda/ensembl/funcgen/software/postgap/gwas_data_files/IGAP/IGAP_stage_1.txt"
+		
+		gwas_data_file = None
+		
+		if "Alzheimers" in diseases:
+			gwas_data_file = alzheimers_gwas_file
+		
+		return gwas_data_file
+	
+	def create_gwas_association_collector(self):
+		
+		class gwas_association_collector:
+			
+			def __init__(self):
+				self.found_list = []
+			
+			def add_to_found_list(self, gwas_association):
+				self.found_list.append(gwas_association)
+			
+			def get_found_list(self):
+				return self.found_list
+		
+		return gwas_association_collector()
+
+	
+	def run(self, diseases, iris):
+		"""
+
+			Returns all GWAS SNPs associated to a disease in known gwas files
+			Args:
+			* [ string ] (trait descriptions)
+			* [ string ] (trait Ontology IRIs)
+			Returntype: [ GWAS_Association ]
+
+		"""
+		
+		gwas_data_file = self.find_gwas_data_file(diseases, iris)
+		
+		if gwas_data_file is None:
+			return None
+		
+		self.logger.info( "gwas_data_file = " + gwas_data_file )
+		
+		pvalue_filtered_gwas_associations = self.create_gwas_association_collector()
+		
+		gwas_pvalue_threshold = 0.00001
+		
+		pvalue_filter = self.create_pvalue_filter(pvalue_threshold = gwas_pvalue_threshold)
+		
+		self.parse_gwas_data_file(
+			gwas_data_file                    = gwas_data_file,
+			want_this_gwas_association_filter = pvalue_filter,
+			callback                          = pvalue_filtered_gwas_associations.add_to_found_list,
+			max_lines_to_return_threshold     = 3
+		)
+		
+		self.logger.info( "Found " + str(len(pvalue_filtered_gwas_associations.get_found_list())) + " gwas associations with a pvalue of " + str(gwas_pvalue_threshold) + " or less.")
+		
+		return pvalue_filtered_gwas_associations.get_found_list()
+	
+	def create_gwas_clusters_with_pvalues_from_file(self, gwas_clusters, gwas_data_file):
+		
+		proper_gwas_cluster = []
+		
+		cluster_number = 0
+		for gwas_cluster in gwas_clusters:
+			cluster_number += 1
+			gwas_cluster_with_values_from_file = self.create_gwas_cluster_with_pvalues_from_file(gwas_cluster, gwas_data_file)
+			proper_gwas_cluster.append(gwas_cluster_with_values_from_file)
+		
+		return proper_gwas_cluster
+
+		
+	def create_gwas_cluster_with_pvalues_from_file(self, gwas_cluster, gwas_data_file):
+
+		ld_gwas_associations = self.create_gwas_association_collector()
+		
+		self.parse_gwas_data_file(
+			gwas_data_file                    = gwas_data_file, 
+			want_this_gwas_association_filter = self.create_snp_filter(gwas_cluster.ld_snps),
+			callback                          = ld_gwas_associations.add_to_found_list,
+			max_lines_to_return_threshold     = len(gwas_cluster.ld_snps)
+		)
+		from pprint import pformat
+		logging.info( "ld_gwas_associations.found_list: " + pformat(ld_gwas_associations.get_found_list()) )
+		# TODO: Figure out which snps couldn't be found in the file and include them with imputed p values.
+		
+		ld_snps_converted_to_gwas_snps = []
+		ld_snps_that_could_not_be_converted_to_gwas_snps = []
+		
+		for ld_snp in gwas_cluster.ld_snps:
+			
+			gwas_associations_for_ld_snp = filter(lambda x : ld_snp.rsID == x.snp.rsID, ld_gwas_associations.get_found_list())
+			
+			# If one could be found, add that.
+			if len(gwas_associations_for_ld_snp) == 1:
+				
+				logging.info("Found " + ld_snp.rsID + " in the file! All good.")
+				gwas_association = gwas_associations_for_ld_snp[0] 
+				assert type(gwas_association) is GWAS_Association, "gwas_association is GWAS_Association."
+			
+				gwas_snp = GWAS_SNP(
+					snp      = gwas_association.snp,
+					pvalue   = gwas_association.pvalue,
+					evidence = [ gwas_association ]
+				)
+				ld_snps_converted_to_gwas_snps.append(gwas_snp)
+			
+			# If more than one assocation was found: error.	
+			if len(gwas_associations_for_ld_snp) > 1:
+				logging.info("Found more than one matching assocation for " + ld_snp.rsID + " in the file. Bad!")
+				import sys
+				sys.exit(1)
+			
+			# If the snp wasn't found, add it as a regular snp.
+			if len(gwas_associations_for_ld_snp) == 0:
+				logging.info("Found no matching assocation for " + ld_snp.rsID + " in the file. Including it as regular snp.")
+				ld_snps_that_could_not_be_converted_to_gwas_snps.append(ld_snp)
+				
+		proper_gwas_cluster = GWAS_Cluster(
+			gwas_snps          = gwas_cluster.gwas_snps,
+			ld_snps            = ld_snps_converted_to_gwas_snps + ld_snps_that_could_not_be_converted_to_gwas_snps,
+			finemap_posteriors = None,
+		)
+		return proper_gwas_cluster
+	
+	def create_snp_filter(self, snps):
+		
+		rsIDs_to_look_for = []
+		
+		for snp in snps:
+			rsIDs_to_look_for.append(snp.rsID)
+		
+		from pprint import pformat
+		self.logger.info( "Searching for snps: " + pformat(rsIDs_to_look_for) )
+		
+		def snp_name_filter(gwas_association):
+			
+			rsID  = gwas_association.snp.rsID
+			found = rsID in rsIDs_to_look_for
+			
+			return found
+		
+		return snp_name_filter
+
+	def create_pvalue_filter(self, pvalue_threshold):
+		
+		def filter_for_pvalues_smaller_than(gwas_association):
+			if gwas_association.pvalue < pvalue_threshold:
+				return True
+			return False
+		
+		return filter_for_pvalues_smaller_than
+	
+	def parse_gwas_data_file(
+			self, 
+			gwas_data_file, 
+			callback, 
+			want_this_gwas_association_filter,
+			max_lines_to_return_threshold = None,
+			column_labels = [
+				"Chromosome",
+				"Position",
+				"MarkerName",
+				"Effect_allele",
+				"Non_Effect_allele",
+				"Beta",
+				"SE",
+				"Pvalue"
+			]
+		):
+		
+		file = open(gwas_data_file)
+		
+		number_of_lines_returned = 0
+		for line in file:
+			# Skip the line with headers
+			if line.startswith("Chromosome"):
+				continue
+			
+			items = line.rstrip().split('\t')
+			
+			parsed = dict()
+			for column_index in range(len(column_labels)):
+				
+				column_label = column_labels[column_index]
+				parsed[column_label] = items[column_index]
+			
+			from postgap.DataModel import SNP
+			snp = SNP(
+				rsID  = parsed["MarkerName"],
+				chrom = parsed["Chromosome"],
+				pos   = int(parsed["Position"])
+			)
+			
+			gwas_association = GWAS_Association(
+				pvalue                            = float(parsed["Pvalue"]),
+				snp                               = snp,
+				disease                           = "Todo",
+				reported_trait                    = "Todo",
+				source                            = "Todo",
+				study                             = "Todo",
+				odds_ratio                        = "Todo",
+				beta_coefficient                  = float(parsed["Beta"]),
+				beta_coefficient_unit             = "Todo",
+				beta_coefficient_direction        = "Todo",
+				rest_hash                         = None,
+				risk_alleles_present_in_reference = None,
+			)
+			
+			if not want_this_gwas_association_filter(gwas_association):
+				continue
+
+			callback(gwas_association)
+			
+			number_of_lines_returned += 1
+			if max_lines_to_return_threshold is not None and number_of_lines_returned>=max_lines_to_return_threshold:
+				break
 
 class GWAS_DB(GWAS_source):
 	display_name = "GWAS DB"
