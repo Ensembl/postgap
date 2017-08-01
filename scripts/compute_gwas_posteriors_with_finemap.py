@@ -31,6 +31,7 @@ import sys
 import argparse
 import logging
 import logging.config
+from pprint import pformat
 
 logging.config.fileConfig('configuration/logging.conf')
 logger = logging.getLogger(__name__)
@@ -48,6 +49,8 @@ python scripts/compute_gwas_posteriors_with_finemap.py \
 	postgap.Globals.DATABASES_DIR = '/nfs/nobackup/ensembl/mnuhn/postgap/databases/'
 
 	parser = argparse.ArgumentParser(description='Run finemap')
+	parser.add_argument('--diseases', nargs='*', default=[])
+	#parser.add_argument('--iris',     nargs='*', default=[])
 	parser.add_argument('--gwas_cluster_file')
 	parser.add_argument('--output_posteriors_file')
 	
@@ -55,6 +58,11 @@ python scripts/compute_gwas_posteriors_with_finemap.py \
 	
 	logger.info( "gwas_cluster_file      = " + options.gwas_cluster_file      )
 	logger.info( "output_posteriors_file = " + options.output_posteriors_file )
+	#logger.info( "iris                   = " + pformat(options.iris) )
+	logger.info( "diseases               = " + pformat(options.diseases) )
+	
+	#import sys
+	#sys.exit(0)
 	
 	import pickle
 	
@@ -74,12 +82,27 @@ python scripts/compute_gwas_posteriors_with_finemap.py \
 	
 	logger.info("Cluster title: " + title)
 	
+	diseases = options.diseases
+	#iris     = options.iris
+	iris     = []
+	
+	from finemap.GwasIntegation import load_gwas_pvalues_from_file
+	gwas_clusters_with_values_from_file = load_gwas_pvalues_from_file([ gwas_cluster ], diseases, iris)
+	
+	# One cluster goes into load_gwas_pvalues_from_file, so only one should 
+	# come out.
+	#
+	if len(gwas_clusters_with_values_from_file) != 1:
+		raise Exception
+	
+	gwas_cluster_with_values_from_file = gwas_clusters_with_values_from_file[0]
+	
 	from methods.GWAS_Cluster import ZScoreComputationException
 	from methods.GWAS_SNP     import snp_in_multiple_gwas_associations_exception
 	
 	try:
 		
-		gwas_posteriors = process_gwas_cluster(gwas_cluster, cluster_name = title)
+		gwas_posteriors = process_gwas_cluster(gwas_cluster_with_values_from_file, cluster_name = title)
 		
 	except ZScoreComputationException as z:
 		
