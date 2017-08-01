@@ -114,14 +114,18 @@ def scan_disease_databases(diseases, efos):
 				evidence = [ gwas_association ]
 			)
 
-	res = associations_by_snp.values()
+	gwas_snps = associations_by_snp.values()
+	
+	for gwas_snp in gwas_snps:
+		assert type(gwas_snp) is GWAS_SNP
+		assert type(gwas_snp.snp) is SNP, "The gwas_snp.snp is a SNP. " + gwas_snp.snp
 
 	if postgap.Globals.GWAS_adaptors == None:
 		logger.info("Found %i unique GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (len(res), ", ".join(diseases), ", ".join(efos)))
 	else:
 		logger.info("Found %i unique GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in (%s)" % (len(res), ", ".join(diseases), ", ".join(efos), ", ".join(postgap.Globals.GWAS_adaptors)))
 
-	return res
+	return gwas_snps
 
 def gwas_snps_to_genes(gwas_snps, populations, tissue_weights):
 	"""
@@ -138,12 +142,20 @@ def gwas_snps_to_genes(gwas_snps, populations, tissue_weights):
 	
 	for gwas_snp in gwas_snps:
 		assert type(gwas_snp) is GWAS_SNP
+		assert type(gwas_snp.snp) is SNP, "The gwas_snp.snp is a SNP. " + gwas_snp.snp
 	
 	# Must set the tissue settings before separating out the gwas_snps
 	if tissue_weights is None:
 		tissue_weights = gwas_snps_to_tissue_weights(gwas_snps)
 
 	clusters = cluster_gwas_snps(gwas_snps, populations)
+	
+	if len(clusters)>0:
+		
+		from postgap.Globals import finemap_gwas_clusters_directory
+		logger.info("Writing %i clusters to %s" % (len(clusters), finemap_gwas_clusters_directory))
+		write_gwas_clusters_to_files(clusters, finemap_gwas_clusters_directory)
+	
 	res = concatenate(cluster_to_genes(cluster, tissue_weights, populations) for cluster in clusters)
 
 	logger.info("\tFound %i genes associated to all clusters" % (len(res)))
@@ -181,6 +193,7 @@ def cluster_gwas_snps(gwas_snps, populations):
 	
 	for gwas_snp in gwas_snps:
 		assert type(gwas_snp) is GWAS_SNP
+		assert type(gwas_snp.snp) is SNP, "The gwas_snp.snp is a SNP. " + gwas_snp.snp
 	
 	gwas_snp_locations = get_gwas_snp_locations(gwas_snps)
 
@@ -202,12 +215,6 @@ def cluster_gwas_snps(gwas_snps, populations):
 	#
 	clusters = merge_preclusters(filtered_preclusters)
 	
-	if len(clusters)>0:
-		
-		from postgap.Globals import finemap_gwas_clusters_directory		
-		logger.info("Writing %i clusters from %i GWAS SNP locations to %s" % (len(clusters), len(gwas_snp_locations), finemap_gwas_clusters_directory))
-		write_gwas_clusters_to_files(clusters, finemap_gwas_clusters_directory)
-	
 	logger.info("Found %i clusters from %i GWAS SNP locations" % (len(clusters), len(gwas_snp_locations)))
 
 	return clusters
@@ -215,6 +222,9 @@ def cluster_gwas_snps(gwas_snps, populations):
 def write_gwas_clusters_to_files(clusters, directory_name_for_storing_the_gwas_clusters):
 		
 	import os
+	
+	assert directory_name_for_storing_the_gwas_clusters is not None, "directory_name_for_storing_the_gwas_clusters must be set!"
+	
 	if not os.path.exists(directory_name_for_storing_the_gwas_clusters):
 		os.makedirs(directory_name_for_storing_the_gwas_clusters)
 	
@@ -222,7 +232,7 @@ def write_gwas_clusters_to_files(clusters, directory_name_for_storing_the_gwas_c
 	
 	for cluster in clusters:
 
-		cluster_file_name = create_file_name_for_gwas_cluster(cluster)
+		cluster_file_name = create_file_name_for_gwas_cluster(cluster, directory_name_for_storing_the_gwas_clusters)
 		
 		import os.path
 		if os.path.isfile(cluster_file_name):
@@ -238,12 +248,10 @@ def write_gwas_clusters_to_files(clusters, directory_name_for_storing_the_gwas_c
 	
 	return list_of_files_created
 	
-def create_file_name_for_gwas_cluster(gwas_cluster):
+def create_file_name_for_gwas_cluster(gwas_cluster, base_directory):
 	
 	production_name = create_production_name_for_gwas_cluster(gwas_cluster)
-	
-	from postgap.Globals import finemap_gwas_clusters_directory
-	cluster_file_name = finemap_gwas_clusters_directory + "/" +  production_name + ".pickle"
+	cluster_file_name = base_directory + "/" +  production_name + ".pickle"
 	
 	return cluster_file_name
 
@@ -313,8 +321,15 @@ def get_gwas_snp_locations(gwas_snps):
 		Returntype: [ GWAS_SNP ]
 
 	"""
-	original_gwas_snp = dict((gwas_snp.snp, gwas_snp) for gwas_snp in gwas_snps)
+	for gwas_snp in gwas_snps:
+		assert type(gwas_snp) is postgap.DataModel.GWAS_SNP, "The gwas_snp is a GWAS_SNP."
+		assert type(gwas_snp.snp) is postgap.DataModel.SNP, "The gwas_snp.snp is a SNP. " + gwas_snp.snp
+	
+	postgap.Globals.SPECIES = "homo_sapiens"
+	
+	original_gwas_snp = dict((gwas_snp.snp.rsID, gwas_snp) for gwas_snp in gwas_snps)
 	mapped_snps = postgap.Ensembl_lookup.get_snp_locations(original_gwas_snp.keys())
+	
 	return [
 		GWAS_SNP(
 			snp = mapped_snp,
