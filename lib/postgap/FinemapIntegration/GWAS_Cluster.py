@@ -100,8 +100,8 @@ def compute_finemap_posteriors(gwas_cluster, cluster_name="Unnamed cluster"):
 	kmax   = 1
 	max_iter = "Not used when kstart == kmax"
 
-	import finemap.stochastic_search as sss
-	finemap_posteriors = sss.finemap(
+	from postgap.Finemap import finemap
+	finemap_posteriors = finemap(
 		labels       = SNP_ids,
 		z_scores     = approximated_gwas_zscores,
 		cov_matrix   = r2_array,
@@ -123,13 +123,13 @@ def compute_gwas_snps_with_z_scores(gwas_snps):
 	
 	logger = logging.getLogger(__name__)
 	
-	from methods.GWAS_SNP import compute_z_score_for_gwas_snp
+	from postgap.FinemapIntegration.GWAS_SNP import compute_z_score_for_snp_like_type
 	
 	gwas_snps_with_z_scores = filter (
 		lambda X: X.z_score is not None, [ 
 			snp_with_zscore(
 				snp_id  = gwas_snp.snp.rsID,
-				z_score = compute_z_score_for_gwas_snp(gwas_snp)
+				z_score = compute_z_score_for_snp_like_type(gwas_snp)
 			)
 				for gwas_snp in gwas_snps 
 		]
@@ -182,7 +182,7 @@ def compute_approximated_gwas_zscores(gwas_snps, ld_snps):
 				+ json.dumps(SNP_ids) \
 			)
 	
-	from methods.GWAS_Cluster import compute_approximated_zscores_for_snps_from_multiple_lead_snps
+	from postgap.FinemapIntegration.GWAS_Cluster import compute_approximated_zscores_for_snps_from_multiple_lead_snps
 	
 	approximated_gwas_zscores = compute_approximated_zscores_for_snps_from_multiple_lead_snps(
 		ld_correlation_matrix = r2_array,

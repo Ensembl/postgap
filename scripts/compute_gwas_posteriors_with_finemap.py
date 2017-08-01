@@ -86,7 +86,7 @@ python scripts/compute_gwas_posteriors_with_finemap.py \
 	#iris     = options.iris
 	iris     = []
 	
-	from finemap.GwasIntegation import load_gwas_pvalues_from_file
+	from postgap.FinemapIntegration.GwasIntegration import load_gwas_pvalues_from_file
 	gwas_clusters_with_values_from_file = load_gwas_pvalues_from_file([ gwas_cluster ], diseases, iris)
 	
 	# One cluster goes into load_gwas_pvalues_from_file, so only one should 
@@ -97,8 +97,8 @@ python scripts/compute_gwas_posteriors_with_finemap.py \
 	
 	gwas_cluster_with_values_from_file = gwas_clusters_with_values_from_file[0]
 	
-	from methods.GWAS_Cluster import ZScoreComputationException
-	from methods.GWAS_SNP     import snp_in_multiple_gwas_associations_exception
+	from postgap.FinemapIntegration.GWAS_Cluster import ZScoreComputationException
+	from postgap.FinemapIntegration.GWAS_SNP     import snp_in_multiple_gwas_associations_exception
 	
 	try:
 		
@@ -138,7 +138,7 @@ python scripts/compute_gwas_posteriors_with_finemap.py \
 
 def process_gwas_cluster(gwas_cluster, cluster_name="Unnamed cluster"):
 
-	from methods.GWAS_Cluster import compute_gwas_cluster_with_finemap_posteriors
+	from postgap.FinemapIntegration.GWAS_Cluster import compute_gwas_cluster_with_finemap_posteriors
 	gwas_clusters_with_posteriors = compute_gwas_cluster_with_finemap_posteriors(gwas_cluster, cluster_name = cluster_name)
 	logger.info("Got %i gwas clusters with posteriors." % len(gwas_clusters_with_posteriors))
 	return gwas_clusters_with_posteriors.finemap_posteriors

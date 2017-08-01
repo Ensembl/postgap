@@ -158,7 +158,7 @@ def process_eqtl_cluster(cisregulatory_evidence, gwas_cluster, cluster_name = "U
 	
 	snps_from_gwas_snps = [ gwas_snp.snp for gwas_snp in gwas_snps ]
 	
-	from methods.GWAS_Cluster import compute_approximated_gwas_zscores
+	from postgap.FinemapIntegration.GWAS_Cluster import compute_approximated_gwas_zscores
 	(approximated_gwas_zscores, r2_array, SNP_ids) = compute_approximated_gwas_zscores(
 		gwas_snps = [ cisregulatory_evidence ],
 		ld_snps   = ld_snps + snps_from_gwas_snps
@@ -181,7 +181,7 @@ def process_eqtl_cluster(cisregulatory_evidence, gwas_cluster, cluster_name = "U
 	kmax   = 1
 	max_iter = "Not used when kstart == kmax"
 
-	import finemap.stochastic_search as sss
+	import postgap.Finemap as sss
 	finemap_posteriors = sss.finemap(
 		labels       = SNP_ids,
 		z_scores     = approximated_gwas_zscores,

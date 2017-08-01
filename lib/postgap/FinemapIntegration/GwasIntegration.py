@@ -53,10 +53,10 @@ def load_gwas_pvalues_from_file(gwas_clusters, diseases = [], iris = []):
 
 def compute_gwas_clusters_with_finemap_posteriors(gwas_clusters):
 	
-	from methods.GWAS_Cluster import GWAS_Clusters_ok
+	from postgap.FinemapIntegration.GWAS_Cluster import GWAS_Clusters_ok
 	assert(GWAS_Clusters_ok(gwas_clusters))
 	
-	from methods.GWAS_Cluster import compute_gwas_cluster_with_finemap_posteriors	
+	from postgap.FinemapIntegration.GWAS_Cluster import compute_gwas_cluster_with_finemap_posteriors	
 	gwas_clusters_with_posteriors = [ 
 		compute_gwas_cluster_with_finemap_posteriors(gwas_cluster) 
 			for gwas_cluster in gwas_clusters 
