@@ -53,11 +53,13 @@ python scripts/create_finemap_pipeline_commands.py \
 	postgap.Globals.DATABASES_DIR = '/nfs/nobackup/ensembl/mnuhn/postgap/databases/'
 
 	parser = argparse.ArgumentParser(description='Run finemap')
+	parser.add_argument('--diseases', nargs='*', default=[])
 	parser.add_argument('--gwas_clusters_directory')
 	parser.add_argument('--output_commands_file')
 	
 	options = parser.parse_args()
-
+	
+	diseases                = options.diseases
 	gwas_clusters_directory = options.gwas_clusters_directory
 	output_commands_file    = options.output_commands_file
 
@@ -81,6 +83,7 @@ python scripts/create_finemap_pipeline_commands.py \
 		gwas_cluster_posteriors_output_file = gwas_clusters_directory + "/" + gwas_cluster_file_basename + ".posteriors" + gwas_cluster_file_extension
 		
 		cmd = create_command_for_gwas_cluster_posteriors(
+			diseases                            = diseases,
 			gwas_cluster_file                   = gwas_clusters_directory + "/" + gwas_cluster_file, 
 			gwas_cluster_posteriors_output_file = gwas_cluster_posteriors_output_file,
 		)
@@ -124,9 +127,12 @@ python scripts/create_finemap_pipeline_commands.py \
 	logging.info("All done.");
 				
 
-def create_command_for_gwas_cluster_posteriors(gwas_cluster_file, gwas_cluster_posteriors_output_file):
+def create_command_for_gwas_cluster_posteriors(gwas_cluster_file, gwas_cluster_posteriors_output_file, diseases):
+	
+	diseases_string = " ".join(diseases)
 	
 	cmd = "python scripts/compute_gwas_posteriors_with_finemap.py \\\n" \
+		+ "    --diseases               " + diseases_string + " \\\n" \
 		+ "    --gwas_cluster_file      " + gwas_cluster_file + " \\\n" \
 		+ "    --output_posteriors_file " + gwas_cluster_posteriors_output_file + "\n"
 	
