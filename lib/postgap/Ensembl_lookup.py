@@ -153,9 +153,11 @@ def get_snp_locations_simple(rsIDs, ENSEMBL_REST_SERVER = GRCH37_ENSEMBL_REST_SE
 
 	"""
 
+	assert postgap.Globals.SPECIES is not None, "postgap.Globals.SPECIES must be set or the url will be nonsense"
+	
 	server = ENSEMBL_REST_SERVER
 	ext = "/variation/%s?content-type=application/json" % (postgap.Globals.SPECIES)
-	hash = concatenate_hashes(postgap.REST.get(server, ext, data={'ids':chunk}) for chunk in chunks(rsIDs, 100))
+	hash = concatenate_hashes(postgap.REST.get(server, ext, data={'ids':chunk}) for chunk in chunks(rsIDs, 199))
 	for record in hash.values():
 		for synonym in record["synonyms"]:
 			hash[synonym] = record
