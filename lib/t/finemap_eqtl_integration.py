@@ -144,7 +144,7 @@ class finemap_eqtl_integration(unittest.TestCase):
 				kmax   = 1
 				max_iter = "Not used when kstart == kmax"
 
-				import finemap.stochastic_search as sss
+				import postgap.Finemap as sss
 				finemap_posteriors = sss.finemap(
 					z_scores   = zscore_vector,
 					cov_matrix = r2_array,

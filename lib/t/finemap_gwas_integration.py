@@ -33,7 +33,7 @@ class finemap_postgap_integration(unittest.TestCase):
 		for x in range(len(clusters)):
 			logger.info("Cluster %s has %s members." % ( x, len(clusters[x].ld_snps) ))
 
-		from finemap.GwasIntegation import compute_gwas_clusters_with_finemap_posteriors
+		from postgap.FinemapIntegration.GwasIntegration import compute_gwas_clusters_with_finemap_posteriors
 		
 		gwas_clusters_with_posteriors = compute_gwas_clusters_with_finemap_posteriors(clusters)
 		

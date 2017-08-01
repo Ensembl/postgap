@@ -100,6 +100,37 @@ def compute_z_score_from_pvalue_and_odds_ratio_or_beta_coefficient(pvalue, odds_
 class snp_in_multiple_gwas_associations_exception(Exception):
 	pass
 
+def compute_z_score_for_snp_like_type(snp_like):
+	"""
+		The joys of duck typing
+	"""
+	
+	from postgap.DataModel import GWAS_SNP
+	if type(snp_like) is GWAS_SNP:
+		print "\nGot a gwas snp!\n"
+		return compute_z_score_for_gwas_snp(snp_like)
+	
+	from postgap.DataModel import Cisregulatory_Evidence
+	if type(snp_like) is Cisregulatory_Evidence:
+		print "\nGot Cisregulatory_Evidence!\n"
+		zscore = compute_z_score_for_cisregulatory_evidence(snp_like)
+		print "\nThe zscore is: " + str(zscore)
+		return compute_z_score_for_cisregulatory_evidence(snp_like)
+	
+	raise Exception
+
+def compute_z_score_for_cisregulatory_evidence(cisregulatory_evidence):
+	
+	# TODO: Check with Daniel: For gwas snps we are checking whether the risk allels are present in the reference. For eqtl snps we don't have this information. Is this correct to assume the eqtl snps are not present in the reference for all eqtls?
+	risk_alleles_present_in_reference = False
+	
+	z_score = compute_z_score_from_pvalue_and_odds_ratio_or_beta_coefficient(
+		pvalue           = cisregulatory_evidence.pvalue,
+		odds_ratio       = None,
+		beta_coefficient = cisregulatory_evidence.beta,
+	)
+	return z_score
+
 def compute_z_score_for_gwas_snp(gwas_snp):
 	
 	evidence_list = gwas_snp.evidence
