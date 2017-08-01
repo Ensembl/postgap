@@ -102,7 +102,7 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 		posterior = finemap_summary.posterior
 		BF        = finemap_summary.BF
 		
-		sentence = "The snp configuration {} has a prior probability of {:1.0%}. The posterior probability is {:.2e}. The base factor is: {:.2e}".format(
+		sentence = "The snp configuration {} has a prior probability of {:1.0%}. The posterior probability is {:.2e}. The Bayes factor is: {:.2e}".format(
 				snps_stringified, prior, posterior, BF
 			)
 
