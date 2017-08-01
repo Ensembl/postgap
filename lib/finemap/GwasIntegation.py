@@ -28,6 +28,28 @@ limitations under the License.
 
 """
 
+import logging
+import logging.config
+
+logging.config.fileConfig('configuration/logging.conf')
+logger = logging.getLogger(__name__)
+
+def load_gwas_pvalues_from_file(gwas_clusters, diseases = [], iris = []):
+	
+	from postgap.GWAS import GWAS_File
+	
+	gwas_file = GWAS_File()
+	gwas_data_file = gwas_file.find_gwas_data_file(diseases, iris)
+	
+	if gwas_data_file is None:
+		logging.info( "No gwas data file found, so leaving pvalues in gwas clusters unchanged.")
+	
+	logging.info( "gwas_data_file: " + gwas_data_file )
+	
+	gwas_clusters_with_values_from_file = gwas_file.create_gwas_clusters_with_pvalues_from_file(gwas_clusters, gwas_data_file)
+	return gwas_clusters_with_values_from_file
+
+
 def compute_gwas_clusters_with_finemap_posteriors(gwas_clusters):
 	
 	from methods.GWAS_Cluster import GWAS_Clusters_ok
