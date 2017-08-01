@@ -43,6 +43,7 @@ def load_gwas_pvalues_from_file(gwas_clusters, diseases = [], iris = []):
 	
 	if gwas_data_file is None:
 		logging.info( "No gwas data file found, so leaving pvalues in gwas clusters unchanged.")
+		return gwas_clusters
 	
 	logging.info( "gwas_data_file: " + gwas_data_file )
 	
