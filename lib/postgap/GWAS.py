@@ -677,9 +677,9 @@ class GWAS_File(GWAS_source):
 		
 		pvalue_filtered_gwas_associations = self.create_gwas_association_collector()
 		
-		gwas_pvalue_threshold = 0.00001
+		from postgap.Globals import GWAS_PVALUE_CUTOFF
 		
-		pvalue_filter = self.create_pvalue_filter(pvalue_threshold = gwas_pvalue_threshold)
+		pvalue_filter = self.create_pvalue_filter(pvalue_threshold = GWAS_PVALUE_CUTOFF)
 		
 		self.parse_gwas_data_file(
 			gwas_data_file                    = gwas_data_file,
@@ -688,7 +688,7 @@ class GWAS_File(GWAS_source):
 			max_lines_to_return_threshold     = 3
 		)
 		
-		self.logger.info( "Found " + str(len(pvalue_filtered_gwas_associations.get_found_list())) + " gwas associations with a pvalue of " + str(gwas_pvalue_threshold) + " or less.")
+		self.logger.info( "Found " + str(len(pvalue_filtered_gwas_associations.get_found_list())) + " gwas associations with a pvalue of " + str(GWAS_PVALUE_CUTOFF) + " or less.")
 		
 		return pvalue_filtered_gwas_associations.get_found_list()
 	

@@ -47,7 +47,6 @@ import logging
 import sys
 
 phenotype_cache = ()
-PVALUE_CUTOFF = 1e-4
 
 def diseases_to_genes(diseases, efos, populations, tissues):
 	"""
@@ -75,9 +74,11 @@ def diseases_to_gwas_snps(diseases, efos):
 	"""
 	logger = logging.getLogger(__name__)
 	
-	res = filter(lambda X: X.pvalue < PVALUE_CUTOFF, scan_disease_databases(diseases, efos))
+	from postgap.Globals import GWAS_PVALUE_CUTOFF
+	
+	res = filter(lambda X: X.pvalue < GWAS_PVALUE_CUTOFF, scan_disease_databases(diseases, efos))
 
-	logger.info("Found %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) after p-value filter (%f)" % (len(res), ", ".join(diseases), ", ".join(efos), PVALUE_CUTOFF))
+	logger.info("Found %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) after p-value filter (%f)" % (len(res), ", ".join(diseases), ", ".join(efos), GWAS_PVALUE_CUTOFF))
 
 	return res 
 
