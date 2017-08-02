@@ -347,7 +347,6 @@ def genecluster_association_table(association):
 
 		r2_distances = [read_pairwise_ld(gene_snp_association.snp, gwas_snp.snp) for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
 
-
 		row = [
 			gene_snp_association.snp.rsID, 
 			gene_snp_association.snp.chrom, 
