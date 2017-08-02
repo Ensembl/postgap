@@ -54,8 +54,6 @@ Reg_adaptors = None
 GTEx_path = None
 SQLite_connection = None
 work_directory = "notset"
-
 finemap_gwas_clusters_directory = None
-finemap_eqtl_clusters_directory = None
 
 GWAS_PVALUE_CUTOFF = 1e-4
