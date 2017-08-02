@@ -309,7 +309,7 @@ class GWASCatalog(GWAS_source):
 					hash = postgap.REST.get(risk_alleles_href, ext="")
 					riskAlleles = hash["_embedded"]["riskAlleles"]
 					
-					from postgap.FinemapIntegration.GWAS_Lead_Snp_Orientation                  \
+					from postgap.FinemapIntegration.GWAS_Lead_Snp_Orientation \
 					import                                                  \
 					gwas_risk_alleles_present_in_reference,                 \
 					none_of_the_risk_alleles_is_a_substitution_exception,   \
