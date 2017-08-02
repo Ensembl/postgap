@@ -326,8 +326,6 @@ def get_gwas_snp_locations(gwas_snps):
 		assert type(gwas_snp) is postgap.DataModel.GWAS_SNP, "The gwas_snp is a GWAS_SNP."
 		assert type(gwas_snp.snp) is postgap.DataModel.SNP, "The gwas_snp.snp is a SNP. " + gwas_snp.snp
 	
-	postgap.Globals.SPECIES = "homo_sapiens"
-	
 	original_gwas_snp = dict((gwas_snp.snp.rsID, gwas_snp) for gwas_snp in gwas_snps)
 	mapped_snps = postgap.Ensembl_lookup.get_snp_locations(original_gwas_snp.keys())
 	
