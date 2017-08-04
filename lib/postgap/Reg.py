@@ -33,6 +33,7 @@ from postgap.DataModel import *
 import postgap.BedTools
 from postgap.Utils import *
 import logging
+import requests
 
 class Reg_source(object):
 	logger = logging.getLogger(__name__)
