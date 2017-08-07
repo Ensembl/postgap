@@ -260,7 +260,11 @@ def get_pairwise_ld(ld_snps, population='EUR'):
 	### Second pass through file: store LD into matrix
 	SNP_ids = [x.rsID for x in ld_snps if x.rsID in observed_snps]
 	snp_order = dict((rsID, rank) for rank, rsID in enumerate(SNP_ids))
-	r2_array = numpy.zeros((len(SNP_ids), len(SNP_ids)))
+	
+	matrix_size = len(SNP_ids)
+	
+	r2_array = numpy.zeros((matrix_size, matrix_size))
+	
 	for line in output.split("\n"):
 		column = line.split('\t')
 		
@@ -279,4 +283,20 @@ def get_pairwise_ld(ld_snps, population='EUR'):
 	os.remove(rsID_file_name)
 	os.close(rsID_file)
 
+	# Healthcheck for the matrix. An LD matrix should never be the unity 
+	# matrix, but sometimes it is.
+	if is_null_matrix(matrix = r2_array, matrix_size=matrix_size):
+		raise Exception("LD matrix is null matrix!")
+		
 	return SNP_ids, r2_array + numpy.identity(len(SNP_ids))
+
+def is_null_matrix(matrix, matrix_size):
+	"""
+		Checks, if the matrix passed in is the null matrix
+	"""
+	for i in range(0, matrix_size):
+		for j in range(0, matrix_size):
+			if matrix[i][j] != 0:
+				return False
+	
+	return True
