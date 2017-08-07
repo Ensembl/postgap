@@ -115,9 +115,40 @@ python scripts/stringify_pickle_object.py --pickle_file /hps/nobackup/production
 
 	from postgap.FinemapIntegration.GWAS_Cluster import compute_finemap_posteriors
 	
+	ld_snps_with_cis_regulatory_evidence_inserted = []
+	
+	from postgap.DataModel import Cisregulatory_Evidence, GWAS_SNP, SNP
+	
+	for ld_snp in gwas_cluster.ld_snps:
+		
+		rsID = None
+		
+		if type(ld_snp) is SNP:
+			rsID = ld_snp.rsID
+		
+		if type(ld_snp) is GWAS_SNP:
+			rsID = ld_snp.snp.rsID
+		
+		if rsID is None:
+			raise Exception(str(type(ld_snp)))
+		
+		cisregulatory_evidence = get_cisregulatory_evidence(rsID_to_find=rsID, cisregulatory_evidence_list=eqtl_clusters)
+		
+		if cisregulatory_evidence is None:
+			ld_snps_with_cis_regulatory_evidence_inserted.append(ld_snp)
+			continue
+		
+		if type(cisregulatory_evidence) is Cisregulatory_Evidence:
+			ld_snps_with_cis_regulatory_evidence_inserted.append(cisregulatory_evidence)
+			continue
+			
+		raise Exception(str(type(cisregulatory_evidence)))
+	
+	logging.info( "The ld snps with cis regulatory evidence inserted where possible::\n" + summarise(ld_snps_with_cis_regulatory_evidence_inserted) )
+	
 	finemap_posteriors = compute_finemap_posteriors(
 		lead_snps    = eqtl_clusters,
-		ld_snps      = gwas_cluster.ld_snps,
+		ld_snps      = ld_snps_with_cis_regulatory_evidence_inserted,
 		cluster_name = title
 	)
 	
@@ -140,6 +171,16 @@ python scripts/stringify_pickle_object.py --pickle_file /hps/nobackup/production
 	logging.info("Posteriors have been written to " + output_posteriors_file)
 
 	logging.info("All done.");
+
+def get_cisregulatory_evidence(rsID_to_find, cisregulatory_evidence_list):
+	
+	for cisregulatory_evidence in cisregulatory_evidence_list:
+		
+		rsID = cisregulatory_evidence.snp.rsID
+		if rsID_to_find == rsID:
+			return cisregulatory_evidence
+	
+	return None
 
 def assert_all_eqtl_snps_are_in_gwas_cluster(gwas_cluster, eqtl_clusters):
 	
