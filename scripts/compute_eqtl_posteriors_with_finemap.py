@@ -27,11 +27,7 @@ limitations under the License.
 	<http://www.ensembl.org/Help/Contact>.
 
 """
-import sys
 import argparse
-import collections
-import json
-import sqlite3
 import logging
 import logging.config
 
@@ -45,6 +41,16 @@ python scripts/compute_eqtl_posteriors_with_finemap.py \
     --gwas_cluster_file      /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir_for_diabetes5/diabetes/gwas_clusters/gwas_cluster_around_snp_rs10510110.pickle \
     --eqtl_cluster_file      /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir_for_diabetes5/diabetes/gwas_clusters/gwas_cluster_around_snp_rs10510110/cis_regulatory_evidence_from_eqtl_snp_rs11200594_linked_to_ENSG00000107679_in_Whole_Blood.pickle \
     --output_posteriors_file /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir_for_diabetes5/diabetes/gwas_clusters/gwas_cluster_around_snp_rs10510110/cis_regulatory_evidence_from_eqtl_snp_rs11200594_linked_to_ENSG00000107679_in_Whole_Blood.posteriors.pickle
+
+
+python scripts/compute_eqtl_posteriors_with_finemap.py \
+    --gwas_cluster_file      /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/file_based_gwas//Alzheimers/gwas_clusters/gwas_cluster_with_104_snps_around_rs10948363.pickle \
+    --eqtl_cluster_file      /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/file_based_gwas//Alzheimers/gwas_clusters/gwas_cluster_with_104_snps_around_rs10948363/cis_regulatory_evidence_from_eqtl_84_snps_linked_to_ENSG00000164393_in_Esophagus_Mucosa.pickle \
+    --output_posteriors_file /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/file_based_gwas//Alzheimers/gwas_clusters/gwas_cluster_with_104_snps_around_rs10948363/cis_regulatory_evidence_from_eqtl_84_snps_linked_to_ENSG00000164393_in_Esophagus_Mucosa.joint_posteriors.pickle
+
+
+
+
 
 python scripts/stringify_pickle_object.py --pickle_file /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir_for_diabetes5/diabetes/gwas_clusters/gwas_cluster_around_snp_rs10510110/cis_regulatory_evidence_from_eqtl_snp_rs2034245_linked_to_ENSG00000155542_in_Whole_Blood.pickle
 
@@ -85,11 +91,11 @@ python scripts/stringify_pickle_object.py --pickle_file /hps/nobackup/production
 		except EOFError:
 			logger.info("Got " + str(len(eqtl_clusters)) + " eqtl clusters.")
 	
-	for eqtl_cluster in eqtl_clusters:
-		from pprint import pformat
-		logger.info(pformat(eqtl_cluster))
+	#from pprint import pformat
+	from postgap.Summarisers import summarise
+	logger.info("The gwas cluster is:\n" + summarise(gwas_cluster))
 	
-	logger.info(pformat(gwas_cluster))
+	logger.info("The cisregulatory evidence is:\n" + summarise(eqtl_clusters))
 	
 	assert_all_eqtl_snps_are_in_gwas_cluster(
 		eqtl_clusters = eqtl_clusters,
@@ -107,13 +113,18 @@ python scripts/stringify_pickle_object.py --pickle_file /hps/nobackup/production
 	# title = gwas_cluster_0
 	title = os.path.splitext(temp)[0]
 
-	eqtl_posteriors = process_eqtl_cluster(
-		cisregulatory_evidence = eqtl_cluster, 
-		gwas_cluster = gwas_cluster,
+	from postgap.FinemapIntegration.GWAS_Cluster import compute_finemap_posteriors
+	
+	finemap_posteriors = compute_finemap_posteriors(
+		lead_snps    = eqtl_clusters,
+		ld_snps      = gwas_cluster.ld_snps,
 		cluster_name = title
 	)
 	
-	logging.info( "eQTL posteriors have been computed:\n" + str(eqtl_posteriors) )
+	if finemap_posteriors is None:
+		raise Exception ("ERROR: Didn't get posteriors!")
+
+	logging.info( "eQTL posteriors have been computed:\n" + str(finemap_posteriors) )
 	
 	import os
 	output_posteriors_file = options.output_posteriors_file
@@ -123,7 +134,7 @@ python scripts/stringify_pickle_object.py --pickle_file /hps/nobackup/production
 		os.makedirs(output_directory)
 
 	pickle_fh = open(output_posteriors_file, 'w')
-	pickle.dump(eqtl_posteriors, pickle_fh)
+	pickle.dump(finemap_posteriors, pickle_fh)
 	pickle_fh.close
 	
 	logging.info("Posteriors have been written to " + output_posteriors_file)
@@ -144,75 +155,6 @@ def assert_all_eqtl_snps_are_in_gwas_cluster(gwas_cluster, eqtl_clusters):
 
 		if not(eqtl_cluster.snp.rsID in all_snp_ids_in_gwas_cluster):
 			raise Exception("Found id in eqtl cluster that is not in the gwas cluster!")
-		
-		#print "Ok " + eqtl_cluster.snp.rsID	
-
-def process_eqtl_cluster(cisregulatory_evidence, gwas_cluster, cluster_name = "Unnamed cluster"):
-	
-	import pprint
-	pp = pprint.PrettyPrinter(indent=4, width=80)
-	pp.pprint(cisregulatory_evidence)
-	
-	ld_snps   = gwas_cluster.ld_snps
-	gwas_snps = gwas_cluster.gwas_snps
-	
-	snps_from_gwas_snps = [ gwas_snp.snp for gwas_snp in gwas_snps ]
-	
-	from postgap.FinemapIntegration.GWAS_Cluster import compute_approximated_gwas_zscores
-	(approximated_gwas_zscores, r2_array, SNP_ids) = compute_approximated_gwas_zscores(
-		gwas_snps = [ cisregulatory_evidence ],
-		ld_snps   = ld_snps + snps_from_gwas_snps
-	)
-	
-	logging.info("SNPs:")
-	logging.info("\n" + stringify_vector(SNP_ids))
-	
-	logging.info("zscores " + str(type(approximated_gwas_zscores)) + ":")
-	logging.info("\n" + stringify_vector(approximated_gwas_zscores))
-	
-	logging.info("Matrix of pairwise linkage disequilibria:")
-	logging.info("\n" + stringify_matrix(r2_array))
-
-	logging.info("Cluster name: " + cluster_name)
-
-	logging.info("Running finemap")
-
-	kstart = 1
-	kmax   = 1
-	max_iter = "Not used when kstart == kmax"
-
-	import postgap.Finemap as sss
-	finemap_posteriors = sss.finemap(
-		labels       = SNP_ids,
-		z_scores     = approximated_gwas_zscores,
-		cov_matrix   = r2_array,
-		n            = len(r2_array),
-		kstart       = kstart,
-		kmax         = kmax,
-		max_iter     = max_iter,
-		prior        = "independence",
-		sample_label = cluster_name
-	)
-	logging.info("Done running finemap")
-	
-	if finemap_posteriors is None:
-		raise Exception ("ERROR: Didn't get posteriors!")
-	
-	return finemap_posteriors
-
-def stringify_vector(vector):
-	#import json
-	#return json.dumps(vector, indent=4)
-	from pprint import pformat
-	return pformat(vector)
-	
-def stringify_matrix(matrix):
-	
-	import numpy as np
-	# https://docs.scipy.org/doc/numpy/reference/generated/numpy.set_printoptions.html
-	np.set_printoptions(precision=3, suppress=True, linewidth=150)
-	return str(np.matrix(matrix))
-
 
 if __name__ == "__main__":
 	main()

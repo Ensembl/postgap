@@ -35,13 +35,6 @@ from postgap.DataModel import GWAS_Cluster
 import logging
 
 import collections
-snp_with_zscore = collections.namedtuple(
-	'snp_with_zscore', 
-	[
-		'snp_id',
-		'z_score'
-	]
-)
 
 class ZScoreComputationException(Exception):
 	pass
@@ -52,49 +45,57 @@ class FinemapFailedException(Exception):
 class IntegrityCheckException(Exception):
 	pass
 
-
-def GWAS_Clusters_ok(gwas_clusters):
-	for gwas_cluster in gwas_clusters:
-		if not(ld_snps_contain_gwas_snps(gwas_cluster)):
-			return False, "Gwas snps not among ld snps"
-	return True, ""
-
-def compute_gwas_cluster_with_finemap_posteriors(gwas_cluster, cluster_name="Unnamed cluster"):
-	"""
-		Computes finemap posteriors for a gwas cluster.
-		
-		The output is a GWAS_Cluster like the input, but with the 
-		finemap_posteriors attribute set.
-		
-		Returns: GWAS_Cluster
-	"""
-	finemap_posteriors = compute_finemap_posteriors(gwas_cluster, cluster_name = cluster_name)
-	
-	if finemap_posteriors is None:
-		raise FinemapFailedException("Got no finemap results!")
-
-	return GWAS_Cluster(
-		gwas_snps          = gwas_cluster.gwas_snps,
-		ld_snps            = gwas_cluster.ld_snps,
-		finemap_posteriors = finemap_posteriors
-	)
-
-def compute_finemap_posteriors(gwas_cluster, cluster_name="Unnamed cluster"):
+def compute_finemap_posteriors(lead_snps, ld_snps, cluster_name="Unnamed cluster"):
 	"""
 		Computes finemap posteriors for a gwas cluster.
 		
 		Returns the finemap_posteriors returned by the as computed by the 
 		stochastic search in finemap.
 	"""
-	ld_snps   = gwas_cluster.ld_snps
-	gwas_snps = gwas_cluster.gwas_snps
 	
-	(approximated_gwas_zscores, r2_array, SNP_ids) = compute_approximated_gwas_zscores(
-		gwas_snps = gwas_snps,
-		ld_snps   = ld_snps
+	(snps_with_z_scores, r2_array, SNP_ids) = compute_approximated_z_scores(
+		lead_snp_like_objects = lead_snps,
+		ld_snps               = ld_snps
 	)
-	logger = logging.getLogger(__name__)
-	logger.info("Running finemap")
+	
+	from postgap.Summarisers import summarise
+	logging.info("The snps with zscores, that will be used by finemap, are:\n" + summarise(snps_with_z_scores))
+	
+	z_score_list = []
+	for snp_with_z_score in snps_with_z_scores:
+		
+		z_score = None
+		
+		from postgap.DataModel import GWAS_SNP, SNP, Cisregulatory_Evidence
+		
+		# If this is a GWAS_SNP
+		if type(snp_with_z_score) is GWAS_SNP:
+
+			# and it has a z score, then use that
+			if snp_with_z_score.z_score is not None:
+				z_score = snp_with_z_score.z_score
+			
+			# Otherwise use the approximated z score from ld.
+			else:
+				z_score = snp_with_z_score.snp.approximated_zscore
+		
+		# If it is only a snp, then the approximated z score is used.
+		if type(snp_with_z_score) is SNP:
+			z_score = snp_with_z_score.approximated_zscore
+		
+		if type(snp_with_z_score) is Cisregulatory_Evidence:
+			z_score = snp_with_z_score.z_score
+		
+		# z_score should have some value by now
+		if z_score is None:
+			raise Exception("No z score for:\n" + summarise(snp_with_z_score))
+		
+		z_score_list.append(z_score)
+	
+
+	logging.info("Running finemap")
+	
+	#BUG: approximated_gwas_zscores should only be used, if the pvalues are unknown.
 	
 	kstart = 1
 	kmax   = 1
@@ -103,7 +104,7 @@ def compute_finemap_posteriors(gwas_cluster, cluster_name="Unnamed cluster"):
 	from postgap.Finemap import finemap
 	finemap_posteriors = finemap(
 		labels       = SNP_ids,
-		z_scores     = approximated_gwas_zscores,
+		z_scores     = z_score_list,
 		cov_matrix   = r2_array,
 		n            = len(r2_array),
 		kstart       = kstart,
@@ -112,46 +113,119 @@ def compute_finemap_posteriors(gwas_cluster, cluster_name="Unnamed cluster"):
 		prior        = "independence",
 		sample_label = cluster_name
 	)
-	logger.info("Done running finemap")
+	logging.info("Done running finemap")
 	
 	if finemap_posteriors is None:
 		raise Exception ("ERROR: Didn't get posteriors!")
 
 	return finemap_posteriors
 
-def compute_gwas_snps_with_z_scores(gwas_snps):
+def compute_z_scores_for_snp_like_object(snp_like_objects):
 	
 	logger = logging.getLogger(__name__)
 	
 	from postgap.FinemapIntegration.GWAS_SNP import compute_z_score_for_snp_like_type
 	
-	gwas_snps_with_z_scores = filter (
-		lambda X: X.z_score is not None, [ 
-			snp_with_zscore(
-				snp_id  = gwas_snp.snp.rsID,
-				z_score = compute_z_score_for_snp_like_type(gwas_snp)
+	snp_like_object_with_z_scores = []
+	
+	for snp_like_object in snp_like_objects:
+		
+		# This may be "None"
+		z_score = compute_z_score_for_snp_like_type(snp_like_object)
+		
+		from postgap.DataModel import GWAS_SNP, SNP, Cisregulatory_Evidence
+		
+		if type(snp_like_object) is GWAS_SNP:
+		
+			gwas_snp_with_z_score = GWAS_SNP(
+				snp       = snp_like_object.snp,
+				pvalue    = snp_like_object.pvalue,
+				z_score   = z_score,
+				evidence  = snp_like_object.evidence,
 			)
-				for gwas_snp in gwas_snps 
-		]
-	)
+			snp_like_object_with_z_scores.append(gwas_snp_with_z_score)
+			continue
+		
+		if type(snp_like_object) is Cisregulatory_Evidence:
+			
+			cisregulatory_evidence_with_zscore = Cisregulatory_Evidence(
+				snp     = snp_like_object.snp,
+				gene    = snp_like_object.gene,
+				score   = snp_like_object.score,
+				source  = snp_like_object.source,
+				study   = snp_like_object.study,
+				tissue  = snp_like_object.tissue,
+				info    = snp_like_object.info,
+				z_score = z_score,
+				pvalue  = snp_like_object.pvalue,
+				beta    = snp_like_object.beta, 
+			)
+			snp_like_object_with_z_scores.append(cisregulatory_evidence_with_zscore)
+			continue
+		
+		raise Exception("Not implemented for type " + type(snp_like_object))
 	
-	gwas_cluster_size = len(gwas_snps)
-	
-	if len(gwas_snps_with_z_scores) == 0:
-		raise ZScoreComputationException("Couldn't compute a z score for any of the gwas snps.")
-	
-	return gwas_snps_with_z_scores
+	return snp_like_object_with_z_scores
 
-def compute_approximated_gwas_zscores(gwas_snps, ld_snps):
+def compute_approximated_z_scores(lead_snp_like_objects, ld_snps):
 	
-	from postgap.DataModel import GWAS_SNP
-	snps_with_right_type = [ snp.snp if type(snp) is GWAS_SNP else snp for snp in ld_snps ]
+	from postgap.DataModel import GWAS_SNP, SNP, Cisregulatory_Evidence, GWAS_Association
 	
-	# LD measures the deviation from the expectation of non-association.
-	(SNP_ids, r2_array) = postgap.LD.get_pairwise_ld(snps_with_right_type)
+	all_snps_as_snp_tuples    = []
+	all_lead_snp_like_objects = []
+	
+	# Some of the ld_snps may be of type GWAS_SNP as well. This can happen, if
+	# they were included in the analysis because of their ld value, but there
+	# was gwas data available for them and so they have a pvalue and are in 
+	# this as GWAS_SNPs.
+	#
+	#for snp in lead_snp_like_objects + ld_snps:
+	for snp in ld_snps:
+		
+		if type(snp) is GWAS_SNP:
+			all_snps_as_snp_tuples.append(snp.snp)
+			all_lead_snp_like_objects.append(snp)
+			continue
+		
+		if type(snp) is SNP:
+			all_snps_as_snp_tuples.append(snp)
+			continue
 
+		if type(snp) is Cisregulatory_Evidence:
+			all_snps_as_snp_tuples.append(snp.snp)
+			
+			#HACK: Creating fake gwas snp
+			fake_gwas_snp = GWAS_SNP(
+				snp = snp.snp,
+				pvalue = snp.pvalue,
+				z_score = None,
+				evidence = [
+					GWAS_Association(
+						snp = snp.snp,
+						disease = None,
+						reported_trait = None,
+						pvalue = snp.pvalue,
+						source = None,
+						study = None,
+						odds_ratio = None,
+						beta_coefficient = snp.beta,
+						beta_coefficient_unit = None,
+						beta_coefficient_direction = None,
+						rest_hash = None,
+						risk_alleles_present_in_reference = None,
+					)
+				]
+			)
+			all_lead_snp_like_objects.append(fake_gwas_snp)
+			continue
+		
+		raise Exception("Unknown type: " + str(type(snp)))
+	
 	logger = logging.getLogger(__name__)
 	
+	# LD measures the deviation from the expectation of non-association.
+	(SNP_ids, r2_array) = postgap.LD.get_pairwise_ld(all_snps_as_snp_tuples)
+
 	ld_cluster_size = len(ld_snps)
 
 	if ld_cluster_size==0:
@@ -163,48 +237,62 @@ def compute_approximated_gwas_zscores(gwas_snps, ld_snps):
 	logger.info("Matrix of pairwise linkage disequilibria:")
 	logger.info("\n" + stringify_matrix(r2_array))
 	
-	gwas_snps_with_z_scores = compute_gwas_snps_with_z_scores(gwas_snps)
+	# Only the lead snps will be used to compute the approximated gwas scores.
+	# The gwas snps that were included from files, because of their ld are not
+	# used to compute the approximated zscores.
+	#
+	z_scores_for_lead_snp_like_objects = compute_z_scores_for_snp_like_object(lead_snp_like_objects)
+	
+	# Collect all lead gwas snps for which z score could be computed
+	lead_snp_like_objects_with_z_scores = []
+	
+	for gwas_snp in z_scores_for_lead_snp_like_objects:
+		if not(gwas_snp.z_score is None):
+			lead_snp_like_objects_with_z_scores.append(gwas_snp)
+	
+	if len(lead_snp_like_objects_with_z_scores) == 0:
+		raise ZScoreComputationException("Couldn't compute a z score for any of the gwas snps.")
+
 	
 	# This loop is just a healthcheck
-	for gwas_snps_with_z_score in gwas_snps_with_z_scores:
+	for lead_snp_like_object_with_z_score in lead_snp_like_objects_with_z_scores:
 		
 		found_in_list = None
 		try:
-			SNP_ids.index(gwas_snps_with_z_score.snp_id)
+			SNP_ids.index(lead_snp_like_object_with_z_score.snp.rsID)
 			found_in_list = True
 		except ValueError:
 			found_in_list = False
 			
 		if not(found_in_list):
 			raise Exception("ERROR: The lead SNP wasn't found in SNP ids!\n" \
-				+ "lead SNP: " + gwas_snps_with_z_score.snp_id + "\n" \
+				+ "lead SNP: " + lead_snp_like_object_with_z_score.snp_id + "\n" \
 				+ "SNP_ids:" + "\n" \
 				+ json.dumps(SNP_ids) \
 			)
 	
-	from postgap.FinemapIntegration.GWAS_Cluster import compute_approximated_zscores_for_snps_from_multiple_lead_snps
-	
-	approximated_gwas_zscores = compute_approximated_zscores_for_snps_from_multiple_lead_snps(
+	snps_with_approximated_gwas_zscores = compute_approximated_zscores_for_snps_from_multiple_lead_snps(
 		ld_correlation_matrix = r2_array,
 		SNP_ids               = SNP_ids,
-		lead_snps             = gwas_snps_with_z_scores,
+		lead_snps             = lead_snp_like_objects_with_z_scores,
 	)
 	
-	return approximated_gwas_zscores, r2_array, SNP_ids
-
-def ld_snps_contain_gwas_snps(gwas_cluster):
+	all_gwas_snps_with_z_scores = compute_z_scores_for_snp_like_object(lead_snp_like_objects)
 	
-	gwas_snps = gwas_cluster.gwas_snps
-	ld_snps   = gwas_cluster.ld_snps
+	# For every snp, check, if there is a gwas version of it with a measure 
+	# pvalue.
+	#
+	# If there is, replace the snp with the gwas_snp.
+	#
+	for index, snp_with_approximated_gwas_zscore in enumerate(snps_with_approximated_gwas_zscores):
+		
+		for gwas_snp in all_gwas_snps_with_z_scores:
+			
+			if gwas_snp.snp.rsID == snp_with_approximated_gwas_zscore.rsID:
+				
+				snps_with_approximated_gwas_zscores[index] = gwas_snp
 	
-	for gwas_snp in gwas_snps:
-		
-		snp  = gwas_snp.snp
-		rsID = snp.rsID
-		
-		if not( any([ ld_snp.rsID == rsID for ld_snp in ld_snps ]) ):
-			return False
-	return True
+	return snps_with_approximated_gwas_zscores, r2_array, SNP_ids
 
 def compute_approximated_zscores_for_snps_from_multiple_lead_snps(
 		ld_correlation_matrix, 
@@ -230,7 +318,24 @@ def compute_approximated_zscores_for_snps_from_multiple_lead_snps(
 			if abs(approximated_zscores_for_snps_from_lead_snp[x]) > abs(maximum_zscores[x]):
 				maximum_zscores[x] = approximated_zscores_for_snps_from_lead_snp[x]
 	
-	return maximum_zscores
+	from postgap.DataModel import SNP
+	
+	snps_with_approximated_zscores = []
+	
+	for index, maximum_zscore in enumerate(maximum_zscores):
+
+		snps_with_approximated_zscores.append(
+			SNP(
+				rsID = SNP_ids[index],
+				chrom = None,
+				pos = None,
+				approximated_zscore = maximum_zscore,
+			)
+		)
+	#from postgap.Summarisers import summarise
+	#print summarise(snps_with_approximated_zscores)
+	
+	return snps_with_approximated_zscores
 
 def compute_approximated_zscores_for_snps_from_lead_snp(
 		ld_correlation_matrix, 
@@ -239,7 +344,7 @@ def compute_approximated_zscores_for_snps_from_lead_snp(
 	):
 	
 	try:
-		index_of_gwas_snp = SNP_ids.index(lead_snp.snp_id)
+		index_of_gwas_snp = SNP_ids.index(lead_snp.snp.rsID)
 	except ValueError:
 		error_message = "The lead SNP wasn't found in SNP ids!\n" \
 			+ "ERROR: lead SNP: %s" % lead_snp.snp_id + "\n" \

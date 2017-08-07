@@ -368,7 +368,8 @@ class GWASCatalog(GWAS_source):
 							snp     = SNP(
 								rsID  = current_snp["rsId"],
 								chrom = None,
-								pos   = None
+								pos   = None,
+								approximated_zscore = None
 							),
 							pvalue  = current_association["pvalue"],
 							sample_size = sample_size,
@@ -673,7 +674,7 @@ class GWAS_File(GWAS_source):
 		"""
 		
 		gwas_data_file = self.find_gwas_data_file(diseases, iris)
-		
+			
 		if gwas_data_file is None:
 			return None
 		
@@ -689,7 +690,7 @@ class GWAS_File(GWAS_source):
 			gwas_data_file                    = gwas_data_file,
 			want_this_gwas_association_filter = pvalue_filter,
 			callback                          = pvalue_filtered_gwas_associations.add_to_found_list,
-			max_lines_to_return_threshold     = None
+			max_lines_to_return_threshold     = 5
 		)
 		
 		self.logger.info( "Found " + str(len(pvalue_filtered_gwas_associations.get_found_list())) + " gwas associations with a pvalue of " + str(GWAS_PVALUE_CUTOFF) + " or less.")
@@ -740,6 +741,7 @@ class GWAS_File(GWAS_source):
 				gwas_snp = GWAS_SNP(
 					snp      = gwas_association.snp,
 					pvalue   = gwas_association.pvalue,
+					z_score  = None,
 					evidence = [ gwas_association ]
 				)
 				ld_snps_converted_to_gwas_snps.append(gwas_snp)
@@ -828,7 +830,8 @@ class GWAS_File(GWAS_source):
 			snp = SNP(
 				rsID  = parsed["MarkerName"],
 				chrom = parsed["Chromosome"],
-				pos   = int(parsed["Position"])
+				pos   = int(parsed["Position"]),
+				approximated_zscore = None
 			)
 			
 			gwas_association = GWAS_Association(

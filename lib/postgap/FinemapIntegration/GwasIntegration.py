@@ -43,12 +43,12 @@ def load_gwas_pvalues_from_file(gwas_clusters, diseases = [], iris = []):
 	
 	if gwas_data_file is None:
 		logging.info( "No gwas data file found, so leaving pvalues in gwas clusters unchanged.")
-		return gwas_clusters
+		return gwas_clusters, False
 	
 	logging.info( "gwas_data_file: " + gwas_data_file )
 	
 	gwas_clusters_with_values_from_file = gwas_file.create_gwas_clusters_with_pvalues_from_file(gwas_clusters, gwas_data_file)
-	return gwas_clusters_with_values_from_file
+	return gwas_clusters_with_values_from_file, True
 
 
 def compute_gwas_clusters_with_finemap_posteriors(gwas_clusters):

@@ -95,7 +95,14 @@ def calculate_window(snp, window_len=500000, population='EUR', cutoff=0.7):
 				ld_pos = items[2]
 				ld_id  = items[3]
 
-			ld_snps.append(SNP(ld_id, snp.chrom, int(ld_pos)))
+			ld_snps.append(
+				SNP(
+					rsID  = ld_id,
+					chrom = snp.chrom,
+					pos   = int(ld_pos),
+					approximated_zscore =  None
+				)
+			)
 
 	# Make sure the snp is among the ld_snps. If it isn't already, it is added.
 	#

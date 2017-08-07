@@ -29,6 +29,7 @@ limitations under the License.
 """
 
 import argparse
+import pickle
 
 def main():
 	'''
@@ -39,7 +40,7 @@ def main():
 		
 		E.g.:
 		
-			python scripts/stringify_pickle_object.py --pickle_file finemap/EFO_0000203/joint_posteriors/eqtl_snps_linked_to_ENSG00000168038_in_Adipose_Subcutaneous__gwas_cluster_0.joint_posteriors.pickle
+			python scripts/stringify_pickle_object.py --pickle_file /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir_for_diabetes8/diabetes/gwas_clusters/gwas_cluster_with_247_snps_around_rs1727313/cis_regulatory_evidence_from_eqtl_201_snps_linked_to_ENSG00000111328_in_Whole_Blood.pickle
 	
 	'''
 	
@@ -48,11 +49,20 @@ def main():
 	
 	options = parser.parse_args()
 
-	import pickle
-	pickle_fh       = open(options.pickle_file, 'rb')
-	finemap_object  = pickle.load(pickle_fh)
+	object_list = []
 
-	print(str(finemap_object));
+	with open(options.pickle_file, 'rb') as pickle_fh:
+		try:
+			while True:
+				current_object = pickle.load(pickle_fh)
+				object_list.append(current_object)
+		except EOFError:
+			print "Loaded " + str(len(object_list)) + " objects from " + options.pickle_file
+
+	from postgap.Summarisers import summarise
+	
+	for obj in object_list:
+		print(summarise(obj));
 
 if __name__ == "__main__":
 	main()

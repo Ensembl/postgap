@@ -117,13 +117,15 @@ def scan_disease_databases(diseases, efos):
 					snp = record.snp,
 					pvalue = gwas_association.pvalue,
 					evidence = record.evidence,
+					z_score   = None,
 				)
 		else:
 			associations_by_snp[gwas_association.snp] = GWAS_SNP(
 				snp = gwas_association.snp,
 				pvalue = gwas_association.pvalue,
 				# A GWAS association is its own evidence.
-				evidence = [ gwas_association ]
+				evidence = [ gwas_association ],
+				z_score   = None,
 			)
 
 	gwas_snps = associations_by_snp.values()
@@ -342,6 +344,7 @@ def get_gwas_snp_locations(gwas_snps):
 			snp = mapped_snp,
 			pvalue = original_gwas_snp[mapped_snp.rsID].pvalue,
 			evidence = original_gwas_snp[mapped_snp.rsID].evidence,
+			z_score   = None,
 		)
 		for mapped_snp in mapped_snps
 		if mapped_snp.rsID in original_gwas_snp

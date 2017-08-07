@@ -27,11 +27,9 @@ limitations under the License.
 	<http://www.ensembl.org/Help/Contact>.
 
 """
-import sys
 import argparse
 import logging
 import logging.config
-from pprint import pformat
 
 logging.config.fileConfig('configuration/logging.conf')
 logger = logging.getLogger(__name__)
@@ -40,8 +38,42 @@ def main():
 	'''
 
 python scripts/compute_gwas_posteriors_with_finemap.py \
-    --gwas_cluster_file      finemap/EFO_0000203/gwas_clusters/gwas_cluster_0.pickle \
-    --output_posteriors_file finemap/EFO_0000203/gwas_clusters/gwas_cluster_0.posteriors.pickle
+    --gwas_cluster_file      /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/file_based_gwas//Alzheimers/gwas_clusters/gwas_cluster_with_10_snps_around_rs11055612.pvalues_from_file.pickle \
+    --output_posteriors_file /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/file_based_gwas//Alzheimers/gwas_clusters/gwas_cluster_with_10_snps_around_rs11055612.pvalues_from_file.posteriors.pickle
+
+
+python scripts/load_pvalues_for_gwas_ld_snps.py \
+    --diseases \
+    --gwas_cluster_file_in  /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/EFO_0000203/gwas_clusters/gwas_cluster_with_803_snps_around_rs73071352.pickle \
+    --gwas_cluster_file_out /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/EFO_0000203/gwas_clusters/gwas_cluster_with_803_snps_around_rs73071352.pvalues_from_file.pickle
+
+python scripts/compute_gwas_posteriors_with_finemap.py \
+    --gwas_cluster_file      /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/EFO_0000203/gwas_clusters/gwas_cluster_with_803_snps_around_rs73071352.pvalues_from_file.pickle \
+    --output_posteriors_file /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/EFO_0000203/gwas_clusters/gwas_cluster_with_803_snps_around_rs73071352.posteriors.pickle
+
+python scripts/compute_eqtl_posteriors_with_finemap.py \
+    --gwas_cluster_file      /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/EFO_0000203/gwas_clusters/gwas_cluster_with_803_snps_around_rs73071352.pickle \
+    --eqtl_cluster_file      /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/file_based_gwas//Alzheimers/gwas_clusters/gwas_cluster_with_104_snps_around_rs10948363/cis_regulatory_evidence_from_eqtl_84_snps_linked_to_ENSG00000164393_in_Esophagus_Mucosa.pickle \
+    --output_posteriors_file /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/file_based_gwas//Alzheimers/gwas_clusters/gwas_cluster_with_104_snps_around_rs10948363/cis_regulatory_evidence_from_eqtl_84_snps_linked_to_ENSG00000164393_in_Esophagus_Mucosa.joint_posteriors.pickle
+
+
+
+
+python scripts/compute_gwas_posteriors_with_finemap.py \
+    --gwas_cluster_file      /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/EFO_0000203/gwas_clusters/gwas_cluster_with_155_snps_around_rs138740.pickle \
+    --output_posteriors_file /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/EFO_0000203/gwas_clusters/gwas_cluster_with_155_snps_around_rs138740.posteriors.pickle
+
+python scripts/compute_eqtl_posteriors_with_finemap.py \
+    --gwas_cluster_file      /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/EFO_0000203/gwas_clusters/gwas_cluster_with_155_snps_around_rs138740.pickle \
+    --eqtl_cluster_file      /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/EFO_0000203/gwas_clusters/gwas_cluster_with_155_snps_around_rs138740/cis_regulatory_evidence_from_eqtl_131_snps_linked_to_ENSG00000100284_in_Muscle_Skeletal.pickle \
+    --output_posteriors_file /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/EFO_0000203/gwas_clusters/gwas_cluster_with_155_snps_around_rs138740/cis_regulatory_evidence_from_eqtl_131_snps_linked_to_ENSG00000100284_in_Muscle_Skeletal.posteriors.pickle
+
+python scripts/compute_joint_posteriors.py \
+    --gwas_posterior          /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/EFO_0000203/gwas_clusters/gwas_cluster_with_155_snps_around_rs138740.posteriors.pickle \
+    --eqtl_posterior          /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/EFO_0000203/gwas_clusters/gwas_cluster_with_155_snps_around_rs138740/cis_regulatory_evidence_from_eqtl_131_snps_linked_to_ENSG00000100284_in_Muscle_Skeletal.posteriors.pickle \
+    --output_joint_posteriors /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/EFO_0000203/gwas_clusters/gwas_cluster_with_155_snps_around_rs138740/cis_regulatory_evidence_from_eqtl_131_snps_linked_to_ENSG00000100284_in_Muscle_Skeletal.joint_posteriors.pickle
+
+
 
 	'''
 	
@@ -49,8 +81,6 @@ python scripts/compute_gwas_posteriors_with_finemap.py \
 	postgap.Globals.DATABASES_DIR = '/nfs/nobackup/ensembl/mnuhn/postgap/databases/'
 
 	parser = argparse.ArgumentParser(description='Run finemap')
-	parser.add_argument('--diseases', nargs='*', default=[])
-	#parser.add_argument('--iris',     nargs='*', default=[])
 	parser.add_argument('--gwas_cluster_file')
 	parser.add_argument('--output_posteriors_file')
 	
@@ -58,16 +88,14 @@ python scripts/compute_gwas_posteriors_with_finemap.py \
 	
 	logger.info( "gwas_cluster_file      = " + options.gwas_cluster_file      )
 	logger.info( "output_posteriors_file = " + options.output_posteriors_file )
-	#logger.info( "iris                   = " + pformat(options.iris) )
-	logger.info( "diseases               = " + pformat(options.diseases) )
-	
-	#import sys
-	#sys.exit(0)
 	
 	import pickle
 	
 	pickle_fh    = open(options.gwas_cluster_file, 'rb')
 	gwas_cluster = pickle.load(pickle_fh)
+	
+	from postgap.Summarisers import summarise
+	logger.info("Gwas cluster:\n" + summarise(gwas_cluster))
 	
 	#
 	# finemap/EFO_0000203/gwas_clusters/gwas_cluster_0.posteriors.pickle -> gwas_cluster_0.posteriors
@@ -81,46 +109,19 @@ python scripts/compute_gwas_posteriors_with_finemap.py \
 	title = os.path.splitext(temp)[0]
 	
 	logger.info("Cluster title: " + title)
-	
-	diseases = options.diseases
-	#iris     = options.iris
-	iris     = []
-	
-	from postgap.FinemapIntegration.GwasIntegration import load_gwas_pvalues_from_file
-	gwas_clusters_with_values_from_file = load_gwas_pvalues_from_file([ gwas_cluster ], diseases, iris)
-	
-	# One cluster goes into load_gwas_pvalues_from_file, so only one should 
-	# come out.
-	#
-	if len(gwas_clusters_with_values_from_file) != 1:
-		raise Exception
-	
-	gwas_cluster_with_values_from_file = gwas_clusters_with_values_from_file[0]
-	
-	from postgap.FinemapIntegration.GWAS_Cluster import ZScoreComputationException
-	from postgap.FinemapIntegration.GWAS_SNP     import snp_in_multiple_gwas_associations_exception
-	
-	try:
-		
-		gwas_posteriors = process_gwas_cluster(gwas_cluster_with_values_from_file, cluster_name = title)
-		
-	except ZScoreComputationException as z:
-		
-		#
-		# "logger.info" no longer works here, no idea, why. "logging" does 
-		# work somehow, so going with that.
-		#
-		logging.warning(str(z))
-		logging.warning("Skipping this cluster.")
-		return
-	
-	except snp_in_multiple_gwas_associations_exception as e:
 
-		logging.warning(str(e))
-		logging.warning("Skipping this cluster.")
-		return
-		
-	logger.info( "Gwas posteriors have been computed:\n" + str(gwas_posteriors) )
+	from postgap.FinemapIntegration.GWAS_Cluster import compute_finemap_posteriors
+	gwas_posteriors = compute_finemap_posteriors(
+		lead_snps    = gwas_cluster.gwas_snps,
+		ld_snps      = gwas_cluster.ld_snps,
+		cluster_name = title
+	)
+	
+	if gwas_posteriors is None:
+		from postgap.FinemapIntegration.GWAS_Cluster import FinemapFailedException
+		raise FinemapFailedException("Got no finemap results!")
+
+	logging.info( "Gwas posteriors have been computed:\n" + summarise(gwas_posteriors) )
 	
 	import os
 	output_posteriors_file = options.output_posteriors_file
@@ -135,13 +136,6 @@ python scripts/compute_gwas_posteriors_with_finemap.py \
 	
 	logging.info("Posteriors have been written to " + output_posteriors_file)
 	logging.info("All done.");
-
-def process_gwas_cluster(gwas_cluster, cluster_name="Unnamed cluster"):
-
-	from postgap.FinemapIntegration.GWAS_Cluster import compute_gwas_cluster_with_finemap_posteriors
-	gwas_clusters_with_posteriors = compute_gwas_cluster_with_finemap_posteriors(gwas_cluster, cluster_name = cluster_name)
-	logger.info("Got %i gwas clusters with posteriors." % len(gwas_clusters_with_posteriors))
-	return gwas_clusters_with_posteriors.finemap_posteriors
 
 if __name__ == "__main__":
 	main()
