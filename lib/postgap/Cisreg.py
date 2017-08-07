@@ -93,8 +93,7 @@ class GTEx(Cisreg_source):
 		#	res = concatenate((self.gene(gene, tissues, snp_hash) for gene in genes))
 		#else:
 		#	res = concatenate((self.snp(snp, tissues) for snp in snps))
-
-		logger = logging.getLogger(__name__)
+		
 		logger.info("\tFound %i interactions in GTEx" % (len(res)))
 		print "\tFound %i interactions in GTEx" % (len(res))
 		#raise Exception("Being called!")
@@ -158,6 +157,7 @@ class GTEx(Cisreg_source):
 				source = cisreg_with_pvalue.source,
 				study  = None,
 				info   = None,
+				z_score = None,
 				pvalue = cisreg_with_pvalue.pvalue,
 				beta   = cisreg_with_beta.beta
 			)
@@ -246,9 +246,24 @@ class GTEx(Cisreg_source):
 					for k in range(0, len(p_val_index[0]))
 					if hdf5_snp_index[snp_range[p_val_index[2][k]]] in snp_hash
 				]
-
-
-
+			'''
+			res = [
+				Cisregulatory_Evidence(
+					snp = snp_hash[eQTL['snp']],
+					gene = gene,
+					tissue = eQTL['tissue'],
+					score = 1 - float(eQTL['value']),
+					source = self.display_name,
+					study = None,
+					info = None,
+					z_score = None,
+					pvalue = eQTL['value'],
+					beta = None
+				)
+				for eQTL in eQTLs 
+				if eQTL['snp'] in snp_hash
+			]
+			'''
 		except Exception as e:
 			logging.warning("Got exception when querying gene_tissue")
 			logging.warning("The exception is %s" % (e))
@@ -271,8 +286,14 @@ class GTEx(Cisreg_source):
 			Returntype: [ Cisregulatory_Evidence ]
 
 		"""
+		
+		from postgap.Globals import SPECIES
+		if SPECIES is None:
+			raise Exception
+		
 		server = "http://rest.ensembl.org"
-		ext = "/eqtl/id/%s/%s?content-type=application/json;statistic=beta;tissue=%s" % ('homo_sapiens', gene.id, tissue);
+		ext = "/eqtl/id/%s/%s?content-type=application/json;statistic=beta;tissue=%s" % (SPECIES, gene.id, tissue);
+		
 		try:
 			eQTLs = postgap.REST.get(server, ext)
 
@@ -295,19 +316,20 @@ class GTEx(Cisreg_source):
 					study = None,
 					info = None,
 					pvalue = None,
+					z_score = None,
 					beta = eQTL['value']
 				)
 				for eQTL in eQTLs 
 				if eQTL['snp'] in snp_hash
 			]
 
-			self.logger.info("\tFound %i SNPs with betas associated to gene %s in tissue %s in GTEx" % (len(res), gene.id, tissue))
+			logging.info("\tFound %i SNPs with betas associated to gene %s in tissue %s in GTEx" % (len(res), gene.id, tissue))
 
 			return res
-		except Exception as e:
-			self.logger.warning("Got exception when querying %s%s" % (server, ext))
-			self.logger.warning("The exception is %s" % (e))
-			self.logger.warning("Returning 'None' and pretending this didn't happen.")
+		except requests.exceptions.HTTPError as e:
+			logging.warning("Got exception when querying %s%s" % (server, ext))
+			logging.warning("The exception is %s" % (e))
+			logging.warning("Returning 'None' and pretending this didn't happen.")
 			return None
 
 	def snp(self, snp, tissues):
@@ -322,7 +344,7 @@ class GTEx(Cisreg_source):
 		"""
 		res = concatenate(self.snp_tissue(snp, tissue) for tissue in tissues)
 
-		self.logger.info("\tFound %i genes associated to snp %s in GTEx" % (len(res), snp.rsID))
+		logging.info("\tFound %i genes associated to snp %s in GTEx" % (len(res), snp.rsID))
 
 		return res
 

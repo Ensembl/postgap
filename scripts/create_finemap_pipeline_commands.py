@@ -29,9 +29,7 @@ from postgap.Integration import cisregulatory_evidence
 	<http://www.ensembl.org/Help/Contact>.
 
 """
-import sys
 import argparse
-import collections
 import logging
 import logging.config
 
@@ -44,8 +42,8 @@ def main():
 	'''
 	
 python scripts/create_finemap_pipeline_commands.py \
-    --gwas_clusters_directory        /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir_for_diabetes8/diabetes/gwas_clusters/ \
-    --output_commands_file /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir_for_diabetes8/diabetes/gwas_clusters/compute_all_posteriors.bash
+    --gwas_clusters_directory /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/EFO_0000203/gwas_clusters/ \
+    --output_commands_file    /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/EFO_0000203/gwas_clusters/compute_all_posteriors.bash
 
 	'''
 	
@@ -76,15 +74,30 @@ python scripts/create_finemap_pipeline_commands.py \
 		
 		if gwas_cluster_file_extension == ".bash":
 			continue
+		if gwas_cluster_file.endswith(".posteriors.pickle"):
+			continue
+		if gwas_cluster_file.endswith(".joint_posteriors.pickle"):
+			continue
 		
 		if gwas_cluster_file_extension != ".pickle":
 			raise Exception("File " + gwas_cluster_file_extension + " does not end in .pickle")
+		
+		gwas_cluster_with_pvalues_from_gwas_file_file = gwas_clusters_directory + "/" + gwas_cluster_file_basename + ".pvalues_from_file" + gwas_cluster_file_extension
+		
+		cmd = create_command_for_loading_pvalues_for_gwas_ld_snps(
+			gwas_cluster_file_in  = gwas_clusters_directory + "/" + gwas_cluster_file,
+			gwas_cluster_file_out = gwas_cluster_with_pvalues_from_gwas_file_file,
+			diseases              = diseases,
+		)
+		
+		output_commands_fh.write(cmd)
+		output_commands_fh.write("\n")
 		
 		gwas_cluster_posteriors_output_file = gwas_clusters_directory + "/" + gwas_cluster_file_basename + ".posteriors" + gwas_cluster_file_extension
 		
 		cmd = create_command_for_gwas_cluster_posteriors(
 			diseases                            = diseases,
-			gwas_cluster_file                   = gwas_clusters_directory + "/" + gwas_cluster_file, 
+			gwas_cluster_file                   = gwas_cluster_with_pvalues_from_gwas_file_file,
 			gwas_cluster_posteriors_output_file = gwas_cluster_posteriors_output_file,
 		)
 
@@ -98,8 +111,13 @@ python scripts/create_finemap_pipeline_commands.py \
 			cisreg_files = ls_files_from_directory(cisregulatory_evidence_directory)
 			
 			for cisreg_file in cisreg_files:
-				
+
 				(cisreg_file_basename, cisreg_file_extension) = splitext(cisreg_file)
+				
+				if cisreg_file.endswith(".posteriors.pickle"):
+					continue
+				if cisreg_file.endswith(".joint_posteriors.pickle"):
+					continue
 				
 				eqtl_posteriors_output_file = cisregulatory_evidence_directory + "/" + cisreg_file_basename + ".posteriors" + cisreg_file_extension
 				
@@ -126,13 +144,22 @@ python scripts/create_finemap_pipeline_commands.py \
 	logger.info("Commands have been written to: " + output_commands_file)
 	logging.info("All done.");
 				
+def create_command_for_loading_pvalues_for_gwas_ld_snps(gwas_cluster_file_in, gwas_cluster_file_out, diseases):
+	
+	diseases_string = " ".join(diseases)
+	
+	cmd = "python scripts/load_pvalues_for_gwas_ld_snps.py \\\n" \
+		+ "    --diseases              " + diseases_string + " \\\n" \
+		+ "    --gwas_cluster_file_in  " + gwas_cluster_file_in + " \\\n" \
+		+ "    --gwas_cluster_file_out " + gwas_cluster_file_out + "\n"
+	
+	return cmd
 
 def create_command_for_gwas_cluster_posteriors(gwas_cluster_file, gwas_cluster_posteriors_output_file, diseases):
 	
 	diseases_string = " ".join(diseases)
 	
 	cmd = "python scripts/compute_gwas_posteriors_with_finemap.py \\\n" \
-		+ "    --diseases               " + diseases_string + " \\\n" \
 		+ "    --gwas_cluster_file      " + gwas_cluster_file + " \\\n" \
 		+ "    --output_posteriors_file " + gwas_cluster_posteriors_output_file + "\n"
 	

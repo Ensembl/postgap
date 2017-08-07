@@ -205,7 +205,8 @@ def get_snp_locations_simple(rsIDs, ENSEMBL_REST_SERVER = GRCH37_ENSEMBL_REST_SE
 					SNP(
 						rsID = rsID,
 						chrom = mapping['seq_region_name'],
-						pos = (int(mapping['start']) + int(mapping['end'])) / 2
+						pos = (int(mapping['start']) + int(mapping['end'])) / 2,
+						approximated_zscore = None
 					)
 				)
 	return results

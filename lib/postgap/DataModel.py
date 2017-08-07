@@ -31,7 +31,15 @@ limitations under the License.
 import collections
 
 Region = collections.namedtuple("Region", ['chrom', 'start', 'end'])
-SNP = collections.namedtuple("SNP", ['rsID', 'chrom', 'pos'])
+SNP = collections.namedtuple(
+	"SNP", 
+	[
+		'rsID',
+		'chrom',
+		'pos',
+		'approximated_zscore'
+	]
+)
 Gene = collections.namedtuple("Gene", ['name', 'id', 'chrom', 'tss', 'biotype'])
 Disease = collections.namedtuple('Disease', ['name', 'efo'])
 GWAS_Association = collections.namedtuple(
@@ -62,6 +70,7 @@ GWAS_SNP = collections.namedtuple(
 	[
 		'snp',
 		'pvalue',
+		'z_score',
 		'evidence',
    ]
 )
@@ -84,6 +93,7 @@ Cisregulatory_Evidence = collections.namedtuple(
 		'study',
 		'tissue',
 		'info',
+		'z_score',
 		'pvalue',
 		'beta'
 	]

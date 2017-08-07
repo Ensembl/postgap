@@ -27,9 +27,7 @@ limitations under the License.
 	<http://www.ensembl.org/Help/Contact>.
 
 """
-import sys
 import argparse
-import collections
 import logging
 import logging.config
 
@@ -85,9 +83,6 @@ python scripts/compute_joint_posteriors.py \
 	pickle_fh = open(output_joint_posteriors, 'w')
 	pickle.dump(twoDConfigurationSample, pickle_fh)
 	pickle_fh.close
-	
-	configurations = twoDConfigurationSample.configurations
-	posterior      = twoDConfigurationSample.posterior
 	
 	logging.info("Joint posteriors: " + str(twoDConfigurationSample));
 	logging.info("Posteriors have been written to " + output_joint_posteriors)
