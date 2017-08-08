@@ -109,15 +109,16 @@ def compute_z_score_for_snp_like_type(snp_like):
 	from postgap.DataModel import Cisregulatory_Evidence
 	if type(snp_like) is Cisregulatory_Evidence:
 		zscore = compute_z_score_for_cisregulatory_evidence(snp_like)
-		return compute_z_score_for_cisregulatory_evidence(snp_like)
+		return zscore
 	
 	# Should never happen
 	raise Exception
 
 def compute_z_score_for_cisregulatory_evidence(cisregulatory_evidence):
 	
-	# For eqtls, this should never be true.
-	risk_alleles_present_in_reference = False
+	# For eqtls there is no check, if the risk allel is present in the 
+	# reference. this should never be true. We trust that this is not
+	# necessary.
 	
 	z_score = compute_z_score_from_pvalue_and_odds_ratio_or_beta_coefficient(
 		pvalue           = cisregulatory_evidence.pvalue,
