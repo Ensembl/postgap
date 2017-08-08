@@ -48,10 +48,6 @@ python scripts/compute_eqtl_posteriors_with_finemap.py \
     --eqtl_cluster_file      /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/file_based_gwas//Alzheimers/gwas_clusters/gwas_cluster_with_104_snps_around_rs10948363/cis_regulatory_evidence_from_eqtl_84_snps_linked_to_ENSG00000164393_in_Esophagus_Mucosa.pickle \
     --output_posteriors_file /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir/file_based_gwas//Alzheimers/gwas_clusters/gwas_cluster_with_104_snps_around_rs10948363/cis_regulatory_evidence_from_eqtl_84_snps_linked_to_ENSG00000164393_in_Esophagus_Mucosa.joint_posteriors.pickle
 
-
-
-
-
 python scripts/stringify_pickle_object.py --pickle_file /hps/nobackup/production/ensembl/mnuhn/postgap/work_dir_for_diabetes5/diabetes/gwas_clusters/gwas_cluster_around_snp_rs10510110/cis_regulatory_evidence_from_eqtl_snp_rs2034245_linked_to_ENSG00000155542_in_Whole_Blood.pickle
 
 	'''
@@ -77,9 +73,6 @@ python scripts/stringify_pickle_object.py --pickle_file /hps/nobackup/production
 	
 	assert type(gwas_cluster) is postgap.DataModel.GWAS_Cluster, "gwas_cluster is a GWAS_Cluster"
 
-	#pickle_fh       = open(options.eqtl_cluster_file, 'rb')
-	#eqtl_cluster    = pickle.load(pickle_fh)
-	
 	eqtl_clusters = []
 	
 	with open(options.eqtl_cluster_file, 'rb') as pickle_fh:
@@ -91,7 +84,6 @@ python scripts/stringify_pickle_object.py --pickle_file /hps/nobackup/production
 		except EOFError:
 			logger.info("Got " + str(len(eqtl_clusters)) + " eqtl clusters.")
 	
-	#from pprint import pformat
 	from postgap.Summarisers import summarise
 	logger.info("The gwas cluster is:\n" + summarise(gwas_cluster))
 	
@@ -144,7 +136,7 @@ python scripts/stringify_pickle_object.py --pickle_file /hps/nobackup/production
 			
 		raise Exception(str(type(cisregulatory_evidence)))
 	
-	logging.info( "The ld snps with cis regulatory evidence inserted where possible::\n" + summarise(ld_snps_with_cis_regulatory_evidence_inserted) )
+	logging.info( "The ld snps with cis regulatory evidence inserted where possible:\n" + summarise(ld_snps_with_cis_regulatory_evidence_inserted) )
 	
 	finemap_posteriors = compute_finemap_posteriors(
 		lead_snps    = eqtl_clusters,
