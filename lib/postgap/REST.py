@@ -127,6 +127,12 @@ def get(server, ext, data=None):
 		except requests.exceptions.ConnectionError:
 			# A timeout can creep up as a connection error, so catching this as well.
 			# requests.exceptions.ConnectionError: HTTPConnectionPool(host='grch37.rest.ensembl.org', port=80): Read timed out.
+			logging.error("Got a requests.exceptions.ChunkedEncodingError when querying %s%s" % (server, ext) )
+			continue
+		except requests.exceptions.ChunkedEncodingError:
+			# Happen every now and then when the eqtl server feels a bit 
+			# stressed.
+			logging.error("Got a requests.exceptions.ChunkedEncodingError when querying %s%s" % (server, ext) )
 			continue
 
 
@@ -160,7 +166,7 @@ def get(server, ext, data=None):
 			
 			logging.error("Error code: %s (%s) %s" % (http_response_code, r.status_code, response_as_string ) )
 
-			if retries == 2:
+			if retries == 5:
 				logging.critical("Giving up.")
 				r.raise_for_status()
 
@@ -175,6 +181,10 @@ def get(server, ext, data=None):
 				or r.status_code == requests.codes.gateway_timeout \
 				or r.status_code == requests.codes.request_timeout:
 
+				logging.error("Will try again in %s seconds." % 60)
+				time.sleep(60) # Sleep 1 minute while server cools down
+			elif r.status_code == 400:
+				# requests.exceptions.HTTPError: 400 Client Error: Bad Request for url: http://grch37.rest.ensembl.org/overlap/region/Human/5:117435127-119583975?feature=gene;content-type=application/json
 				logging.error("Will try again in %s seconds." % 60)
 				time.sleep(60) # Sleep 1 minute while server cools down
 			else:
