@@ -127,10 +127,10 @@ def get(server, ext, data=None):
 		except requests.exceptions.ConnectionError:
 			# A timeout can creep up as a connection error, so catching this as well.
 			# requests.exceptions.ConnectionError: HTTPConnectionPool(host='grch37.rest.ensembl.org', port=80): Read timed out.
-			logging.error("Got a requests.exceptions.ChunkedEncodingError when querying %s%s" % (server, ext) )
+			logging.error("Got a requests.exceptions.ConnectionError when querying %s%s" % (server, ext) )
 			continue
 		except requests.exceptions.ChunkedEncodingError:
-			# Happen every now and then when the eqtl server feels a bit 
+			# Happens every now and then when the eqtl server feels a bit 
 			# stressed.
 			logging.error("Got a requests.exceptions.ChunkedEncodingError when querying %s%s" % (server, ext) )
 			continue
