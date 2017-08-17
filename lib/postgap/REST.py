@@ -175,15 +175,46 @@ def get(server, ext, data=None):
 				time.sleep(int(r.headers['Retry-After']))
 
 			elif r.status_code == requests.codes.forbidden:
-				logging.error("Will try again in %s seconds." % 600)
+				logging.error("Got 'forbidden' error: Will try again in %s seconds." % 600)
 				time.sleep(600) # Sleep 10 minutes while server calms down
+			elif r.status_code == 429:
+				
+				# Too Many Requests
+				#
+				# This seems to never get run, because it is handled by the
+				# "if 'Retry-After' in r.headers:" further up.
+				#
+				logging.error("Got error 429 'Too Many Requests'. Will try again in %s seconds." % 10)
+				time.sleep(10) # Sleep while server cools down
 			elif r.status_code == 104 \
 				or r.status_code == requests.codes.gateway_timeout \
 				or r.status_code == requests.codes.request_timeout:
 
-				logging.error("Will try again in %s seconds." % 60)
+				logging.error("Got 'timeout error': Will try again in %s seconds." % 60)
 				time.sleep(60) # Sleep 1 minute while server cools down
 			elif r.status_code == 400:
+				
+				# Check for errors that aren't actually errors
+				
+				url = server + ext
+				if "/eqtl/" in url:
+					logging.info("Error is expected behaviour by the eqtl server and will be passed on.")
+					raise EQTL400error(r)
+				
+				if "/variation/" in url:
+					
+					response = r.json()
+					
+					# Happens like this:
+					#
+					# Failed to get proper response to query http://grch37.rest.ensembl.org/variation/homo_sapiens/rs24449894?content-type=application/json
+					# With headers:{'Content-Type': 'application/json'}
+					# Error code: Bad Request (400) {"error": "rs24449894 not found for homo_sapiens"}
+					#
+					if " not found for" in response["error"]:
+						logging.error("Error is expected behaviour by the variation endpoint and will be passed on.")
+						raise Variation400error(r)
+				
 				# requests.exceptions.HTTPError: 400 Client Error: Bad Request for url: http://grch37.rest.ensembl.org/overlap/region/Human/5:117435127-119583975?feature=gene;content-type=application/json
 				logging.error("Will try again in %s seconds." % 60)
 				time.sleep(60) # Sleep 1 minute while server cools down
@@ -206,4 +237,23 @@ def get(server, ext, data=None):
 	error_message = "Failed too many times to get a proper response for query %s%s !" % (server, ext)
 	logging.critical(error_message)
 	raise requests.exceptions.ConnectionError(error_message)
+
+class unhandled_rest_exception(Exception):
+    def __init__(self, request):
+
+        # No message to pass, so setting to ""
+        super(Exception, self).__init__("")
+
+        # Now for your custom code...
+        self.request = request
+        self.response = request.json()
+
+class EQTL400error(unhandled_rest_exception):
+	pass
+
+class Variation400error(unhandled_rest_exception):
+	pass
+
+
+
 
