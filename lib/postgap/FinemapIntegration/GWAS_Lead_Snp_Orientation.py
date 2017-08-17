@@ -250,6 +250,7 @@ def compute_risk_allele_orientations(riskAlleles):
 	'''
 	rs_id = assert_risk_alleles_are_from_same_snp(riskAlleles)
 	
+	from postgap.REST import Variation400error
 	import requests
 	try:
 		base_at_snp_in_reference, ensembl_source_url = fetch_base_at_snp_in_reference(rs_id)
@@ -275,6 +276,13 @@ def compute_risk_allele_orientations(riskAlleles):
 		# http://grch37.rest.ensembl.org/variation/homo_sapiens/rs24449894?content-type=application/json for snprs24449894
 		#
 		raise cant_determine_base_at_snp_in_reference_exception("Got an HTTPError " + str(e) + " for snp " + rs_id + " and risk alleles:\n\n" + json.dumps(riskAlleles))
+	
+	except Variation400error as e:
+		
+		import json
+		logging.debug("Skipping variant, got: " + str(e.response));
+		raise cant_determine_base_at_snp_in_reference_exception("Unmapped snp: " + rs_id + " with risk alleles:\n\n" + json.dumps(riskAlleles))
+		
 	
 	risk_allele_orientations = []
 
@@ -420,7 +428,7 @@ def fetch_variant_mappings(rs_id):
 		Returns the hash returned by the rest server.
 	'''
 	variant_mappings_rest_call_url = "http://grch37.rest.ensembl.org/variation/homo_sapiens/%s?content-type=application/json" % rs_id
-	
+
 	import postgap.REST
 	hash = postgap.REST.get(variant_mappings_rest_call_url, ext="")
 	'''

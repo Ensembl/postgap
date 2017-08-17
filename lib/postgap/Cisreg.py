@@ -179,11 +179,16 @@ class GTEx(Cisreg_source):
 		"""
 
 		try:
+			from postgap.Globals import SPECIES
+			if SPECIES is None:
+				raise Exception
+
 			if postgap.Globals.GTEx_path is None:
 				server = "http://rest.ensembl.org"
 				ext = "/eqtl/id/%s/%s?content-type=application/json;statistic=p-value" % (
 				'homo_sapiens', gene.id);
 				eQTLs = postgap.REST.get(server, ext)
+				from postgap.REST import EQTL400error
 
 				'''
                     Example return object:
@@ -264,8 +269,17 @@ class GTEx(Cisreg_source):
 				if eQTL['snp'] in snp_hash
 			]
 			'''
-		except Exception as e:
-			logging.warning("Got exception when querying gene_tissue")
+			except Exception as e:
+				logging.warning("Got exception when querying gene_tissue")
+
+			self.logger.info("\tFound %i SNPs associated to gene %s in GTEx" % (len(res), gene.id))
+
+			return res
+
+		except EQTL400error as e:
+			logging.info("No data was found for %s%s" % (server, ext))
+		except requests.exceptions.HTTPError as e:
+			logging.warning("Got exception when querying %s%s" % (server, ext))
 			logging.warning("The exception is %s" % (e))
 			logging.warning("Returning 'None' and pretending this didn't happen.")
 			return None
@@ -293,6 +307,8 @@ class GTEx(Cisreg_source):
 		
 		server = "http://rest.ensembl.org"
 		ext = "/eqtl/id/%s/%s?content-type=application/json;statistic=beta;tissue=%s" % (SPECIES, gene.id, tissue);
+		
+		from postgap.REST import EQTL400error
 		
 		try:
 			eQTLs = postgap.REST.get(server, ext)
@@ -326,6 +342,8 @@ class GTEx(Cisreg_source):
 			logging.info("\tFound %i SNPs with betas associated to gene %s in tissue %s in GTEx" % (len(res), gene.id, tissue))
 
 			return res
+		except EQTL400error as e:
+			logging.info("No data was found for %s%s" % (server, ext))
 		except requests.exceptions.HTTPError as e:
 			logging.warning("Got exception when querying %s%s" % (server, ext))
 			logging.warning("The exception is %s" % (e))
