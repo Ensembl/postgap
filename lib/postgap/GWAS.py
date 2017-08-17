@@ -299,6 +299,13 @@ class GWASCatalog(GWAS_source):
 				sample_size = sum(int(ancestry['numberOfIndividuals']) for ancestry in ancestries_response['_embedded']['ancestries'] if ancestry['numberOfIndividuals'] is not None)
 
 				for current_snp in singleNucleotidePolymorphisms:
+					
+					is_dbSNP_accession = "rs" in current_snp["rsId"]
+					
+					if not(is_dbSNP_accession):
+						logger.warning("Did not get a valid dbSNP accession: (" + current_snp["rsId"] + ") from " + snp_url)
+						continue
+					
 					if current_snp["rsId"] == '6':
 						continue
 
@@ -690,7 +697,7 @@ class GWAS_File(GWAS_source):
 			gwas_data_file                    = gwas_data_file,
 			want_this_gwas_association_filter = pvalue_filter,
 			callback                          = pvalue_filtered_gwas_associations.add_to_found_list,
-			max_lines_to_return_threshold     = 5
+			max_lines_to_return_threshold     = None
 		)
 		
 		self.logger.info( "Found " + str(len(pvalue_filtered_gwas_associations.get_found_list())) + " gwas associations with a pvalue of " + str(GWAS_PVALUE_CUTOFF) + " or less.")
