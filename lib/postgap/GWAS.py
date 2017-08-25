@@ -364,6 +364,26 @@ class GRASP(GWAS_source):
 		items = line.rstrip().split('\t')
 		for iri in items[70].split(','):
 			if iri in iris:
+				try:
+					return GWAS_Association(
+						pvalue = float(items[10]),
+						snp = "rs" + items[4],
+						disease = Disease(name = postgap.EFO.term(iri), efo = iri),
+						reported_trait = items[12].decode('latin1'),
+						source = self.display_name,
+						study = items[7],
+						sample_size = int(items[24]),
+						odds_ratio = None,
+						beta_coefficient = None,
+						beta_coefficient_unit = None,
+						beta_coefficient_direction = None
+					)
+				except:
+					return None
+
+		if items[12] in diseases:
+			iri = items[70].split(',')[0]
+			try:
 				return GWAS_Association(
 					pvalue = float(items[10]),
 					snp = "rs" + items[4],
@@ -377,22 +397,8 @@ class GRASP(GWAS_source):
 					beta_coefficient_unit = None,
 					beta_coefficient_direction = None
 				)
-
-		if items[12] in diseases:
-			iri = items[70].split(',')[0]
-			return GWAS_Association(
-				pvalue = float(items[10]),
-				snp = "rs" + items[4],
-				disease = Disease(name = postgap.EFO.term(iri), efo = iri),
-				reported_trait = items[12].decode('latin1'),
-				source = self.display_name,
-				study = items[7],
-				sample_size = int(items[24]),
-				odds_ratio = None,
-				beta_coefficient = None,
-				beta_coefficient_unit = None,
-				beta_coefficient_direction = None
-			)
+			except:
+				return None
 
 		return None
 
