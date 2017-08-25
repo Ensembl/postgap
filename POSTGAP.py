@@ -48,6 +48,8 @@ from postgap.Utils import *
 import sys
 from pprint import pformat
 
+r2_cache = collections.defaultdict(dict)
+
 '''
 Development TODO list:
 
@@ -273,8 +275,15 @@ def genecluster_association_table(association):
 
 	"""
 	results = []
-	ld_snp_ids, r2_matrix = postgap.LD.get_pairwise_ld(association.cluster.ld_snps)
-	r2_index = dict((snp, index) for index, snp in enumerate(ld_snp_ids))
+	for snp1 in association.cluster.ld_snps:
+		for snp2 in association.cluster.ld_snps:
+			if snp1.rsID not in r2_cache or snp2.rsID not in r2_cache[snp1.rsID]:
+				ld_snp_ids, r2_matrix = postgap.LD.get_pairwise_ld(association.cluster.ld_snps)
+				r2_index = dict((snp, index) for index, snp in enumerate(ld_snp_ids))
+				for SNPA in ld_snp_ids:
+					for SNPB in ld_snp_ids:
+						r2_cache[SNPA][SNPB] = r2_matrix.item((r2_index[SNPA], r2_index[SNPB]))
+				break
 	cluster_id = hash(json.dumps(association.cluster.gwas_snps))
 
 	gwas_sources = [gwas_association.source for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
@@ -324,7 +333,7 @@ def genecluster_association_table(association):
 		else:
 			vep_sum = 0
 
-		r2_distances = [read_pairwise_ld(gene_snp_association.snp, gwas_snp.snp, r2_matrix, r2_index)  for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
+		r2_distances = [read_pairwise_ld(gene_snp_association.snp, gwas_snp.snp) for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
 
 
 		row = [
@@ -365,19 +374,17 @@ def genecluster_association_table(association):
 
 	return results
 
-def read_pairwise_ld(snp1, snp2, matrix, index):
+def read_pairwise_ld(snp1, snp2):
 	"""
 		Returns r2 between two SNPs using matrix precomputed by LD.get_pairwise_ld
 		Arg1: SNP
 		Arg2: SNP
-		Arg3: numpy.matrix
-		Arg4: dict(SNP => int)
-		Returntype: float:w
+		Returntype: float
 	"""
-	if snp1.rsID not in index or snp2.rsID not in index:
-		return 0
+	if snp1.rsID in r2_cache and snp2.rsID in r2_cache:
+		return r2_cache[snp1.rsID][snp2.rsID]
 	else:
-		return matrix.item((index[snp1.rsID], index[snp2.rsID]))
+		return 0
 
 if __name__ == "__main__":
 	main()
