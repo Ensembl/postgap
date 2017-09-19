@@ -31,7 +31,7 @@ Flatfile preparation
 
   Ideally, save these files in a separate directory, which we will call ```databases_dir````
 
-  Everytime you run POSTGAP, add ```--databases_dir /path/to/databases_dir``` to the command line.
+  Everytime you run POSTGAP, add ```--database_dir /path/to/databases_dir``` to the command line.
 
 * Manually (*sloooow*)
   This script will create a ```databases_dir``` directory for you:
