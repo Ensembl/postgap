@@ -1,4 +1,5 @@
 DEST_DIR=~/hps/postgap/databases
+DIR_REGEX=~\/hps\/postgap\/databases
 
 default: download process
 download: create_dir d_GRASP d_Phewas_Catalog d_GWAS_DB d_Fantom5 d_DHS d_Regulome d_pchic d_1000Genomes
@@ -88,6 +89,9 @@ efo_list:
 	wget -nc http://www.ebi.ac.uk/gwas/api/search/downloads/alternative -qO ${DEST_DIR}/raw/GWAS_Catalog.txt 
 	cut -f36 ${DEST_DIR}/raw/GWAS_Catalog.txt | tr -d ' '| tr ',' '\n' | sort | uniq | grep -v MAPPED_TRAIT_URI > ${DEST_DIR}/raw/GWAS_Catalog.efos.txt
 	sort -m ${DEST_DIR}/raw/GRASP.efos.txt ${DEST_DIR}/raw/Phewas_Catalog.efos.txt ${DEST_DIR}/raw/GWAS_DB.efos.txt ${DEST_DIR}/raw/GWAS_Catalog.efos.txt | uniq | grep '.' |  grep -v 'N/A' > ${DEST_DIR}/raw/all.efos.txt
+
+script: efo_list
+	cat ${DEST_DIR}/raw/all.efos.txt | sed -e 's/.*\///' | sed -e 's/\(.*\)/python POSTGAP.py  --database_dir ${DIR_REGEX} --efos \1 --output \1.txt/' > all_tests.sh
 
 
 define process_1000Genomes_file
