@@ -80,6 +80,16 @@ d_1000Genomes:
 	mkdir -p ${DEST_DIR}/raw/1000Genomes
 	cat ./preprocessing/links.txt | xargs -n1 wget -nc -P ${DEST_DIR}/raw/1000Genomes/
 
+efo_list:
+	cut -f71 ${DEST_DIR}/GRASP.txt | tr ',' '\n' | sort | uniq > ${DEST_DIR}/raw/GRASP.efos.txt
+	cut -f10 ${DEST_DIR}/Phewas_Catalog.txt | tr ',' '\n' | sort | uniq > ${DEST_DIR}/raw/Phewas_Catalog.efos.txt
+	cut -f7 ${DEST_DIR}/GWAS_DB.txt | tr ',' '\n' | sort | uniq > ${DEST_DIR}/raw/GWAS_DB.efos.txt
+	rm -f ${DEST_DIR}/raw/GWAS_Catalog.txt 
+	wget -nc http://www.ebi.ac.uk/gwas/api/search/downloads/alternative -qO ${DEST_DIR}/raw/GWAS_Catalog.txt 
+	cut -f36 ${DEST_DIR}/raw/GWAS_Catalog.txt | tr -d ' '| tr ',' '\n' | sort | uniq | grep -v MAPPED_TRAIT_URI > ${DEST_DIR}/raw/GWAS_Catalog.efos.txt
+	sort -m ${DEST_DIR}/raw/GRASP.efos.txt ${DEST_DIR}/raw/Phewas_Catalog.efos.txt ${DEST_DIR}/raw/GWAS_DB.efos.txt ${DEST_DIR}/raw/GWAS_Catalog.efos.txt | uniq | grep '.' |  grep -v 'N/A' > ${DEST_DIR}/raw/all.efos.txt
+
+
 define process_1000Genomes_file
 gzip -dc $(1) \
 | vcfkeepsamples - `cat ./preprocessing/EUR_samples.txt`\
