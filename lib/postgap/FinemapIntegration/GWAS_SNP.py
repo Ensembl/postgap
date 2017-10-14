@@ -132,7 +132,7 @@ def compute_z_score_for_gwas_snp(gwas_snp):
 	evidence_list = gwas_snp.evidence
 	
 	if len(evidence_list) != 1:
-		from postgap.Summarisers import summarise
+		from postgap.Utils import summarise
 		raise snp_in_multiple_gwas_associations_exception("This GWAS SNP was found via more than one GWAS Association:\n" + summarise(gwas_snp))
 	
 	evidence = evidence_list[0]

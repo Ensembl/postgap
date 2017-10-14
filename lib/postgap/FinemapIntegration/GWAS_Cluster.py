@@ -58,7 +58,7 @@ def compute_finemap_posteriors(lead_snps, ld_snps, cluster_name="Unnamed cluster
 		ld_snps               = ld_snps
 	)
 	
-	from postgap.Summarisers import summarise
+	from postgap.Utils import summarise
 	logging.info("The snps with zscores, that will be used by finemap, are:\n" + summarise(snps_with_z_scores))
 	
 	z_score_list = []
