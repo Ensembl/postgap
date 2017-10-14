@@ -37,6 +37,8 @@ import postgap.Globals
 from postgap.DataModel import *
 from postgap.Utils import *
 
+from postgap.FinemapIntegration.GWAS_Lead_Snp_Orientation import *
+					
 import logging
 import sys
 
@@ -315,16 +317,6 @@ class GWASCatalog(GWAS_source):
 					import postgap.REST
 					hash = postgap.REST.get(risk_alleles_href, ext="")
 					riskAlleles = hash["_embedded"]["riskAlleles"]
-					
-					from postgap.FinemapIntegration.GWAS_Lead_Snp_Orientation \
-					import                                                  \
-					gwas_risk_alleles_present_in_reference,                 \
-					none_of_the_risk_alleles_is_a_substitution_exception,   \
-					variant_mapping_is_ambiguous_exception,                 \
-					some_alleles_present_in_reference_others_not_exception, \
-					no_dbsnp_accession_for_snp_exception,                   \
-					base_in_allele_missing_exception,                       \
-					cant_determine_base_at_snp_in_reference_exception
 					
 					try:
 					
