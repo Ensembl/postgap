@@ -36,7 +36,6 @@ import logging
 import requests
 
 class Reg_source(object):
-	logger = logging.getLogger(__name__)
 	def run(self, ld_snps, tissues):
 		"""
 
@@ -65,7 +64,7 @@ class Regulome(Reg_source):
 		intersection = postgap.BedTools.overlap_snps_to_bed(ld_snps, postgap.Globals.DATABASES_DIR + "/Regulome.bed")
 		res = filter (lambda X: X.score, (self.get_regulome_evidence(feature, snp_hash) for feature in intersection))
 
-		self.logger.info("\tFound %i regulatory variants in Regulome" % (len(res)))
+		logging.info("\tFound %i regulatory variants in Regulome" % (len(res)))
 
 		return res
 
@@ -194,7 +193,7 @@ class VEP_reg(Reg_source):
 						))
 						break
 
-		self.logger.info("\tFound %i interactions in VEP" % (len(res)))
+		logging.info("\tFound %i interactions in VEP" % (len(res)))
 
 		return res
 

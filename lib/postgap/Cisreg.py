@@ -48,7 +48,6 @@ VEP_impact_to_score = {
 }
 
 class Cisreg_source(object):
-	logger = logging.getLogger(__name__)
 	def run(self, snps, tissues):
 		assert False, "This stub should be defined"
 
@@ -75,8 +74,7 @@ class GTEx(Cisreg_source):
 		server = 'http://grch37.rest.ensembl.org'
 		ext = '/overlap/region/%s/%s:%i-%i?feature=gene;content-type=application/json' % (postgap.Globals.SPECIES, chrom, max(0, start - 1e6), end + 1e6)
 		
-		logger = logging.getLogger(__name__)
-		logger.info("Querying:" + server + "" + ext)
+		logging.info("Querying:" + server + "" + ext)
 		print "Querying:" + server + "" + ext
 		
 		genes = [ Gene(
@@ -95,7 +93,7 @@ class GTEx(Cisreg_source):
 			res = concatenate((self.snp(snp, tissues) for snp in snps))
 
 		
-		logger.info("\tFound %i interactions in GTEx" % (len(res)))
+		logging.info("\tFound %i interactions in GTEx" % (len(res)))
 		print "\tFound %i interactions in GTEx" % (len(res))
 		#raise Exception("Being called!")
 		return res
@@ -113,7 +111,7 @@ class GTEx(Cisreg_source):
 		"""
 		res = concatenate(self.gene_tissue(gene, tissue, snp_hash) for tissue in tissues)
 
-		self.logger.info("\tFound %i SNPs associated to gene %s in GTEx" % (len(res), gene.id))
+		logging.info("\tFound %i SNPs associated to gene %s in GTEx" % (len(res), gene.id))
 
 		return res
 	
@@ -448,7 +446,7 @@ class VEP(Cisreg_source):
 					}
 				))
 
-		self.logger.info("\tFound %i interactions in VEP" % (len(res)))
+		logging.info("\tFound %i interactions in VEP" % (len(res)))
 
 		return res
 
@@ -508,18 +506,18 @@ class Fantom5(Cisreg_source):
 
 		"""
 		
-		self.logger.info("\tSearching for overlaps from %i SNPs to Fantom5" % len(snps))
+		logging.info("\tSearching for overlaps from %i SNPs to Fantom5" % len(snps))
 		
 		intersection = postgap.BedTools.overlap_snps_to_bed(snps, postgap.Globals.DATABASES_DIR + "/Fantom5.bed")
 		fdr_model = pickle.load(open(postgap.Globals.DATABASES_DIR + "/Fantom5.fdrs"))
 		snp_hash = dict( (snp.rsID, snp) for snp in snps)
 		hits  = filter(lambda X: X is not None, map(lambda X: self.get_evidence(X, fdr_model, snp_hash), intersection))
 
-		self.logger.info("\tFound %i overlaps with %i SNPs to Fantom5" % (len(hits), len(snps)))
+		logging.info("\tFound %i overlaps with %i SNPs to Fantom5" % (len(hits), len(snps)))
 
 		res = filter(lambda X: X.score, hits)
 
-		self.logger.info("\tFound %i interactions in Fantom5" % (len(res)))
+		logging.info("\tFound %i interactions in Fantom5" % (len(res)))
 
 		return res
 
@@ -567,14 +565,14 @@ class DHS(Cisreg_source):
 			Returntype: [ Regulatory_Evidence ]
 
 		"""
-		self.logger.info("\tSearching for gene associations in DHS")
+		logging.info("\tSearching for gene associations in DHS")
 		
 		intersection = postgap.BedTools.overlap_snps_to_bed(snps, postgap.Globals.DATABASES_DIR + "/DHS.bed")
 		fdr_model = pickle.load(open(postgap.Globals.DATABASES_DIR+"/DHS.fdrs"))
 		snp_hash = dict( (snp.rsID, snp) for snp in snps)
 		res = filter (lambda X: X is not None and X.score, (self.get_evidence(feature, fdr_model, snp_hash) for feature in intersection))
 
-		self.logger.info("\tFound %i gene associations in DHS" % len(res))
+		logging.info("\tFound %i gene associations in DHS" % len(res))
 
 		return res
 
@@ -673,13 +671,13 @@ class PCHIC(Cisreg_source):
 
 		"""
 		
-		self.logger.info("\tSearching for gene associations in PCHIC")
+		logging.info("\tSearching for gene associations in PCHIC")
 		
 		intersection = postgap.BedTools.overlap_snps_to_bed(snps, postgap.Globals.DATABASES_DIR + "/pchic.bed")
 		snp_hash = dict( (snp.rsID, snp) for snp in snps)
 		res = filter (lambda X: X is not None and X.score, (self.get_evidence(feature, snp_hash) for feature in intersection))
 
-		self.logger.info("\tFound %i gene associations in PCHIC" % len(res))
+		logging.info("\tFound %i gene associations in PCHIC" % len(res))
 
 		return res
 

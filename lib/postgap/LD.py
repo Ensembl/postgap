@@ -68,8 +68,7 @@ def calculate_window(snp, window_len=500000, population='EUR', cutoff=0.7):
 		"-v", snp.rsID,
 		"-w", str(window_len)
 	]
-	logger = logging.getLogger(__name__)
-	logger.debug(" ".join(ld_comm))
+	logging.debug(" ".join(ld_comm))
 
 	process = Popen(ld_comm, stdout=PIPE)
 	(output, err) = process.communicate()

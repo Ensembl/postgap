@@ -71,13 +71,11 @@ def diseases_to_gwas_snps(diseases, efos):
 		Returntype: [ GWAS_SNP ]
 
 	"""
-	logger = logging.getLogger(__name__)
-	
 	from postgap.Globals import GWAS_PVALUE_CUTOFF
 	
 	res = filter(lambda X: X.pvalue < GWAS_PVALUE_CUTOFF, scan_disease_databases(diseases, efos))
 
-	logger.info("Found %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) after p-value filter (%f)" % (len(res), ", ".join(diseases), ", ".join(efos), GWAS_PVALUE_CUTOFF))
+	logging.info("Found %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) after p-value filter (%f)" % (len(res), ", ".join(diseases), ", ".join(efos), GWAS_PVALUE_CUTOFF))
 
 	# Only return the top hits
 	return sorted(res, key = lambda gwas_snp: gwas_snp.pvalue)[:MAX_GWAS_HITS]
@@ -92,13 +90,11 @@ def scan_disease_databases(diseases, efos):
 		Returntype: [ GWAS_SNP ]
 
 	"""
-	logger = logging.getLogger(__name__)
-
-	logger.info("Searching for GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (", ".join(diseases), ", ".join(efos)))
+	logging.info("Searching for GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (", ".join(diseases), ", ".join(efos)))
 
 	gwas_associations = concatenate(source().run(diseases, efos) for source in postgap.GWAS.sources)
 	
-	logger.info("Done searching for GWAS SNPs. Found %s gwas associations." % len(gwas_associations) )
+	logging.info("Done searching for GWAS SNPs. Found %s gwas associations." % len(gwas_associations) )
 
 	associations_by_snp = dict()
 	for gwas_association in gwas_associations:
@@ -145,7 +141,7 @@ def scan_disease_databases(diseases, efos):
 		assert type(gwas_snp) is GWAS_SNP
 		assert type(gwas_snp.snp) is SNP, "The gwas_snp.snp is a SNP. " + gwas_snp.snp
 
-	logger.info("Found %i unique GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (len(gwas_snps), ", ".join(diseases), ", ".join(efos)))
+	logging.info("Found %i unique GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (len(gwas_snps), ", ".join(diseases), ", ".join(efos)))
 
 	return gwas_snps
 
@@ -168,8 +164,6 @@ def gwas_snps_to_genes(gwas_snps, populations, tissue_weights):
 		Returntype: [ GeneCluster_Association ]
 
 	"""
-	logger = logging.getLogger(__name__)
-	
 	for gwas_snp in gwas_snps:
 		assert type(gwas_snp) is GWAS_SNP
 		assert type(gwas_snp.snp) is SNP, "The gwas_snp.snp is a SNP. " + gwas_snp.snp
@@ -188,7 +182,7 @@ def gwas_snps_to_genes(gwas_snps, populations, tissue_weights):
 	
 	res = concatenate(cluster_to_genes(cluster, tissue_weights, populations) for cluster in clusters)
 
-	logger.info("\tFound %i genes associated to all clusters" % (len(res)))
+	logging.info("\tFound %i genes associated to all clusters" % (len(res)))
 
 	if len(res) == 0:
 		return []
@@ -218,16 +212,13 @@ def cluster_gwas_snps(gwas_snps, populations):
 		Returntype: [ GWAS_Cluster ]
 
 	"""
-	
-	logger = logging.getLogger(__name__)
-	
 	for gwas_snp in gwas_snps:
 		assert type(gwas_snp) is GWAS_SNP
 		assert type(gwas_snp.snp) is SNP, "The gwas_snp.snp is a SNP. " + gwas_snp.snp
 	
 	gwas_snp_locations = get_gwas_snp_locations(gwas_snps)
 
-	logger.info("Found %i locations from %i GWAS SNPs" % (len(gwas_snp_locations), len(gwas_snps)))
+	logging.info("Found %i locations from %i GWAS SNPs" % (len(gwas_snp_locations), len(gwas_snps)))
 
 	# For every gwas snp location, create the preclusters.
 	#
@@ -245,7 +236,7 @@ def cluster_gwas_snps(gwas_snps, populations):
 	#
 	clusters = merge_preclusters(filtered_preclusters)
 	
-	logger.info("Found %i clusters from %i GWAS SNP locations" % (len(clusters), len(gwas_snp_locations)))
+	logging.info("Found %i clusters from %i GWAS SNP locations" % (len(clusters), len(gwas_snp_locations)))
 
 	return clusters
 
@@ -332,10 +323,8 @@ def gwas_snp_to_precluster(gwas_snp, populations):
         Returntype: GWAS_Cluster
 
     """
-    logger = logging.getLogger(__name__)
-    
     mapped_ld_snps = postgap.LD.calculate_window(gwas_snp.snp)
-    logger.info("Found %i SNPs in the vicinity of %s" % (len(mapped_ld_snps), gwas_snp.snp.rsID))
+    logging.info("Found %i SNPs in the vicinity of %s" % (len(mapped_ld_snps), gwas_snp.snp.rsID))
     return GWAS_Cluster(
 		gwas_snps = [ gwas_snp ],
 		ld_snps = mapped_ld_snps,
@@ -377,8 +366,6 @@ def merge_preclusters(preclusters):
 		Returntype: [ Cluster ]
 
 	"""
-	logger = logging.getLogger(__name__)
-	
 	clusters = list(preclusters)
 	
 	# A dictionary that maps from snp to merged clusters
@@ -422,7 +409,7 @@ def merge_preclusters(preclusters):
 			else:
 				snp_owner[ld_snp] = cluster
 
-	logger.info("\tFound %i clusters from the GWAS peaks" % (len(clusters)))
+	logging.info("\tFound %i clusters from the GWAS peaks" % (len(clusters)))
 
 	return clusters
 
@@ -559,8 +546,7 @@ def cluster_to_genes(cluster, tissues, populations):
         for (gene, snp) in gene_scores if snp in pics
     ]
 
-    logger = logging.getLogger(__name__)
-    logger.info("\tFound %i genes associated around GWAS SNP %s" % (len(res), top_gwas_hit.snp.rsID))
+    logging.info("\tFound %i genes associated around GWAS SNP %s" % (len(res), top_gwas_hit.snp.rsID))
 
     # Pick the association with the highest score
     return sorted(res, key=lambda X: X.score)
@@ -769,9 +755,7 @@ def cisregulatory_evidence(ld_snps, tissues):
 		Returntype: Hash of hashes SNP => Gene => Cisregulatory_Evidence
 
 	"""
-	logger = logging.getLogger(__name__)
-	
-	logger.info("Searching for cis-regulatory data on %i SNPs in all databases" % (len(ld_snps)))
+	logging.info("Searching for cis-regulatory data on %i SNPs in all databases" % (len(ld_snps)))
 	#evidence = concatenate(source().run(ld_snps, tissues) for source in postgap.Cisreg.sources)
 	
 	GTEx = postgap.Cisreg.GTEx()
@@ -789,7 +773,7 @@ def cisregulatory_evidence(ld_snps, tissues):
 		assert type(association) is postgap.DataModel.Cisregulatory_Evidence, "association is Cisregulatory_Evidence"
 		res[association.snp][association.gene].append(association)
 
-	logger.info(("Found %i cis-regulatory interactions in all databases" % (len(res))))
+	logging.info(("Found %i cis-regulatory interactions in all databases" % (len(res))))
 
 	return res
 
@@ -805,9 +789,7 @@ def regulatory_evidence(snps, tissues):
 		Returntype: [ Regulatory_Evidence ]
 
 	"""
-	logger = logging.getLogger(__name__)
-	
-	logger.info("Searching for regulatory data on %i SNPs in all databases" % (len(snps)))
+	logging.info("Searching for regulatory data on %i SNPs in all databases" % (len(snps)))
 
 	res = concatenate(source().run(snps, tissues) for source in postgap.Reg.sources)
 

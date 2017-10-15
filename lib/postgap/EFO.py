@@ -165,7 +165,6 @@ def children(efo):
 	"""
 
 	import logging
-	logger = logging.getLogger(__name__)
 	
 	server = 'http://www.ebi.ac.uk'
 
@@ -287,9 +286,9 @@ def children(efo):
 	hash = postgap.REST.get(descendants_href, '')
 
 	terms = hash['_embedded']['terms']
-	logger.debug("The Ontology Lookup Service returned the descendants for " + efo)
+	logging.debug("The Ontology Lookup Service returned the descendants for " + efo)
 	for term in terms:
-		logger.debug(" - " + term['short_form']);
+		logging.debug(" - " + term['short_form']);
 
 	result = [ term['iri'] for term in terms ]
 
@@ -320,7 +319,6 @@ def lookup_term(iri):
 
 	"""
 	import logging
-	logger = logging.getLogger(__name__)
 	
 	server = 'http://www.ebi.ac.uk'
 
