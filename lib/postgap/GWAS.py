@@ -37,7 +37,7 @@ import postgap.Globals
 from postgap.DataModel import *
 from postgap.Utils import *
 
-from postgap.FinemapIntegration.GWAS_Lead_Snp_Orientation import *
+from postgap.GWAS_Lead_Snp_Orientation import *
 					
 import logging
 import sys
@@ -514,9 +514,9 @@ class GRASP(GWAS_source):
 					odds_ratio = None,
 					beta_coefficient = None,
 					beta_coefficient_unit = None,
-					beta_coefficient_direction = None
+					beta_coefficient_direction = None,
 					rest_hash = None,
-					risk_alleles_present_in_reference = None,
+					risk_alleles_present_in_reference = None
 				)
 			except:
 				return None
@@ -534,9 +534,9 @@ class GRASP(GWAS_source):
 				odds_ratio = None,
 				beta_coefficient = None,
 				beta_coefficient_unit = None,
-				beta_coefficient_direction = None
+				beta_coefficient_direction = None,
 				rest_hash = None,
-				risk_alleles_present_in_reference = None,
+				risk_alleles_present_in_reference = None
 			)
 
 		return None
@@ -594,7 +594,7 @@ class Phewas_Catalog(GWAS_source):
 					odds_ratio = float(items[5]),
 					beta_coefficient = None,
 					beta_coefficient_unit = None,
-					beta_coefficient_direction = None
+					beta_coefficient_direction = None,
 					rest_hash = None
 				)
 
@@ -611,7 +611,6 @@ class Phewas_Catalog(GWAS_source):
 				study = None,
 				sample_size = int(items[3]),
 				odds_ratio = float(items[5]),
-				study = None,
 				beta_coefficient = None,
 				beta_coefficient_unit = None,
 				beta_coefficient_direction = None,
@@ -886,9 +885,9 @@ class GWAS_DB(GWAS_source):
 					odds_ratio = None,
 					beta_coefficient = None,
 					beta_coefficient_unit = None,
-					beta_coefficient_direction = None
+					beta_coefficient_direction = None,
 					rest_hash = None,
-					risk_alleles_present_in_reference = None,
+					risk_alleles_present_in_reference = None
 				)
 
 		if items[5] in diseases:
@@ -906,9 +905,9 @@ class GWAS_DB(GWAS_source):
 				odds_ratio = None,
 				beta_coefficient = None,
 				beta_coefficient_unit = None,
-				beta_coefficient_direction = None
+				beta_coefficient_direction = None,
 				rest_hash = None,
-				risk_alleles_present_in_reference = None,
+				risk_alleles_present_in_reference = None
 			)
 
 		return None
