@@ -75,7 +75,6 @@ class GTEx(Cisreg_source):
 		ext = '/overlap/region/%s/%s:%i-%i?feature=gene;content-type=application/json' % (postgap.Globals.SPECIES, chrom, max(0, start - 1e6), end + 1e6)
 		
 		logging.info("Querying:" + server + "" + ext)
-		print "Querying:" + server + "" + ext
 		
 		genes = [ Gene(
 				name = gene['external_name'],
@@ -91,11 +90,8 @@ class GTEx(Cisreg_source):
 			res = concatenate((self.gene(gene, tissues, snp_hash) for gene in genes))
 		else:
 			res = concatenate((self.snp(snp, tissues) for snp in snps))
-
 		
 		logging.info("\tFound %i interactions in GTEx" % (len(res)))
-		print "\tFound %i interactions in GTEx" % (len(res))
-		#raise Exception("Being called!")
 		return res
 
 	def gene(self, gene, tissues, snp_hash):
