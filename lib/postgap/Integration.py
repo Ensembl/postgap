@@ -42,6 +42,7 @@ import postgap.Globals
 import postgap.RegionFilter
 from postgap.Utils import *
 import logging
+import scipy
 
 
 import sys
@@ -107,13 +108,23 @@ def scan_disease_databases(diseases, efos):
 		# Looking at you GWAS DB, "p-value = 0", pshaw!
 		if gwas_association.pvalue <= 0:
 			continue
+		
+		if gwas_association.odds_ratio is not None:
+			direction = sign(odds_ratio - 1)
+		elif gwas_association.beta_coefficient is not None:
+			direction = sign(beta_coefficient)
+		else:
+			continue
+
+		zscore = -scipy.norm.ppf(pvalue/2) * direction
+
 		if gwas_association.snp not in associations_by_snp or associations_by_snp[gwas_association.snp].pvalue < gwas_association.pvalue:
 			associations_by_snp[gwas_association.snp] = GWAS_SNP(
 				snp = gwas_association.snp,
 				pvalue = gwas_association.pvalue,
 				# A GWAS association is its own evidence.
 				evidence = [ gwas_association ],
-				z_score   = None,
+				z_score   = z_score,
 			)
 
 	gwas_snps = associations_by_snp.values()
@@ -128,6 +139,14 @@ def scan_disease_databases(diseases, efos):
 		logger.info("Found %i unique GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in (%s)" % (len(res), ", ".join(diseases), ", ".join(efos), ", ".join(postgap.Globals.GWAS_adaptors)))
 
 	return gwas_snps
+
+def sign(number):
+	if number > 0:
+		return 1
+	elif number < 0:
+		return -1
+	else:
+		return 0
 
 def gwas_snps_to_genes(gwas_snps, populations, tissue_weights):
 	"""
@@ -335,7 +354,7 @@ def get_gwas_snp_locations(gwas_snps):
 			snp = mapped_snp,
 			pvalue = original_gwas_snp[mapped_snp.rsID].pvalue,
 			evidence = original_gwas_snp[mapped_snp.rsID].evidence,
-			z_score   = None,
+			z_score   = original_gwas_snp[mapped_snp.rsID].z_score,
 		)
 		for mapped_snp in mapped_snps
 		if mapped_snp.rsID in original_gwas_snp
