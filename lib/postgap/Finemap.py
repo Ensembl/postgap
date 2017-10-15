@@ -27,16 +27,6 @@ OneDConfigurationSample_prototype = collections.namedtuple(
 		'sample_label'
 	]
 )
-#import collections
-finemap_summary_prototype = namedtuple(
-	'finemap_summary_prototype', [
-		'labels', 
-		'prior',
-		'posterior',
-		'log_BF',
-		'BF',
-	]
-)
 
 class TranslationIndexException(Exception):
 	pass
@@ -50,92 +40,6 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 		log_prior: numpy.array (1D)
 		configuration_size: numpy.array (1D), number of SNPs in the corresponding vector
 	'''
-	def __str__(self):
-		return self.finemap_object_to_english()
-
-	def finemap_object_to_english(self, max_show_at_top = 5, max_show_at_end = 2):
-		
-		finemap_summary_list = self.compute_finemap_summaries()
-		
-		total_configurations = len(finemap_summary_list)
-			
-		finemap_summary_list_sorted = sorted(
-			finemap_summary_list, 
-			cmp = lambda x,y: cmp(x.BF, y.BF),
-			reverse = True
-		)
-		
-		num_show_at_top = min(total_configurations, max_show_at_top)
-		num_show_at_end = min(total_configurations, max_show_at_end)
-		
-		indentation = "    "
-		
-		summary_lines = [ "A total of %i configurations have been investigated in %s:" % (total_configurations, self.sample_label) ]
-		
-		for index in range(num_show_at_top):
-			summary_lines.append(indentation + "- " + self.finemap_summary_object_to_english(finemap_summary_list_sorted[index]))
-
-		if num_show_at_top<total_configurations:
-
-			summary_lines.append(indentation +  "...")
-
-			for index in range(total_configurations-num_show_at_end, total_configurations):
-				summary_lines.append(indentation + "- " + self.finemap_summary_object_to_english(finemap_summary_list_sorted[index]))
-
-		return "\n".join(summary_lines)
-
-	def finemap_summary_object_to_english(self, finemap_summary):
-		
-		snps_stringified = "(" + ', '.join(finemap_summary.labels) + ")"
-		
-		prior     = finemap_summary.prior
-		posterior = finemap_summary.posterior
-		BF        = finemap_summary.BF
-		
-		sentence = "The snp configuration {} has a prior probability of {:1.0%}. The posterior probability is {:.2e}. The Bayes factor is: {:.2e}".format(
-				snps_stringified, prior, posterior, BF
-			)
-
-		return sentence
-
-	def lookup_labels_for_snp_configuration(self, configuration):
-		
-		labels = []
-		
-		for position, configuration_index in enumerate(configuration):
-			labels.append(self.labels[configuration_index])
-		
-		return labels
-
-	def compute_finemap_summaries(self):
-		
-		configurations     = self.configurations
-		posterior          = self.posterior
-		log_BF             = self.log_BF
-		configuration_size = self.configuration_size
-		log_prior          = self.log_prior
-		labels             = self.labels
-		
-		finemap_summary_list = []
-		
-		for current_configuration in configurations.keys():
-			
-			index_of_current_configuration = configurations[current_configuration]
-			
-			current_labels = self.lookup_labels_for_snp_configuration(current_configuration)
-			
-			import math
-			current_finemap_summary = finemap_summary_prototype(
-				labels    = current_labels,
-				posterior = posterior[index_of_current_configuration],
-				prior     = math.exp(log_prior[index_of_current_configuration]),
-				log_BF    = log_BF[index_of_current_configuration],
-				BF        = math.exp(log_BF[index_of_current_configuration])
-			)
-			finemap_summary_list.append(current_finemap_summary)
-		return finemap_summary_list
-
-
 	def normalise_posteriors(self):
 		'''
 			Return identical OneDConfigurationSample but with updated posteriors that add up to 1
@@ -180,8 +84,6 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 			sample_label = self.sample_label
 		)
 
-
-
 	def multiple_marginals(self, singleton_count, kmax):
 		'''
 			INPUT----
@@ -223,7 +125,6 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 		return(iter_dict)
 
 	def create_translation_index(self, from_labels, to_labels):
-		
 		translate = dict()
 		
 		for index_in_gwas, current_label in enumerate(from_labels):
@@ -385,6 +286,49 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 
 		return res_final
 
+	def __str__(self):
+		return self.string()
+
+	def string(self, max_show_at_top = 5, max_show_at_end = 2):
+		indentation = "    "
+		total_configurations = len(self.configurations)
+		if total_configurations >  max_show_at_top + max_show_at_end:
+			num_show_at_top = max_show_at_top
+			num_show_at_end = max_show_at_end
+		else:
+			num_show_at_top = total_configurations
+			num_show_at_end = 0
+
+		summary_lines = [ "A total of %i configurations have been investigated in %s:" % (total_configurations, self.sample_label) ]
+		
+		sorted_configurations = sorted(
+			self.configurations, 
+			key = lambda x: self.log_BF[self.configurations[x]],
+			reverse = True
+		)
+		
+		for configuration in sorted_configurations[:num_show_at_top]:
+			summary_lines.append(indentation + self.configuration_string(configuration)
+
+		if num_show_at_end > 0:
+			summary_lines.append(indentation +  "...")
+
+		for configuration in sorted_configurations[-num_show_at_end:]:
+			summary_lines.append(indentation + self.configuration_string(configuration)
+
+		return "\n".join(summary_lines)
+
+	def configuration_string(self, configuration):
+		index_of_configuration = configurations[configuration]
+		posterior = self.posterior[index_of_configuration],
+		prior     = math.exp(self.log_prior[index_of_configuration]),
+		BF        = math.exp(log_BF[index_of_configuration])
+		snps      = ', '.join([self.labels[position] for position in configuration])
+		return "- The snp configuration ({}) has a prior probability of {:1.0%}. The posterior probability is {:.2e}. The Bayes factor is: {:.2e}".format(
+				snps, prior, posterior, BF
+			)
+
+
 TwoDConfigurationSample_prototype = namedtuple(
 	'TwoDConfigurationSample_prototype', 
 	[
@@ -399,18 +343,6 @@ TwoDConfigurationSample_prototype = namedtuple(
 		'sample_2_label'
 	]
 )
-TwoDConfigurationSample_prototype.__new__.__defaults__ = (
-	None, 
-	None,
-	None, 
-	None,
-	None, 
-	None,
-	None, 
-	"sample1",
-	"sample2"
-)
-
 '''
 	Stores colocalisation data on a set of configurations:
 	configurations: dict(tuple => int); assigns to each configuration (tuple of indices) an index into the vectors below
@@ -423,101 +355,55 @@ TwoDConfigurationSample_prototype.__new__.__defaults__ = (
 	log_BF2: numpy.array (1D)
 	log_prior2: numpy.array (1D)
 '''
-
-import collections
-TwoDConfigurationSample_summary = collections.namedtuple(
-	'TwoDConfigurationSample_summary', [
-		'labels', 
-		'posterior',
-		'posterior1',
-		'posterior2'
-	]
-)
-
 class TwoDConfigurationSample(TwoDConfigurationSample_prototype):
-	
 	def __str__(self):
-		return self.to_String()
+		return self.string()
 
-	def to_String(self, max_show_at_top = 5, max_show_at_end = 2):
-		
-		summary_list = self.create_summaries()
-
-		summary_list_sorted = sorted(
-			summary_list, 
-			cmp = lambda x,y: cmp(x.posterior, y.posterior),
-			reverse = False
-		)
-		
-		total_configurations = len(summary_list_sorted)
-		
-		num_show_at_top = min(total_configurations, max_show_at_top)
-		num_show_at_end = min(total_configurations, max_show_at_end)
-		
+	def string(self, max_show_at_top = 5, max_show_at_end = 2):
 		indentation = "    "
+		total_configurations = len(self.configurations)
+		if total_configurations >  max_show_at_top + max_show_at_end:
+			num_show_at_top = max_show_at_top
+			num_show_at_end = max_show_at_end
+		else:
+			num_show_at_top = total_configurations
+			num_show_at_end = 0
 
 		summary_lines = [ "A total of %i configurations have been investigated in %s and %s:" % (total_configurations, self.sample_1_label, self.sample_2_label) ]
+		
+		sorted_configurations = sorted(
+			self.configurations, 
+			key = lambda x: self.posterior[self.configurations[x]],
+			reverse = True
+		)
+		
+		for configuration in sorted_configurations[:num_show_at_top]:
+			summary_lines.append(indentation + self.configuration_string(configuration)
 
-		for index in range(num_show_at_top):
-			summary_lines.append(indentation + "- " + self.twoDConfigurationSample_summary_to_string(summary_list_sorted[index]))
-		
-		if num_show_at_top<total_configurations:
-		
+		if num_show_at_end > 0:
 			summary_lines.append(indentation +  "...")
 
-			for index in range(total_configurations-num_show_at_end, total_configurations):
-				summary_lines.append(indentation + "- " + self.twoDConfigurationSample_summary_to_string(summary_list_sorted[index]))
-		
+		for configuration in sorted_configurations[-num_show_at_end:]:
+			summary_lines.append(indentation + self.configuration_string(configuration)
+
 		summary_lines.append("The coloc evidence is: {:2e}".format(self.coloc_evidence))
 		
 		return '\n'.join(summary_lines)
 
-	def create_summaries(self):
-		
-		summary_list = []
-		
-		for current_configuration in self.configurations.keys():
-			
-			snp_labels = ", ".join(self.lookup_labels_for_snp_configuration(current_configuration))
-			index = self.configurations[ current_configuration ]
-			
-			twoDConfigurationSample_summary = TwoDConfigurationSample_summary(
-				labels     = snp_labels,
-				posterior  = self.posterior[index],
-				posterior1 = self.posterior1[index],
-				posterior2 = self.posterior2[index]
-			)
-			summary_list.append( twoDConfigurationSample_summary )
-		
-		return summary_list
-		
-	
-	def twoDConfigurationSample_summary_to_string(self, twoDConfigurationSample_summary):
-		
-		sentence = "The snp configuration ({}) had posterior probabilities of {:.2e} in {} and {:.2e} in {}. The joint posterior probability is {:.2e}.".format(
-			twoDConfigurationSample_summary.labels,
-			float(twoDConfigurationSample_summary.posterior1),
+	def configuration_string(self, configuration):
+		snp_labels = ", ".join([self.labels[position] for position in configuration])
+		index = self.configurations[configuration]
+		posterior  = self.posterior[index],
+		posterior1 = self.posterior1[index],
+		posterior2 = self.posterior2[index]
+		return "The snp configuration ({}) had posterior probabilities of {:.2e} in {} and {:.2e} in {}. The joint posterior probability is {:.2e}.".format(
+			snp_labels,
+			float(posterior1),
 			self.sample_1_label,
-			float(twoDConfigurationSample_summary.posterior2),
+			float(posterior2),
 			self.sample_2_label,
-			float(twoDConfigurationSample_summary.posterior),
-		)
-		
-		return sentence
-
+			float(posterior),
 	
-	def lookup_labels_for_snp_configuration(self, configuration):
-		'''
-			Copied over: not good!
-		'''
-		
-		labels = []
-		
-		for position, configuration_index in enumerate(configuration):
-			labels.append(self.labels[configuration_index])
-		
-		return labels
-
 def finemap(z_scores, cov_matrix, n, labels, kstart=1, kmax=5, max_iter=100000, output="configuration", prior="independence", v_scale=0.0025, g="BRIC", verbose=False, sample_label="Unnamed sample"):
 	'''
 		Main function for fine-mapping using stochastic search for one trait #
