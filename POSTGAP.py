@@ -221,11 +221,13 @@ def get_options():
     parser.add_argument('--Cisreg', default=None, nargs='*', choices=(CisReg_options))
     parser.add_argument('--Reg', default=None, nargs='*', choices=(Reg_options))
     parser.add_argument('--work_dir', default = 'postgap_temp_work_dir')
+    parser.add_argument('--summary_stats')
     options = parser.parse_args()
 
     postgap.Globals.DATABASES_DIR = options.databases
     postgap.Globals.SPECIES = options.species
     postgap.Globals.DEBUG = postgap.Globals.DEBUG or options.debug
+    postgap.Globals.GWAS_SUMMARY_STATS_FILE = options.summary_stats
     
     if options.efos is not None:
         postgap.Globals.work_directory = options.work_dir + "/" + "_".join(options.efos)

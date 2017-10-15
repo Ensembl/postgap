@@ -630,17 +630,6 @@ class GWAS_File(GWAS_source):
 	display_name = "GWAS File"
 	logger = logging.getLogger(__name__)
 	
-	def find_gwas_data_file(self, diseases, iris):
-		
-		alzheimers_gwas_file = "/nfs/production/panda/ensembl/funcgen/software/postgap/gwas_data_files/IGAP/IGAP_stage_1.txt"
-		
-		gwas_data_file = None
-		
-		if "Alzheimers" in diseases:
-			gwas_data_file = alzheimers_gwas_file
-		
-		return gwas_data_file
-	
 	def create_gwas_association_collector(self):
 		
 		class gwas_association_collector:
@@ -668,7 +657,7 @@ class GWAS_File(GWAS_source):
 
 		"""
 		
-		gwas_data_file = self.find_gwas_data_file(diseases, iris)
+		gwas_data_file = postgap.Globals.GWAS_SUMMARY_FILE
 			
 		if gwas_data_file is None:
 			return None
