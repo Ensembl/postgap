@@ -10,10 +10,8 @@ import scipy.stats
 import itertools as it
 import operator
 import random
-import sklearn
 import collections
 from scipy.stats import norm
-from sklearn import preprocessing
 
 OneDConfigurationSample_prototype = collections.namedtuple(
 	'OneDConfigurationSample', 
