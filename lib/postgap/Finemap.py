@@ -11,11 +11,11 @@ import itertools as it
 import operator
 import random
 import sklearn
+import collections
 from scipy.stats import norm
 from sklearn import preprocessing
-from collections import namedtuple
 
-OneDConfigurationSample_prototype = namedtuple(
+OneDConfigurationSample_prototype = collections.namedtuple(
 	'OneDConfigurationSample', 
 	[
 		'configurations',
