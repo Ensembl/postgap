@@ -61,31 +61,31 @@ def summarise(obj, **kwparams):
 
 def summarise_list(list_of_objects, leadstring = "", **kwparams):
 	
-	string = leadstring + " ┌ List:\n"
+	string = leadstring + " * List:\n"
 	
 	for index, current_object in enumerate(list_of_objects):
 		
-		string += leadstring + " ├─ Item " + str(index) + ":\n"
-		string += summarise(current_object, leadstring = leadstring + " │      ") + "\n"
+		string += leadstring + " ** Item " + str(index) + ":\n"
+		string += summarise(current_object, leadstring = leadstring + " *******") + "\n"
 	
-	string += leadstring + " └─────"
+	string += leadstring + " ******"
 	
 	return string
 
 def summarise_gwas_cluster(gwas_cluster, leadstring = ""):
 	
 	string =  "GWAS_Cluster\n"
-	string += "════════════\n"
+	string += "============\n"
 	string += "\n"
 	
 	string += "    Gwas snps:\n"
-	string += "    ──────────\n"
+	string += "    ----------\n"
 	
 	string += summarise(gwas_cluster.gwas_snps, leadstring = leadstring + "    ")
 	
 	string += "\n"
 	string += "    LD snps:\n"
-	string += "    ────────\n"
+	string += "    --------\n"
 	
 	string += summarise(gwas_cluster.ld_snps, leadstring = leadstring + "    ")
 
@@ -99,14 +99,14 @@ def summarise_generic(obj, leadstring = ""):
 
 def summarise_gwas_snp(gwas_snp, leadstring = ""):
 	
-	string  = leadstring + "╔════════════\n"	
-	string += leadstring + "║GWAS_SNP\n"	
-	string += leadstring + "║ " + "SNP:     " + summarise(gwas_snp.snp, leadstring = "") + "\n"
-	string += leadstring + "║ " + "pvalue:  " + str(gwas_snp.pvalue) + "\n"
-	string += leadstring + "║ " + "z_score: " + str(gwas_snp.z_score) + "\n"
-	string += leadstring + "║ " + "evidence:\n"
-	string += summarise(gwas_snp.evidence, leadstring = leadstring + "║ " + "    ") + "\n"
-	string += leadstring + "╚════════════"
+	string  = leadstring + "=============\n"	
+	string += leadstring + "|GWAS_SNP\n"	
+	string += leadstring + "| " + "SNP:     " + summarise(gwas_snp.snp, leadstring = "") + "\n"
+	string += leadstring + "| " + "pvalue:  " + str(gwas_snp.pvalue) + "\n"
+	string += leadstring + "| " + "z_score: " + str(gwas_snp.z_score) + "\n"
+	string += leadstring + "| " + "evidence:\n"
+	string += summarise(gwas_snp.evidence, leadstring = leadstring + "| " + "    ") + "\n"
+	string += leadstring + "============="
 	return string
 
 def concatenate(list):
