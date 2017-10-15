@@ -285,18 +285,7 @@ def get_pairwise_ld(ld_snps, population='EUR'):
 
 	# Healthcheck for the matrix. An LD matrix should never be the unity 
 	# matrix, but sometimes it is.
-	if is_null_matrix(matrix = r2_array, matrix_size=matrix_size):
-		raise Exception("LD matrix is null matrix!")
+	if numpy.count_nonzero(r2_array) == 0:
+		raise Exception("LD matrix is identity matrix!")
 		
 	return SNP_ids, r2_array + numpy.identity(len(SNP_ids))
-
-def is_null_matrix(matrix, matrix_size):
-	"""
-		Checks, if the matrix passed in is the null matrix
-	"""
-	for i in range(0, matrix_size):
-		for j in range(0, matrix_size):
-			if matrix[i][j] != 0:
-				return False
-	
-	return True
