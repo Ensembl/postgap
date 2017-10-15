@@ -129,75 +129,20 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 		
 		for index_in_gwas, current_label in enumerate(from_labels):
 			try:
-				index_in_eqtl = to_labels.index(current_label)
-				translate[index_in_gwas] = index_in_eqtl
+				translate[index_in_gwas] = to_labels.index(current_label)
 			except ValueError:
 				translate[index_in_gwas] = None
-		
+
 		return translate
 
-	def assert_translation_index_ok(self, translation_index, from_labels, to_labels):
-
-		# Method side effect: Collects and returns some stats along the way.
-		
-		num_translated   = 0
-		num_untranslated = 0
-		
-		for key in translation_index.keys():
-			
-			gwas_label = from_labels[key]
-			if translation_index[key] is None:
-				num_untranslated += 1
-				continue
-			
-			num_translated += 1
-			eqtl_label = to_labels[translation_index[key]]
-			
-			if gwas_label != eqtl_label:
-				raise TranslationIndexException
-		
-		return num_translated, num_untranslated
-
-	def assert_inverse_translation_ok(self, translation, inverse_translation):
-		
-		for key in translation.keys():
-			if translation[key] is None:
-				continue
-			if key == inverse_translation[translation[key]]:
-				continue
-			raise TranslationInverseException
-
-	def translate_configuration(translation_index, configurations):
-		
-		translated_configuration = dict()
-		
-		for configuration in configurations.keys():
-			
-			translated_configuration_indexes = []
-			
-			for configuration_component in configuration:
-				translated_configuration_indexes.append( translation_index[ configuration_component ] )
-			
-			translated_tuple = tuple(translated_configuration_indexes)
-			translated_configuration[ translated_tuple ] = configurations[ configuration ]
-			
-		return translated_configuration
+	def translate_configurations(self, translation_index, configurations):
+		return dict(
+			(self,translate_configuration(translation_index, configuration), configurations[configuration])
+			for configuration in configurations
+		)
 
 	def translate_configuration(self, translation_index, configurations):
-		
-		translated_configuration = dict()
-		
-		for configuration in configurations.keys():
-			
-			translated_configuration_indexes = []
-			
-			for configuration_component in configuration:
-				translated_configuration_indexes.append( translation_index[ configuration_component ] )
-			
-			translated_tuple = tuple(translated_configuration_indexes)
-			translated_configuration[ translated_tuple ] = configurations[ configuration ]
-			
-		return translated_configuration
+		return tuple(translation_index[ configuration_component ] for configuration_component in configuration)
 
 	def joint_posterior(self, sample2):
 		'''
@@ -210,81 +155,42 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 		sample1_labels = self.labels
 		sample2_labels = sample2.labels
 		
-		translate_from_sample1_to_sample2 = self.create_translation_index(
-			from_labels = sample1_labels,
-			to_labels   = sample2_labels
-		)
-		
-		self.assert_translation_index_ok(
-			translation_index = translate_from_sample1_to_sample2,
-			from_labels       = sample1_labels,
-			to_labels         = sample2_labels
-		)
-		
 		translate_from_sample2_to_sample1 = self.create_translation_index(
 			from_labels = sample2_labels,
 			to_labels   = sample1_labels
 		)
-
-		self.assert_translation_index_ok(
-			translation_index = translate_from_sample2_to_sample1,
-			from_labels       = sample2_labels,
-			to_labels         = sample1_labels
-		)
 		
-		self.assert_inverse_translation_ok(
-			translation         = translate_from_sample1_to_sample2,
-			inverse_translation = translate_from_sample2_to_sample1
-		)
-		
-		translated_sample2_configurations = self.translate_configuration(
+		translated_sample2_configurations = self.translate_configurations(
 			translation_index = translate_from_sample2_to_sample1,
 			configurations    = sample2.configurations
 		)
 
 		keys1 = set(self.configurations.keys())
-		#keys2 = set(sample2.configurations.keys())
 		translated_keys2 = set(translated_sample2_configurations.keys())
 		
 		intersection = list(keys1 & translated_keys2)
 		configurations = dict((configuration, index) for index, configuration in enumerate(intersection))
 		ids1 = [self.configurations[configuration] for configuration in intersection]
-		#ids2 = [sample2.configurations[configuration] for configuration in intersection]
-		
-		# Only the keys were translated, the values still have the original indexes for the sample2 object.
 		ids2 = [translated_sample2_configurations[configuration] for configuration in intersection]
-		
-		#sample1_labels = [self.labels[configuration] for configuration in intersection]
 		
 		posterior1 = numpy.take(self.posterior, ids1)
 		posterior2 = numpy.take(sample2.posterior, ids2)
-		#log_BF1 = numpy.take(self.log_BF, ids1)
-		#log_BF2 = numpy.take(sample2.log_BF, ids2)
-		#log_prior1 = numpy.take(self.log_prior, ids1)
-		#log_prior2 = numpy.take(sample2.log_prior, ids2)
 		configuration_size = numpy.take(self.configuration_size, ids1)
 
 		posterior = posterior1 * posterior2
 		coloc_evidence = numpy.sum(posterior)
 
-		res_final = TwoDConfigurationSample(
+		return coloc_evidence, TwoDConfigurationSample(
 				configurations = configurations,
 				posterior = posterior,
 				configuration_size = configuration_size,
 				posterior1 = posterior1,
-				#log_BF1 = log_BF1,
-				#log_prior1 = log_prior1,
 				posterior2 = posterior2,
-				#log_BF2 = log_BF2,
-				#log_prior2 = log_prior2
 				labels = self.labels,
-				#labels = sample1_labels
 				coloc_evidence = coloc_evidence,
 				sample_1_label = self.sample_label,
 				sample_2_label = sample2.sample_label,
 		)
-
-		return res_final
 
 	def __str__(self):
 		return self.string()
