@@ -27,16 +27,6 @@ OneDConfigurationSample_prototype = collections.namedtuple(
 		'sample_label'
 	]
 )
-OneDConfigurationSample_prototype.__new__.__defaults__ = (
-	None,
-	None,
-	None,
-	None,
-	None,
-	None,
-	"Unnamed sample",
-)
-
 #import collections
 finemap_summary_prototype = namedtuple(
 	'finemap_summary_prototype', [
@@ -421,7 +411,6 @@ TwoDConfigurationSample_prototype.__new__.__defaults__ = (
 	"sample2"
 )
 
-#TwoDConfigurationSample = namedtuple('TwoDConfigurationSample', ['configurations', 'posterior', 'configuration_size', 'posterior1', 'log_BF1','log_prior1', 'posterior2', 'log_BF2','log_prior2'])
 '''
 	Stores colocalisation data on a set of configurations:
 	configurations: dict(tuple => int); assigns to each configuration (tuple of indices) an index into the vectors below
