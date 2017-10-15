@@ -93,8 +93,6 @@ class GTEx(Cisreg_source):
 		#	res = concatenate((self.snp(snp, tissues) for snp in snps))
 		
 		logging.info("\tFound %i interactions in GTEx" % (len(res)))
-		print "\tFound %i interactions in GTEx" % (len(res))
-		#raise Exception("Being called!")
 		return res
 
 	def gene(self, gene, tissues, snp_hash):
