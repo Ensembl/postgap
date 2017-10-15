@@ -212,13 +212,13 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 		)
 		
 		for configuration in sorted_configurations[:num_show_at_top]:
-			summary_lines.append(indentation + self.configuration_string(configuration)
+			summary_lines.append(indentation + self.configuration_string(configuration))
 
 		if num_show_at_end > 0:
 			summary_lines.append(indentation +  "...")
 
 		for configuration in sorted_configurations[-num_show_at_end:]:
-			summary_lines.append(indentation + self.configuration_string(configuration)
+			summary_lines.append(indentation + self.configuration_string(configuration))
 
 		return "\n".join(summary_lines)
 
@@ -233,7 +233,7 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 			)
 
 
-TwoDConfigurationSample_prototype = namedtuple(
+TwoDConfigurationSample_prototype = collections.namedtuple(
 	'TwoDConfigurationSample_prototype', 
 	[
 		'configurations', 
@@ -282,13 +282,13 @@ class TwoDConfigurationSample(TwoDConfigurationSample_prototype):
 		)
 		
 		for configuration in sorted_configurations[:num_show_at_top]:
-			summary_lines.append(indentation + self.configuration_string(configuration)
+			summary_lines.append(indentation + self.configuration_string(configuration))
 
 		if num_show_at_end > 0:
 			summary_lines.append(indentation +  "...")
 
 		for configuration in sorted_configurations[-num_show_at_end:]:
-			summary_lines.append(indentation + self.configuration_string(configuration)
+			summary_lines.append(indentation + self.configuration_string(configuration))
 
 		summary_lines.append("The coloc evidence is: {:2e}".format(self.coloc_evidence))
 		
@@ -306,7 +306,7 @@ class TwoDConfigurationSample(TwoDConfigurationSample_prototype):
 			self.sample_1_label,
 			float(posterior2),
 			self.sample_2_label,
-			float(posterior),
+			float(posterior))
 	
 def finemap(z_scores, cov_matrix, n, labels, kstart=1, kmax=5, max_iter=100000, output="configuration", prior="independence", v_scale=0.0025, g="BRIC", verbose=False, sample_label="Unnamed sample"):
 	'''
