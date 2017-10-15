@@ -70,20 +70,17 @@ class GWASCatalog(GWAS_source):
 			Returntype: [ GWAS_Association ]
 		"""
 
-		logger = logging.getLogger(__name__)
-
 		if iris is not None and len(iris) > 0:
 			res = concatenate(self.query(query) for query in iris)
 		else:
 			res = concatenate(self.query(query) for query in diseases)
 
-		logger.debug("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GWAS Catalog" % (len(res), ", ".join(diseases), ", ".join(iris)))
+		logging.debug("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GWAS Catalog" % (len(res), ", ".join(diseases), ", ".join(iris)))
 
 		return res
 
 	def query(self, efo):
-		logger = logging.getLogger(__name__)
-		logger.info("Querying GWAS catalog for " + efo);
+		logging.info("Querying GWAS catalog for " + efo);
 		server = 'http://www.ebi.ac.uk'
 
 		url = '/gwas/labs/rest/api/efoTraits/search/findByEfoUri?uri=%s' % (efo)
@@ -141,7 +138,7 @@ class GWASCatalog(GWAS_source):
 			efoTraitLinks = efoTraitHash["_links"]
 			efoTraitName  = efoTraitHash["trait"]
 
-			logger.info("Querying Gwas rest server for SNPs associated with " + efoTraitName)
+			logging.info("Querying Gwas rest server for SNPs associated with " + efoTraitName)
 
 			association_rest_response = efoTraitLinks["associations"]
 			association_url = association_rest_response["href"]
@@ -204,8 +201,8 @@ class GWASCatalog(GWAS_source):
 				...
 				]
 			'''
-			logger.info("Received " + str(len(associations)) + " associations with SNPs.")
-			logger.info("Fetching SNPs and pvalues.")
+			logging.info("Received " + str(len(associations)) + " associations with SNPs.")
+			logging.info("Fetching SNPs and pvalues.")
 
 			for current_association in associations:
 
@@ -291,13 +288,13 @@ class GWASCatalog(GWAS_source):
 					is_dbSNP_accession = "rs" in current_snp["rsId"]
 					
 					if not(is_dbSNP_accession):
-						logger.warning("Did not get a valid dbSNP accession: (" + current_snp["rsId"] + ") from " + snp_url)
+						logging.warning("Did not get a valid dbSNP accession: (" + current_snp["rsId"] + ") from " + snp_url)
 						continue
 					
 					if current_snp["rsId"] == '6':
 						continue
 
-					logger.debug("    received association with snp rsId: " + '{:12}'.format(current_snp["rsId"]) + " with a pvalue of " + str(current_association["pvalue"]))
+					logging.debug("    received association with snp rsId: " + '{:12}'.format(current_snp["rsId"]) + " with a pvalue of " + str(current_association["pvalue"]))
 					
 					risk_alleles_href = current_snp["_links"]["riskAlleles"]["href"]
 					import postgap.REST
@@ -314,33 +311,33 @@ class GWASCatalog(GWAS_source):
 							logging.info("Risk allele is not present in reference");
 					
 					except none_of_the_risk_alleles_is_a_substitution_exception as e:
-						logger.warning(str(e))
-						logger.warning("Skipping this snp.")
+						logging.warning(str(e))
+						logging.warning("Skipping this snp.")
 						continue
 					
 					except variant_mapping_is_ambiguous_exception:
-						logger.warning("The variant mapping is ambiguous.")
-						logger.warning("Skipping this snp.")
+						logging.warning("The variant mapping is ambiguous.")
+						logging.warning("Skipping this snp.")
 						continue
 					
 					except some_alleles_present_in_reference_others_not_exception as e:
-						logger.warning(str(e));
-						logger.warning("Skipping this snp.")
+						logging.warning(str(e));
+						logging.warning("Skipping this snp.")
 						continue
 					
 					except no_dbsnp_accession_for_snp_exception as e:
-						logger.warning(str(e))
-						logger.warning("Skipping this snp.")
+						logging.warning(str(e))
+						logging.warning("Skipping this snp.")
 						continue
 
 					except base_in_allele_missing_exception as e:
-						logger.warning(str(e));
-						logger.warning("Skipping this snp.")
+						logging.warning(str(e));
+						logging.warning("Skipping this snp.")
 						continue
 
 					except cant_determine_base_at_snp_in_reference_exception as e:
-						logger.warning(str(e));
-						logger.warning("Skipping this snp.")
+						logging.warning(str(e));
+						logging.warning("Skipping this snp.")
 						continue
 
 					list_of_GWAS_Associations.append(
@@ -376,9 +373,9 @@ class GWASCatalog(GWAS_source):
 						)
 					)
 		if len(list_of_GWAS_Associations) > 0:
-			logger.info("Successfully fetched " +  str(len(list_of_GWAS_Associations)) + " SNPs and pvalues.")
+			logging.info("Successfully fetched " +  str(len(list_of_GWAS_Associations)) + " SNPs and pvalues.")
 		if len(list_of_GWAS_Associations) == 0:
-			logger.info("Found no associated SNPs and pvalues.")
+			logging.info("Found no associated SNPs and pvalues.")
 	
 		return list_of_GWAS_Associations
 
@@ -394,13 +391,11 @@ class GRASP(GWAS_source):
 			Returntype: [ GWAS_Association ]
 
 		"""
-		logger = logging.getLogger(__name__)
-		
 		file = open(postgap.Globals.DATABASES_DIR+"/GRASP.txt")
 		res = [ self.get_association(line, diseases, iris) for line in file ]
 		res = filter(lambda X: X is not None, res)
 
-		logger.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GRASP" % (len(res), ", ".join(diseases), ", ".join(iris)))
+		logging.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GRASP" % (len(res), ", ".join(diseases), ", ".join(iris)))
 
 		return res
 
@@ -548,7 +543,6 @@ class GRASP(GWAS_source):
 
 class Phewas_Catalog(GWAS_source):
 	display_name = "Phewas Catalog"
-	logger = logging.getLogger(__name__)
 	
 	def run(self, diseases, iris):
 		"""
@@ -564,7 +558,7 @@ class Phewas_Catalog(GWAS_source):
 		res = [ self.get_association(line, diseases, iris) for line in file ]
 		res = filter(lambda X: X is not None, res)
 
-		self.logger.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in Phewas Catalog" % (len(res), ", ".join(diseases), ", ".join(iris)))
+		logging.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in Phewas Catalog" % (len(res), ", ".join(diseases), ", ".join(iris)))
 
 		return res
 
@@ -628,7 +622,6 @@ class Phewas_Catalog(GWAS_source):
 
 class GWAS_File(GWAS_source):
 	display_name = "GWAS File"
-	logger = logging.getLogger(__name__)
 	
 	def create_gwas_association_collector(self):
 		
@@ -662,7 +655,7 @@ class GWAS_File(GWAS_source):
 		if gwas_data_file is None:
 			return None
 		
-		self.logger.info( "gwas_data_file = " + gwas_data_file )
+		logging.info( "gwas_data_file = " + gwas_data_file )
 		
 		pvalue_filtered_gwas_associations = self.create_gwas_association_collector()
 		
@@ -677,7 +670,7 @@ class GWAS_File(GWAS_source):
 			max_lines_to_return_threshold     = None
 		)
 		
-		self.logger.info( "Found " + str(len(pvalue_filtered_gwas_associations.get_found_list())) + " gwas associations with a pvalue of " + str(GWAS_PVALUE_CUTOFF) + " or less.")
+		logging.info( "Found " + str(len(pvalue_filtered_gwas_associations.get_found_list())) + " gwas associations with a pvalue of " + str(GWAS_PVALUE_CUTOFF) + " or less.")
 		
 		return pvalue_filtered_gwas_associations.get_found_list()
 	
@@ -756,7 +749,7 @@ class GWAS_File(GWAS_source):
 			rsIDs_to_look_for.append(snp.rsID)
 		
 		from pprint import pformat
-		self.logger.info( "Searching for snps: " + pformat(rsIDs_to_look_for) )
+		logging.info( "Searching for snps: " + pformat(rsIDs_to_look_for) )
 		
 		def snp_name_filter(gwas_association):
 			
@@ -844,7 +837,6 @@ class GWAS_File(GWAS_source):
 
 class GWAS_DB(GWAS_source):
 	display_name = "GWAS DB"
-	logger = logging.getLogger(__name__)
 	
 	def run(self, diseases, iris):
 		"""
@@ -861,7 +853,7 @@ class GWAS_DB(GWAS_source):
 		res = [ self.get_association(line, diseases, iris) for line in file ]
 		res = filter(lambda X: X is not None, res)
 
-		self.logger.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GWAS DB" % (len(res), ", ".join(diseases), ", ".join(iris)))
+		logging.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GWAS DB" % (len(res), ", ".join(diseases), ", ".join(iris)))
 
 		return res
 

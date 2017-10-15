@@ -41,7 +41,6 @@ import signal
 class timeout_handler:
 	
 	url = 'initme'
-	#logger = logging.getLogger(__name__)
 	
 	# Register an handler for the timeout
 	def handler_very_short(self, signum, frame):
@@ -105,9 +104,6 @@ def get(server, ext, data=None):
 		Return type: JSON object
 
 	"""
-	#logger = logging.getLogger(__name__)
-	logger = logging.getLogger(__file__)
-	
 	maximum_retries = 10
 	
 	for retries in range(maximum_retries):
