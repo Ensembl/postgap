@@ -31,16 +31,14 @@ import re
 import requests
 import json
 import sys
+import logging
+from pprint import pformat
 
 import postgap.REST
 import postgap.Globals
 from postgap.DataModel import *
 from postgap.Utils import *
-
 from postgap.GWAS_Lead_Snp_Orientation import *
-					
-import logging
-import sys
 
 #postgap.REST.DEBUG = False
 
@@ -89,7 +87,6 @@ class GWASCatalog(GWAS_source):
 		server = 'http://wwwdev.ebi.ac.uk'
 		url = '/gwas/beta/rest/api/efoTraits/search/findByUri?uri=%s' % (efo)
 
-		import postgap.REST
 		hash = postgap.REST.get(server, url)
 
 		'''
@@ -311,7 +308,6 @@ class GWASCatalog(GWAS_source):
 					logging.debug("    received association with snp rsId: " + '{:12}'.format(current_snp["rsId"]) + " with a pvalue of " + str(current_association["pvalue"]))
 					
 					risk_alleles_href = current_snp["_links"]["riskAlleles"]["href"]
-					import postgap.REST
 					hash = postgap.REST.get(risk_alleles_href, ext="")
 					riskAlleles = hash["_embedded"]["riskAlleles"]
 					
@@ -700,7 +696,6 @@ class GWAS_File(GWAS_source):
 			callback                          = ld_gwas_associations.add_to_found_list,
 			max_lines_to_return_threshold     = len(gwas_cluster.ld_snps)
 		)
-		from pprint import pformat
 		logging.info( "ld_gwas_associations.found_list: " + pformat(ld_gwas_associations.get_found_list()) )
 		# TODO: Figure out which snps couldn't be found in the file and include them with imputed p values.
 		
@@ -729,7 +724,6 @@ class GWAS_File(GWAS_source):
 			# If more than one assocation was found: error.	
 			if len(gwas_associations_for_ld_snp) > 1:
 				logging.info("Found more than one matching assocation for " + ld_snp.rsID + " in the file. Bad!")
-				import sys
 				sys.exit(1)
 			
 			# If the snp wasn't found, add it as a regular snp.
@@ -751,7 +745,6 @@ class GWAS_File(GWAS_source):
 		for snp in snps:
 			rsIDs_to_look_for.append(snp.rsID)
 		
-		from pprint import pformat
 		logging.info( "Searching for snps: " + pformat(rsIDs_to_look_for) )
 		
 		def snp_name_filter(gwas_association):
@@ -806,7 +799,6 @@ class GWAS_File(GWAS_source):
 				column_label = column_labels[column_index]
 				parsed[column_label] = items[column_index]
 			
-			from postgap.DataModel import SNP
 			snp = SNP(
 				rsID  = parsed["MarkerName"],
 				chrom = parsed["Chromosome"],
