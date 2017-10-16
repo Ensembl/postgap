@@ -44,7 +44,7 @@ Running
 By default, run from the root directory the command: 
 
 ```
-python scripts/POSTGAP.py --disease autism  
+python POSTGAP.py --disease autism  
 ```
 
 Multiple disease names can be provided.
