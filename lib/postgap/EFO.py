@@ -452,6 +452,10 @@ def query_iris_for_efo_short_form(efo_short_form):
 		ontology_name = 'go'
 	elif re.match("Orphanet_", efo_short_form):
 		ontology_name = 'ordo'
+	elif re.match("CL_", efo_short_form):
+		ontology_name = 'cl'
+	elif re.match("CHEBI_", efo_short_form):
+		ontology_name = 'chebi'
 	assert ontology_name is not None, "Ontology of term %s unknown" % efo_short_form
 
 	ext = "/ols/api/ontologies/%s/terms?short_form=%s" % (ontology_name, efo_short_form)
