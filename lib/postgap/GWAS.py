@@ -83,8 +83,8 @@ class GWASCatalog(GWAS_source):
 		logger = logging.getLogger(__name__)
 		logger.info("Querying GWAS catalog for " + efo);
 
-		server = 'http://wwwdev.ebi.ac.uk'
-		url = '/gwas/beta/rest/api/efoTraits/search/findByUri?uri=%s' % (efo)
+		server = 'http://www.ebi.ac.uk'
+		url = '/gwas/beta/rest/api/efoTraits/search/findByEfoUri?uri=%s' % (efo)
 		
 		#print "Querying: " + server + url;
 
@@ -195,20 +195,8 @@ class GWASCatalog(GWAS_source):
 				}
 				"""
 				pubmedId = study_response["pubmedId"]
-
-				diseaseTrait_url = study_response["_links"]["diseaseTrait"]["href"]
-				diseaseTrait_response = postgap.REST.get(diseaseTrait_url, "")
-				"""
-				Example response:
-				{
-					trait: "Response to statin therapy",
-					_links: {}
-				}
-				"""
-				diseaseTrait = diseaseTrait_response['trait']
-
-				ancestries_url = study_response["_links"]["ancestries"]["href"]
-				ancestries_response = postgap.REST.get(ancestries_url, "")
+				diseaseTrait = study_response["diseaseTrait"]["trait"]
+				ancestries = study_response["ancestries"]
 				"""
 				Example response:
 				{
@@ -227,7 +215,7 @@ class GWASCatalog(GWAS_source):
 						_links: {}
 				}
 				"""
-				sample_size = sum(int(ancestry['numberOfIndividuals']) for ancestry in ancestries_response['_embedded']['ancestries'] if ancestry['numberOfIndividuals'] is not None)
+				sample_size = sum(int(ancestry['numberOfIndividuals']) for ancestry in ancestries if ancestry['numberOfIndividuals'] is not None)
 
 				for current_snp in singleNucleotidePolymorphisms:
 					if current_snp["rsId"] == '6':
