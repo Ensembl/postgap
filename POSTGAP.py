@@ -85,7 +85,6 @@ def main():
 	
 	logger.info("Starting postagp with the following options:")
 	logger.info(pformat(options))
-
 	efo_iris = []
 
 	if options.efos is not None:
@@ -208,6 +207,11 @@ def get_options():
     assert postgap.Globals.DATABASES_DIR is not None
     assert options.rsID is None or (options.efos is None and options.diseases is None)
     assert options.rsID is not None or options.efos is not None or options.diseases is not None or options.coords is not None
+    
+    import os
+    assert os.path.isdir(postgap.Globals.DATABASES_DIR), "--database_dir parameter " + options.databases + " does not point to an existing directory!"
+    assert os.path.exists(postgap.Globals.DATABASES_DIR + "/GRASP.txt"), "Can't find GRASP.txt in " + options.databases
+
 
     if options.diseases is None:
         options.diseases = []
