@@ -297,7 +297,7 @@ def compute_risk_allele_orientations(riskAlleles):
 			
 			rs_id = rs_id,
 			
-			gwas_url    = riskAllele["_links"]["self"]["href"],
+			gwas_url    = "No longer reported",
 			ensembl_url = ensembl_source_url,
 			
 			risk_allele_present_in_reference = current_gwas_risk_allele_present_in_reference,
