@@ -80,13 +80,12 @@ class GWASCatalog(GWAS_source):
 	def query(self, efo):
 		logging.info("Querying GWAS catalog for " + efo);
 		
-		# E.g.: http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/efoTraits/search/findByUri?uri=http://www.ebi.ac.uk/efo/EFO_0000400
+		# E.g.: http://www.ebi.ac.uk/gwas/beta/rest/api/efoTraits/search/findByUri?uri=http://www.ebi.ac.uk/efo/EFO_0000400
 		#
 		# EFO_0000400 stands for diabetes mellitus
 		#
 		server = 'http://www.ebi.ac.uk'
 		url = '/gwas/beta/rest/api/efoTraits/search/findByEfoUri?uri=%s' % (efo)
-		
 		hash = postgap.REST.get(server, url)
 
 		'''
@@ -260,27 +259,8 @@ class GWASCatalog(GWAS_source):
 				}
 				"""
 				pubmedId = study_response["pubmedId"]
+
 				diseaseTrait = study_response["diseaseTrait"]["trait"]
-				ancestries = study_response["ancestries"]
-				"""
-				Example response:
-				{
-					_embedded: {
-						ancestries: [
-								{
-									type: "initial",
-									numberOfIndividuals: 3928,
-									description: "Los Angeles, CA; ",
-									previouslyReported: null,
-									notes: null,
-									_links: {}
-									}
-								]
-						},
-						_links: {}
-				}
-				"""
-				sample_size = sum(int(ancestry['numberOfIndividuals']) for ancestry in ancestries if ancestry['numberOfIndividuals'] is not None)
 
 				for current_snp in singleNucleotidePolymorphisms:
 					
@@ -295,79 +275,106 @@ class GWASCatalog(GWAS_source):
 
 					logging.debug("    received association with snp rsId: " + '{:12}'.format(current_snp["rsId"]) + " with a pvalue of " + str(current_association["pvalue"]))
 					
-					risk_alleles_href = current_snp["_links"]["riskAlleles"]["href"]
-					hash = postgap.REST.get(risk_alleles_href, ext="")
-					riskAlleles = hash["_embedded"]["riskAlleles"]
+					associations_href = current_snp["_links"]["associations"]["href"]
 					
-					try:
-					
-						if gwas_risk_alleles_present_in_reference(riskAlleles):
-							risk_alleles_present_in_reference = True
-							logging.info("Risk allele is present in reference");
-						else:
-							risk_alleles_present_in_reference = False
-							logging.info("Risk allele is not present in reference");
-					
-					except none_of_the_risk_alleles_is_a_substitution_exception as e:
-						logging.warning(str(e))
-						logging.warning("Skipping this snp.")
-						continue
-					
-					except variant_mapping_is_ambiguous_exception:
-						logging.warning("The variant mapping is ambiguous.")
-						logging.warning("Skipping this snp.")
-						continue
-					
-					except some_alleles_present_in_reference_others_not_exception as e:
-						logging.warning(str(e));
-						logging.warning("Skipping this snp.")
-						continue
-					
-					except no_dbsnp_accession_for_snp_exception as e:
-						logging.warning(str(e))
-						logging.warning("Skipping this snp.")
-						continue
+					import postgap.REST
+					associations = postgap.REST.get(associations_href, ext="")
 
-					except base_in_allele_missing_exception as e:
-						logging.warning(str(e));
-						logging.warning("Skipping this snp.")
-						continue
+					riskAlleles = []
+					for association in associations["_embedded"]["associations"]:
+						loci = association["loci"]
+						for locus in loci:
+							strongestRiskAlleles = locus["strongestRiskAlleles"]
+							riskAlleles.append(strongestRiskAlleles)
 
-					except cant_determine_base_at_snp_in_reference_exception as e:
-						logging.warning(str(e));
-						logging.warning("Skipping this snp.")
-						continue
+					
+					from postgap.FinemapIntegration.GWAS_Lead_Snp_Orientation \
+					import                                                  \
+					gwas_risk_alleles_present_in_reference,                 \
+					none_of_the_risk_alleles_is_a_substitution_exception,   \
+					variant_mapping_is_ambiguous_exception,                 \
+					some_alleles_present_in_reference_others_not_exception, \
+					no_dbsnp_accession_for_snp_exception,                   \
+					base_in_allele_missing_exception,                       \
+					cant_determine_base_at_snp_in_reference_exception,      \
+					gwas_data_integrity_exception
+					
+					for riskAllele in riskAlleles:
+					
+						try:
+						
+							if gwas_risk_alleles_present_in_reference(riskAllele):
+								risk_alleles_present_in_reference = True
+								logging.info("Risk allele is present in reference");
+							else:
+								risk_alleles_present_in_reference = False
+								logging.info("Risk allele is not present in reference");
+						
+						except none_of_the_risk_alleles_is_a_substitution_exception as e:
+							logger.warning(str(e))
+							logger.warning("Skipping this snp.")
+							continue
+						
+						except variant_mapping_is_ambiguous_exception:
+							logger.warning("The variant mapping is ambiguous.")
+							logger.warning("Skipping this snp.")
+							continue
+						
+						except some_alleles_present_in_reference_others_not_exception as e:
+							logger.warning(str(e));
+							logger.warning("Skipping this snp.")
+							continue
+						
+						except no_dbsnp_accession_for_snp_exception as e:
+							logger.warning(str(e))
+							logger.warning("Skipping this snp.")
+							continue
 
-					list_of_GWAS_Associations.append(
-						GWAS_Association(
-							disease = Disease(
-								name = efoTraitName,
-								efo  = efo
-							),
-							reported_trait = diseaseTrait,
-							snp     = SNP(
-								rsID  = current_snp["rsId"],
-								chrom = None,
-								pos   = None,
-								approximated_zscore = None
-							),
-							pvalue  = current_association["pvalue"],
-							sample_size = sample_size,
-							source  = 'GWAS Catalog',
-							study   = 'PMID' + pubmedId,
-							
-							# For fetching additional information like risk allele later, if needed.
-							# E.g.: http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/singleNucleotidePolymorphisms/9765
-							rest_hash = current_snp,
-							risk_alleles_present_in_reference = risk_alleles_present_in_reference,
-							
-							odds_ratio                 = current_association["orPerCopyNum"],
+						except base_in_allele_missing_exception as e:
+							logger.warning(str(e));
+							logger.warning("Skipping this snp.")
+							continue
 
-							beta_coefficient           = current_association["betaNum"],
-							beta_coefficient_unit      = current_association["betaUnit"],
-							beta_coefficient_direction = current_association["betaDirection"],
+						except cant_determine_base_at_snp_in_reference_exception as e:
+							logger.warning(str(e));
+							logger.warning("Skipping this snp.")
+							continue
+						
+						except gwas_data_integrity_exception as e:
+							logger.warning(str(e));
+							logger.warning("Skipping this snp.")
+							continue
+						
+
+						list_of_GWAS_Associations.append(
+							GWAS_Association(
+								disease = Disease(
+									name = efoTraitName,
+									efo  = efo
+								),
+								reported_trait = diseaseTrait,
+								snp     = SNP(
+									rsID  = current_snp["rsId"],
+									chrom = None,
+									pos   = None,
+									approximated_zscore = None
+								),
+								pvalue  = current_association["pvalue"],
+								source  = 'GWAS Catalog',
+								study   = 'PMID' + pubmedId,
+								
+								# For fetching additional information like risk allele later, if needed.
+								# E.g.: http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/singleNucleotidePolymorphisms/9765
+								rest_hash = current_snp,
+								risk_alleles_present_in_reference = risk_alleles_present_in_reference,
+								
+								odds_ratio                 = current_association["orPerCopyNum"],
+
+								beta_coefficient           = current_association["betaNum"],
+								beta_coefficient_unit      = current_association["betaUnit"],
+								beta_coefficient_direction = current_association["betaDirection"],
+							)
 						)
-					)
 		if len(list_of_GWAS_Associations) > 0:
 			logging.info("Successfully fetched " +  str(len(list_of_GWAS_Associations)) + " SNPs and pvalues.")
 		if len(list_of_GWAS_Associations) == 0:
