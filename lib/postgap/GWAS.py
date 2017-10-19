@@ -300,7 +300,6 @@ class GWASCatalog(GWAS_source):
 					gwas_data_integrity_exception
 					
 					for riskAllele in riskAlleles:
-					
 						try:
 						
 							if gwas_risk_alleles_present_in_reference(riskAllele):
@@ -644,7 +643,7 @@ class GWAS_File(GWAS_source):
 
 		"""
 		
-		gwas_data_file = postgap.Globals.GWAS_SUMMARY_FILE
+		gwas_data_file = postgap.Globals.GWAS_SUMMARY_STATS_FILE
 			
 		if gwas_data_file is None:
 			return None
