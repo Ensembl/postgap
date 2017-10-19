@@ -98,6 +98,8 @@ def main():
 	else:
 		expanded_efo_iris = efo_iris
 
+	postgap.Globals.PERFORM_BAYESIAN = options.bayesian
+
 	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0:
 		logger.info("Starting diseases_to_genes")
 		res = postgap.Integration.diseases_to_genes(options.diseases, expanded_efo_iris, "CEPH", options.tissues)
@@ -200,6 +202,7 @@ def get_options():
     parser.add_argument('--debug', '-g', action = 'store_true')
     parser.add_argument('--json_output', '-j', action = 'store_true')
     parser.add_argument('--child_terms', action = 'store_true')
+    parser.add_argument('--bayesian', action = 'store_true')
     parser.add_argument('--work_dir', default = 'postgap_temp_work_dir')
     parser.add_argument('--summary_stats')
     options = parser.parse_args()
