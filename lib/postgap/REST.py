@@ -138,7 +138,7 @@ def get(server, ext, data=None):
 			
 			try:
 				http_response_code = httplib.responses[r.status_code]
-			except KeyError, k:
+			except KeyError:
 				http_response_code = r.status_code
 				error_message = "Unknown status code %s" % (r.status_code)
 				logging.critical(error_message)
@@ -157,8 +157,8 @@ def get(server, ext, data=None):
 			
 			try:
 				response_as_string = json.dumps(r.json())
-			except ValueError, v:
-				response_as_string = "<Error when stringifying>" + str(v) + "</Error when stringifying>"
+			except ValueError:
+				response_as_string = "<Error when stringifying>" + repr(r) + "</Error when stringifying>"
 			
 			logging.error("Error code: %s (%s) %s" % (http_response_code, r.status_code, response_as_string ) )
 
