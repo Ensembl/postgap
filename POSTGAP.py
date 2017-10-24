@@ -82,12 +82,11 @@ def main():
 	"""
 	
 	logging.config.fileConfig('configuration/logging.conf')
-	logger = logging.getLogger(__name__)
 
 	options = get_options()
-
-	logger.info("Starting postagp with the following options:")
-	logger.info(pformat(options))
+	
+	logging.info("Starting postgap with the following options:")
+	logging.info(pformat(options))
 	efo_iris = []
 
 	if options.efos is not None:
@@ -113,9 +112,9 @@ def main():
 	postgap.Globals.PERFORM_BAYESIAN = options.bayesian
 
 	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0:
-		logger.info("Starting diseases_to_genes")
+		logging.info("Starting diseases_to_genes")
 		res = postgap.Integration.diseases_to_genes(options.diseases, expanded_efo_iris, "CEPH", options.tissues)
-		logger.info("Done with diseases_to_genes")
+		logging.info("Done with diseases_to_genes")
 	elif options.rsID is not None:
 		res = postgap.Integration.rsIDs_to_genes(options.rsID, options.tissues)
 	elif options.coords is not None:
