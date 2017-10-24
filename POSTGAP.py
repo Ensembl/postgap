@@ -308,7 +308,7 @@ def genecluster_association_table(association):
 	cluster_id = hash(json.dumps(association.cluster.gwas_snps))
 
 	gwas_sources = [gwas_association.source for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
-	gwas_snps = [gwas_association.snp for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
+	gwas_snps = [gwas_association.snp.rsID for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
 	gwas_pvalues = [gwas_association.pvalue for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
 	gwas_odds_ratios = [gwas_association.odds_ratio for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
 	gwas_betas = [gwas_association.beta_coefficient for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
