@@ -5,13 +5,10 @@
 
 import numpy
 import math
-import scipy
-import scipy.stats
 import itertools as it
 import operator
 import random
 import collections
-from scipy.stats import norm
 
 OneDConfigurationSample_prototype = collections.namedtuple(
 	'OneDConfigurationSample', 
@@ -135,12 +132,12 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 
 	def translate_configurations(self, translation_index, configurations):
 		return dict(
-			(self,translate_configuration(translation_index, configuration), configurations[configuration])
+			(self.translate_configuration(translation_index, configuration), configurations[configuration])
 			for configuration in configurations
 		)
 
 	def translate_configuration(self, translation_index, configurations):
-		return tuple(translation_index[ configuration_component ] for configuration_component in configuration)
+		return tuple(translation_index[ configuration_component ] for configuration_component in configurations)
 
 	def joint_posterior(self, sample2):
 		'''
