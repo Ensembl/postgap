@@ -196,6 +196,10 @@ def get(server, ext, data=None):
 				if "/eqtl/" in url:
 					logging.info("Error is expected behaviour by the eqtl server and will be passed on.")
 					raise EQTL400error(r)
+
+				if "/lookup/symbol" in url:
+					logging.info("Error is expected behaviour by the Ensembl gene lookup and will be passed on.")
+					raise GENE400error(r)
 				
 				if "/variation/" in url:
 					
@@ -245,6 +249,9 @@ class unhandled_rest_exception(Exception):
         self.response = request.json()
 
 class EQTL400error(unhandled_rest_exception):
+	pass
+
+class GENE400error(unhandled_rest_exception):
 	pass
 
 class Variation400error(unhandled_rest_exception):
