@@ -154,7 +154,7 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, population='EUR'):
 		"-n", rsID_file_name,
 		"-w", str((end - start) + 1)
 	]
-	sys.stderr.write(" ".join(ld_comm) + "\n")
+	logging.debug(" ".join(ld_comm))
 
 	process = Popen(ld_comm, stdout=PIPE)
 	(output, err) = process.communicate()
@@ -227,7 +227,7 @@ def get_pairwise_ld(ld_snps, population='EUR'):
 		"-w", str((end - start) + 1),
  		"-x"
 	]
-	sys.stderr.write(" ".join(ld_comm) + "\n")
+	logging.debug(" ".join(ld_comm))
 
 	process = Popen(ld_comm, stdout=PIPE, stderr=PIPE)
 	(output, err) = process.communicate()
