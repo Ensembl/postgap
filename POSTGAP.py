@@ -292,6 +292,10 @@ def genecluster_association_table(association):
 
 	for gwas_snp in association.cluster.gwas_snps:
 		for gwas_association in gwas_snp.evidence:
+			pmid = clean_pmid(gwas_association.study)
+			if pmid is None:
+				continue
+
 			for gene_snp_association in association.evidence:
 				afr_maf = 'N/A'
 				amr_maf = 'N/A'
@@ -360,7 +364,7 @@ def genecluster_association_table(association):
 					gwas_association.odds_ratio,
 					gwas_association.beta_coefficient,
 					gwas_association.sample_size,
-					gwas_association.study,
+					pmid,
 					gwas_association.reported_trait,
 					int(gene_snp_association.snp.rsID == gwas_snp.snp.rsID),
 					vep_terms,
@@ -372,6 +376,21 @@ def genecluster_association_table(association):
 				results.append(row)
 
 	return results
+
+def clean_pmid(string):
+	"""
+		Cleans minor exceptions to PMID formatting, e.g. PUBMEDID:######### or just ##########
+		Arg1: string
+		Returntype: string
+	"""
+	if re.match("PMID[0-9]+", string) is not None:
+		return string
+	elif re.match("[0-9]+", string) is not None:
+		return "PMID" + string
+	elif re.match("PUBMEDID:[0-9]+", string) is not None:
+		return re.sub("PUBMEDID:", "PMID", string)
+	else:
+		return None
 
 def read_pairwise_ld(snp1, snp2):
 	"""
