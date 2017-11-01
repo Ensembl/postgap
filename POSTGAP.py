@@ -290,91 +290,86 @@ def genecluster_association_table(association):
 				break
 	cluster_id = hash(json.dumps(association.cluster.gwas_snps))
 
-	gwas_sources = [gwas_association.source for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
-	gwas_snps = [gwas_association.snp for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
-	gwas_pvalues = [gwas_association.pvalue for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
-	gwas_odds_ratios = [gwas_association.odds_ratio for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
-	gwas_betas = [gwas_association.beta_coefficient for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
-	gwas_sizes = [gwas_association.sample_size for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
-	gwas_studies = [gwas_association.study for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
-	gwas_reported_traits = [gwas_association.reported_trait for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
+	for gwas_snp in association.cluster.gwas_snps:
+		for gwas_association in gwas_snp.evidence:
+			for gene_snp_association in association.evidence:
+				afr_maf = 'N/A'
+				amr_maf = 'N/A'
+				eas_maf = 'N/A'
+				eur_maf = 'N/A'
+				sas_maf = 'N/A'
 
-	for gene_snp_association in association.evidence:
-		afr_maf = 'N/A'
-		amr_maf = 'N/A'
-		eas_maf = 'N/A'
-		eur_maf = 'N/A'
-		sas_maf = 'N/A'
+				vep_terms = "N/A"
+				for evidence in gene_snp_association.cisregulatory_evidence:
+					if evidence.source == "VEP":
+						vep_terms = ",".join(evidence.info['consequence_terms'])
 
-		vep_terms = "N/A"
-		for evidence in gene_snp_association.cisregulatory_evidence:
-			if evidence.source == "VEP":
-				vep_terms = ",".join(evidence.info['consequence_terms'])
+				for evidence in gene_snp_association.regulatory_evidence:
+					if evidence.source == "VEP_reg":
+						MAFs = evidence.info['MAFs']
+						if MAFs is not None:
+							if 'afr_maf' in MAFs:
+								afr_maf = MAFs['afr_maf']
+							if 'amr_maf' in MAFs:
+								amr_maf = MAFs['amr_maf']
+							if 'eas_maf' in MAFs:
+								eas_maf = MAFs['eas_maf']
+							if 'eur_maf' in MAFs:
+								eur_maf = MAFs['eur_maf']
+							if 'sas_maf' in MAFs:
+								sas_maf = MAFs['sas_maf']
+							break
 
-		for evidence in gene_snp_association.regulatory_evidence:
-			if evidence.source == "VEP_reg":
-				MAFs = evidence.info['MAFs']
-				if MAFs is not None:
-					if 'afr_maf' in MAFs:
-						afr_maf = MAFs['afr_maf']
-					if 'amr_maf' in MAFs:
-						amr_maf = MAFs['amr_maf']
-					if 'eas_maf' in MAFs:
-						eas_maf = MAFs['eas_maf']
-					if 'eur_maf' in MAFs:
-						eur_maf = MAFs['eur_maf']
-					if 'sas_maf' in MAFs:
-						sas_maf = MAFs['sas_maf']
-					break
+				if 'VEP_mean' in gene_snp_association.intermediary_scores:
+					vep_mean = gene_snp_association.intermediary_scores['VEP_mean']
+				else:
+					vep_mean = 0
 
-		if 'VEP_mean' in gene_snp_association.intermediary_scores:
-			vep_mean = gene_snp_association.intermediary_scores['VEP_mean']
-		else:
-			vep_mean = 0
+				if 'VEP_sum' in gene_snp_association.intermediary_scores:
+					vep_sum = gene_snp_association.intermediary_scores['VEP_sum']
+				else:
+					vep_sum = 0
 
-		if 'VEP_sum' in gene_snp_association.intermediary_scores:
-			vep_sum = gene_snp_association.intermediary_scores['VEP_sum']
-		else:
-			vep_sum = 0
+				r2_distance = read_pairwise_ld(gene_snp_association.snp, gwas_snp.snp)
 
-		r2_distances = [read_pairwise_ld(gene_snp_association.snp, gwas_snp.snp) for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
+				if r2_distance < 0.7:
+					continue
 
+				row = [
+					gene_snp_association.snp.rsID, 
+					gene_snp_association.snp.chrom, 
+					gene_snp_association.snp.pos, 
+					afr_maf,
+					amr_maf,
+					eas_maf,
+					eur_maf,
+					sas_maf,
+					association.gene.name, 
+					association.gene.id, 
+					association.gene.chrom, 
+					association.gene.tss, 
+					gwas_association.disease.name,
+					re.sub(".*/", "", gwas_association.disease.efo),
+					gene_snp_association.score, 
+					gene_snp_association.rank,
+					r2_distance,
+					cluster_id,
+					gwas_association.source,
+					gwas_association.snp,
+					gwas_association.pvalue,
+					gwas_association.odds_ratio,
+					gwas_association.beta_coefficient,
+					gwas_association.sample_size,
+					gwas_association.study,
+					gwas_association.reported_trait,
+					int(gene_snp_association.snp.rsID == gwas_snp.snp.rsID),
+					vep_terms,
+					vep_sum,
+					vep_mean
+				]
 
-		row = [
-			gene_snp_association.snp.rsID, 
-			gene_snp_association.snp.chrom, 
-			gene_snp_association.snp.pos, 
-			afr_maf,
-			amr_maf,
-			eas_maf,
-			eur_maf,
-			sas_maf,
-			association.gene.name, 
-			association.gene.id, 
-			association.gene.chrom, 
-			association.gene.tss, 
-			gwas_association.disease.name,
-			re.sub(".*/", "", gwas_association.disease.efo),
-			gene_snp_association.score, 
-			gene_snp_association.rank,
-			"|".join(map(str, r2_distances)),
-			cluster_id,
-			"|".join(gwas_sources),
-			"|".join(gwas_snps),
-			"|".join(map(str, gwas_pvalues)),
-			"|".join(map(str, gwas_odds_ratios)),
-			"|".join(map(str, gwas_betas)),
-			"|".join(map(str, gwas_sizes)),
-			"|".join(gwas_studies),
-			"|".join(gwas_reported_traits),
-			int(gene_snp_association.snp.rsID in gwas_snps),
-			vep_terms,
-			vep_sum,
-			vep_mean
-		]
-
-		row += [gene_snp_association.intermediary_scores[functional_source.display_name] for functional_source in postgap.Cisreg.sources + postgap.Reg.sources]
-		results.append(row)
+				row += [gene_snp_association.intermediary_scores[functional_source.display_name] for functional_source in postgap.Cisreg.sources + postgap.Reg.sources]
+				results.append(row)
 
 	return results
 
