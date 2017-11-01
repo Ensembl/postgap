@@ -282,11 +282,11 @@ def genecluster_association_table(association):
 	for snp1 in association.cluster.ld_snps:
 		for snp2 in association.cluster.ld_snps:
 			if snp1.rsID not in r2_cache or snp2.rsID not in r2_cache[snp1.rsID]:
-				ld_snp_ids, r2_matrix = postgap.LD.get_pairwise_ld(association.cluster.ld_snps)
-				r2_index = dict((snp, index) for index, snp in enumerate(ld_snp_ids))
+				ld_snp_ids, r_matrix = postgap.LD.get_pairwise_ld(association.cluster.ld_snps)
+				r_index = dict((snp, index) for index, snp in enumerate(ld_snp_ids))
 				for SNPA in ld_snp_ids:
 					for SNPB in ld_snp_ids:
-						r2_cache[SNPA][SNPB] = r2_matrix.item((r2_index[SNPA], r2_index[SNPB]))
+						r2_cache[SNPA][SNPB] = r_matrix.item((r_index[SNPA], r_index[SNPB]))**2
 				break
 	cluster_id = hash(json.dumps(association.cluster.gwas_snps))
 
