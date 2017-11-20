@@ -256,7 +256,7 @@ def pretty_output(associations):
 
 	"""
 	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'afr_maf', 'amr_maf', 'eas_maf', 'eur_maf', 'sas_maf', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'disease_name', 'disease_efo_id', 'score', 'rank', 'r2', 'cluster_id', 'gwas_source', 'gwas_snp', 'gwas_pvalue', 'gwas_odds_ratio', 'gwas_beta', 'gwas_size', 'gwas_pmid', 'gwas_reported_trait', 'ls_snp_is_gwas_snp', 'vep_terms', 'vep_sum', 'vep_mean'] + [source.display_name for source in postgap.Cisreg.sources + postgap.Reg.sources])
-	content = map(pretty_cluster_association, associations)
+	content = filter(lambda X: len(X) > 0, map(pretty_cluster_association, associations))
 	return "\n".join([header] + content)
 
 def pretty_cluster_association(association):
