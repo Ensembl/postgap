@@ -194,6 +194,7 @@ class GWASCatalog(GWAS_source):
 					_links: {}
 				}
 				"""
+				study_id = study_response['accessionId']
 				pubmedId = study_response["pubmedId"]
 				diseaseTrait = study_response["diseaseTrait"]["trait"]
 				ancestries = study_response["ancestries"]
@@ -232,9 +233,11 @@ class GWASCatalog(GWAS_source):
 							reported_trait = diseaseTrait,
 							snp     = current_snp["rsId"],
 							pvalue  = current_association["pvalue"],
+							pvalue_description  = current_association["pvalueDescription"],
 							sample_size = sample_size,
 							source  = 'GWAS Catalog',
-							study   = 'PMID' + pubmedId,
+							publication = 'PMID' + pubmedId,
+							study = study_id, 
 							
 							odds_ratio                 = current_association["orPerCopyNum"],
 
@@ -355,11 +358,13 @@ class GRASP(GWAS_source):
 				try:
 					return GWAS_Association(
 						pvalue = float(items[10]),
+						pvalue_description = None,
 						snp = "rs" + items[4],
 						disease = Disease(name = postgap.EFO.term(iri), efo = iri),
 						reported_trait = items[12].decode('latin1'),
 						source = self.display_name,
-						study = items[7],
+						publication = items[7],
+						study = None,
 						sample_size = int(items[24]),
 						odds_ratio = None,
 						beta_coefficient = None,
@@ -374,11 +379,13 @@ class GRASP(GWAS_source):
 			try:
 				return GWAS_Association(
 					pvalue = float(items[10]),
+					pvalue_description = None,
 					snp = "rs" + items[4],
 					disease = Disease(name = postgap.EFO.term(iri), efo = iri),
 					reported_trait = items[12].decode('latin1'),
 					source = self.display_name,
-					study = items[7],
+					publication = items[7],
+					study = None,
 					sample_size = int(items[24]),
 					odds_ratio = None,
 					beta_coefficient = None,
@@ -433,11 +440,13 @@ class Phewas_Catalog(GWAS_source):
 			if iri in iris:
 				return GWAS_Association (
 					pvalue = float(items[4]),
+					pvalue_description = None,
 					snp = items[1],
 					disease = Disease(name = postgap.EFO.term(iri), efo = iri), 
 					reported_trait = items[2],
 					source = self.display_name,
-					study = "PMID24270849",
+					publication = "PMID24270849",
+					study = None,
 					sample_size = int(items[3]),
 					odds_ratio = float(items[5]),
 					beta_coefficient = None,
@@ -449,11 +458,13 @@ class Phewas_Catalog(GWAS_source):
 			iri = items[9].split(',')[0]
 			return GWAS_Association (
 				pvalue = float(items[4]),
+				pvalue_description = None,
 				snp = items[1],
 				disease = Disease(name = postgap.EFO.term(iri), efo = iri), 
 				reported_trait = items[2],
 				source = self.display_name,
-				study = "PMID24270849",
+				publication = "PMID24270849",
+				study = None,
 				sample_size = int(items[3]),
 				odds_ratio = float(items[5]),
 				beta_coefficient = None,
@@ -504,11 +515,13 @@ class GWAS_DB(GWAS_source):
 			if iri in iris:
 				return GWAS_Association(
 					pvalue = float(items[3]),
+					pvalue_description = None,
 					snp = items[2],
 					disease = Disease(name = postgap.EFO.term(iri), efo = iri),
 					reported_trait = items[5].decode('latin1'),
 					source = self.display_name,
-					study = items[4],
+					publication = items[4],
+					study = None,
 					sample_size = "N/A",
 					odds_ratio = None,
 					beta_coefficient = None,
@@ -520,11 +533,13 @@ class GWAS_DB(GWAS_source):
 			iri = items[6].split(',')[0]
 			return GWAS_Association(
 				pvalue = float(items[3]),
+				pvalue_description = None,
 				snp = items[2],
 				disease = Disease(name = postgap.EFO.term(iri), efo = iri),
 				reported_trait = items[5].decode('latin1'),
 				source = self.display_name,
-				study = items[4],
+				publication = items[4],
+				study = None,
 				sample_size = "N/A",
 				odds_ratio = None,
 				beta_coefficient = None,
