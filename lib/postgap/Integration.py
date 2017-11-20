@@ -468,9 +468,8 @@ def compute_v2g_scores(reg, cisreg):
 
 			# VEP stats
 			if evidence.source == 'VEP':
-				if float(evidence.score) > intermediary_scores[gene]['VEP_max']:
-					intermediary_scores[gene]['VEP_max'] = float(evidence.score)
 				intermediary_scores[gene]['VEP_count'] += 1
+				intermediary_scores[gene]['VEP_sum'] += float(evidence.score) 
 
 		# Ad hoc bounds defined here:
 		# PCHiC
@@ -478,8 +477,6 @@ def compute_v2g_scores(reg, cisreg):
 
 		# VEP
 		if 'VEP' in intermediary_scores[gene]:
-			intermediary_scores[gene]['VEP_sum'] = intermediary_scores[gene]['VEP']
-			intermediary_scores[gene]['VEP'] = intermediary_scores[gene]['VEP_max']
 			intermediary_scores[gene]['VEP_mean'] = intermediary_scores[gene]['VEP_sum'] / intermediary_scores[gene]['VEP_count']
 
 		# Weighted sum
