@@ -142,14 +142,13 @@ class GTEx(Cisreg_source):
 					snp = snp_hash[eQTL['snp']],
 					gene = gene,
 					tissue = tissue,
-					score = 1,
+					score = 1 - float(eQTL['value']),
 					source = self.display_name,
 					study = None,
 					info = None
 				)
 				for eQTL in eQTLs 
 				if eQTL['snp'] in snp_hash
-				if eQTL['value'] < 2.5e-5 
 			]
 
 			self.logger.info("\tFound %i SNPs associated to gene %s in tissue %s in GTEx" % (len(res), gene.id, tissue))
@@ -210,13 +209,12 @@ class GTEx(Cisreg_source):
 					snp = snp,
 					gene = postgap.Ensembl_lookup.get_ensembl_gene(eQTL['gene']),
 					tissue = tissue,
-					score = 1,
+					score = 1 - float(eQTL['value']),
 					source = self.display_name,
 					study = None,
 					info = None
 				)
 				for eQTL in eQTLs
-				if eQTL['value'] < 2.5e-5 
 			]
 
 			self.logger.info("\tFound %i genes associated the SNP %s in tissue %s in GTEx" % (len(res), snp.rsID, tissue))
@@ -509,14 +507,7 @@ def STOPGAP_FDR(snp, gene, fdr_model):
 
 	FDR = fdr_model['FDR'][bin]
 
-	if FDR is None:
-		return 0
-	elif FDR < .6:
-		return 2
-	elif FDR < .85:
-		return 1
-	else:
-		return 0
+	return 1 - FDR
 
 class PCHIC(Cisreg_source):
 	display_name = "PCHiC"
@@ -573,7 +564,7 @@ class PCHIC(Cisreg_source):
 		return Cisregulatory_Evidence(
 			snp = snp,
 			gene = gene,
-			score = 1,
+			score = float(feature[3]) / 645.0974, # Divide by max value in dataset
 			source = self.display_name,
 			study = None,
 			tissue = None,

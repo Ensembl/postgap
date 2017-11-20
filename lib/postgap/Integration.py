@@ -463,7 +463,8 @@ def compute_v2g_scores(reg, cisreg):
 	for gene in cisreg:
 		intermediary_scores[gene] = collections.defaultdict(int)
 		for evidence in cisreg[gene] + reg:
-			intermediary_scores[gene][evidence.source] += float(evidence.score)
+			if float(evidence.score) > intermediary_scores[gene][evidence.source]:
+				intermediary_scores[gene][evidence.source] = float(evidence.score)
 
 			# VEP stats
 			if evidence.source == 'VEP':

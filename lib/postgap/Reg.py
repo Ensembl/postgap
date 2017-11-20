@@ -96,7 +96,7 @@ class Regulome(Reg_source):
 		return Regulatory_Evidence(
 				snp = snp_hash[feature[7]],
 				source = self.display_name,
-				score = 2 if feature[3][0] == '1' or feature[3][0] == '2' else 1,
+				score = 1 if feature[3][0] == '1' or feature[3][0] == '2' else 0.5,
 				study = None,
 				tissue = None,
 				info = None
