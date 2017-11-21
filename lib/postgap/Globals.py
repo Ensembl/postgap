@@ -34,7 +34,8 @@ SPECIES = None
 DEBUG = True
 
 BLACKLISTED_REGIONS = [
-	Region(chrom = '6', start=28477797, end=33448354) # MHC
+	Region(chrom = '6', start=28477797, end=33448354), # MHC
+	Region(chrom = '17', start=44165260, end=44784489) # Dan Wright's inversion
 ]
 
 EVIDENCE_WEIGHTS = {
