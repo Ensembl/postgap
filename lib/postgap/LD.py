@@ -169,6 +169,11 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, population='EUR'):
 	os.close(rsID_file)
 
 	r2_dict[gwas_snp] = 1
+
+	for snp in ld_snps:
+		if snp not in r2_dict:
+			r2_dict[snp] = 0
+
 	return r2_dict
 
 def get_pairwise_ld(ld_snps, population='EUR'):
