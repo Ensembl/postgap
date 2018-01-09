@@ -49,6 +49,7 @@ import sys
 from pprint import pformat
 
 r2_cache = collections.defaultdict(dict)
+GRCh38_snp_locations= dict()
 
 '''
 Development TODO list:
@@ -255,7 +256,7 @@ def pretty_output(associations):
 		Returntype: String
 
 	"""
-	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'afr_maf', 'amr_maf', 'eas_maf', 'eur_maf', 'sas_maf', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'disease_name', 'disease_efo_id', 'score', 'rank', 'r2', 'cluster_id', 'gwas_source', 'gwas_snp', 'gwas_pvalue', 'gwas_pvalue_description', 'gwas_odds_ratio', 'gwas_beta', 'gwas_size', 'gwas_pmid', 'gwas_study', 'gwas_reported_trait', 'ls_snp_is_gwas_snp', 'vep_terms', 'vep_sum', 'vep_mean'] + [source.display_name for source in postgap.Cisreg.sources + postgap.Reg.sources])
+	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'GRCh38_chrom', 'GRCh38_pos', 'afr_maf', 'amr_maf', 'eas_maf', 'eur_maf', 'sas_maf', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'GRCh38_gene_chrom', 'GRCh38_gene_pos', 'disease_name', 'disease_efo_id', 'score', 'rank', 'r2', 'cluster_id', 'gwas_source', 'gwas_snp', 'gwas_pvalue', 'gwas_pvalue_description', 'gwas_odds_ratio', 'gwas_beta', 'gwas_size', 'gwas_pmid', 'gwas_study', 'gwas_reported_trait', 'ls_snp_is_gwas_snp', 'vep_terms', 'vep_sum', 'vep_mean'] + [source.display_name for source in postgap.Cisreg.sources + postgap.Reg.sources])
 	content = filter(lambda X: len(X) > 0, map(pretty_cluster_association, associations))
 	return "\n".join([header] + content)
 
@@ -288,15 +289,31 @@ def genecluster_association_table(association):
 					for SNPB in ld_snp_ids:
 						r2_cache[SNPA][SNPB] = r_matrix.item((r_index[SNPA], r_index[SNPB]))**2
 				break
+
+	GRCh38_gene = postgap.Ensembl_lookup.get_ensembl_gene(association.gene.id, postgap.Ensembl_lookup.GRCH38_ENSEMBL_REST_SERVER)
+	if GRCh38_gene is None:
+		return []
+
+	GRCh38_snps = postgap.Ensembl_lookup.get_snp_locations([ld_snp.rsID for ld_snp in association.cluster.ld_snps if ld_snp.rsID not in GRCh38_snp_locations], postgap.Ensembl_lookup.GRCH38_ENSEMBL_REST_SERVER)
+
+	for snp in GRCh38_snps:
+		GRCh38_snp_locations[snp.rsID] = snp
+
 	cluster_id = hash(json.dumps(association.cluster.gwas_snps))
 
 	for gwas_snp in association.cluster.gwas_snps:
+		if gwas_snp.snp.rsID not in GRCh38_snp_locations:
+			continue
+
 		for gwas_association in gwas_snp.evidence:
 			pmid = clean_pmid(gwas_association.publication)
 			if pmid is None:
 				continue
 
 			for gene_snp_association in association.evidence:
+				if gene_snp_association.snp.rsID not in GRCh38_snp_locations:
+					continue
+
 				afr_maf = 'N/A'
 				amr_maf = 'N/A'
 				eas_maf = 'N/A'
@@ -343,6 +360,8 @@ def genecluster_association_table(association):
 					gene_snp_association.snp.rsID, 
 					gene_snp_association.snp.chrom, 
 					gene_snp_association.snp.pos, 
+					GRCh38_snp_locations[gene_snp_association.snp.rsID].chrom,
+					GRCh38_snp_locations[gene_snp_association.snp.rsID].pos,
 					afr_maf,
 					amr_maf,
 					eas_maf,
@@ -352,6 +371,8 @@ def genecluster_association_table(association):
 					association.gene.id, 
 					association.gene.chrom, 
 					association.gene.tss, 
+					GRCh38_gene.chrom,
+					GRCh38_gene.tss,
 					gwas_association.disease.name,
 					re.sub(".*/", "", gwas_association.disease.efo),
 					gene_snp_association.score, 
