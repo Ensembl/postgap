@@ -33,10 +33,11 @@ from postgap.DataModel import *
 import postgap.Globals
 from postgap.Utils import *
 
-ENSEMBL_REST_SERVER = "http://grch37.rest.ensembl.org"
+GRCH37_ENSEMBL_REST_SERVER = "http://grch37.rest.ensembl.org"
+GRCH38_ENSEMBL_REST_SERVER = "http://rest.ensembl.org"
 known_genes = {}
 
-def get_gene(gene_name):
+def get_gene(gene_name, ENSEMBL_REST_SERVER = GRCH37_ENSEMBL_REST_SERVER):
 	"""
 
 		Get gene details from name
@@ -44,14 +45,25 @@ def get_gene(gene_name):
 		Returntype: Gene
 
 	"""
-	if gene_name not in known_genes:
+	key = (gene_name, ENSEMBL_REST_SERVER)
+	if key not in known_genes:
 		if gene_name[:4] != 'ENSG':
-			known_genes[gene_name] = fetch_gene(gene_name)
+			gene = fetch_gene(gene_name, ENSEMBL_REST_SERVER)
+			if gene is None:
+				known_genes[key] = None
+			else:
+				key2 = (gene.id, ENSEMBL_REST_SERVER)
+				if key2 in known_genes:
+					# Already found the same gene but under a different name (capitalisation changes etc)
+					known_genes[key] = known_genes[key2]
+				else:
+					known_genes[key] = gene
+					known_genes[key2] = gene
 		else:
-			known_genes[gene_name] = fetch_gene_id(gene_name)
-	return known_genes[gene_name]
+			known_genes[key] = fetch_gene_id(gene_name)
+	return known_genes[key]
 
-def fetch_gene(gene_name):
+def fetch_gene(gene_name, ENSEMBL_REST_SERVER = GRCH37_ENSEMBL_REST_SERVER):
 	"""
 
 		Get gene details from name
@@ -73,7 +85,7 @@ def fetch_gene(gene_name):
 	except:
 		return None
 
-def fetch_gene_id(gene_id):
+def fetch_gene_id(gene_id, ENSEMBL_REST_SERVER = GRCH37_ENSEMBL_REST_SERVER):
 	"""
 
 		Get gene details from name
@@ -96,7 +108,7 @@ def fetch_gene_id(gene_id):
 		return None
 
 
-def get_ensembl_gene(ensembl_id):
+def get_ensembl_gene(ensembl_id, ENSEMBL_REST_SERVER = GRCH37_ENSEMBL_REST_SERVER):
 	"""
 
 		Get gene details from name
@@ -104,30 +116,12 @@ def get_ensembl_gene(ensembl_id):
 		Returntype: Gene
 
 	"""
-	if ensembl_id not in known_genes:
-		known_genes[ensembl_id] = fetch_ensembl_gene(ensembl_id)
-	return known_genes[ensembl_id]
+	key = (ensembl_id, ENSEMBL_REST_SERVER)
+	if key not in known_genes:
+		known_genes[key] = fetch_gene_id(ensembl_id, ENSEMBL_REST_SERVER)
+	return known_genes[key]
 
-def fetch_ensembl_gene(ensembl_id):
-	"""
-
-		Get gene details from name
-		* string
-		Returntype: Gene
-
-	"""
-	server = ENSEMBL_REST_SERVER
-	ext = "/lookup/id/%s?content-type=application/json" % (ensembl_id)
-	hash = postgap.REST.get(server, ext)
-	return Gene(
-		name = hash['display_name'],
-		id = ensembl_id,
-		chrom = hash['seq_region_name'],
-		tss = int(hash['start']) if hash['strand'] > 0 else int(hash['end']),
-		biotype = hash['biotype']
-		)
-
-def get_snp_locations(rsIDs):
+def get_snp_locations(rsIDs, ENSEMBL_REST_SERVER = GRCH37_ENSEMBL_REST_SERVER):
 	"""
 
 		Get SNP details from rsID
@@ -138,7 +132,7 @@ def get_snp_locations(rsIDs):
 	if len(rsIDs) == 0:
 		return []
 
-	res = get_snp_locations_simple(rsIDs) 
+	res = get_snp_locations_simple(rsIDs, ENSEMBL_REST_SERVER) 
 
 	if len(res) == 0:
 		if len(rsIDs) == 1:
@@ -150,7 +144,7 @@ def get_snp_locations(rsIDs):
 	
 
 
-def get_snp_locations_simple(rsIDs):
+def get_snp_locations_simple(rsIDs, ENSEMBL_REST_SERVER = GRCH37_ENSEMBL_REST_SERVER):
 	"""
 
 		Get SNP details from rsID
