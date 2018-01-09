@@ -401,6 +401,8 @@ def read_pairwise_ld(snp1, snp2):
 		Arg2: SNP
 		Returntype: float
 	"""
+	if snp1.rsID == snp2.rsID:
+		return 1
 	if snp1.rsID in r2_cache and snp2.rsID in r2_cache:
 		return r2_cache[snp1.rsID][snp2.rsID]
 	else:
