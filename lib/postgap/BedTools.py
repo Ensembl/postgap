@@ -44,8 +44,8 @@ def overlap_snps_to_bed(snps, bed):
 	if (len(snps)==0):
 		return []
 	
-	max_pos = max([x.pos + 1 for x in snps])
-	min_pos = min([x.pos for x in snps])
+	max_pos = max([x.pos for x in snps])
+	min_pos = min([x.pos-1 for x in snps])
 	chrom = snps[0].chrom
 	SNP_bt = snps_to_bt(snps)
 	Annotation_bt_indexed = bed_to_bt_indexed(bed)
@@ -54,13 +54,13 @@ def overlap_snps_to_bed(snps, bed):
 	return intersection
 
 def closest(snps, bed):
-	SNP_string = "\n".join("\t".join((snp.chrom, str(snp.pos), str(snp.pos+1), snp.rsID)) for snp in sorted(snps, key=lambda X: (X.chrom, X.pos)))
+	SNP_string = "\n".join("\t".join((snp.chrom, str(snp.pos-1), str(snp.pos), snp.rsID)) for snp in sorted(snps, key=lambda X: (X.chrom, X.pos)))
 	SNP_bt = pybedtools.BedTool(SNP_string, from_string=True)
 	Annotation_bt_indexed = bed_to_bt_indexed(bed)
 	return SNP_bt.closest(Annotation_bt_indexed, wa=True, wb=True)
 
 def snps_to_bt(snps):
-	SNP_string = "\n".join(( "\t".join((snp.chrom, str(snp.pos), str(snp.pos+1), snp.rsID)) for snp in snps ))
+	SNP_string = "\n".join(( "\t".join((snp.chrom, str(snp.pos-1), str(snp.pos), snp.rsID)) for snp in snps ))
 	return pybedtools.BedTool(SNP_string, from_string=True)
 
 def bed_to_bt_indexed(bed):
