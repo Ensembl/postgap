@@ -60,3 +60,18 @@ class TestPostgapBase(unittest.TestCase):
         all_valid = all(s in VALID_GWAS_SOURCES for s in sources)
         invalid_freqs = series[~series.isin(VALID_GWAS_SOURCES)].value_counts()
         self.assertTrue(all_valid, invalid_freqs)
+
+
+    def assert_groupby_series_is_unique_per_group(self, groupbyseries):
+        """
+        Check if the `pandas.Series` per group contains a unique value.
+
+        Example:
+          `g1=[1, 1, 1], g2=[2, 2]` would pass.
+          `g1=[1, 2] g2=[2, 2]` would not pass.
+        """
+        counts = groupbyseries.nunique()
+        counts_are_one = (counts == 1)
+        self.assertTrue(counts_are_one.all(),
+                        counts[~counts_are_one].head(1))
+                        
