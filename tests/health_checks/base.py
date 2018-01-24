@@ -35,6 +35,13 @@ class TestPostgapBase(unittest.TestCase):
         self.assertTrue(all_valid_snp_id,
                         series[~valid_snp_id].head(1).to_string(index=False))
 
+    def assert_series_valid_genomic_coord(self, series):
+        """
+        Check if all values in a `pandas.Series` are valid chromosomal coords.
+        """
+        self.assertTrue((series > 0).all(),
+                        series[series <= 0].head(1))
+
     def assert_series_valid_chrom(self, series):
         """
         Check if all values in a `pandas.Series` are valid chromosomes.
@@ -53,4 +60,3 @@ class TestPostgapBase(unittest.TestCase):
         all_valid = all(s in VALID_GWAS_SOURCES for s in sources)
         invalid_freqs = series[~series.isin(VALID_GWAS_SOURCES)].value_counts()
         self.assertTrue(all_valid, invalid_freqs)
-        

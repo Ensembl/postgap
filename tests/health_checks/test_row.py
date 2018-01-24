@@ -22,6 +22,8 @@ class TestPostgapRow(TestPostgapBase):
         self.assert_series_valid_chrom(self.pg.chrom)
 
     # pos
+    def test_col_format_pos(self):
+        self.assert_series_valid_genomic_coord(self.pg.pos)
 
     # GRCh38_chrom
     def test_col_format_GRCh38_chrom(self):
@@ -57,12 +59,17 @@ class TestPostgapRow(TestPostgapBase):
         self.assert_series_valid_chrom(self.pg.gene_chrom)
 
     # gene_tss
+    def test_col_format_gene_tss(self):
+        self.assert_series_valid_genomic_coord(self.pg.gene_tss)
 
     # GRCh38_gene_chrom
     def test_col_format_GRCh38_gene_chrom(self):
         self.assert_series_valid_chrom(self.pg.GRCh38_gene_chrom)
 
     # GRCh38_gene_pos
+    def test_col_format_GRCh38_gene_pos(self):
+        self.assert_series_valid_genomic_coord(self.pg.GRCh38_gene_pos)
+
     # disease_name
     # disease_efo_id
     # score
@@ -73,7 +80,7 @@ class TestPostgapRow(TestPostgapBase):
         self.assert_series_in_range(self.pg.r2, 0.7, 1.0)
 
     # cluster_id
-    
+
     # gwas_source
     def test_col_format_gwas_source(self):
         self.assert_series_valid_gwas_source(self.pg.gwas_source)
