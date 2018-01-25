@@ -76,7 +76,11 @@ class TestPostgapRow(TestPostgapBase):
         self.assert_series_valid_genomic_coord(self.pg.GRCh38_gene_pos)
 
     # disease_name
+
     # disease_efo_id
+    def test_col_format_disease_efo_id(self):
+        self.assert_series_valid_efo_id(self.pg.disease_efo_id)
+
     # score
     # rank
 

@@ -58,6 +58,12 @@ class TestPostgapBase(unittest.TestCase):
         """
         self.assert_series_matches_regex(series, VALID_SNP_ID_REGEX)
 
+    def assert_series_valid_efo_id(self, series):
+        """
+        Check if all values in a `pandas.Series` are valid EFO ids.
+        """
+        self.assert_series_matches_regex(series, VALID_EFO_ID_REGEX)
+
     def assert_series_valid_genomic_coord(self, series):
         """
         Check if all values in a `pandas.Series` are valid chromosomal coords.
