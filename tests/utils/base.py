@@ -24,11 +24,15 @@ class TestPostgapBase(unittest.TestCase):
         Check if all values in a `pandas.Series` are in the range [low, high].
         """
         def check(series):
-            between = series.between(low, high)
-            all_between = between.all()
+            all_between = True
             first_exception = None
-            if (not all_between) and (len(series) > 0):
-                first_exception = series[~between].head(1).to_string(index=False)
+
+            if len(series) > 0:
+                between = series.between(low, high)
+                all_between = between.all()
+                if (not all_between):
+                    first_exception = series[~between].head(1).to_string(index=False)
+
             return (all_between, first_exception)
 
         if allow_na == True:
