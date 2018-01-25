@@ -6,6 +6,8 @@ import unittest
 VALID_CHROMOSOMES = [*[str(chr) for chr in range(23)], 'X', 'Y']
 VALID_GWAS_SOURCES = ['GWAS Catalog']
 VALID_SNP_ID_REGEX = '^rs\d+$'
+VALID_GENE_ID_REGEX = '^ENSG\d+$'
+VALID_EFO_ID_REGEX = '^EFO_\d+$'
 
 
 class TestPostgapBase(unittest.TestCase):
@@ -26,14 +28,35 @@ class TestPostgapBase(unittest.TestCase):
         self.assertTrue(all_between,
                         series[~between].head(1).to_string(index=False))
 
-    def assert_valid_snp_id(self, series):
+    def assert_series_not_in_range(self, series, low, high):
+        """
+        Check if all values in a `pandas.Series` are NOT in the range [low, high].
+        """
+        between = series.between(low, high)
+        all_between = between.all()
+        self.assertTrue(not all_between,
+                        series[between].head(1).to_string(index=False))
+
+    def assert_series_matches_regex(self, series, regex):
+        """
+        Check if all values in a `pandas.Series` match a regex.
+        """
+        match = series.str.match(regex)
+        all_match = match.all()
+        self.assertTrue(all_match,
+                        series[~match].head(1).to_string(index=False))
+
+    def assert_series_valid_gene_id(self, series):
+        """
+        Check if all values in a `pandas.Series` are valid Ensembl gene ids.
+        """
+        self.assert_series_matches_regex(series, VALID_GENE_ID_REGEX)
+
+    def assert_series_valid_snp_id(self, series):
         """
         Check if all values in a `pandas.Series` are valid SNP ids.
         """
-        valid_snp_id = series.str.match(VALID_SNP_ID_REGEX)
-        all_valid_snp_id = valid_snp_id.all()
-        self.assertTrue(all_valid_snp_id,
-                        series[~valid_snp_id].head(1).to_string(index=False))
+        self.assert_series_matches_regex(series, VALID_SNP_ID_REGEX)
 
     def assert_series_valid_genomic_coord(self, series):
         """
@@ -74,4 +97,3 @@ class TestPostgapBase(unittest.TestCase):
         counts_are_one = (counts == 1)
         self.assertTrue(counts_are_one.all(),
                         counts[~counts_are_one].head(1))
-                        

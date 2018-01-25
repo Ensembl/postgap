@@ -15,7 +15,7 @@ class TestPostgapRow(TestPostgapBase):
 
     # ld_snp_rsID
     def test_col_format_ld_snp_rsID(self):
-        self.assert_valid_snp_id(self.pg.ld_snp_rsID)
+        self.assert_series_valid_snp_id(self.pg.ld_snp_rsID)
 
     # chrom
     def test_col_format_chrom(self):
@@ -54,7 +54,10 @@ class TestPostgapRow(TestPostgapBase):
         self.assert_series_in_range(self.pg.sas_maf, 0.0, 1.0)
 
     # gene_symbol
+
     # gene_id
+    def test_col_format_gene_id(self):
+        self.assert_series_valid_gene_id(self.pg.gene_id)
 
     # gene_chrom
     def test_col_format_gene_chrom(self):
@@ -89,7 +92,7 @@ class TestPostgapRow(TestPostgapBase):
 
     # gwas_snp
     def test_col_format_gwas_snp(self):
-        self.assert_valid_snp_id(self.pg.gwas_snp)
+        self.assert_series_valid_snp_id(self.pg.gwas_snp)
 
     # gwas_pvalue
     def test_col_format_gwas_pval(self):
