@@ -19,37 +19,49 @@ class TestPostgapBase(unittest.TestCase):
         super(TestPostgapBase, self).__init__(test_name)
         self.pg = postgap
 
+    def assert_series_against_interval(self, series, low, high, inside=True):
+        """
+        Check if all values in a `pandas.Series` are inside or outside the range
+        [low, high], depending on the value of the inside boolean.
+        """
+        all_meet_criteria = True
+        first_exception = None
+
+        if len(series) > 0:
+            between = series.between(low, high)
+            meet_criteria = between
+            if inside == False:
+                meet_criteria = ~between
+
+            all_meet_criteria = meet_criteria.all()
+            if (not all_meet_criteria):
+                first_exception = series[~meet_criteria].head(1).to_string(index=False)
+                first_exception = '{}{} in [{}, {}]'.format(
+                    first_exception,
+                    ' not' if inside else '',
+                    low,
+                    high
+                )
+
+        self.assertTrue(all_meet_criteria, first_exception)
+
     def assert_series_in_range(self, series, low, high, allow_na=False):
         """
         Check if all values in a `pandas.Series` are in the range [low, high].
         """
-        def check(series):
-            all_between = True
-            first_exception = None
-
-            if len(series) > 0:
-                between = series.between(low, high)
-                all_between = between.all()
-                if (not all_between):
-                    first_exception = series[~between].head(1).to_string(index=False)
-
-            return (all_between, first_exception)
-
         if allow_na == True:
-            (all_between, first_exception) = check(series.dropna())
+            self.assert_series_against_interval(series.dropna(), low, high)
         else:
-            (all_between, first_exception) = check(series)
+            self.assert_series_against_interval(series, low, high)
 
-        self.assertTrue(all_between, first_exception)
-
-    def assert_series_not_in_range(self, series, low, high):
+    def assert_series_not_in_range(self, series, low, high, allow_na=False):
         """
         Check if all values in a `pandas.Series` are NOT in the range [low, high].
         """
-        between = series.between(low, high)
-        all_between = between.all()
-        self.assertTrue(not all_between,
-                        series[between].head(1).to_string(index=False))
+        if allow_na == True:
+            self.assert_series_against_interval(series.dropna(), low, high, inside=False)
+        else:
+            self.assert_series_against_interval(series, low, high, inside=False)
 
     def assert_series_matches_regex(self, series, regex):
         """
