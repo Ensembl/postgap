@@ -35,23 +35,23 @@ class TestPostgapRow(TestPostgapBase):
 
     # afr_maf
     def test_col_format_afr_maf(self):
-        self.assert_series_in_range(self.pg.afr_maf, 0.0, 1.0)
+        self.assert_series_in_range(self.pg.afr_maf, 0.0, 1.0, allow_na=True)
 
     # amr_maf
     def test_col_format_amr_maf(self):
-        self.assert_series_in_range(self.pg.amr_maf, 0.0, 1.0)
+        self.assert_series_in_range(self.pg.amr_maf, 0.0, 1.0, allow_na=True)
 
     # eas_maf
     def test_col_format_eas_maf(self):
-        self.assert_series_in_range(self.pg.eas_maf, 0.0, 1.0)
+        self.assert_series_in_range(self.pg.eas_maf, 0.0, 1.0, allow_na=True)
 
     # eur_maf
     def test_col_format_eur_maf(self):
-        self.assert_series_in_range(self.pg.eur_maf, 0.0, 1.0)
+        self.assert_series_in_range(self.pg.eur_maf, 0.0, 1.0, allow_na=True)
 
     # sas_maf
     def test_col_format_sas_maf(self):
-        self.assert_series_in_range(self.pg.sas_maf, 0.0, 1.0)
+        self.assert_series_in_range(self.pg.sas_maf, 0.0, 1.0, allow_na=True)
 
     # gene_symbol
 
