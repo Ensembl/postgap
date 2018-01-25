@@ -18,7 +18,7 @@ MHC_END_GRCH38 = 33480577
 
 MHC_CHROM = 6
 
-class TestPostgapPerGene(TestPostgapBase):
+class TestPostgapMHCRegion(TestPostgapBase):
 
     def test_canary(self):
         self.assertTrue(True)
