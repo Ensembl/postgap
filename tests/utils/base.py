@@ -19,14 +19,24 @@ class TestPostgapBase(unittest.TestCase):
         super(TestPostgapBase, self).__init__(test_name)
         self.pg = postgap
 
-    def assert_series_in_range(self, series, low, high):
+    def assert_series_in_range(self, series, low, high, allow_na=False):
         """
         Check if all values in a `pandas.Series` are in the range [low, high].
         """
-        between = series.between(low, high)
-        all_between = between.all()
-        self.assertTrue(all_between,
-                        series[~between].head(1).to_string(index=False))
+        def check(series):
+            between = series.between(low, high)
+            all_between = between.all()
+            first_exception = None
+            if (not all_between) and (len(series) > 0):
+                first_exception = series[~between].head(1).to_string(index=False)
+            return (all_between, first_exception)
+
+        if allow_na == True:
+            (all_between, first_exception) = check(series.dropna())
+        else:
+            (all_between, first_exception) = check(series)
+
+        self.assertTrue(all_between, first_exception)
 
     def assert_series_not_in_range(self, series, low, high):
         """
