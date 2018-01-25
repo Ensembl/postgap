@@ -3,7 +3,7 @@
 import unittest
 
 # local
-from .base import TestPostgapBase
+from utils.base import TestPostgapBase
 # ------------------------------------------------
 
 class TestPostgapPerGeneANDLdSnp(TestPostgapBase):

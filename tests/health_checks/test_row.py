@@ -5,7 +5,7 @@ import unittest
 # pipped
 
 # local
-from .base import TestPostgapBase
+from utils.base import TestPostgapBase
 # ------------------------------------------------
 
 class TestPostgapRow(TestPostgapBase):
