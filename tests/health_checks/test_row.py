@@ -30,6 +30,8 @@ class TestPostgapRow(TestPostgapBase):
         self.assert_series_valid_chrom(self.pg.GRCh38_chrom)
 
     # GRCh38_pos
+    def test_col_format_GRCh38_pos(self):
+        self.assert_series_valid_genomic_coord(self.pg.GRCh38_pos)
 
     # afr_maf
     def test_col_format_afr_maf(self):
