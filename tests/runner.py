@@ -33,5 +33,5 @@ if __name__ == '__main__':
     postgap = pd.read_csv(sys.argv[1], sep='\t', na_values=['None'])
     suite_with_postgap = add_postgap(suite, postgap)
 
-    result = unittest.TextTestRunner().run(suite_with_postgap)
+    result = unittest.TextTestRunner(verbosity=2).run(suite_with_postgap)
     sys.exit(not result.wasSuccessful())
