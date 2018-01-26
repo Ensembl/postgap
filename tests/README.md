@@ -30,7 +30,8 @@ These are summary or metadata files that:
 Ideally, use `virtualenv` as follows:
 ```
 # (in tests folder)
-virtualenv venv
+virtualenv -p python3 venv
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
