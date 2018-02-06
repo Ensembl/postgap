@@ -40,3 +40,10 @@ For a file in POSTGAP TSV format, run:
 ```
 python runner.py ./sample_data/postgap.20180108.asthma.tsv.gz
 ```
+
+### Run report generator against a file
+For a file in POSTGAP TSV format, run:
+```
+python reporter.py ./sample_data/postgap.20180108.asthma.tsv.gz
+```
+This will produce a file in `tests/__reports__` with filename format format `<input_file>.REPORT.<timestamp>.ipynb`.

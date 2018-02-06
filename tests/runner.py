@@ -6,9 +6,6 @@ import unittest
 # pipped
 import pandas as pd
 import papermill as pm
-
-# local
-from reports.generator import PostgapReportGenerator
 # ------------------------------------------------
 
 def add_postgap(suite, postgap):
@@ -37,21 +34,6 @@ if __name__ == '__main__':
     filename = sys.argv[1]
     postgap = pd.read_csv(filename, sep='\t', na_values=['None'])
 
-    # report_generator = PostgapReportGenerator(postgap=postgap)
-    # report_generator.run()
-
     suite_with_postgap = add_postgap(suite, postgap)
-
     result = unittest.TextTestRunner(verbosity=2).run(suite_with_postgap)
-
-
-
-
-    pm.execute_notebook(
-        './reports/template.ipynb',
-        './__reports__/first.ipynb',
-        parameters = dict(filename=filename)
-    )
-
-
     sys.exit(not result.wasSuccessful())
