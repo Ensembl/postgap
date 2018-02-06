@@ -50,6 +50,7 @@ from pprint import pformat
 
 r2_cache = collections.defaultdict(dict)
 GRCh38_snp_locations= dict()
+known_chroms = map(str, range(1,22)) + ['X','Y']
 
 '''
 Development TODO list:
@@ -294,6 +295,9 @@ def genecluster_association_table(association):
 	if GRCh38_gene is None:
 		return []
 
+	if GRCh38_gene.chrom not in known_chroms:
+		return []
+
 	GRCh38_snps = postgap.Ensembl_lookup.get_snp_locations([ld_snp.rsID for ld_snp in association.cluster.ld_snps if ld_snp.rsID not in GRCh38_snp_locations], postgap.Ensembl_lookup.GRCH38_ENSEMBL_REST_SERVER)
 
 	for snp in GRCh38_snps:
@@ -302,9 +306,6 @@ def genecluster_association_table(association):
 	cluster_id = hash(json.dumps(association.cluster.gwas_snps))
 
 	for gwas_snp in association.cluster.gwas_snps:
-		if gwas_snp.snp.rsID not in GRCh38_snp_locations:
-			continue
-
 		for gwas_association in gwas_snp.evidence:
 			pmid = clean_pmid(gwas_association.publication)
 			if pmid is None:
@@ -312,6 +313,9 @@ def genecluster_association_table(association):
 
 			for gene_snp_association in association.evidence:
 				if gene_snp_association.snp.rsID not in GRCh38_snp_locations:
+					continue
+
+				if gene_snp_association.snp.chrom not in known_chroms or GRCh38_snp_locations[gene_snp_association.snp.rsID].chrom not in known_chroms:
 					continue
 
 				afr_maf = 'N/A'
