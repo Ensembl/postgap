@@ -10,14 +10,14 @@ These are unit tests that:
   * an output file for a single EFO term
   * a large concatenated output file (across all EFO terms)
 
-## Data checks (TODO)
+## Data checks
 These are unit tests that:
 * check biological expectations, such as:
   * filtering of the MHC region
   * filtering of *trans* relations (ie. when genes and snps have different chromosomes)
 * can be run against a whole output file only
 
-## Reports (TODO)
+## Reports
 These are summary or metadata files that:
 * can be generated for either a partial or whole output file
 * present summary statistics to allow comparison between POSTGAP output files
