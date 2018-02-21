@@ -67,6 +67,38 @@ Or a manually defined variant:
 python POSTGAP.py --coords my_variant 1 1234567 
 ```
 
+Direct data upload
+------------------
+
+To short cut the GWAS databases and enter you own data with a file:
+```
+python POSTGAP.py --summary_stats my_stats.txt
+```
+
+The summary statistics file should be tab delimited with the following columns:
+* Chromosome
+* Position
+* MarkerName
+* Effect_allele
+* Non_Effect_allele
+* Beta
+* SE
+* Pvalue
+
+Bayesian mode
+-------------
+
+For an EFO, you can trigger the Bayesian calculations with:
+
+```
+python POSTGAP.py --efos EFO_0000196 --bayesian
+```
+
+In this case, POSTGAP produces an output file, 'postgap_output', which can be displayed as:
+```
+python extract_data.py
+```
+
 
 Output
 ------
