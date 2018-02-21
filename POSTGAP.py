@@ -110,8 +110,6 @@ def main():
 	if options.Reg is not None:
 		postgap.Globals.Reg_adaptors = options.Reg
 
-	postgap.Globals.PERFORM_BAYESIAN = options.bayesian
-
 	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0:
 		logging.info("Starting diseases_to_genes")
 		res = postgap.Integration.diseases_to_genes(options.diseases, expanded_efo_iris, "CEPH", options.tissues)
@@ -232,6 +230,7 @@ def get_options():
     postgap.Globals.SPECIES = options.species
     postgap.Globals.DEBUG = postgap.Globals.DEBUG or options.debug
     postgap.Globals.GWAS_SUMMARY_STATS_FILE = options.summary_stats
+    postgap.Globals.PERFORM_BAYESIAN = options.bayesian
     
     if options.efos is not None:
         postgap.Globals.work_directory = options.work_dir + "/" + "_".join(options.efos)
