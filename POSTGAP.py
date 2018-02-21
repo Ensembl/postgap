@@ -35,6 +35,7 @@ import json
 import re
 import logging
 import logging.config
+import cPickle as pickle
 
 import postgap
 import postgap.GWAS
@@ -114,6 +115,7 @@ def main():
 	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0:
 		logging.info("Starting diseases_to_genes")
 		res = postgap.Integration.diseases_to_genes(options.diseases, expanded_efo_iris, "CEPH", options.tissues)
+		pickle.dump(res, open("postgap_output", "w")) # DEBUG remove hard coded path
 		logging.info("Done with diseases_to_genes")
 	elif options.rsID is not None:
 		res = postgap.Integration.rsIDs_to_genes(options.rsID, options.tissues)
