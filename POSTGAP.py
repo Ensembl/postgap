@@ -98,7 +98,6 @@ def main():
 	else:
 		expanded_efo_iris = efo_iris
 
-	postgap.Globals.PERFORM_BAYESIAN = options.bayesian
 
 	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0:
 		logging.info("Starting diseases_to_genes")
@@ -212,6 +211,7 @@ def get_options():
     postgap.Globals.SPECIES = options.species
     postgap.Globals.DEBUG = postgap.Globals.DEBUG or options.debug
     postgap.Globals.GWAS_SUMMARY_STATS_FILE = options.summary_stats
+    postgap.Globals.PERFORM_BAYESIAN = options.bayesian
     
     if options.efos is not None:
         postgap.Globals.work_directory = options.work_dir + "/" + "_".join(options.efos)
