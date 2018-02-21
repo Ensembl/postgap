@@ -80,7 +80,9 @@ GWAS_Cluster = collections.namedtuple(
 	[
 		'gwas_snps',
 		'ld_snps',
-		'finemap_posteriors'
+		'ld_matrix',
+		'z_scores',
+		'gwas_configuration_posteriors'
 	]
 )
 Cisregulatory_Evidence = collections.namedtuple(
@@ -100,4 +102,4 @@ Cisregulatory_Evidence = collections.namedtuple(
 )
 Regulatory_Evidence = collections.namedtuple('Regulatory_Evidence', ['snp','score','source','study','tissue','info'])
 GeneSNP_Association = collections.namedtuple('GeneSNP_Association', ['gene', 'snp', 'score', 'rank', 'intermediary_scores', 'cisregulatory_evidence', 'regulatory_evidence'])
-GeneCluster_Association = collections.namedtuple('GeneCluster_Association', ['gene', 'cluster', 'score', 'evidence','r2'])
+GeneCluster_Association = collections.namedtuple('GeneCluster_Association', ['gene', 'cluster', 'score', 'collocation_posterior', 'evidence','r2'])
