@@ -40,9 +40,6 @@ from postgap.DataModel import *
 from postgap.Utils import *
 from postgap.GWAS_Lead_Snp_Orientation import *
 
-#postgap.REST.DEBUG = False
-
-
 class GWAS_source(object):
 	def run(self, diseases, iris):
 		"""
@@ -86,6 +83,7 @@ class GWASCatalog(GWAS_source):
 		#
 		server = 'http://www.ebi.ac.uk'
 		url = '/gwas/beta/rest/api/efoTraits/search/findByEfoUri?uri=%s' % (efo)
+		import postgap.REST
 		hash = postgap.REST.get(server, url)
 
 		'''
@@ -288,7 +286,7 @@ class GWASCatalog(GWAS_source):
 							riskAlleles.append(strongestRiskAlleles)
 
 					
-					from postgap.FinemapIntegration.GWAS_Lead_Snp_Orientation \
+					from postgap.GWAS_Lead_Snp_Orientation \
 					import                                                  \
 					gwas_risk_alleles_present_in_reference,                 \
 					none_of_the_risk_alleles_is_a_substitution_exception,   \
@@ -361,6 +359,7 @@ class GWASCatalog(GWAS_source):
 								pvalue  = current_association["pvalue"],
 								source  = 'GWAS Catalog',
 								study   = 'PMID' + pubmedId,
+								sample_size = 1000, # TODO
 								
 								# For fetching additional information like risk allele later, if needed.
 								# E.g.: http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/singleNucleotidePolymorphisms/9765
@@ -752,8 +751,8 @@ class GWAS_File(GWAS_source):
 
 	def create_pvalue_filter(self, pvalue_threshold):
 		
-		def filter_for_pvalues_smaller_than(gwas_association):
-			if gwas_association.pvalue < pvalue_threshold:
+		def filter_for_pvalues_smaller_than(pvalue):
+			if float(pvalue) < pvalue_threshold:
 				return True
 			return False
 		
@@ -793,6 +792,9 @@ class GWAS_File(GWAS_source):
 				column_label = column_labels[column_index]
 				parsed[column_label] = items[column_index]
 			
+			if not want_this_gwas_association_filter(parsed["Pvalue"]):
+				continue
+
 			snp = SNP(
 				rsID  = parsed["MarkerName"],
 				chrom = parsed["Chromosome"],
@@ -803,10 +805,11 @@ class GWAS_File(GWAS_source):
 			gwas_association = GWAS_Association(
 				pvalue                            = float(parsed["Pvalue"]),
 				snp                               = snp,
-				disease                           = "Todo",
+				disease                           = Disease(name = 'TODO', efo = 'EFO_TODO'),
 				reported_trait                    = "Todo",
 				source                            = "Todo",
 				study                             = "Todo",
+				sample_size                       = 1000, # TODO
 				odds_ratio                        = "Todo",
 				beta_coefficient                  = float(parsed["Beta"]),
 				beta_coefficient_unit             = "Todo",
@@ -815,8 +818,6 @@ class GWAS_File(GWAS_source):
 				risk_alleles_present_in_reference = None,
 			)
 			
-			if not want_this_gwas_association_filter(gwas_association):
-				continue
 
 			callback(gwas_association)
 			

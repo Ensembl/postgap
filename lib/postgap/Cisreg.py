@@ -38,6 +38,7 @@ import BedTools
 import Ensembl_lookup
 import requests
 import logging
+import postgap.FinemapIntegration
 
 VEP_impact_to_score = {
 	'HIGH': 4,
@@ -69,7 +70,6 @@ class GTEx(Cisreg_source):
 		start = min(snp.pos for snp in snps)
 		end = max(snp.pos for snp in snps)
 		chrom = snps[0].chrom
-		
 
 		server = 'http://grch37.rest.ensembl.org'
 		ext = '/overlap/region/%s/%s:%i-%i?feature=gene;content-type=application/json' % (postgap.Globals.SPECIES, chrom, max(0, start - 1e6), end + 1e6)
@@ -83,7 +83,7 @@ class GTEx(Cisreg_source):
 				tss = int(gene['start']) if gene['strand'] > 0 else int(gene['end']),
 				biotype = gene['biotype']
 			)
-			for gene in postgap.REST.get(server, ext)
+			for gene in postgap.REST.get(server, ext) if gene['biotype'] == 'protein_coding'
 		]
 		if len(genes) < len(snps):
 			snp_hash = dict( (snp.rsID, snp) for snp in snps)
@@ -105,15 +105,7 @@ class GTEx(Cisreg_source):
 			Returntype: [ Cisregulatory_Evidence ]
 
 		"""
-		res = concatenate(self.gene_tissue(gene, tissue, snp_hash) for tissue in tissues)
-
-		logging.info("\tFound %i SNPs associated to gene %s in GTEx" % (len(res), gene.id))
-
-		return res
-	
-	def gene_tissue(self, gene, tissue, snp_hash):
-		
-		cisreg_with_pvalues = self._gene_tissue_pvalue(gene, tissue, snp_hash)
+		cisreg_with_pvalues = self._gene_pvalue(gene, snp_hash)
 		
 		if cisreg_with_pvalues is None:
 			return None
@@ -122,7 +114,7 @@ class GTEx(Cisreg_source):
 			# Empty list
 			return cisreg_with_pvalues
 		
-		cisreg_betas = self._gene_tissue_betas(gene, tissue, snp_hash)
+		cisreg_betas = self._gene_betas(gene, snp_hash)
 		
 		# Where there are pvalues, there must be betas
 		if cisreg_betas is None:
@@ -137,37 +129,43 @@ class GTEx(Cisreg_source):
 		
 		for cisreg_with_pvalue in cisreg_with_pvalues:
 			
-			matching_cisreg_betas = filter(lambda X: X.snp.rsID == cisreg_with_pvalue.snp.rsID, cisreg_betas)
+			matching_cisreg_betas = filter(lambda X: X.snp.rsID == cisreg_with_pvalue.snp.rsID and X.tissue == cisreg_with_pvalue.tissue, cisreg_betas)
 			
 			if len(matching_cisreg_betas) != 1:
 				raise Exception
 			
 			cisreg_with_beta = matching_cisreg_betas[0]
-			
+
+			if cisreg_with_pvalue.pvalue < 2.5e-5:
+				score = 1
+			else:
+				score = 0
+
 			combined_cisreg_evidence = Cisregulatory_Evidence(
 				snp    = cisreg_with_pvalue.snp,
 				gene   = cisreg_with_pvalue.gene,
 				tissue = cisreg_with_pvalue.tissue,
-				score  = 1,
+				score  = score,
 				source = cisreg_with_pvalue.source,
-				study  = None,
+				study  = 'GTEx',
 				info   = None,
-				z_score = None,
+				z_score = postgap.FinemapIntegration.z_score_from_pvalue(cisreg_with_pvalue.pvalue,cisreg_with_beta.beta),
 				pvalue = cisreg_with_pvalue.pvalue,
 				beta   = cisreg_with_beta.beta
 			)
 			combined_cisreg_evidence_list.append(combined_cisreg_evidence)
 		
+		logging.info("\tFound %i SNPs associated to gene %s in GTEx" % (len(combined_cisreg_evidence_list), gene.id))
+
 		return combined_cisreg_evidence_list
 			
 		
-	def _gene_tissue_pvalue(self, gene, tissue, snp_hash):
+	def _gene_pvalue(self, gene, snp_hash):
 		"""
 
 			Returns all SNPs associated to a gene in GTEx in a given tissue
 			Args:
 			* Gene
-			* string, tissue
 			* { rsID: SNP }
 			Returntype: [ Cisregulatory_Evidence ]
 
@@ -178,7 +176,7 @@ class GTEx(Cisreg_source):
 			raise Exception
 
 		server = "http://rest.ensembl.org"
-		ext = "/eqtl/id/%s/%s?content-type=application/json;statistic=p-value;tissue=%s" % (SPECIES, gene.id, tissue);
+		ext = "/eqtl/id/%s/%s?content-type=application/json;statistic=p-value" % (SPECIES, gene.id);
 		
 		from postgap.REST import EQTL400error
 		
@@ -198,7 +196,7 @@ class GTEx(Cisreg_source):
 				Cisregulatory_Evidence(
 					snp = snp_hash[eQTL['snp']],
 					gene = gene,
-					tissue = tissue,
+					tissue = eQTL['tissue'],
 					score = 1,
 					source = self.display_name,
 					study = None,
@@ -209,10 +207,9 @@ class GTEx(Cisreg_source):
 				)
 				for eQTL in eQTLs 
 				if eQTL['snp'] in snp_hash
-				if eQTL['value'] < 2.5e-5 
 			]
 
-			logging.info("\tFound %i SNPs associated to gene %s in tissue %s in GTEx" % (len(res), gene.id, tissue))
+			logging.info("\tFound %i SNPs associated to gene %s in GTEx" % (len(res), gene.id))
 
 			return res
 		except EQTL400error as e:
@@ -223,13 +220,12 @@ class GTEx(Cisreg_source):
 			logging.warning("Returning 'None' and pretending this didn't happen.")
 			return None
 
-	def _gene_tissue_betas(self, gene, tissue, snp_hash):
+	def _gene_betas(self, gene, snp_hash):
 		"""
 
 			Returns all SNPs associated to a gene in GTEx in a given tissue
 			Args:
 			* Gene
-			* string, tissue
 			* { rsID: SNP }
 			Returntype: [ Cisregulatory_Evidence ]
 
@@ -240,7 +236,7 @@ class GTEx(Cisreg_source):
 			raise Exception
 		
 		server = "http://rest.ensembl.org"
-		ext = "/eqtl/id/%s/%s?content-type=application/json;statistic=beta;tissue=%s" % (SPECIES, gene.id, tissue);
+		ext = "/eqtl/id/%s/%s?content-type=application/json;statistic=beta" % (SPECIES, gene.id);
 		
 		from postgap.REST import EQTL400error
 		
@@ -260,7 +256,7 @@ class GTEx(Cisreg_source):
 				Cisregulatory_Evidence(
 					snp = snp_hash[eQTL['snp']],
 					gene = gene,
-					tissue = tissue,
+					tissue = eQTL['tissue'],
 					score = 1,
 					source = self.display_name,
 					study = None,
@@ -273,7 +269,7 @@ class GTEx(Cisreg_source):
 				if eQTL['snp'] in snp_hash
 			]
 
-			logging.info("\tFound %i SNPs with betas associated to gene %s in tissue %s in GTEx" % (len(res), gene.id, tissue))
+			logging.info("\tFound %i SNPs with betas associated to gene %s in GTEx" % (len(res), gene.id))
 
 			return res
 		except EQTL400error as e:
@@ -287,6 +283,71 @@ class GTEx(Cisreg_source):
 	def snp(self, snp, tissues):
 		"""
 
+			Returns all SNPs associated to a SNP in GTEx
+			Args:
+			* Gene
+			* [ string ] (tissues)
+			* { rsID: SNP }
+			Returntype: [ Cisregulatory_Evidence ]
+
+		"""
+		cisreg_with_pvalues = self._snp_pvalues(snp, tissues)
+		
+		if cisreg_with_pvalues is None:
+			return None
+		
+		if len(cisreg_with_pvalues) == 0:
+			# Empty list
+			return cisreg_with_pvalues
+		
+		cisreg_betas = self._snp_betas(snp, tissues)
+		
+		# Where there are pvalues, there must be betas
+		if cisreg_betas is None:
+			raise Exception
+		
+		if len(cisreg_betas) == 0:
+			raise Exception
+		
+		# Match them up:
+		
+		combined_cisreg_evidence_list = []
+		
+		for cisreg_with_pvalue in cisreg_with_pvalues:
+			
+			matching_cisreg_betas = filter(lambda X: X.gene.id == cisreg_with_pvalue.gene.id and X.tissue == cisreg_with_pvalue.tissue, cisreg_betas)
+			
+			if len(matching_cisreg_betas) != 1:
+				raise Exception
+			
+			cisreg_with_beta = matching_cisreg_betas[0]
+
+			if cisreg_with_pvalue.pvalue < 2.5e-5:
+				score = 1
+			else:
+				score = 0
+
+			combined_cisreg_evidence = Cisregulatory_Evidence(
+				snp    = cisreg_with_pvalue.snp,
+				gene   = cisreg_with_pvalue.gene,
+				tissue = cisreg_with_pvalue.tissue,
+				score  = score,
+				source = cisreg_with_pvalue.source,
+				study  = 'GTEx',
+				info   = None,
+				z_score = postgap.FinemapIntegration.z_score_from_pvalue(cisreg_with_pvalue.pvalue,cisreg_with_beta.beta),
+				pvalue = cisreg_with_pvalue.pvalue,
+				beta   = cisreg_with_beta.beta
+			)
+			combined_cisreg_evidence_list.append(combined_cisreg_evidence)
+		
+		logging.info("\tFound %i genes associated to snp %s in GTEx" % (len(combined_cisreg_evidence_list), snp.rsID))
+
+		return combined_cisreg_evidence_list
+
+	def _snp_betas(self, snp, tissues):
+		"""
+
 			Returns all genes associated to a snp in GTEx
 			Args:
 			* SNP
@@ -294,26 +355,9 @@ class GTEx(Cisreg_source):
 			Returntype: [ Cisregulatory_Evidence ]
 
 		"""
-		res = concatenate(self.snp_tissue(snp, tissue) for tissue in tissues)
-
-		logging.info("\tFound %i genes associated to snp %s in GTEx" % (len(res), snp.rsID))
-
-		return res
-
-	def snp_tissue(self, snp, tissue):
-		"""
-
-			Returns all genes associated to a SNP in GTEx in a given tissue
-			Args:
-			* SNP
-			* string, tissues
-			Returntype: [ Cisregulatory_Evidence ]
-
-		"""
-
 
 		server = "http://rest.ensembl.org"
-		ext = "/eqtl/variant_name/%s/%s?content-type=application/json;statistic=p-value;tissue=%s" % ('homo_sapiens', snp.rsID, tissue);
+		ext = "/eqtl/variant_name/%s/%s?content-type=application/json;statistic=beta" % ('homo_sapiens', snp.rsID);
 		try:
 			eQTLs = postgap.REST.get(server, ext)
 
@@ -332,18 +376,68 @@ class GTEx(Cisreg_source):
 				Cisregulatory_Evidence(
 					snp = snp,
 					gene = postgap.Ensembl_lookup.get_ensembl_gene(eQTL['gene']),
-					tissue = tissue,
+					tissue = eQTL['tissue'],
 					score = 1,
 					source = self.display_name,
 					study = None,
+					info = None,
 					z_score = None,
-					info = None
+					pvalue = None,
+					beta = float(eQTL['value'])
 				)
 				for eQTL in eQTLs
-				if eQTL['value'] < 2.5e-5 
 			]
 
-			logging.info("\tFound %i genes associated the SNP %s in tissue %s in GTEx" % (len(res), snp.rsID, tissue))
+			logging.info("\tFound %i genes associated to snp %s in GTEx" % (len(res), snp.rsID))
+
+			return res
+		except:
+			return None
+
+	def _snp_pvalues(self, snp, tissues):
+		"""
+
+			Returns all genes associated to a snp in GTEx
+			Args:
+			* SNP
+			* [ string ] (tissues)
+			Returntype: [ Cisregulatory_Evidence ]
+
+		"""
+
+		server = "http://rest.ensembl.org"
+		ext = "/eqtl/variant_name/%s/%s?content-type=application/json;statistic=p-value" % ('homo_sapiens', snp.rsID);
+		try:
+			eQTLs = postgap.REST.get(server, ext)
+
+			'''
+				Example return object:
+				[
+					{
+						minus_log10_p_value: 1.47569690641653,
+						value: 0.0334428355738418,
+						gene: "ENSG00000162627"
+					},
+				]
+			'''
+
+			res = [
+				Cisregulatory_Evidence(
+					snp = snp,
+					gene = postgap.Ensembl_lookup.get_ensembl_gene(eQTL['gene']),
+					tissue = eQTL['tissue'],
+					score = 1,
+					source = self.display_name,
+					study = None,
+					info = None,
+					z_score = None,
+					pvalue = float(eQTL['value']),
+					beta = None
+				)
+				for eQTL in eQTLs
+			]
+
+			logging.info("\tFound %i genes associated to snp %s in GTEx" % (len(res), snp.rsID))
 
 			return res
 		except:
@@ -439,7 +533,10 @@ class VEP(Cisreg_source):
 					tissue = None,
 					info = {
 						'consequence_terms': consequence['consequence_terms'], 
-					}
+					},
+					z_score = None,
+					pvalue = None,
+					beta = None
 				))
 
 		logging.info("\tFound %i interactions in VEP" % (len(res)))
@@ -544,7 +641,10 @@ class Fantom5(Cisreg_source):
 				score = score,
 				study = None,
 				tissue = None,
-				info = None
+				info = None,
+				z_score = None,
+				pvalue = None,
+				beta = None
 			)
 
 class DHS(Cisreg_source):
@@ -610,7 +710,10 @@ class DHS(Cisreg_source):
 			source = self.display_name,
 			study = None,
 			tissue = None,
-			info = None
+			info = None,
+			z_score = None,
+			pvalue = None,
+			beta = None
 		)
 
 def get_fdr_model(filename):
@@ -714,7 +817,10 @@ class PCHIC(Cisreg_source):
 			source = self.display_name,
 			study = None,
 			tissue = None,
-			info = None
+			info = None,
+			z_score = None,
+			pvalue = None,
+			beta = None
 		)
 
 class nearest_gene(Cisreg_source):
@@ -754,7 +860,10 @@ class nearest_gene(Cisreg_source):
 				source = self.display_name,
 				study = None,
 				tissue = None,
-				info = None
+				info = None,
+				z_score = None,
+				pvalue = None,
+				beta = None
 				)
 			for row in res ]
 

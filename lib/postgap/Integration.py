@@ -29,6 +29,10 @@ limitations under the License.
 """
 import collections
 import math
+import os
+import sys
+import os.path
+import cPickle as pickle
 
 from postgap.DataModel import *
 import postgap.GWAS
@@ -40,6 +44,8 @@ import postgap.EFO
 import postgap.Ensembl_lookup
 import postgap.Globals
 import postgap.RegionFilter
+import postgap.FinemapIntegration
+import postgap.Finemap
 from postgap.Utils import *
 import logging
 import scipy
@@ -71,14 +77,11 @@ def diseases_to_gwas_snps(diseases, efos):
 		Returntype: [ GWAS_SNP ]
 
 	"""
-	from postgap.Globals import GWAS_PVALUE_CUTOFF
-	
-	res = filter(lambda X: X.pvalue < GWAS_PVALUE_CUTOFF, scan_disease_databases(diseases, efos))
+	res = filter(lambda X: X.pvalue < postgap.Globals.GWAS_PVALUE_CUTOFF, scan_disease_databases(diseases, efos))
 
-	logging.info("Found %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) after p-value filter (%f)" % (len(res), ", ".join(diseases), ", ".join(efos), GWAS_PVALUE_CUTOFF))
+	logging.info("Found %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) after p-value filter (%f)" % (len(res), ", ".join(diseases), ", ".join(efos), postgap.Globals.GWAS_PVALUE_CUTOFF))
 
-	# Only return the top hits
-	return sorted(res, key = lambda gwas_snp: gwas_snp.pvalue)[:MAX_GWAS_HITS]
+	return res
 
 def scan_disease_databases(diseases, efos):
 	"""
@@ -92,9 +95,17 @@ def scan_disease_databases(diseases, efos):
 	"""
 	logging.info("Searching for GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (", ".join(diseases), ", ".join(efos)))
 
-	gwas_associations = concatenate(source().run(diseases, efos) for source in postgap.GWAS.sources)
+	if postgap.Globals.GWAS_SUMMARY_STATS_FILE is not None:
+		gwas_associations = postgap.GWAS.GWAS_File().run(diseases, efos)
+	else:
+		gwas_associations = concatenate(source().run(diseases, efos) for source in postgap.GWAS.sources)
 	
 	logging.info("Done searching for GWAS SNPs. Found %s gwas associations." % len(gwas_associations) )
+
+	# DEBUG
+	for gwas_association in gwas_associations:
+		snp = gwas_association.snp
+		print "\t".join(map(str, [snp.chrom, snp.pos, snp.rsID, gwas_association.pvalue]))
 
 	associations_by_snp = dict()
 	for gwas_association in gwas_associations:
@@ -103,14 +114,15 @@ def scan_disease_databases(diseases, efos):
 		if gwas_association.pvalue <= 0:
 			continue
 		
-		if gwas_association.odds_ratio is not None:
-			direction = sign(odds_ratio - 1)
-		elif gwas_association.beta_coefficient is not None:
-			direction = sign(beta_coefficient)
+		if postgap.Globals.PERFORM_BAYESIAN:
+			if gwas_association.odds_ratio is not None:
+				z_score = postgap.FinemapIntegration.z_score_from_pvalue(gwas_association.pvalue, gwas_association.odds_ratio)
+			elif gwas_association.beta_coefficient is not None:
+				z_score = postgap.FinemapIntegration.z_score_from_pvalue(gwas_association.pvalue, gwas_association.beta_coefficient)
+			else:
+				continue
 		else:
-			continue
-
-		zscore = -scipy.norm.ppf(pvalue/2) * direction
+			z_score = None
 
 		if gwas_association.snp in associations_by_snp:
 			record = associations_by_snp[gwas_association.snp]
@@ -130,28 +142,15 @@ def scan_disease_databases(diseases, efos):
 			associations_by_snp[gwas_association.snp] = GWAS_SNP(
 				snp = gwas_association.snp,
 				pvalue = gwas_association.pvalue,
-				# A GWAS association is its own evidence.
 				evidence = [ gwas_association ],
 				z_score   = z_score,
 			)
 
 	gwas_snps = associations_by_snp.values()
-	
-	for gwas_snp in gwas_snps:
-		assert type(gwas_snp) is GWAS_SNP
-		assert type(gwas_snp.snp) is SNP, "The gwas_snp.snp is a SNP. " + gwas_snp.snp
 
 	logging.info("Found %i unique GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (len(gwas_snps), ", ".join(diseases), ", ".join(efos)))
 
 	return gwas_snps
-
-def sign(number):
-	if number > 0:
-		return 1
-	elif number < 0:
-		return -1
-	else:
-		return 0
 
 def gwas_snps_to_genes(gwas_snps, populations, tissue_weights):
 	"""
@@ -164,22 +163,24 @@ def gwas_snps_to_genes(gwas_snps, populations, tissue_weights):
 		Returntype: [ GeneCluster_Association ]
 
 	"""
-	for gwas_snp in gwas_snps:
-		assert type(gwas_snp) is GWAS_SNP
-		assert type(gwas_snp.snp) is SNP, "The gwas_snp.snp is a SNP. " + gwas_snp.snp
-	
 	# Must set the tissue settings before separating out the gwas_snps
 	if tissue_weights is None:
 		tissue_weights = gwas_snps_to_tissue_weights(gwas_snps)
 
-	clusters = cluster_gwas_snps(gwas_snps, populations)
+	return clusters_to_genes(cluster_gwas_snps(gwas_snps, populations), populations, tissue_weights)
 	
-	if len(clusters)>0:
-		
-		from postgap.Globals import finemap_gwas_clusters_directory
-		logger.info("Writing %i clusters to %s" % (len(clusters), finemap_gwas_clusters_directory))
-		write_gwas_clusters_to_files(clusters, finemap_gwas_clusters_directory)
-	
+
+def clusters_to_genes(clusters, populations, tissue_weights):
+	"""
+
+		Associates genes to a set of clusters 
+		Args:
+		* [ Cluster ]
+		* { population_name: scalar (weight) }
+		* {tissue_name: scalar (weight) }
+		Returntype: [ string ]
+
+	"""
 	res = concatenate(cluster_to_genes(cluster, tissue_weights, populations) for cluster in clusters)
 
 	logging.info("\tFound %i genes associated to all clusters" % (len(res)))
@@ -198,9 +199,6 @@ def gwas_snps_to_tissue_weights(gwas_snps):
 		Returntype: [ string ]
 
 	"""
-	for gwas_snp in gwas_snps:
-		assert type(gwas_snp) is GWAS_SNP
-		
 	return ['Whole_Blood'] # See FORGE??
 
 def cluster_gwas_snps(gwas_snps, populations):
@@ -212,107 +210,46 @@ def cluster_gwas_snps(gwas_snps, populations):
 		Returntype: [ GWAS_Cluster ]
 
 	"""
-	for gwas_snp in gwas_snps:
-		assert type(gwas_snp) is GWAS_SNP
-		assert type(gwas_snp.snp) is SNP, "The gwas_snp.snp is a SNP. " + gwas_snp.snp
-	
 	gwas_snp_locations = get_gwas_snp_locations(gwas_snps)
 
 	logging.info("Found %i locations from %i GWAS SNPs" % (len(gwas_snp_locations), len(gwas_snps)))
 
-	# For every gwas snp location, create the preclusters.
+	# For every gwas snp location, create the preclusters by simple LD expansion of independent SNPs.
 	#
-	# A precluster is a GWAS_Cluster with the current SNP in the 
-	# GWAS_Cluster.gwas_snps list and the SNPs found by linkage disequilibrium
-	# in GWAS_Cluster.ld_snps.
-	# 
 	preclusters = filter (lambda X: X is not None, [ gwas_snp_to_precluster(gwas_snp_location, populations) for gwas_snp_location in gwas_snp_locations ])
+	for precluster in preclusters:
+		for gwas_snp in precluster.gwas_snps:
+			assert gwas_snp.snp.rsID in [ld_snp.rsID for ld_snp in precluster.ld_snps]
 	
 	# Remove preclusters having a SNP in a blacklisted region
 	#
 	filtered_preclusters = postgap.RegionFilter.region_filter(preclusters)
+	for precluster in filtered_preclusters:
+		for gwas_snp in precluster.gwas_snps:
+			assert gwas_snp.snp.rsID in [ld_snp.rsID for ld_snp in precluster.ld_snps]
 	
-	# Merge precluster that share one of their GWAS_Cluster.ld_snps.
+	# Merge precluster that share one or more GWAS_Cluster.ld_snps.
 	#
-	clusters = merge_preclusters(filtered_preclusters)
+	raw_clusters = merge_preclusters_ld(merge_preclusters_distance(filtered_preclusters))
+	for cluster in filtered_preclusters:
+		for gwas_snp in cluster.gwas_snps:
+			assert gwas_snp.snp.rsID in [ld_snp.rsID for ld_snp in cluster.ld_snps]
+
+	if postgap.Globals.PERFORM_BAYESIAN:
+		# Perform GWAS finemapping of the clusters
+		# 
+		clusters = [postgap.FinemapIntegration.finemap_gwas_cluster(cluster, populations) for cluster in raw_clusters]
+	else:
+		clusters = raw_clusters
 	
 	logging.info("Found %i clusters from %i GWAS SNP locations" % (len(clusters), len(gwas_snp_locations)))
 
+	for cluster in filtered_preclusters:
+		for gwas_snp in cluster.gwas_snps:
+			assert gwas_snp.snp.rsID in [ld_snp.rsID for ld_snp in cluster.ld_snps]
+
 	return clusters
 
-def write_gwas_clusters_to_files(clusters, directory_name_for_storing_the_gwas_clusters):
-		
-	import os
-	
-	assert directory_name_for_storing_the_gwas_clusters is not None, "directory_name_for_storing_the_gwas_clusters must be set!"
-	
-	if not os.path.exists(directory_name_for_storing_the_gwas_clusters):
-		os.makedirs(directory_name_for_storing_the_gwas_clusters)
-	
-	list_of_files_created = []
-	
-	for cluster in clusters:
-
-		cluster_file_name = create_file_name_for_gwas_cluster(cluster, directory_name_for_storing_the_gwas_clusters)
-		
-		import os.path
-		if os.path.isfile(cluster_file_name):
-			raise Exception("File " + cluster_file_name + " already exists!")
-
-		f = open(cluster_file_name, 'w')
-		
-		import pickle
-		pickle.dump(cluster, f)
-		f.close
-		
-		list_of_files_created.append(cluster_file_name)
-	
-	return list_of_files_created
-	
-def create_file_name_for_gwas_cluster(gwas_cluster, base_directory):
-	
-	production_name = create_production_name_for_gwas_cluster(gwas_cluster)
-	cluster_file_name = base_directory + "/" +  production_name + ".pickle"
-	
-	return cluster_file_name
-
-def create_directory_name_for_storing_the_eqtl_cluster(gwas_cluster):
-	
-	assert type(gwas_cluster) is postgap.DataModel.GWAS_Cluster, "The gwas_cluster is a GWAS_Cluster "
-	
-	production_name = create_production_name_for_gwas_cluster(gwas_cluster)
-	
-	from postgap.Globals import finemap_gwas_clusters_directory
-	directory_name_for_storing_the_eqtl_cluster = finemap_gwas_clusters_directory + "/" +  production_name
-	
-	return directory_name_for_storing_the_eqtl_cluster
-	
-def create_production_name_for_gwas_cluster(gwas_cluster):
-	"""
-		Create a production name for a gwas cluster.
-		
-		Within a run, no other gwas cluster should be given this name, so 
-		this should be usable for generating file or directory names. 
-	"""
-	assert type(gwas_cluster) is postgap.DataModel.GWAS_Cluster, "The gwas_cluster is a GWAS_Cluster "
-	
-	gwas_snps = gwas_cluster.gwas_snps
-	assert type(gwas_snps) is list, "We have a list."
-	assert len(gwas_snps) > 0, "We have a list with something in it."
-	
-	gwas_snp = gwas_snps[0]
-	assert type(gwas_snp) is postgap.DataModel.GWAS_SNP, "The gwas_snp is a GWAS_SNP."
-	
-	snp = gwas_snp.snp
-	assert type(snp) is postgap.DataModel.SNP, "snp is a SNP (and not its dbSNP accession)."
-	
-	cluster_size = len(gwas_snps) + len(gwas_cluster.ld_snps)
-	
-	rsID = snp.rsID
-	production_name = "gwas_cluster_with_" + str(cluster_size) + "_snps_around_" + rsID
-	
-	return production_name
-	
 def gwas_snp_to_precluster(gwas_snp, populations):
     """
 
@@ -328,7 +265,9 @@ def gwas_snp_to_precluster(gwas_snp, populations):
     return GWAS_Cluster(
 		gwas_snps = [ gwas_snp ],
 		ld_snps = mapped_ld_snps,
-		finemap_posteriors = None
+		ld_matrix = None,
+		z_scores = None,
+		gwas_configuration_posteriors = None
 	)
 
 def get_gwas_snp_locations(gwas_snps):
@@ -340,10 +279,6 @@ def get_gwas_snp_locations(gwas_snps):
 		Returntype: [ GWAS_SNP ]
 
 	"""
-	for gwas_snp in gwas_snps:
-		assert type(gwas_snp) is postgap.DataModel.GWAS_SNP, "The gwas_snp is a GWAS_SNP."
-		assert type(gwas_snp.snp) is postgap.DataModel.SNP, "The gwas_snp.snp is a SNP. " + gwas_snp.snp
-	
 	original_gwas_snp = dict((gwas_snp.snp.rsID, gwas_snp) for gwas_snp in gwas_snps)
 	mapped_snps = postgap.Ensembl_lookup.get_snp_locations(original_gwas_snp.keys())
 	
@@ -358,7 +293,43 @@ def get_gwas_snp_locations(gwas_snps):
 		if mapped_snp.rsID in original_gwas_snp
 	]
 
-def merge_preclusters(preclusters):
+def merge_preclusters_distance(preclusters):
+	"""
+
+		Bundle together preclusters that are within 100Kb
+		* [ Cluster ]
+		Returntype: [ Cluster ]
+
+	"""
+	input = list(preclusters)
+	output = []
+
+	for new_precluster in input:
+		merged = False
+		for cluster in output:
+			distance = distance_between_preclusters(cluster, new_precluster)
+			if distance is not None and distance < 1e5:
+				output.remove(cluster)
+				output.append(merge_clusters(cluster, new_precluster))
+				merged = True
+				break
+		if not merged:
+			output.append(new_precluster)
+
+	for cluster in output:
+		for gwas_snp in cluster.gwas_snps:
+			assert gwas_snp.snp.rsID in [ld_snp.rsID for ld_snp in cluster.ld_snps]
+	return output
+
+def distance_between_preclusters(A, B):
+	min_distance = None
+	for SNPA in A.gwas_snps:
+		for SNPB in B.gwas_snps:
+			if SNPA.snp.chrom == SNPB.snp.chrom and (min_distance is None or min_distance > abs(SNPA.snp.pos - SNPB.snp.pos)):
+				min_distance = abs(SNPA.snp.pos - SNPB.snp.pos)
+	return min_distance
+
+def merge_preclusters_ld(preclusters):
 	"""
 
 		Bundle together preclusters that share one LD snp
@@ -368,29 +339,22 @@ def merge_preclusters(preclusters):
 	"""
 	clusters = list(preclusters)
 	
+	for cluster in clusters:
+		chrom = cluster.gwas_snps[0].snp.chrom
+		start = min(gwas_snp.snp.pos for gwas_snp in cluster.gwas_snps)
+		end = max(gwas_snp.snp.pos for gwas_snp in cluster.gwas_snps)
+		print "%s\t%i\t%i\t%i" % (chrom, start, end, len(cluster.gwas_snps))
+	print '>>>>>>>>>>>>>>>>>>>>'
 	# A dictionary that maps from snp to merged clusters
 	snp_owner = dict()
 	for cluster in preclusters:
 		for ld_snp in cluster.ld_snps:
 			# If this SNP has been seen in a different cluster
 			if ld_snp in snp_owner and snp_owner[ld_snp] is not cluster:
-				
 				# Set other_cluster to that different cluster
 				other_cluster = snp_owner[ld_snp]
 
-				# Merge data from current cluster into previous cluster
-				merged_gwas_snps = other_cluster.gwas_snps + cluster.gwas_snps
-				
-				#   Create a unique set of ld snps from the current cluster 
-				#   and the other cluster.
-				merged_ld_snps = dict((ld_snp.rsID, ld_snp) for ld_snp in cluster.ld_snps + other_cluster.ld_snps).values()
-				
-				#   Create a new Cluster
-				merged_cluster = GWAS_Cluster(
-					gwas_snps = merged_gwas_snps,
-					ld_snps = merged_ld_snps,
-					finemap_posteriors = None
-				)
+				merged_cluster = merge_clusters(cluster, other_cluster)
 				
 				#    Remove the two previous clusters and replace them with 
 				#    the merged cluster
@@ -409,89 +373,38 @@ def merge_preclusters(preclusters):
 			else:
 				snp_owner[ld_snp] = cluster
 
+	for cluster in clusters:
+		chrom = cluster.gwas_snps[0].snp.chrom
+		start = min(gwas_snp.snp.pos for gwas_snp in cluster.gwas_snps)
+		end = max(gwas_snp.snp.pos for gwas_snp in cluster.gwas_snps)
+		print "%s\t%i\t%i\t%i" % (chrom, start, end, len(cluster.gwas_snps))
+
 	logging.info("\tFound %i clusters from the GWAS peaks" % (len(clusters)))
 
 	return clusters
 
-def write_geneSNP_Associations_to_files(geneSNP_Associations, directory_name_for_storing_the_eqtl_cluster):
+def merge_clusters(cluster, other_cluster):
+	"""
+		Merges two clusters into a single one:
+		Arg1: Cluster
+		Arg2: Cluster
+		Returntype: Cluster
+	"""
+	# Merge data from current cluster into previous cluster
+	merged_gwas_snps = other_cluster.gwas_snps + cluster.gwas_snps
 	
-	tissue_gene_to_cisregulatory_evidence_list = create_tissue_gene_to_cisreg_dictionary_from_geneSNP_Associations(geneSNP_Associations)
+	#   Create a unique set of ld snps from the current cluster 
+	#   and the other cluster.
+	merged_ld_snps = dict((ld_snp.rsID, ld_snp) for ld_snp in cluster.ld_snps + other_cluster.ld_snps).values()
 	
-	list_of_files_created = []
-	
-	tissues = tissue_gene_to_cisregulatory_evidence_list.keys()
-	for tissue in tissues:
-		
-		gene_stable_ids = tissue_gene_to_cisregulatory_evidence_list[tissue].keys()		
-		for gene_stable_id in gene_stable_ids:
-			
-			cis_regulatory_evidence_list = tissue_gene_to_cisregulatory_evidence_list[tissue][gene_stable_id]
-			assert type(cis_regulatory_evidence_list) is list, "We have a list."
-			
-			number_of_snps_linked_to_this_gene_and_tissue = len(cis_regulatory_evidence_list)
-			
-			cluster_file_name = directory_name_for_storing_the_eqtl_cluster + "/cis_regulatory_evidence_from_eqtl_" + str(number_of_snps_linked_to_this_gene_and_tissue) + "_snps_linked_to_" + gene_stable_id + "_in_"  + tissue + ".pickle"
-			
-			list_of_files_created.append(cluster_file_name)
-			
-			import os.path
-			if os.path.isfile(cluster_file_name):
-				raise Exception("File " + cluster_file_name + " already exists!")
-			
-			import os
-			if not os.path.exists(directory_name_for_storing_the_eqtl_cluster):
-				os.makedirs(directory_name_for_storing_the_eqtl_cluster)
-
-			f = open(cluster_file_name, 'w')
-			import pickle
-
-			for cis_regulatory_evidence in cis_regulatory_evidence_list:
-				
-				import postgap.DataModel
-				assert type(cis_regulatory_evidence) is postgap.DataModel.Cisregulatory_Evidence, "The cis_regulatory_evidence is Cisregulatory_Evidence"
-				
-				#snp = cis_regulatory_evidence.snp
-				#assert type(snp) is postgap.DataModel.SNP, "snp is a SNP (and not its dbSNP accession)."
-				
-				pickle.dump(cis_regulatory_evidence, f)
-				
-			f.close
-	
-	return list_of_files_created
-				
-def create_tissue_gene_to_cisreg_dictionary_from_geneSNP_Associations(geneSNP_Associations):
-	
-	import collections
-	def generate_default():
-		return collections.defaultdict(list)
-
-	tissue_gene_to_cisregulatory_evidence_list = collections.defaultdict(generate_default)
-	
-	for geneSNP_Association in geneSNP_Associations:
-		
-		import postgap.DataModel
-		assert type(geneSNP_Association) is postgap.DataModel.GeneSNP_Association, "geneSNP_Association is a postgap.DataModel.GeneSNP_Association"
-		
-		gene = geneSNP_Association.gene
-		assert type(gene) is postgap.DataModel.Gene, "gene is a postgap.DataModel.Gene"
-		
-		gene_stable_id = gene.id
-		
-		snp = geneSNP_Association.snp
-		assert type(snp) is postgap.DataModel.SNP, "snp is a postgap.DataModel.SNP"
-		
-		cisregulatory_evidence_list = geneSNP_Association.cisregulatory_evidence
-		assert type(cisregulatory_evidence_list) is list, "cisregulatory_evidence_list is a list"
-		
-		for cisregulatory_evidence in cisregulatory_evidence_list:
-			
-			assert type(cisregulatory_evidence) is postgap.DataModel.Cisregulatory_Evidence, "cisregulatory_evidence is postgap.DataModel.Cisregulatory_Evidence"
-			
-			tissue = cisregulatory_evidence.tissue
-			
-			tissue_gene_to_cisregulatory_evidence_list[tissue][gene_stable_id].append(cisregulatory_evidence)
-	
-	return tissue_gene_to_cisregulatory_evidence_list
+	#   Create a new Cluster
+	return GWAS_Cluster(
+		gwas_snps = merged_gwas_snps,
+		ld_snps = merged_ld_snps,
+		ld_matrix = None,
+		z_scores = None,
+		gwas_configuration_posteriors = None
+	)
 
 def cluster_to_genes(cluster, tissues, populations):
     """
@@ -504,49 +417,78 @@ def cluster_to_genes(cluster, tissues, populations):
         Returntype: [ GeneCluster_Association ]
 
     """
-    # Compute LD from top SNP
-    top_gwas_hit = sorted(cluster.gwas_snps, key=lambda X: X.pvalue)[-1]
-    ld = postgap.LD.get_lds_from_top_gwas(top_gwas_hit.snp, cluster.ld_snps, populations)
+    assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
+    assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
 
-    # Obtain interaction data from LD snps
-    associations = ld_snps_to_genes([snp for snp in cluster.ld_snps if snp in ld], tissues)
-    
-    if len(associations) > 0:
-	    list_of_files_created = write_geneSNP_Associations_to_files(
-			associations, 
-			directory_name_for_storing_the_eqtl_cluster = create_directory_name_for_storing_the_eqtl_cluster(cluster)
-		)
-    
-    # Compute gene score
-    gene_scores = dict(
-        ((association.gene, association.snp), (association, association.score * ld[association.snp]))
-        for association in associations
-    )
+    if postgap.Globals.PERFORM_BAYESIAN:
+      # Obtain interaction data from LD snps
+      associations = ld_snps_to_genes([snp for snp in cluster.ld_snps], tissues)
+      gene_tissue_posteriors = postgap.FinemapIntegration.compute_joint_posterior(cluster, associations)
 
-    if len(gene_scores) == 0:
-        return []
+      res = [
+	GeneCluster_Association(
+	    gene = gene,
+	    score = None,
+	    collocation_posterior = gene_tissue_posteriors[gene],
+	    cluster = cluster,
+	    evidence = filter(lambda X: X.gene == gene, associations), # This is a [ GeneSNP_Association ]
+	    r2 = None
+	)
+	for gene in gene_tissue_posteriors
+      ]
 
-    # OMIM exception
-    max_score = max(X[1] for X in gene_scores.values())
-    for gene, snp in gene_scores:
-        if len(gene_to_phenotypes(gene)):
-            gene_scores[(gene, snp)][1] = max_score
+      logging.info("\tFound %i genes associated" % (len(res)))
 
-    # PICS score precomputed and normalised
-    pics = PICS(ld, top_gwas_hit.pvalue)
+    else:
+      # Compute LD from top SNP
+      top_gwas_hit = sorted(cluster.gwas_snps, key=lambda X: X.pvalue)[-1]
+      ld = postgap.LD.get_lds_from_top_gwas(top_gwas_hit.snp, cluster.ld_snps, populations)
 
-    res = [
-        GeneCluster_Association(
-            gene = gene,
-            score = total_score(pics[snp], gene_scores[(gene, snp)][1]),
-            cluster = cluster,
-            evidence = gene_scores[(gene, snp)][:1], # This is a [ GeneSNP_Association ]
-	    r2 = ld[snp]
-        )
-        for (gene, snp) in gene_scores if snp in pics
-    ]
+      # Obtain interaction data from LD snps
+      associations = ld_snps_to_genes([snp for snp in cluster.ld_snps if snp in ld], tissues)
+      
+      # Compute gene score
+      gene_scores = dict(
+	  ((association.gene, association.snp), (association, association.score * ld[association.snp]))
+	  for association in associations
+      )
 
-    logging.info("\tFound %i genes associated around GWAS SNP %s" % (len(res), top_gwas_hit.snp.rsID))
+      if len(gene_scores) == 0:
+	  return []
+
+      # OMIM exception
+      max_score = max(X[1] for X in gene_scores.values())
+      for gene, snp in gene_scores:
+	  if len(gene_to_phenotypes(gene)):
+	      gene_scores[(gene, snp)][1] = max_score
+
+      # PICS score precomputed and normalised
+      pics = PICS(ld, top_gwas_hit.pvalue)
+
+      # Compute posterior
+      assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
+      assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
+
+      gene_tissue_posteriors = None
+
+      res = []
+      for (gene, snp) in gene_scores:
+	if snp in pics:
+	  if gene_tissue_posteriors is None or gene not in gene_tissue_posteriors:
+	    tissue_posteriors = None
+	  else:
+	    tissue_posteriors = gene_tissue_posteriors[gene]
+
+	  res.append(GeneCluster_Association(
+	      gene = gene,
+	      score = total_score(pics[snp], gene_scores[(gene, snp)][1]),
+	      collocation_posterior = tissue_posteriors,
+	      cluster = cluster,
+	      evidence = gene_scores[(gene, snp)][:1], # This is a [ GeneSNP_Association ]
+	      r2 = ld[snp]
+	  ))
+
+      logging.info("\tFound %i genes associated around GWAS SNP %s" % (len(res), top_gwas_hit.snp.rsID))
 
     # Pick the association with the highest score
     return sorted(res, key=lambda X: X.score)
@@ -602,6 +544,8 @@ def total_score(pics, gene_score):
 		Returntype: scalar
 
 	"""
+	if pics is None:
+	  return None
 	A = pics * (pics ** (1/3))
 	B = gene_score * (gene_score ** (1/3))
 	return ((A + B) / 2) ** 3
@@ -632,56 +576,12 @@ def ld_snps_to_genes(ld_snps, tissues):
 
 	"""
 	# Search for SNP-Gene pairs:
-	cisreg = cisregulatory_evidence(ld_snps, tissues)
+	cisreg = cisregulatory_evidence(ld_snps, tissues) # Hash of hashes SNP => Gene => Cisregulatory_Evidence
 	
 	# Extract SNP specific info:
-	reg = regulatory_evidence(cisreg.keys(), tissues)
+	reg = regulatory_evidence(cisreg.keys(), tissues) # Hash: SNP => [ Regulatory_evidence ]
 		
-	# Create postgap.DataModel.GeneSNP_Association objects:
-	#
-	#   cisreg is a dictionary of dictionaries that map to a list of cis regulatory evidence:
-	#
-	#    dict(postgap.DataModel.SNP -> dict( postgap.DataModel.Gene -> [ postgap.DataModel.Cisregulatory_Evidence ] )
-	#
-	#   so cisreg[snp] is a dictionary:
-	#
-	#     dict(postgap.DataModel.Gene -> [ postgap.DataModel.Cisregulatory_Evidence ])
-	#
-	SNP_GeneSNP_Associations = concatenate((create_SNP_GeneSNP_Associations(snp, reg[snp], cisreg[snp]) for snp in cisreg))
-	
-	return SNP_GeneSNP_Associations
-
-def find_gene_snp_association_with_source(GeneSNP_Association_list, source):
-	
-	from postgap.DataModel import GeneSNP_Association
-	
-	gene_snp_association_with_source = []
-	
-	for gene_snp_association in GeneSNP_Association_list:
-		
-		assert type(gene_snp_association) is GeneSNP_Association, "Type is GeneSNP_Association"
-		
-		if gene_snp_association_has_cisregulatory_evidence_from_source(gene_snp_association, source):
-			gene_snp_association_with_source.append(gene_snp_association)
-
-	return gene_snp_association_with_source
-
-def gene_snp_association_has_cisregulatory_evidence_from_source(gene_snp_association, source):
-	
-	cisregulatory_evidence_list = gene_snp_association.cisregulatory_evidence
-	assert type(cisregulatory_evidence_list) is list, "Type is list"
-	return cisregulatory_evidence_has_source(cisregulatory_evidence_list, source)
-	
-	
-def cisregulatory_evidence_has_source(cisregulatory_evidence_list, source):
-	
-	for cisregulatory_evidence in cisregulatory_evidence_list:
-		
-		assert type(cisregulatory_evidence) is list, "Type is cisregulatory_evidence"
-		
-		if cisregulatory_evidence.source == source:
-			return True
-	return False
+	return concatenate((create_SNP_GeneSNP_Associations(snp, reg[snp], cisreg[snp]) for snp in cisreg))
 
 def create_SNP_GeneSNP_Associations(snp, reg, cisreg):
 	"""
@@ -756,10 +656,7 @@ def cisregulatory_evidence(ld_snps, tissues):
 
 	"""
 	logging.info("Searching for cis-regulatory data on %i SNPs in all databases" % (len(ld_snps)))
-	#evidence = concatenate(source().run(ld_snps, tissues) for source in postgap.Cisreg.sources)
-	
-	GTEx = postgap.Cisreg.GTEx()
-	evidence_list = GTEx.run(ld_snps, tissues)
+	evidence_list = concatenate(source().run(ld_snps, tissues) for source in postgap.Cisreg.sources)
 	
 	for evidence in evidence_list:
 		assert type(evidence) is postgap.DataModel.Cisregulatory_Evidence, "evidence is Cisregulatory_Evidence"
@@ -767,8 +664,7 @@ def cisregulatory_evidence(ld_snps, tissues):
 	filtered_evidence = filter(lambda association: association.gene is not None and association.gene.biotype == "protein_coding", evidence_list)
 
 	# Group by snp, then gene:
-	#res = collections.defaultdict(lambda: collections.defaultdict(list))
-	res = collections.defaultdict(generate_default)
+	res = collections.defaultdict(lambda: collections.defaultdict(list))
 	for association in filtered_evidence:
 		assert type(association) is postgap.DataModel.Cisregulatory_Evidence, "association is Cisregulatory_Evidence"
 		res[association.snp][association.gene].append(association)
@@ -777,16 +673,13 @@ def cisregulatory_evidence(ld_snps, tissues):
 
 	return res
 
-def generate_default():
-	return collections.defaultdict(list)
-
 def regulatory_evidence(snps, tissues):
 	"""
 
 		Extract regulatory evidence linked to SNPs and stores them in a hash
 		* [ SNP ]
 		* [ string ]
-		Returntype: [ Regulatory_Evidence ]
+		Returntype: Hash: SNP => [ Regulatory_evidence ]
 
 	"""
 	logging.info("Searching for regulatory data on %i SNPs in all databases" % (len(snps)))
@@ -816,4 +709,3 @@ def gene_to_phenotypes(gene):
 		phenotype_cache[gene['stable_id']] = postgap.Ensembl_lookup.get_gene_phenotypes(gene)
 
 	return phenotype_cache[gene['stable_id']]
-
