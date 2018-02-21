@@ -37,6 +37,12 @@ GWAS_DB:
 GWAS_Catalog:
 	wget https://www.ebi.ac.uk/gwas/api/search/downloads/alternative -qO ${DEST_DIR}/raw/GWAS_Catalog.txt
 
+d_Neale:
+	wget https://storage.googleapis.com/postgap-data/postgap_input.nealeUKB_20170915.clumped.1Mb.tsv -q0 ${DEST_DIR}/raw/Neale_UKB.txt
+
+Neale:
+	cp ${DEST_DIR}/raw/Neale_UKB.txt ${DEST_DIR}/Neale_UKB.txt
+
 d_Fantom5:
 	wget -nc http://enhancer.binf.ku.dk/presets/enhancer_tss_associations.bed -qO ${DEST_DIR}/raw/Fantom5.txt
 

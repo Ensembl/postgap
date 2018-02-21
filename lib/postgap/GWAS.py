@@ -395,6 +395,61 @@ class GWASCatalog(GWAS_source):
 	
 		return list_of_GWAS_Associations
 
+class Neale_UKB(GWAS_source):
+	display_name = "Neale_UKB"
+	def run(self, diseases, iris):
+		"""
+
+			Returns all GWAS SNPs associated to a disease in Neale_UKB
+			Args:
+			* [ string ] (trait descriptions)
+			* [ string ] (trait Ontology IRIs)
+			Returntype: [ GWAS_Association ]
+
+		"""
+		logger = logging.getLogger(__name__)
+		
+		# This database does not have EFOs so give up early if unneeded
+		if diseases == None or len(diseases) == 0:
+			return []
+
+		file = open(postgap.Globals.DATABASES_DIR+"/Neale_UKB.txt")
+		res = [ self.get_association(line, diseases, iris) for line in file ]
+		res = filter(lambda X: X is not None, res)
+
+		logger.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in Neale_UKB" % (len(res), ", ".join(diseases), ", ".join(iris)))
+
+		return res
+
+	def get_association(self, line, diseases, iris):
+		'''
+			Neale_UKB file format:
+		'''
+		try:
+			snp, disease, reported_trait, p_value, sample_size, source, study, odds_ratio, beta_coefficient, beta_coefficient_direction = line.strip().split('\t')
+		except:
+			return None
+		
+		if reported_trait in diseases:
+			return GWAS_Association(
+				pvalue = float(p_value),
+				pvalue_description = None,
+				snp = snp,
+				disease = None,
+				reported_trait = reported_trait + " " + disease,
+				source = 'UK Biobank',
+				publication = source,
+				study = None,
+				sample_size = sample_size,
+				odds_ratio = None,
+				beta_coefficient = beta_coefficient,
+				beta_coefficient_unit = None,
+				beta_coefficient_direction = beta_coefficient_direction
+			)
+		else:
+			return None
+
+
 class GRASP(GWAS_source):
 	display_name = "GRASP"
 	def run(self, diseases, iris):

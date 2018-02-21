@@ -7,6 +7,7 @@ cd databases
 wget https://storage.googleapis.com/postgap-data/GWAS_DB.txt
 wget https://storage.googleapis.com/postgap-data/GRASP.txt
 wget https://storage.googleapis.com/postgap-data/Phewas_Catalog.txt
+wget https://storage.googleapis.com/postgap-data/postgap_input.nealeUKB_20170915.clumped.1Mb.tsv
 
 # Cisregulatory databases
 wget https://storage.googleapis.com/postgap-data/Fantom5.bed.gz
