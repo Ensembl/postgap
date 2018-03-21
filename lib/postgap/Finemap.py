@@ -367,7 +367,7 @@ def finemap(z_scores, cov_matrix, n, labels, kstart=1, kmax=5, max_iter=100000, 
             new_configs = create_neighborhood(current_config, len(z_scores), kstart, kmax, neighbourhood_cache)
 
             # Evaluate probabilities of these configs
-            results_nh = compare_neighborhood(new_configs, z_scores, cov_matrix, kmax, n, score_cache, prior, v_scale=v_scale, g=g, labels=labels)
+            results_nh = compare_neighborhood(new_configs, z_scores, cov_matrix, kmax, n, score_cache, labels, prior, v_scale=v_scale, g=g)
 
             # Add new entries into the results list
             result_list.append(results_nh)
