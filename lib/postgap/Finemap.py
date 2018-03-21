@@ -102,11 +102,11 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
                       configuration =  input_keys[count]
                       #print(configuration)
                       if  (len(configuration)<nc):
-                      count += 1
+                          count += 1
                       else:
                           index_tupel =  [config for config in it.combinations(configuration,nc)]
                           for index in index_tupel:
-                          marginal_iter[configurations[index]] += self.posterior[self.configurations[configuration]]
+                              marginal_iter[configurations[index]] += self.posterior[self.configurations[configuration]]
                           count += 1
 
             iter_out = OneDConfigurationSample(
@@ -533,13 +533,13 @@ def calc_loggBF(z, cov, n, g="BRIC"):
                 Arg g: string, g-parameter of the g-prior, recommended g="BRIC" g=max(n,#SNPs**2), other options g="BIC" where g=n (Bayes Information Criterion), or  g="RIC" where g=#SNPs**2 (Risk Inflation Criterion) see Mixtures of g Priors for Bayesian Variable Selection Liang et al 2008
         Returntype: numpy.array
     '''
-        if(g=="BRIC"):
-           gp=numpy.max((len(z),n))
-        if(g=="BIC"):
-       gp=n
-        if(g=="RIC"):
-       gp=len(z)
-        z = numpy.matrix(z)
+    if(g=="BRIC"):
+        gp=numpy.max((len(z),n))
+    if(g=="BIC"):
+        gp=n
+    if(g=="RIC"):
+        gp=len(z)
+    z = numpy.matrix(z)
     cov = numpy.matrix(cov)
     m = numpy.float(len(z))
     gp = numpy.float(gp)
@@ -547,7 +547,6 @@ def calc_loggBF(z, cov, n, g="BRIC"):
     coeff = (1 + gp)**(-m / 2)
     exponent = 0.5 * numpy.divide(gp, (gp + 1)) * z * pinv * z.T
     return numpy.array((math.log(coeff) + exponent))[0][0]
-
 
 def calc_logbinom(subset_size, k, m):
     '''
