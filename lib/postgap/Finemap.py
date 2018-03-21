@@ -220,10 +220,10 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
         return "\n".join(summary_lines)
 
     def configuration_string(self, configuration):
-        index_of_configuration = configurations[configuration]
-        posterior = self.posterior[index_of_configuration],
-        prior     = math.exp(self.log_prior[index_of_configuration]),
-        BF        = math.exp(log_BF[index_of_configuration])
+        index_of_configuration = self.configurations[configuration]
+        posterior = self.posterior[index_of_configuration]
+        prior     = math.exp(self.log_prior[index_of_configuration])
+        BF        = math.exp(self.log_BF[index_of_configuration])
         snps      = ', '.join([self.labels[position] for position in configuration])
         return "- The snp configuration ({}) has a prior probability of {:1.0%}. The posterior probability is {:.2e}. The Bayes factor is: {:.2e}".format(
                 snps, prior, posterior, BF
@@ -575,6 +575,13 @@ def merge_samples(samples):
         Arg1: [ OneDConfigurationSample ]
         Returntype: OneDConfigurationSample
     '''
+
+    # DEBUG
+    print(len(samples))
+    print(samples[0])
+
+    import sys; sys.exit()
+
     configurations_old = dict((configuration, (sample, sample.configurations[configuration])) for sample in samples for configuration in sample.configurations)
     configurations = dict((configuration, index) for index, configuration in enumerate(configurations_old.keys()))
 
@@ -596,5 +603,7 @@ def merge_samples(samples):
             posterior = posterior,
             log_BF = log_BF,
             configuration_size = configuration_size,
-            log_prior = log_prior
+            log_prior = log_prior,
+            # labels = labels,
+            # sample_label = sample_label
         )
