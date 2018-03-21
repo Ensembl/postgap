@@ -293,8 +293,8 @@ class TwoDConfigurationSample(TwoDConfigurationSample_prototype):
     def configuration_string(self, configuration):
         snp_labels = ", ".join([self.labels[position] for position in configuration])
         index = self.configurations[configuration]
-        posterior  = self.posterior[index],
-        posterior1 = self.posterior1[index],
+        posterior  = self.posterior[index]
+        posterior1 = self.posterior1[index]
         posterior2 = self.posterior2[index]
         return "The snp configuration ({}) had posterior probabilities of {:.2e} in {} and {:.2e} in {}. The joint posterior probability is {:.2e}.".format(
             snp_labels,
