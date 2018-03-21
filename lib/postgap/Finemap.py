@@ -576,11 +576,9 @@ def merge_samples(samples):
         Returntype: OneDConfigurationSample
     '''
 
-    # DEBUG
-    print(len(samples))
-    print(samples[0])
-
-    import sys; sys.exit()
+    # Assert that all labels and sample_labels are the same for all samples
+    assert all([samples[0].labels == x.labels for x in samples[1:]]), "Labels differ between samples"
+    assert all([samples[0].sample_label == x.sample_label for x in samples[1:]]), "Labels differ between samples"
 
     configurations_old = dict((configuration, (sample, sample.configurations[configuration])) for sample in samples for configuration in sample.configurations)
     configurations = dict((configuration, index) for index, configuration in enumerate(configurations_old.keys()))
@@ -604,6 +602,6 @@ def merge_samples(samples):
             log_BF = log_BF,
             configuration_size = configuration_size,
             log_prior = log_prior,
-            # labels = labels,
-            # sample_label = sample_label
+            labels = samples[0].labels,
+            sample_label = samples[0].sample_label
         )
