@@ -44,6 +44,6 @@ EVIDENCE_WEIGHTS = {
 	'GTEx': 1,
 	'Fantom5': 1,
 	'DHS': 1,
-	'PCHIC': 1,
+	'PCHiC': 1,
 	'nearest_gene': 1
 }
