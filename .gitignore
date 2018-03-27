@@ -20,3 +20,5 @@ nytprof.out
 /misc/
 databases
 *.pyc
+tests/venv
+*.DS_Store
