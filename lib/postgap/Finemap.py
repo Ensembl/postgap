@@ -221,8 +221,8 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 
 	def configuration_string(self, configuration):
 		index_of_configuration = configurations[configuration]
-		posterior = self.posterior[index_of_configuration],
-		prior     = math.exp(self.log_prior[index_of_configuration]),
+		posterior = self.posterior[index_of_configuration]
+		prior     = math.exp(self.log_prior[index_of_configuration])
 		BF        = math.exp(log_BF[index_of_configuration])
 		snps      = ', '.join([self.labels[position] for position in configuration])
 		return "- The snp configuration ({}) has a prior probability of {:1.0%}. The posterior probability is {:.2e}. The Bayes factor is: {:.2e}".format(
