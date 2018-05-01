@@ -58,7 +58,7 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 			Return OneDConfigurationSample where the configuration posteriors are reduced to marginals
 			on the positions
 			Arg2: OneDConfigurationSample
-                        Returntype: OneDConfigurationSample
+			Returntype: OneDConfigurationSample
 		'''
 		singletons = range(singleton_count)
 		configurations = dict((i, i) for i in singletons)
@@ -100,13 +100,13 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 			input_keys=self.configurations.keys()
 			while count < len(self.configurations):
 			      	configuration =  input_keys[count]      
-      				#print(configuration)
-      				if  (len(configuration)<nc): 
+				#print(configuration)
+				if  (len(configuration)<nc): 
 	  				count += 1
-      				else: 
-          				index_tupel =  [config for config in it.combinations(configuration,nc)]
-          				for index in index_tupel:
-  						marginal_iter[configurations[index]] += self.posterior[self.configurations[configuration]]
+				else: 
+	  				index_tupel =  [config for config in it.combinations(configuration,nc)]
+	  				for index in index_tupel:
+						marginal_iter[configurations[index]] += self.posterior[self.configurations[configuration]]
 				      	count += 1
 
 			iter_out = OneDConfigurationSample(
@@ -223,7 +223,7 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 		index_of_configuration = configurations[configuration]
 		posterior = self.posterior[index_of_configuration]
 		prior     = math.exp(self.log_prior[index_of_configuration])
-		BF        = math.exp(log_BF[index_of_configuration])
+		BF	= math.exp(log_BF[index_of_configuration])
 		snps      = ', '.join([self.labels[position] for position in configuration])
 		return "- The snp configuration ({}) has a prior probability of {:1.0%}. The posterior probability is {:.2e}. The Bayes factor is: {:.2e}".format(
 				snps, prior, posterior, BF
@@ -294,8 +294,8 @@ class TwoDConfigurationSample(TwoDConfigurationSample_prototype):
 	def configuration_string(self, configuration):
 		snp_labels = ", ".join([self.labels[position] for position in configuration])
 		index = self.configurations[configuration]
-		posterior  = self.posterior[index],
-		posterior1 = self.posterior1[index],
+		posterior  = self.posterior[index]
+		posterior1 = self.posterior1[index]
 		posterior2 = self.posterior2[index]
 		return "The snp configuration ({}) had posterior probabilities of {:.2e} in {} and {:.2e} in {}. The joint posterior probability is {:.2e}.".format(
 			snp_labels,
@@ -532,16 +532,16 @@ def calc_loggBF(z, cov, n, g="BRIC"):
 		Arg1: numpy.array (1D)
 		Arg2: numpy.array (2D)
 		Arg3: int sample size
-                Arg g: string, g-parameter of the g-prior, recommended g="BRIC" g=max(n,#SNPs**2), other options g="BIC" where g=n (Bayes Information Criterion), or  g="RIC" where g=#SNPs**2 (Risk Inflation Criterion) see Mixtures of g Priors for Bayesian Variable Selection Liang et al 2008
+		Arg g: string, g-parameter of the g-prior, recommended g="BRIC" g=max(n,#SNPs**2), other options g="BIC" where g=n (Bayes Information Criterion), or  g="RIC" where g=#SNPs**2 (Risk Inflation Criterion) see Mixtures of g Priors for Bayesian Variable Selection Liang et al 2008
 		Returntype: numpy.array
 	'''
-        if(g=="BRIC"):
-           gp=numpy.max((len(z),n))
-        if(g=="BIC"):
+	if(g=="BRIC"):
+	   gp=numpy.max((len(z),n))
+	if(g=="BIC"):
 	   gp=n
-        if(g=="RIC"):
+	if(g=="RIC"):
 	   gp=len(z)
-        z = numpy.matrix(z)
+	z = numpy.matrix(z)
 	cov = numpy.matrix(cov)
 	m = numpy.float(len(z))
 	gp = numpy.float(gp)
@@ -553,8 +553,8 @@ def calc_loggBF(z, cov, n, g="BRIC"):
 
 def calc_logbinom(subset_size, k, m):
 	'''
-                creates a binomial prior for a given subset_size under the assumption of k causal variants 
-                excluding k=0 (that is no causal variant)
+		creates a binomial prior for a given subset_size under the assumption of k causal variants 
+		excluding k=0 (that is no causal variant)
 		Arg1: numpy.array (1D)
 		Arg2: int, maximum number of causal variants
 		Arg3: int, number of SNPs (len(z))
