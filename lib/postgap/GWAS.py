@@ -84,8 +84,8 @@ class GWASCatalog(GWAS_source):
 		logger.info("Querying GWAS catalog for " + efo);
 
 		server = 'http://www.ebi.ac.uk'
-		url = '/gwas/beta/rest/api/efoTraits/search/findByEfoUri?uri=%s' % (efo)
-		
+
+		url = '/gwas/labs/rest/api/efoTraits/search/findByEfoUri?uri=%s' % (efo)
 		#print "Querying: " + server + url;
 
 		hash = postgap.REST.get(server, url)
