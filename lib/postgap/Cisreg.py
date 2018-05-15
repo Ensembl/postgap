@@ -138,20 +138,21 @@ class GTEx(Cisreg_source):
 			
 			cisreg_with_beta = matching_cisreg_betas[0]
 
-			if cisreg_with_pvalue.pvalue < 2.5e-5:
-				score = 1
+			if postgap.Globals.PERFORM_BAYESIAN:
+				z_score = postgap.FinemapIntegration.z_score_from_pvalue(cisreg_with_pvalue.pvalue,cisreg_with_beta.beta),
 			else:
-				score = 0
+				z_score = None
+
 
 			combined_cisreg_evidence = Cisregulatory_Evidence(
 				snp    = cisreg_with_pvalue.snp,
 				gene   = cisreg_with_pvalue.gene,
 				tissue = cisreg_with_pvalue.tissue,
-				score  = score,
+				score  = 1 - cisreg_with_pvalue.pvalue,
 				source = cisreg_with_pvalue.source,
 				study  = 'GTEx',
 				info   = None,
-				z_score = postgap.FinemapIntegration.z_score_from_pvalue(cisreg_with_pvalue.pvalue,cisreg_with_beta.beta),
+				z_score = z_score, 
 				pvalue = cisreg_with_pvalue.pvalue,
 				beta   = cisreg_with_beta.beta
 			)
@@ -384,20 +385,20 @@ class GTEx(Cisreg_source):
 			
 			cisreg_with_beta = matching_cisreg_betas[0]
 
-			if cisreg_with_pvalue.pvalue < 2.5e-5:
-				score = 1
+			if postgap.Globals.PERFORM_BAYESIAN:
+				z_score = postgap.FinemapIntegration.z_score_from_pvalue(cisreg_with_pvalue.pvalue,cisreg_with_beta.beta),
 			else:
-				score = 0
+				z_score = None
 
 			combined_cisreg_evidence = Cisregulatory_Evidence(
 				snp    = cisreg_with_pvalue.snp,
 				gene   = cisreg_with_pvalue.gene,
 				tissue = cisreg_with_pvalue.tissue,
-				score  = score,
+				score  = 1 - cisreg_with_pvalue.pvalue,
 				source = cisreg_with_pvalue.source,
 				study  = 'GTEx',
 				info   = None,
-				z_score = postgap.FinemapIntegration.z_score_from_pvalue(cisreg_with_pvalue.pvalue,cisreg_with_beta.beta),
+				z_score = z_score, 
 				pvalue = cisreg_with_pvalue.pvalue,
 				beta   = cisreg_with_beta.beta
 			)
