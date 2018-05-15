@@ -253,7 +253,8 @@ class GWASCatalog(GWAS_source):
 					_links: {}
 				}
 				"""
-				pubmedId = study_response["pubmedId"]
+				study_id = study_response['accessionId']
+				pubmedId = study_response["publicationInfo"]["pubmedId"]
 
 				diseaseTrait = study_response["diseaseTrait"]["trait"]
 
