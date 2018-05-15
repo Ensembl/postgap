@@ -34,35 +34,21 @@ import subprocess
 
 def main():
 
-
-	firstTime=True
-	parameters=""
-	outputFile=""
-	swOutput =0
-	for a in sys.argv:
-		if not firstTime:
-			parameters += a + " "
-			
-			if swOutput == 1:
-				outputFile = a
-				swOutput=0
-
-			if a == "--output":
-				swOutput=1
-			
-		firstTime=False
-
-	parameters = parameters.rstrip()
-	strExe = "./POSTGAP.py " + parameters	
-	subprocess.call(['bash','-c', strExe])
+	command = ["./POSTGAP.py"] + sys.argv[1:]
+	subprocess.call(command)
+	try:
+		outputFile = sys.argv[sys.argv.index('--output') + 1]
+	except:
+		outputFile = ""
 
 	if outputFile != "":
 		fullPathOutputFile = os.path.abspath(outputFile)
 		actualPath = os.getcwd()
 		os.chdir(actualPath + "/tests")
-		strTests ="./runner.py " + fullPathOutputFile
-		subprocess.call(['bash','-c', strTests])
-		
+		cmdTests = ["./runner.py"]
+		cmdTests.append(fullPathOutputFile)
+		subprocess.call(cmdTests)
+		os.chdir(actualPath)
 		
 	
 if __name__ == "__main__":
