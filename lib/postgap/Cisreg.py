@@ -32,7 +32,7 @@ import collections
 
 from postgap.DataModel import *
 from postgap.Utils import *
-import REST
+import postgap.REST
 import postgap.Globals 
 import BedTools
 import Ensembl_lookup
@@ -59,7 +59,6 @@ class Cisreg_source(object):
 class GTEx(Cisreg_source):
 	display_name = "GTEx"
 
-	
 	def run(self, snps, tissues):
 		"""
 
@@ -70,300 +69,50 @@ class GTEx(Cisreg_source):
 			Returntype: [ Cisregulatory_Evidence ]
 
 		"""
-		res = concatenate((self.snp(snp, tissues) for snp in snps))
-		# Find all genes with 1Mb
-		#start = min(snp.pos for snp in snps)
-		#end = max(snp.pos for snp in snps)
-		#chrom = snps[0].chrom
-
-		#server = 'http://grch37.rest.ensembl.org'
-		#ext = '/overlap/region/%s/%s:%i-%i?feature=gene;content-type=application/json' % (postgap.Globals.SPECIES, chrom, max(0, start - 1e6), end + 1e6)
-		#genes = [ Gene(
-		#		name = gene['external_name'],
-		#		id = gene['id'],
-		#		chrom = gene['seq_region_name'],
-		#		tss = int(gene['start']) if gene['strand'] > 0 else int(gene['end']),
-		#		biotype = gene['biotype']
-		#	)
-		#	for gene in postgap.REST.get(server, ext)
-		#]
-		#if len(genes) < len(snps):
-		#	snp_hash = dict( (snp.rsID, snp) for snp in snps)
-		#	res = concatenate((self.gene(gene, tissues, snp_hash) for gene in genes))
-		#else:
-		#	res = concatenate((self.snp(snp, tissues) for snp in snps))
-		
+		res = concatenate(map(self.snp, snps))
 		logging.info("\tFound %i interactions in GTEx" % (len(res)))
 		return res
 
-	def gene(self, gene, tissues, snp_hash):
-		"""
-
-			Returns all SNPs associated to a gene in GTEx
-			Args:
-			* Gene
-			* [ string ] (tissues)
-			* { rsID: SNP }
-			Returntype: [ Cisregulatory_Evidence ]
-
-		"""
-		cisreg_with_pvalues = self._gene_pvalue(gene, snp_hash)
-		
-		if cisreg_with_pvalues is None:
-			return None
-		
-		if len(cisreg_with_pvalues) == 0:
-			# Empty list
-			return cisreg_with_pvalues
-		
-		cisreg_betas = self._gene_betas(gene, snp_hash)
-		
-		# Where there are pvalues, there must be betas
-		if cisreg_betas is None:
-			raise Exception
-		
-		if len(cisreg_betas) == 0:
-			raise Exception
-		
-		# Match them up:
-		
-		combined_cisreg_evidence_list = []
-		
-		for cisreg_with_pvalue in cisreg_with_pvalues:
-			
-			matching_cisreg_betas = filter(lambda X: X.snp.rsID == cisreg_with_pvalue.snp.rsID and X.tissue == cisreg_with_pvalue.tissue, cisreg_betas)
-			
-			if len(matching_cisreg_betas) != 1:
-				raise Exception
-			
-			cisreg_with_beta = matching_cisreg_betas[0]
-
-			if postgap.Globals.PERFORM_BAYESIAN:
-				z_score = postgap.FinemapIntegration.z_score_from_pvalue(cisreg_with_pvalue.pvalue,cisreg_with_beta.beta),
-			else:
-				z_score = None
-
-
-			combined_cisreg_evidence = Cisregulatory_Evidence(
-				snp    = cisreg_with_pvalue.snp,
-				gene   = cisreg_with_pvalue.gene,
-				tissue = cisreg_with_pvalue.tissue,
-				score  = 1 - cisreg_with_pvalue.pvalue,
-				source = cisreg_with_pvalue.source,
-				study  = 'GTEx',
-				info   = None,
-				z_score = z_score, 
-				pvalue = cisreg_with_pvalue.pvalue,
-				beta   = cisreg_with_beta.beta
-			)
-			combined_cisreg_evidence_list.append(combined_cisreg_evidence)
-		
-		logging.info("\tFound %i SNPs associated to gene %s in GTEx" % (len(combined_cisreg_evidence_list), gene.id))
-
-		return combined_cisreg_evidence_list
-			
-		
-	def _gene_pvalue(self, gene, snp_hash):
-		"""
-
-			Returns all SNPs associated to a gene in GTEx in a given tissue
-			Args:
-			* Gene
-			* { rsID: SNP }
-			Returntype: [ Cisregulatory_Evidence ]
-
-		"""
-		try:
-			from postgap.Globals import SPECIES
-			if SPECIES is None:
-				raise Exception
-
-			if postgap.Globals.GTEx_path is None:
-				server = "http://rest.ensembl.org"
-				ext = "/eqtl/id/%s/%s?content-type=application/json;statistic=p-value" % (
-				'homo_sapiens', gene.id);
-				eQTLs = postgap.REST.get(server, ext)
-				from postgap.REST import EQTL400error
-
-				'''
-                    Example return object:
-                    [
-                        {
-                            'value': '0.804108648395327',
-                            'snp': 'rs142557973'
-                        },
-                    ]
-                '''
-
-				res = [
-					Cisregulatory_Evidence(
-						snp=snp_hash[eQTL['snp']],
-						gene = gene,
-						tissue = eQTL['tissue'],
-						score=1 - float(eQTL['value']),
-						source = self.display_name,
-						study = None,
-						info = None
-						pvalue = eQTL['value'],
-						beta = None
-					)
-					for eQTL in eQTLs
-					if eQTL['snp'] in snp_hash
-				]
-			else:
-
-				snp_cursor = get_sqlite_values(['hdf5_index', 'external_id'], 'snp', 'external_id', snp_hash.keys())
-				if snp_cursor is None:
-					raise ValueError('SNP not found')
-
-				hdf5_snp_index = dict((row[0] - 1, row[1]) for row in snp_cursor)
-
-				gene_cursor = get_sqlite_values(['hdf5_index'], 'gene', 'external_id', [gene.id])
-				if gene_cursor is None:
-					raise ValueError('Gene not found')
-
-				hdf5_gene_index = gene_cursor.fetchone()[0] - 1
-				with h5py.File(postgap.Globals.GTEx_path) as hdf5_f:
-
-					tissue_array_names = {k: (''.join(chr(i) for i in hdf5_f.get('dim_labels/1')[k]))
-										  for k in range(0, len(hdf5_f.get('dim_labels/1')))}
-
-					p_val = numpy.array([hdf5_f['matrix'][1, :, hdf5_gene_index, [k for k in sorted(hdf5_snp_index.iterkeys())]]])
-
-				p_val_index = numpy.where(p_val > 0)
-				snp_range = [k for k in sorted(hdf5_snp_index.iterkeys())]
-
-				res = [
-					Cisregulatory_Evidence(
-						snp=snp_hash[hdf5_snp_index[snp_range[p_val_index[2][k]]]],
-						gene=gene,
-						tissue=tissue_array_names[p_val_index[1][k]],
-						score=1 - (p_val[p_val_index[0][k]][p_val_index[1][k]][p_val_index[2][k]]),
-						source=self.display_name,
-						study=None,
-						info=None
-					)
-					for k in range(0, len(p_val_index[0]))
-					if hdf5_snp_index[snp_range[p_val_index[2][k]]] in snp_hash
-				]
-			'''
-			res = [
-				Cisregulatory_Evidence(
-					snp = snp_hash[eQTL['snp']],
-					gene = gene,
-					tissue = eQTL['tissue'],
-					score = 1 - float(eQTL['value']),
-					source = self.display_name,
-					study = None,
-					info = None,
-					z_score = None,
-					pvalue = eQTL['value'],
-					beta = None
-				)
-				for eQTL in eQTLs 
-				if eQTL['snp'] in snp_hash
-			]
-			'''
-			except Exception as e:
-				logging.warning("Got exception when querying gene_tissue")
-
-			logging.info("\tFound %i SNPs associated to gene %s in GTEx" % (len(res), gene.id))
-
-			return res
-
-		except EQTL400error as e:
-			logging.info("No data was found for %s%s" % (server, ext))
-		except requests.exceptions.HTTPError as e:
-			logging.warning("Got exception when querying %s%s" % (server, ext))
-			logging.warning("The exception is %s" % (e))
-			logging.warning("Returning 'None' and pretending this didn't happen.")
-			return None
-
-		self.logger.info(
-			"\tFound %i SNPs associated to gene %s in GTEx" % (len(res), gene.id))
-
-		return res
-
-	def _gene_tissue_betas(self, gene, tissue, snp_hash):
-		"""
-
-			Returns all SNPs associated to a gene in GTEx in a given tissue
-			Args:
-			* Gene
-			* { rsID: SNP }
-			Returntype: [ Cisregulatory_Evidence ]
-
-		"""
-		
-		if postgap.Globals.SPECIES is None:
-			raise Exception
-		
-		server = "http://rest.ensembl.org"
-		ext = "/eqtl/id/%s/%s?content-type=application/json;statistic=beta" % (postgap.Globals.SPECIES, gene.id);
-		
-		from postgap.REST import EQTL400error
-		
-		try:
-			eQTLs = postgap.REST.get(server, ext)
-
-			'''
-				Example return object:
-				[
-					{
-						'value': '0.804108648395327',
-						'snp': 'rs142557973'
-					},
-				]
-			'''
-			res = [
-				Cisregulatory_Evidence(
-					snp = snp_hash[eQTL['snp']],
-					gene = gene,
-					tissue = eQTL['tissue'],
-					score = 1,
-					source = self.display_name,
-					study = None,
-					info = None,
-					pvalue = None,
-					z_score = None,
-					beta = eQTL['value']
-				)
-				for eQTL in eQTLs 
-				if eQTL['snp'] in snp_hash
-			]
-
-			logging.info("\tFound %i SNPs with betas associated to gene %s in GTEx" % (len(res), gene.id))
-
-			return res
-		except EQTL400error as e:
-			logging.info("No data was found for %s%s" % (server, ext))
-		except requests.exceptions.HTTPError as e:
-			logging.warning("Got exception when querying %s%s" % (server, ext))
-			logging.warning("The exception is %s" % (e))
-			logging.warning("Returning 'None' and pretending this didn't happen.")
-			return None
-
-	def snp(self, snp, tissues):
+	def snp(self, snp):
 		"""
 
 			Returns all SNPs associated to a SNP in GTEx
 			Args:
-			* Gene
-			* [ string ] (tissues)
-			* { rsID: SNP }
+			* string (rsID)
 			Returntype: [ Cisregulatory_Evidence ]
 
 		"""
-		cisreg_with_pvalues = self._snp_pvalues(snp, tissues)
+		if postgap.Globals.GTEx_path is None:
+			res = self._snp_rest(snp)
+		else:
+			res = self._snp_hdf5(snp)
+
+		logging.info(
+			"\tFound %i genes associated the SNP %s in GTEx" % (len(res), snp.rsID))
+
+		return res
+
+
+	def _snp_rest(self, snp):
+		"""
+
+			Returns all SNPs associated to a SNP in GTEx
+			Args:
+			* string (rsID)
+			Returntype: [ Cisregulatory_Evidence ]
+
+		"""
+		cisreg_with_pvalues = self._snp_pvalues(snp)
 		
 		if cisreg_with_pvalues is None:
-			return None
+		irint "Found %i associations" % (len(res))
+			return []
 		
 		if len(cisreg_with_pvalues) == 0:
 			# Empty list
 			return cisreg_with_pvalues
 		
-		cisreg_betas = self._snp_betas(snp, tissues)
+		cisreg_betas = self._snp_betas(snp)
 		
 		# Where there are pvalues, there must be betas
 		if cisreg_betas is None:
@@ -404,17 +153,14 @@ class GTEx(Cisreg_source):
 			)
 			combined_cisreg_evidence_list.append(combined_cisreg_evidence)
 		
-		logging.info("\tFound %i genes associated to snp %s in GTEx" % (len(combined_cisreg_evidence_list), snp.rsID))
-
 		return combined_cisreg_evidence_list
 
-	def _snp_betas(self, snp, tissues):
+	def _snp_betas(self, snp):
 		"""
 
 			Returns all genes associated to a snp in GTEx
 			Args:
 			* SNP
-			* [ string ] (tissues)
 			Returntype: [ Cisregulatory_Evidence ]
 
 		"""
@@ -435,7 +181,7 @@ class GTEx(Cisreg_source):
 				]
 			'''
 
-			res = [
+			return [
 				Cisregulatory_Evidence(
 					snp = snp,
 					gene = postgap.Ensembl_lookup.get_ensembl_gene(eQTL['gene']),
@@ -450,106 +196,120 @@ class GTEx(Cisreg_source):
 				)
 				for eQTL in eQTLs
 			]
-
-			logging.info("\tFound %i genes associated to snp %s in GTEx" % (len(res), snp.rsID))
-
-			return res
 		except:
 			return None
 
-	def _snp_pvalues(self, snp, tissues):
+	def _snp_pvalues(self, snp):
 		"""
 
 			Returns all genes associated to a snp in GTEx
 			Args:
 			* SNP
-			* [ string ] (tissues)
 			Returntype: [ Cisregulatory_Evidence ]
 
 		"""
-
 		try:
-			if postgap.Globals.GTEx_path is None:
-				server = "http://rest.ensembl.org"
-				ext = "/eqtl/variant_name/%s/%s?content-type=application/json;statistic=p-value" % (
-					'homo_sapiens', snp.rsID);
+			server = "http://rest.ensembl.org"
+			ext = "/eqtl/variant_name/%s/%s?content-type=application/json;statistic=p-value" % (
+				'homo_sapiens', snp.rsID);
 
-				eQTLs = postgap.REST.get(server, ext)
+			eQTLs = postgap.REST.get(server, ext)
 
-				'''
-                    Example return object:
-                    [
-                        {
-                            minus_log10_p_value: 1.47569690641653,
-                            value: 0.0334428355738418,
-                            gene: "ENSG00000162627"
-                        },
-                    ]
-                '''
+			'''
+			    Example return object:
+			    [
+				{
+				    minus_log10_p_value: 1.47569690641653,
+				    value: 0.0334428355738418,
+				    gene: "ENSG00000162627"
+				},
+			    ]
+			'''
 
-				res = [
-					Cisregulatory_Evidence(
-						snp = snp,
-						gene = postgap.Ensembl_lookup.get_ensembl_gene(eQTL['gene']),
-						tissue = eQTL['tissue'],
-						score = 1 - float(eQTL['value']),
-						source = self.display_name,
-						study = None,
-						info = None
-					)
-					for eQTL in eQTLs
-				]
+			return [
+				Cisregulatory_Evidence(
+					snp = snp,
+					gene = postgap.Ensembl_lookup.get_ensembl_gene(eQTL['gene']),
+					tissue = eQTL['tissue'],
+					score = 1 - float(eQTL['value']),
+					source = self.display_name,
+					study = None,
+					info = None,
+					pvalue = float(eQTL['value']),
+					beta = None,
+					z_score = None
+				)
+				for eQTL in eQTLs
+			]
 
-			else:
-				snp_cursor = get_sqlite_values(['hdf5_index', 'external_id'], 'snp', 'external_id', [snp.rsID])
-				if snp_cursor is None:
-					raise ValueError('SNP not found')
+		except Exception, e:
+			return None
 
-				hdf5_snp_index = snp_cursor.fetchone()[0] - 1
+	def _snp_hdf5(snp):
+		"""
 
-				with h5py.File(postgap.Globals.GTEx_path) as hdf5_file:
-					tissue_array_names = {k: (''.join(chr(i) for i in hdf5_file.get('dim_labels/1')[k]))
-										  for k in range(0, len(hdf5_file.get('dim_labels/1')))}
+			Returns all SNPs associated to a SNP in GTEx
+			Args:
+			* string (rsID)
+			Returntype: [ Cisregulatory_Evidence ]
 
-					hdf5_gene_boundaries = hdf5_file.get('boundaries/3')[hdf5_snp_index]
+		"""
+		try:
+			snp_cursor = get_sqlite_values(['hdf5_index', 'external_id'], 'snp', 'external_id', [snp.rsID])
+			if snp_cursor is None:
+				raise ValueError('SNP not found')
 
-					p_val = numpy.array([hdf5_file['matrix'][1,:, int(hdf5_gene_boundaries[0][0]):int(hdf5_gene_boundaries[0][1]) + 1, hdf5_snp_index]])
+			hdf5_snp_index = snp_cursor.fetchone()[0] - 1
 
-					p_val_index = numpy.where(p_val > 0)
+			with h5py.File(postgap.Globals.GTEx_path) as hdf5_file:
+				tissue_array_names = {k: (''.join(chr(i) for i in hdf5_file.get('dim_labels/1')[k]))
+									  for k in range(0, len(hdf5_file.get('dim_labels/1')))}
 
-					gene_range = range(int(hdf5_gene_boundaries[0][0]), int(hdf5_gene_boundaries[0][1]) + 1)
-					gene_range_filtered = [gene_range[k] for k in p_val_index[2]]
-					gene_index_list = set(p_val_index[2])
-					gene_list_filtered = [gene_range[k] for k in gene_index_list]
-					gene_array_names = {k:(''.join(chr(i) for i in hdf5_file.get('dim_labels/2')[k])) for k in gene_list_filtered}
+				hdf5_gene_boundaries = hdf5_file.get('boundaries/3')[hdf5_snp_index]
 
+				p_val = numpy.array([hdf5_file['matrix'][1,:, int(hdf5_gene_boundaries[0][0]):int(hdf5_gene_boundaries[0][1]) + 1, hdf5_snp_index]])
+				beta = numpy.array([hdf5_file['matrix'][0,:, int(hdf5_gene_boundaries[0][0]):int(hdf5_gene_boundaries[0][1]) + 1, hdf5_snp_index]])
 
+				p_val_index = numpy.where(p_val > 0)
 
-				res = [
+				gene_range = range(int(hdf5_gene_boundaries[0][0]), int(hdf5_gene_boundaries[0][1]) + 1)
+				gene_range_filtered = [gene_range[k] for k in p_val_index[2]]
+				gene_index_list = set(p_val_index[2])
+				gene_list_filtered = [gene_range[k] for k in gene_index_list]
+				gene_array_names = {k:(''.join(chr(i) for i in hdf5_file.get('dim_labels/2')[k])) for k in gene_list_filtered}
+
+			res = []
+			for k in range(0, len(p_val_index[0])):
+				pvalue = p_val[p_val_index[0][k]][p_val_index[1][k]][p_val_index[2][k]]
+				beta = beta[p_val_index[0][k]][p_val_index[1][k]][p_val_index[2][k]]
+
+				if postgap.Globals.PERFORM_BAYESIAN:
+					z_score = postgap.FinemapIntegration.z_score_from_pvalue(pvalue,beta),
+				else:
+					z_score = None
+
+				res.append([
 					Cisregulatory_Evidence(
 						snp = snp,
 						gene=postgap.Ensembl_lookup.get_ensembl_gene(gene_array_names[gene_range_filtered[k]]),
 						tissue = tissue_array_names[p_val_index[1][k]],
-						score = 1 - float(p_val[p_val_index[0][k]][p_val_index[1][k]][p_val_index[2][k]]),
+						score = 1 - float(pvalue),
 						source = self.display_name,
 						study = None,
-						info = None
+						info = None,
+						z_score = z_score,
+						pvalue = p_value,
+						beta = beta
 					)
-					for k in range(0, len(p_val_index[0]))
-				]
+				])
 
+			return res
 
 		except Exception as e:
 			logging.warning("Got exception when quering snp_tisuue")
 			logging.warning("The exception is %s" % (e))
 			logging.warning("Returning 'None' and pretending this didn't happen.")
-			return None
-
-		logging.info(
-			"\tFound %i genes associated the SNP %s in GTEx" % (len(res), snp.rsID))
-
-		return res
-
+			return []
 
 class VEP(Cisreg_source):
 	display_name = "VEP"

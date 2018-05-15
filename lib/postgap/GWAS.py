@@ -77,9 +77,7 @@ class GWASCatalog(GWAS_source):
 	def query(self, efo):
 		logging.info("Querying GWAS catalog for " + efo);
 		server = 'http://www.ebi.ac.uk'
-
 		url = '/gwas/labs/rest/api/efoTraits/search/findByEfoUri?uri=%s' % (efo)
-		#print "Querying: " + server + url;
 
 		hash = postgap.REST.get(server, url)
 
@@ -128,7 +126,6 @@ class GWASCatalog(GWAS_source):
 		efoTraits = hash["_embedded"]["efoTraits"]
 		
 		for efoTraitHash in efoTraits:
-
 			efoTraitLinks = efoTraitHash["_links"]
 			efoTraitName  = efoTraitHash["trait"]
 
@@ -199,7 +196,6 @@ class GWASCatalog(GWAS_source):
 			logging.info("Fetching SNPs and pvalues.")
 
 			for current_association in associations:
-
 				# e.g. snp_url can be: http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/associations/16513018/snps
 				#
 				snp_url = current_association["_links"]["snps"]["href"]
@@ -279,7 +275,6 @@ class GWASCatalog(GWAS_source):
 				sample_size = sum(int(ancestry['numberOfIndividuals']) for ancestry in ancestries if ancestry['numberOfIndividuals'] is not None)
 
 				for current_snp in singleNucleotidePolymorphisms:
-					
 					is_dbSNP_accession = "rs" in current_snp["rsId"]
 					
 					if not(is_dbSNP_accession):
@@ -292,29 +287,14 @@ class GWASCatalog(GWAS_source):
 					logging.debug("    received association with snp rsId: " + '{:12}'.format(current_snp["rsId"]) + " with a pvalue of " + str(current_association["pvalue"]))
 					
 					associations_href = current_snp["_links"]["associations"]["href"]
-					
-					import postgap.REST
 					associations = postgap.REST.get(associations_href, ext="")
 
 					riskAlleles = []
-					for association in associations["_embedded"]["associations"]:
-						loci = association["loci"]
-						for locus in loci:
-							strongestRiskAlleles = locus["strongestRiskAlleles"]
-							riskAlleles.append(strongestRiskAlleles)
+					loci = current_association["loci"]
+					for locus in loci:
+						strongestRiskAlleles = locus["strongestRiskAlleles"]
+						riskAlleles.append(strongestRiskAlleles)
 
-					
-					from postgap.GWAS_Lead_Snp_Orientation \
-					import                                                  \
-					gwas_risk_alleles_present_in_reference,                 \
-					none_of_the_risk_alleles_is_a_substitution_exception,   \
-					variant_mapping_is_ambiguous_exception,                 \
-					some_alleles_present_in_reference_others_not_exception, \
-					no_dbsnp_accession_for_snp_exception,                   \
-					base_in_allele_missing_exception,                       \
-					cant_determine_base_at_snp_in_reference_exception,      \
-					gwas_data_integrity_exception
-					
 					for riskAllele in riskAlleles:
 						try:
 						
@@ -326,38 +306,38 @@ class GWASCatalog(GWAS_source):
 								logging.info("Risk allele is not present in reference");
 						
 						except none_of_the_risk_alleles_is_a_substitution_exception as e:
-							logger.warning(str(e))
-							logger.warning("Skipping this snp.")
+							logging.warning(str(e))
+							logging.warning("Skipping this snp.")
 							continue
 						
 						except variant_mapping_is_ambiguous_exception:
-							logger.warning("The variant mapping is ambiguous.")
-							logger.warning("Skipping this snp.")
+							logging.warning("The variant mapping is ambiguous.")
+							logging.warning("Skipping this snp.")
 							continue
 						
 						except some_alleles_present_in_reference_others_not_exception as e:
-							logger.warning(str(e));
-							logger.warning("Skipping this snp.")
+							logging.warning(str(e));
+							logging.warning("Skipping this snp.")
 							continue
 						
 						except no_dbsnp_accession_for_snp_exception as e:
-							logger.warning(str(e))
-							logger.warning("Skipping this snp.")
+							logging.warning(str(e))
+							logging.warning("Skipping this snp.")
 							continue
 
 						except base_in_allele_missing_exception as e:
-							logger.warning(str(e));
-							logger.warning("Skipping this snp.")
+							logging.warning(str(e));
+							logging.warning("Skipping this snp.")
 							continue
 
 						except cant_determine_base_at_snp_in_reference_exception as e:
-							logger.warning(str(e));
-							logger.warning("Skipping this snp.")
+							logging.warning(str(e));
+							logging.warning("Skipping this snp.")
 							continue
 						
 						except gwas_data_integrity_exception as e:
-							logger.warning(str(e));
-							logger.warning("Skipping this snp.")
+							logging.warning(str(e));
+							logging.warning("Skipping this snp.")
 							continue
 						
 
@@ -390,9 +370,10 @@ class GWASCatalog(GWAS_source):
 
 								beta_coefficient           = current_association["betaNum"],
 								beta_coefficient_unit      = current_association["betaUnit"],
-								beta_coefficient_direction = current_association["betaDirection"],
+								beta_coefficient_direction = current_association["betaDirection"]
 							)
 						)
+
 		if len(list_of_GWAS_Associations) > 0:
 			logging.info("Successfully fetched " +  str(len(list_of_GWAS_Associations)) + " SNPs and pvalues.")
 		if len(list_of_GWAS_Associations) == 0:
@@ -514,7 +495,9 @@ class GRASP(GWAS_source):
 						odds_ratio = None,
 						beta_coefficient = None,
 						beta_coefficient_unit = None,
-						beta_coefficient_direction = None
+						beta_coefficient_direction = None,
+						rest_hash = None,
+						risk_alleles_present_in_reference = None
 					)
 				except:
 					return None
@@ -679,9 +662,7 @@ class GWAS_File(GWAS_source):
 		
 		pvalue_filtered_gwas_associations = self.create_gwas_association_collector()
 		
-		from postgap.Globals import GWAS_PVALUE_CUTOFF
-		
-		pvalue_filter = self.create_pvalue_filter(pvalue_threshold = GWAS_PVALUE_CUTOFF)
+		pvalue_filter = self.create_pvalue_filter(pvalue_threshold = postgap.Globals.GWAS_PVALUE_CUTOFF)
 		
 		self.parse_gwas_data_file(
 			gwas_data_file                    = gwas_data_file,
@@ -690,7 +671,7 @@ class GWAS_File(GWAS_source):
 			max_lines_to_return_threshold     = None
 		)
 		
-		logging.info( "Found " + str(len(pvalue_filtered_gwas_associations.get_found_list())) + " gwas associations with a pvalue of " + str(GWAS_PVALUE_CUTOFF) + " or less.")
+		logging.info( "Found " + str(len(pvalue_filtered_gwas_associations.get_found_list())) + " gwas associations with a pvalue of " + str(postgap.Globals.GWAS_PVALUE_CUTOFF) + " or less.")
 		
 		return pvalue_filtered_gwas_associations.get_found_list()
 	
@@ -706,7 +687,6 @@ class GWAS_File(GWAS_source):
 		
 		return proper_gwas_cluster
 
-		
 	def create_gwas_cluster_with_pvalues_from_file(self, gwas_cluster, gwas_data_file):
 
 		ld_gwas_associations = self.create_gwas_association_collector()
@@ -832,16 +812,18 @@ class GWAS_File(GWAS_source):
 			
 			gwas_association = GWAS_Association(
 				pvalue                            = float(parsed["Pvalue"]),
+				pvalue_description		  = 'Manual',
 				snp                               = snp,
 				disease                           = Disease(name = 'TODO', efo = 'EFO_TODO'),
-				reported_trait                    = "Todo",
-				source                            = "Todo",
-				study                             = "Todo",
+				reported_trait                    = "Manual",
+				source                            = "Manual",
+				publication			  = "PMID0",
+				study                             = "Manual",
 				sample_size                       = 1000, # TODO
-				odds_ratio                        = "Todo",
+				odds_ratio                        = "Manual",
 				beta_coefficient                  = float(parsed["Beta"]),
-				beta_coefficient_unit             = "Todo",
-				beta_coefficient_direction        = "Todo",
+				beta_coefficient_unit             = "Manual",
+				beta_coefficient_direction        = "Manual",
 				rest_hash                         = None,
 				risk_alleles_present_in_reference = None,
 			)

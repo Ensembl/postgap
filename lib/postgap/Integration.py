@@ -134,9 +134,9 @@ def scan_disease_databases(diseases, efos):
 	gwas_snps = associations_by_snp.values()
 
 	if postgap.Globals.GWAS_adaptors == None:
-		logging.info("Found %i unique GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (len(res), ", ".join(diseases), ", ".join(efos)))
+		logging.info("Found %i unique GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (len(gwas_snps), ", ".join(diseases), ", ".join(efos)))
 	else:
-		logging.info("Found %i unique GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in (%s)" % (len(res), ", ".join(diseases), ", ".join(efos), ", ".join(postgap.Globals.GWAS_adaptors)))
+		logging.info("Found %i unique GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in (%s)" % (len(gwas_snps), ", ".join(diseases), ", ".join(efos), ", ".join(postgap.Globals.GWAS_adaptors)))
 
 	return gwas_snps
 
@@ -156,15 +156,14 @@ def gwas_snps_to_genes(gwas_snps, populations, tissue_weights):
 		tissue_weights = gwas_snps_to_tissue_weights(gwas_snps)
 
 	clusters = cluster_gwas_snps(gwas_snps, populations)
-	
-	if len(clusters)>0:
-		
-		from postgap.Globals import finemap_gwas_clusters_directory
-		logging.info("Writing %i clusters to %s" % (len(clusters), finemap_gwas_clusters_directory))
-		write_gwas_clusters_to_files(clusters, finemap_gwas_clusters_directory)
+	res = concatenate(cluster_to_genes(cluster, tissue_weights, populations) for cluster in clusters)
 
-	return clusters
-	
+	logging.info("\tFound %i genes associated to all clusters" % (len(res)))
+
+	if len(res) == 0:
+		return []
+	else:
+		return sorted(res, key=lambda X: X.score)
 
 def clusters_to_genes(clusters, populations, tissue_weights):
 	"""
@@ -644,7 +643,7 @@ def cisregulatory_evidence(ld_snps, tissues):
 		logging.info("Searching for cis-regulatory data on %i SNPs in (%s)" % (len(ld_snps), ", ".join(postgap.Globals.Cisreg_adaptors)))
 		evidence = concatenate(source().run(ld_snps, tissues) for source in postgap.Cisreg.get_filtered_subclasses(postgap.Globals.Cisreg_adaptors))
 
-	filtered_evidence = filter(lambda association: association.gene is not None and association.gene.biotype == "protein_coding", evidence_list)
+	filtered_evidence = filter(lambda association: association.gene is not None and association.gene.biotype == "protein_coding", evidence)
 
 	# Group by snp, then gene:
 	res = collections.defaultdict(lambda: collections.defaultdict(list))
