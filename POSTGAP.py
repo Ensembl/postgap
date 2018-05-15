@@ -84,7 +84,7 @@ def main():
 	logger = logging.getLogger(__name__)
 
 	options = get_options()
-	
+
 	logger.info("Starting postagp with the following options:")
 	logger.info(pformat(options))
 	efo_iris = []
@@ -99,6 +99,15 @@ def main():
 		expanded_efo_iris = efo_iris + concatenate(map(postgap.EFO.children, efo_iris))
 	else:
 		expanded_efo_iris = efo_iris
+
+	if options.GWAS is not None:
+		postgap.Globals.GWAS_adaptors = options.GWAS
+
+	if options.Cisreg is not None:
+		postgap.Globals.Cisreg_adaptors = options.Cisreg
+
+	if options.Reg is not None:
+		postgap.Globals.Reg_adaptors = options.Reg
 
 	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0:
 		res = postgap.Integration.diseases_to_genes(options.diseases, expanded_efo_iris, "CEPH", options.tissues)
@@ -188,6 +197,11 @@ def get_options():
     """,
     formatter_class = RawTextHelpFormatter
 		    )
+
+    GWAS_options = ["GWAS_Catalog", "GRASP", "Phewas_Catalog", "GWAS_DB"]
+    CisReg_options = ["GTEx", "VEP", "Fantom5", "DHS", "PCHiC", "Nearest"]
+    Reg_options = ["Regulome", "VEP_reg"]
+
     parser.add_argument('--efos', nargs='*')
     parser.add_argument('--diseases', nargs='*')
     parser.add_argument('--rsID')
@@ -200,6 +214,12 @@ def get_options():
     parser.add_argument('--debug', '-g', action = 'store_true')
     parser.add_argument('--json_output', '-j', action = 'store_true')
     parser.add_argument('--child_terms', action = 'store_true')
+
+    parser.add_argument('--GWAS', default=None, nargs='*', choices=(GWAS_options))
+    parser.add_argument('--Cisreg', default=None, nargs='*', choices=(CisReg_options))
+    parser.add_argument('--Reg', default=None, nargs='*', choices=(Reg_options))
+
+
     options = parser.parse_args()
 
     postgap.Globals.DATABASES_DIR = options.databases

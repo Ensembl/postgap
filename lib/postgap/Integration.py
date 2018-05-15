@@ -43,6 +43,9 @@ import postgap.RegionFilter
 from postgap.Utils import *
 import logging
 
+
+import sys
+
 phenotype_cache = ()
 PVALUE_CUTOFF = 1e-4
 
@@ -90,9 +93,16 @@ def scan_disease_databases(diseases, efos):
 	"""
 	logger = logging.getLogger(__name__)
 
-	logger.info("Searching for GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (", ".join(diseases), ", ".join(efos)))
 
-	gwas_associations = concatenate(source().run(diseases, efos) for source in postgap.GWAS.sources)
+
+	if postgap.Globals.GWAS_adaptors == None:
+		logger.info("Searching for GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (", ".join(diseases), ", ".join(efos)))
+		gwas_associations = concatenate(source().run(diseases, efos) for source in postgap.GWAS.sources)
+	else:
+		logger.info("Searching for GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in (%s)" % (", ".join(diseases), ", ".join(efos), ", ".join(postgap.Globals.GWAS_adaptors)))
+		gwas_associations = concatenate(source().run(diseases, efos) for source in postgap.GWAS.get_filtered_subclasses(postgap.Globals.GWAS_adaptors))
+
+
 	associations_by_snp = dict()
 	for gwas_association in gwas_associations:
 		# Sanity filter to avoid breaking downstream code
@@ -129,7 +139,10 @@ def scan_disease_databases(diseases, efos):
 
 	res = associations_by_snp.values()
 
-	logger.info("Found %i unique GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (len(res), ", ".join(diseases), ", ".join(efos)))
+	if postgap.Globals.GWAS_adaptors == None:
+		logger.info("Found %i unique GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (len(res), ", ".join(diseases), ", ".join(efos)))
+	else:
+		logger.info("Found %i unique GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in (%s)" % (len(res), ", ".join(diseases), ", ".join(efos), ", ".join(postgap.Globals.GWAS_adaptors)))
 
 	return res
 
@@ -494,8 +507,14 @@ def cisregulatory_evidence(ld_snps, tissues):
 	"""
 	logger = logging.getLogger(__name__)
 	
-	logger.info("Searching for cis-regulatory data on %i SNPs in all databases" % (len(ld_snps)))
-	evidence = concatenate(source().run(ld_snps, tissues) for source in postgap.Cisreg.sources)
+
+
+	if postgap.Globals.Cisreg_adaptors == None:
+		logger.info("Searching for cis-regulatory data on %i SNPs in all databases" % (len(ld_snps)))
+		evidence = concatenate(source().run(ld_snps, tissues) for source in postgap.Cisreg.sources)
+	else:
+		logger.info("Searching for cis-regulatory data on %i SNPs in (%s)" % (len(ld_snps), ", ".join(postgap.Globals.Cisreg_adaptors)))
+		evidence = concatenate(source().run(ld_snps, tissues) for source in postgap.Cisreg.get_filtered_subclasses(postgap.Globals.Cisreg_adaptors))
 
 	filtered_evidence = filter(lambda association: association.gene is not None and association.gene.biotype == "protein_coding", evidence)
 
@@ -505,8 +524,10 @@ def cisregulatory_evidence(ld_snps, tissues):
 		res[association.snp][association.gene].append(association)
 
 	if postgap.Globals.DEBUG:
-		logger.info(("Found %i cis-regulatory interactions in all databases" % (len(res))))
-
+		if postgap.Globals.Cisreg_adaptors == None:
+			logger.info(("Found %i cis-regulatory interactions in all databases" % (len(res))))
+		else:
+			logger.info(("Found %i cis-regulatory interactions in (%s)" % (len(res), ", ".join(postgap.Globals.Cisreg_adaptors))))
 	return res
 
 def regulatory_evidence(snps, tissues):
@@ -520,11 +541,16 @@ def regulatory_evidence(snps, tissues):
 	"""
 	logger = logging.getLogger(__name__)
 	
-	logger.info("Searching for regulatory data on %i SNPs in all databases" % (len(snps)))
+	if postgap.Globals.Reg_adaptors == None:
+		logger.info("Searching for regulatory data on %i SNPs in all databases" % (len(snps)))
+		res = concatenate(source().run(snps, tissues) for source in postgap.Reg.sources)
+		logging.info("Found %i regulatory SNPs among %i in all databases" % (len(res), len(snps)))
+	else:
+		logger.info("Searching for regulatory data on %i SNPs in (%s)" % (len(snps), ", ".join(postgap.Globals.Reg_adaptors)))
+		res = concatenate(source().run(snps, tissues) for source in postgap.Reg.get_filtered_subclasses(postgap.Globals.Reg_adaptors))
+		logging.info("Found %i regulatory SNPs among %i in (%s)" % (len(res), len(snps), ", ".join(postgap.Globals.Reg_adaptors)))
 
-	res = concatenate(source().run(snps, tissues) for source in postgap.Reg.sources)
 
-	logging.info("Found %i regulatory SNPs among %i in all databases" % (len(res), len(snps)))
 
 	# Group by SNP
 	hash = collections.defaultdict(list)

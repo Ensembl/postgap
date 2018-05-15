@@ -233,4 +233,18 @@ class VEP_reg(Reg_source):
 					return self.get(chunk[:len(chunk)/2]) + self.get(chunk[len(chunk)/2:])
 			raise
 
+
+def get_filtered_subclasses(subclasses_filter):
+    subclass_list = []
+
+    for subclass in Reg_source.__subclasses__():
+		try:
+			if subclass.display_name in subclasses_filter:
+				subclass_list.append(subclass)
+		except:
+			pass
+
+    return subclass_list
+
+
 sources = Reg_source.__subclasses__()

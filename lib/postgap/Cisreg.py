@@ -612,4 +612,18 @@ class nearest_gene(Cisreg_source):
 				)
 			for row in res ]
 
+
+def get_filtered_subclasses(subclasses_filter):
+    subclass_list = []
+
+    for subclass in Cisreg_source.__subclasses__():
+		try:
+			if subclass.display_name in subclasses_filter:
+				subclass_list.append(subclass)
+		except:
+			pass
+
+    return subclass_list
+
+
 sources = Cisreg_source.__subclasses__()

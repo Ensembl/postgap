@@ -47,3 +47,7 @@ EVIDENCE_WEIGHTS = {
 	'PCHiC': 1,
 	'nearest_gene': 1
 }
+
+GWAS_adaptors = None
+Cisreg_adaptors = None
+Reg_adaptors = None
