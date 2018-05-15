@@ -294,12 +294,11 @@ class GTEx(Cisreg_source):
 
 		"""
 		
-		from postgap.Globals import SPECIES
-		if SPECIES is None:
+		if postgap.Globals.SPECIES is None:
 			raise Exception
 		
 		server = "http://rest.ensembl.org"
-		ext = "/eqtl/id/%s/%s?content-type=application/json;statistic=beta" % (SPECIES, gene.id);
+		ext = "/eqtl/id/%s/%s?content-type=application/json;statistic=beta" % (postgap.Globals.SPECIES, gene.id);
 		
 		from postgap.REST import EQTL400error
 		
