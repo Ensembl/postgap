@@ -423,7 +423,7 @@ def genecluster_association_table(association):
 					r2_distance,
 					cluster_id,
 					gwas_association.source,
-					gwas_association.snp,
+					gwas_association.snp.rsID,
 					gwas_association.pvalue,
 					gwas_association.pvalue_description,
 					gwas_association.odds_ratio,
