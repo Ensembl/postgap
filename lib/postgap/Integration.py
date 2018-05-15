@@ -106,11 +106,6 @@ def scan_disease_databases(diseases, efos):
 
 	logging.info("Done searching for GWAS SNPs. Found %s gwas associations." % len(gwas_associations) )
 
-	# DEBUG
-	for gwas_association in gwas_associations:
-		snp = gwas_association.snp
-		print "\t".join(map(str, [snp.chrom, snp.pos, snp.rsID, gwas_association.pvalue]))
-
 	associations_by_snp = dict()
 	for gwas_association in gwas_associations:
 		# Sanity filter to avoid breaking downstream code
@@ -344,8 +339,7 @@ def merge_preclusters_ld(preclusters):
 		chrom = cluster.gwas_snps[0].snp.chrom
 		start = min(gwas_snp.snp.pos for gwas_snp in cluster.gwas_snps)
 		end = max(gwas_snp.snp.pos for gwas_snp in cluster.gwas_snps)
-		print "%s\t%i\t%i\t%i" % (chrom, start, end, len(cluster.gwas_snps))
-	print '>>>>>>>>>>>>>>>>>>>>'
+
 	# A dictionary that maps from snp to merged clusters
 	snp_owner = dict()
 	for cluster in preclusters:
@@ -378,7 +372,6 @@ def merge_preclusters_ld(preclusters):
 		chrom = cluster.gwas_snps[0].snp.chrom
 		start = min(gwas_snp.snp.pos for gwas_snp in cluster.gwas_snps)
 		end = max(gwas_snp.snp.pos for gwas_snp in cluster.gwas_snps)
-		print "%s\t%i\t%i\t%i" % (chrom, start, end, len(cluster.gwas_snps))
 
 	logging.info("\tFound %i clusters from the GWAS peaks" % (len(clusters)))
 
@@ -418,10 +411,9 @@ def cluster_to_genes(cluster, tissues, populations):
         Returntype: [ GeneCluster_Association ]
 
     """
-    assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
-    assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
-
     if postgap.Globals.PERFORM_BAYESIAN:
+      assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
+      assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
       # Obtain interaction data from LD snps
       associations = ld_snps_to_genes([snp for snp in cluster.ld_snps], tissues)
       gene_tissue_posteriors = postgap.FinemapIntegration.compute_joint_posterior(cluster, associations)
@@ -467,27 +459,18 @@ def cluster_to_genes(cluster, tissues, populations):
       pics = PICS(ld, top_gwas_hit.pvalue)
 
       # Compute posterior
-      assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
-      assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
-
-      gene_tissue_posteriors = None
-
-      res = []
-      for (gene, snp) in gene_scores:
-	if snp in pics:
-	  if gene_tissue_posteriors is None or gene not in gene_tissue_posteriors:
-	    tissue_posteriors = None
-	  else:
-	    tissue_posteriors = gene_tissue_posteriors[gene]
-
-	  res.append(GeneCluster_Association(
+      res = [
+	  GeneCluster_Association(
 	      gene = gene,
 	      score = total_score(pics[snp], gene_scores[(gene, snp)][1]),
-	      collocation_posterior = tissue_posteriors,
+	      collocation_posterior = None,
 	      cluster = cluster,
 	      evidence = gene_scores[(gene, snp)][:1], # This is a [ GeneSNP_Association ]
 	      r2 = ld[snp]
-	  ))
+	  )
+          for (gene, snp) in gene_scores
+	  if snp in pics
+      ]
 
       logging.info("\tFound %i genes associated around GWAS SNP %s" % (len(res), top_gwas_hit.snp.rsID))
 
@@ -578,7 +561,7 @@ def ld_snps_to_genes(ld_snps, tissues):
 	"""
 	# Search for SNP-Gene pairs:
 	cisreg = cisregulatory_evidence(ld_snps, tissues) # Hash of hashes SNP => Gene => Cisregulatory_Evidence
-	
+
 	# Extract SNP specific info:
 	reg = regulatory_evidence(cisreg.keys(), tissues) # Hash: SNP => [ Regulatory_evidence ]
 		
