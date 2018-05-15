@@ -257,6 +257,26 @@ class GWASCatalog(GWAS_source):
 				pubmedId = study_response["publicationInfo"]["pubmedId"]
 
 				diseaseTrait = study_response["diseaseTrait"]["trait"]
+				ancestries = study_response["ancestries"]
+				"""
+				Example response:
+				{
+					_embedded: {
+						ancestries: [
+								{
+									type: "initial",
+									numberOfIndividuals: 3928,
+									description: "Los Angeles, CA; ",
+									previouslyReported: null,
+									notes: null,
+									_links: {}
+									}
+								]
+						},
+						_links: {}
+				}
+				"""
+				sample_size = sum(int(ancestry['numberOfIndividuals']) for ancestry in ancestries if ancestry['numberOfIndividuals'] is not None)
 
 				for current_snp in singleNucleotidePolymorphisms:
 					
@@ -355,9 +375,11 @@ class GWASCatalog(GWAS_source):
 									approximated_zscore = None
 								),
 								pvalue  = current_association["pvalue"],
+								pvalue_description = current_association["pvalueDescription"],
 								source  = 'GWAS Catalog',
-								study   = 'PMID' + pubmedId,
-								sample_size = 1000, # TODO
+								publication = 'PMID' + pubmedId,
+								study   = study_id,
+								sample_size = sample_size,
 								
 								# For fetching additional information like risk allele later, if needed.
 								# E.g.: http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/singleNucleotidePolymorphisms/9765
