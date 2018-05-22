@@ -109,22 +109,7 @@ def scan_disease_databases(diseases, efos):
 		# Looking at you GWAS DB, "p-value = 0", pshaw!
 		if gwas_association.pvalue <= 0:
 			continue
-		if gwas_association.snp in associations_by_snp:
-			record = associations_by_snp[gwas_association.snp]
-			record.evidence.append(gwas_association)
-			if record.pvalue > gwas_association.pvalue:
-				associations_by_snp[gwas_association.snp] = GWAS_SNP(
-					snp = record.snp,
-					pvalue = gwas_association.pvalue,
-
-					odds_ratio                 = gwas_association.odds_ratio,
-					beta_coefficient           = gwas_association.beta_coefficient,
-					beta_coefficient_unit      = gwas_association.beta_coefficient_unit,
-					beta_coefficient_direction = gwas_association.beta_coefficient_direction,
-
-					evidence = record.evidence,
-				)
-		else:
+		if gwas_association.snp not in associations_by_snp or associations_by_snp[gwas_association.snp].pvalue < gwas_association.pvalue:
 			associations_by_snp[gwas_association.snp] = GWAS_SNP(
 				snp = gwas_association.snp,
 				pvalue = gwas_association.pvalue,
