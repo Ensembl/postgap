@@ -432,7 +432,7 @@ def create_SNP_GeneSNP_Associations(snp, reg, cisreg):
 
 	"""
 	intermediary_scores, gene_scores = compute_v2g_scores(reg, cisreg)
-	rank = dict((score, index) for index, score in enumerate(sorted(gene_scores.values())))
+	rank = dict((score, index) for index, score in enumerate(sorted(gene_scores.values(), reverse=True)))
 
 	return [ GeneSNP_Association(
 		gene = gene,
