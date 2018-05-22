@@ -45,7 +45,7 @@ EVIDENCE_WEIGHTS = {
 	'Fantom5': 1,
 	'DHS': 1,
 	'PCHiC': 1,
-	'nearest_gene': 1
+	'Nearest': 1
 }
 
 GWAS_adaptors = None
