@@ -123,7 +123,7 @@ class GTEx(Cisreg_source):
 
 
 		server = "http://rest.ensembl.org"
-		ext = "/eqtl/id/%s/%s?content-type=application/json;statistic=p-value;tissue=%s" % ('homo_sapiens', gene.id, tissue);
+		ext = "/eqtl/id/%s/%s?content-type=application/json;statistic=p-value" % ('homo_sapiens', gene.id);
 		try:
 			eQTLs = postgap.REST.get(server, ext)
 
@@ -141,7 +141,7 @@ class GTEx(Cisreg_source):
 				Cisregulatory_Evidence(
 					snp = snp_hash[eQTL['snp']],
 					gene = gene,
-					tissue = tissue,
+					tissue = eQTL['tissue'],
 					score = 1 - float(eQTL['value']),
 					source = self.display_name,
 					study = None,
@@ -151,7 +151,7 @@ class GTEx(Cisreg_source):
 				if eQTL['snp'] in snp_hash
 			]
 
-			self.logger.info("\tFound %i SNPs associated to gene %s in tissue %s in GTEx" % (len(res), gene.id, tissue))
+			self.logger.info("\tFound %i SNPs associated to gene %s in GTEx" % (len(res), gene.id))
 
 			return res
 		except Exception as e:
@@ -189,7 +189,7 @@ class GTEx(Cisreg_source):
 
 
 		server = "http://rest.ensembl.org"
-		ext = "/eqtl/variant_name/%s/%s?content-type=application/json;statistic=p-value;tissue=%s" % ('homo_sapiens', snp.rsID, tissue);
+		ext = "/eqtl/variant_name/%s/%s?content-type=application/json;statistic=p-value" % ('homo_sapiens', snp.rsID);
 		try:
 			eQTLs = postgap.REST.get(server, ext)
 
@@ -208,7 +208,7 @@ class GTEx(Cisreg_source):
 				Cisregulatory_Evidence(
 					snp = snp,
 					gene = postgap.Ensembl_lookup.get_ensembl_gene(eQTL['gene']),
-					tissue = tissue,
+					tissue = eQTL['tissue'],
 					score = 1 - float(eQTL['value']),
 					source = self.display_name,
 					study = None,
@@ -217,7 +217,7 @@ class GTEx(Cisreg_source):
 				for eQTL in eQTLs
 			]
 
-			self.logger.info("\tFound %i genes associated the SNP %s in tissue %s in GTEx" % (len(res), snp.rsID, tissue))
+			self.logger.info("\tFound %i genes associated the SNP %s in GTEx" % (len(res), snp.rsID))
 
 			return res
 		except:
