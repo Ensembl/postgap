@@ -51,3 +51,7 @@ EVIDENCE_WEIGHTS = {
 GWAS_adaptors = None
 Cisreg_adaptors = None
 Reg_adaptors = None
+
+GTEx_path = None
+SQLite_connection = None
+

@@ -38,6 +38,10 @@ import BedTools
 import Ensembl_lookup
 import requests
 import logging
+import sqlite3
+import h5py
+import sys
+import numpy
 
 VEP_impact_to_score = {
 	'HIGH': 4,
@@ -49,6 +53,7 @@ VEP_impact_to_score = {
 
 class Cisreg_source(object):
 	logger = logging.getLogger(__name__)
+
 	def run(self, snps, tissues):
 		assert False, "This stub should be defined"
 
@@ -67,10 +72,10 @@ class GTEx(Cisreg_source):
 
 		"""
 		# Find all genes with 1Mb
+
 		start = min(snp.pos for snp in snps)
 		end = max(snp.pos for snp in snps)
 		chrom = snps[0].chrom
-
 		server = 'http://grch37.rest.ensembl.org'
 		ext = '/overlap/region/%s/%s:%i-%i?feature=gene;content-type=application/json' % (postgap.Globals.SPECIES, chrom, max(0, start - 1e6), end + 1e6)
 		genes = [ Gene(
@@ -82,11 +87,14 @@ class GTEx(Cisreg_source):
 			)
 			for gene in postgap.REST.get(server, ext)
 		]
+
+
 		if len(genes) < len(snps):
 			snp_hash = dict( (snp.rsID, snp) for snp in snps)
 			res = concatenate((self.gene(gene, tissues, snp_hash) for gene in genes))
 		else:
 			res = concatenate((self.snp(snp, tissues) for snp in snps))
+
 
 		self.logger.info("\tFound %i interactions in GTEx" % (len(res)))
 
@@ -121,44 +129,91 @@ class GTEx(Cisreg_source):
 
 		"""
 
-
-		server = "http://rest.ensembl.org"
-		ext = "/eqtl/id/%s/%s?content-type=application/json;statistic=p-value" % ('homo_sapiens', gene.id);
 		try:
-			eQTLs = postgap.REST.get(server, ext)
+			if postgap.Globals.GTEx_path is None:
+				server = "http://rest.ensembl.org"
+				ext = "/eqtl/id/%s/%s?content-type=application/json;statistic=p-value" % (
+				'homo_sapiens', gene.id);
+				eQTLs = postgap.REST.get(server, ext)
 
-			'''
-				Example return object:
-				[
-					{
-						'value': '0.804108648395327',
-						'snp': 'rs142557973'
-					},
+				'''
+                    Example return object:
+                    [
+                        {
+                            'value': '0.804108648395327',
+                            'snp': 'rs142557973'
+                        },
+                    ]
+                '''
+
+				res = [
+					Cisregulatory_Evidence(
+						snp=snp_hash[eQTL['snp']],
+						gene = gene,
+						tissue = eQTL['tissue'],
+						score=1 - float(eQTL['value']),
+						source = self.display_name,
+						study = None,
+						info = None
+					)
+					for eQTL in eQTLs
+					if eQTL['snp'] in snp_hash
 				]
-			'''
 
-			res = [
-				Cisregulatory_Evidence(
-					snp = snp_hash[eQTL['snp']],
-					gene = gene,
-					tissue = eQTL['tissue'],
-					score = 1 - float(eQTL['value']),
-					source = self.display_name,
-					study = None,
-					info = None
-				)
-				for eQTL in eQTLs 
-				if eQTL['snp'] in snp_hash
-			]
+			else:
 
-			self.logger.info("\tFound %i SNPs associated to gene %s in GTEx" % (len(res), gene.id))
+				snp_cursor = get_sqlite_values(['hdf5_index', 'external_id'], 'snp', 'external_id', snp_hash.keys())
+				if snp_cursor is None:
+					raise ValueError('SNP not found')
 
-			return res
+				hdf5_snp_index = dict((row[0] - 1, row[1]) for row in snp_cursor)
+
+				gene_cursor = get_sqlite_values(['hdf5_index'], 'gene', 'external_id', [gene.id])
+				if gene_cursor is None:
+					raise ValueError('Gene not found')
+
+				hdf5_gene_index = gene_cursor.fetchone()[0] - 1
+				with h5py.File(postgap.Globals.GTEx_path) as hdf5_f:
+
+					tissue_array_names = {k: (''.join(chr(i) for i in hdf5_f.get('dim_labels/1')[k]))
+										  for k in range(0, len(hdf5_f.get('dim_labels/1')))}
+
+					p_val = numpy.array([hdf5_f['matrix'][1, :, hdf5_gene_index, [k for k in sorted(hdf5_snp_index.iterkeys())]]])
+
+				p_val_index = numpy.where(p_val > 0)
+				snp_range = [k for k in sorted(hdf5_snp_index.iterkeys())]
+
+				res = [
+					Cisregulatory_Evidence(
+						snp=snp_hash[hdf5_snp_index[snp_range[p_val_index[2][k]]]],
+						gene=gene,
+						tissue=tissue_array_names[p_val_index[1][k]],
+						score=1 - (p_val[p_val_index[0][k]][p_val_index[1][k]][p_val_index[2][k]]),
+						source=self.display_name,
+						study=None,
+						info=None
+					)
+					for k in range(0, len(p_val_index[0]))
+					if hdf5_snp_index[snp_range[p_val_index[2][k]]] in snp_hash
+				]
+
+
+
 		except Exception as e:
-			self.logger.warning("Got exception when querying %s%s" % (server, ext))
-			self.logger.warning("The exception is %s" % (e))
-			self.logger.warning("Returning 'None' and pretending this didn't happen.")
+			logging.warning("Got exception when querying gene_tissue")
+			logging.warning("The exception is %s" % (e))
+			logging.warning("Returning 'None' and pretending this didn't happen.")
 			return None
+
+		self.logger.info(
+			"\tFound %i SNPs associated to gene %s in GTEx" % (len(res), gene.id))
+
+		return res
+
+
+
+
+
 
 	def snp(self, snp, tissues):
 		"""
@@ -187,41 +242,88 @@ class GTEx(Cisreg_source):
 
 		"""
 
-
-		server = "http://rest.ensembl.org"
-		ext = "/eqtl/variant_name/%s/%s?content-type=application/json;statistic=p-value" % ('homo_sapiens', snp.rsID);
 		try:
-			eQTLs = postgap.REST.get(server, ext)
+			if postgap.Globals.GTEx_path is None:
+				server = "http://rest.ensembl.org"
+				ext = "/eqtl/variant_name/%s/%s?content-type=application/json;statistic=p-value" % (
+					'homo_sapiens', snp.rsID);
 
-			'''
-				Example return object:
-				[
-					{
-						minus_log10_p_value: 1.47569690641653,
-						value: 0.0334428355738418,
-						gene: "ENSG00000162627"
-					},
+				eQTLs = postgap.REST.get(server, ext)
+
+				'''
+                    Example return object:
+                    [
+                        {
+                            minus_log10_p_value: 1.47569690641653,
+                            value: 0.0334428355738418,
+                            gene: "ENSG00000162627"
+                        },
+                    ]
+                '''
+
+				res = [
+					Cisregulatory_Evidence(
+						snp = snp,
+						gene = postgap.Ensembl_lookup.get_ensembl_gene(eQTL['gene']),
+						tissue = eQTL['tissue'],
+						score = 1 - float(eQTL['value']),
+						source = self.display_name,
+						study = None,
+						info = None
+					)
+					for eQTL in eQTLs
 				]
-			'''
 
-			res = [
-				Cisregulatory_Evidence(
-					snp = snp,
-					gene = postgap.Ensembl_lookup.get_ensembl_gene(eQTL['gene']),
-					tissue = eQTL['tissue'],
-					score = 1 - float(eQTL['value']),
-					source = self.display_name,
-					study = None,
-					info = None
-				)
-				for eQTL in eQTLs
-			]
+			else:
+				snp_cursor = get_sqlite_values(['hdf5_index', 'external_id'], 'snp', 'external_id', [snp.rsID])
+				if snp_cursor is None:
+					raise ValueError('SNP not found')
 
-			self.logger.info("\tFound %i genes associated the SNP %s in GTEx" % (len(res), snp.rsID))
+				hdf5_snp_index = snp_cursor.fetchone()[0] - 1
 
-			return res
-		except:
+				with h5py.File(postgap.Globals.GTEx_path) as hdf5_file:
+					tissue_array_names = {k: (''.join(chr(i) for i in hdf5_file.get('dim_labels/1')[k]))
+										  for k in range(0, len(hdf5_file.get('dim_labels/1')))}
+
+					hdf5_gene_boundaries = hdf5_file.get('boundaries/3')[hdf5_snp_index]
+
+					p_val = numpy.array([hdf5_file['matrix'][1,:, int(hdf5_gene_boundaries[0][0]):int(hdf5_gene_boundaries[0][1]) + 1, hdf5_snp_index]])
+
+					p_val_index = numpy.where(p_val > 0)
+
+					gene_range = range(int(hdf5_gene_boundaries[0][0]), int(hdf5_gene_boundaries[0][1]) + 1)
+					gene_range_filtered = [gene_range[k] for k in p_val_index[2]]
+					gene_index_list = set(p_val_index[2])
+					gene_list_filtered = [gene_range[k] for k in gene_index_list]
+					gene_array_names = {k:(''.join(chr(i) for i in hdf5_file.get('dim_labels/2')[k])) for k in gene_list_filtered}
+
+
+
+				res = [
+					Cisregulatory_Evidence(
+						snp = snp,
+						gene=postgap.Ensembl_lookup.get_ensembl_gene(gene_array_names[gene_range_filtered[k]]),
+						tissue = tissue_array_names[p_val_index[1][k]],
+						score = 1 - float(p_val[p_val_index[0][k]][p_val_index[1][k]][p_val_index[2][k]]),
+						source = self.display_name,
+						study = None,
+						info = None
+					)
+					for k in range(0, len(p_val_index[0]))
+				]
+
+
+		except Exception as e:
+			logging.warning("Got exception when quering snp_tisuue")
+			logging.warning("The exception is %s" % (e))
+			logging.warning("Returning 'None' and pretending this didn't happen.")
 			return None
+
+		logging.info(
+			"\tFound %i genes associated the SNP %s in GTEx" % (len(res), snp.rsID))
+
+		return res
+
 
 class VEP(Cisreg_source):
 	display_name = "VEP"
@@ -614,8 +716,25 @@ class nearest_gene(Cisreg_source):
 
 
 def get_filtered_subclasses(subclasses_filter):
-
 	return [subclass for subclass in sources if subclass.display_name in subclasses_filter]
 
+
+def get_sqlite_values(columns, dimension, filtername, args):
+	try:
+		sql = "SELECT {fld}".format(fld=', '.join(columns)) + " FROM %s" % dimension
+		if filtername is not None:
+			sql += " WHERE %s" % filtername + " in ({seq})".format(seq=', '.join(map("'{0}'".format, args)))
+
+		db = sqlite3.connect(postgap.Globals.SQLite_connection)
+		cursor = db.cursor().execute(sql)
+		db.close
+
+	except Exception as e:
+		logging.warning("Got exception in get_sqlite_values")
+		logging.warning("The exception is %s" % (e))
+		logging.warning("Returning 'None' and pretending this didn't happen.")
+		return None
+
+	return cursor
 
 sources = Cisreg_source.__subclasses__()
