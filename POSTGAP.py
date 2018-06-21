@@ -345,10 +345,14 @@ def genecluster_association_table(association):
 				eur_maf = 'N/A'
 				sas_maf = 'N/A'
 
-				vep_terms = "N/A"
+				vep_terms = []
 				for evidence in gene_snp_association.cisregulatory_evidence:
 					if evidence.source == "VEP":
-						vep_terms = ",".join(evidence.info['consequence_terms'])
+						vep_terms += evidence.info['consequence_terms']
+				if len(vep_terms) > 0:
+					vep_terms = ",".join(list(set(vep_terms)))
+				else:
+					vep_terms = "N/A"
 
 				for evidence in gene_snp_association.regulatory_evidence:
 					if evidence.source == "VEP_reg":
