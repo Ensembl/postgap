@@ -71,30 +71,28 @@ class GTEx(Cisreg_source):
 			Returntype: [ Cisregulatory_Evidence ]
 
 		"""
+		res = concatenate((self.snp(snp, tissues) for snp in snps))
 		# Find all genes with 1Mb
+		#start = min(snp.pos for snp in snps)
+		#end = max(snp.pos for snp in snps)
+		#chrom = snps[0].chrom
 
-		start = min(snp.pos for snp in snps)
-		end = max(snp.pos for snp in snps)
-		chrom = snps[0].chrom
-		server = 'http://grch37.rest.ensembl.org'
-		ext = '/overlap/region/%s/%s:%i-%i?feature=gene;content-type=application/json' % (postgap.Globals.SPECIES, chrom, max(0, start - 1e6), end + 1e6)
-		genes = [ Gene(
-				name = gene['external_name'],
-				id = gene['id'],
-				chrom = gene['seq_region_name'],
-				tss = int(gene['start']) if gene['strand'] > 0 else int(gene['end']),
-				biotype = gene['biotype']
-			)
-			for gene in postgap.REST.get(server, ext)
-		]
-
-
-		if len(genes) < len(snps):
-			snp_hash = dict( (snp.rsID, snp) for snp in snps)
-			res = concatenate((self.gene(gene, tissues, snp_hash) for gene in genes))
-		else:
-			res = concatenate((self.snp(snp, tissues) for snp in snps))
-
+		#server = 'http://grch37.rest.ensembl.org'
+		#ext = '/overlap/region/%s/%s:%i-%i?feature=gene;content-type=application/json' % (postgap.Globals.SPECIES, chrom, max(0, start - 1e6), end + 1e6)
+		#genes = [ Gene(
+		#		name = gene['external_name'],
+		#		id = gene['id'],
+		#		chrom = gene['seq_region_name'],
+		#		tss = int(gene['start']) if gene['strand'] > 0 else int(gene['end']),
+		#		biotype = gene['biotype']
+		#	)
+		#	for gene in postgap.REST.get(server, ext)
+		#]
+		#if len(genes) < len(snps):
+		#	snp_hash = dict( (snp.rsID, snp) for snp in snps)
+		#	res = concatenate((self.gene(gene, tissues, snp_hash) for gene in genes))
+		#else:
+		#	res = concatenate((self.snp(snp, tissues) for snp in snps))
 
 		self.logger.info("\tFound %i interactions in GTEx" % (len(res)))
 
