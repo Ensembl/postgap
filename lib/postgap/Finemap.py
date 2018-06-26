@@ -5,9 +5,14 @@
 
 import numpy
 import math
+import scipy
+import scipy.stats
 import itertools as it
 import operator
 import random
+import sklearn
+from scipy.stats import norm
+from sklearn import preprocessing
 import collections
 
 OneDConfigurationSample_prototype = collections.namedtuple(
@@ -35,17 +40,20 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 		log_prior: numpy.array (1D)
 		configuration_size: numpy.array (1D), number of SNPs in the corresponding vector
 	'''
+
 	def normalise_posteriors(self):
 		'''
 			Return identical OneDConfigurationSample but with updated posteriors that add up to 1
 			Arg1: OneDConfigurationSample
 			Returntype: OneDConfigurationSample
 		'''
-		sum_calib = numpy.sum(self.posterior)
-		assert not numpy.isinf(sum_calib), 'going to infinity'
+		max_logpp_unscaled = numpy.max(self.posterior)
+		assert not numpy.isinf(numpy.exp(max_logpp_unscaled)), 'max BF going to infinity'
+		sum_calib = numpy.sum(numpy.exp(self.posterior-max_logpp_unscaled)) * numpy.exp(max_logpp_unscaled)
+		assert not numpy.isinf(sum_calib), 'calibration going to infinity'
 		return OneDConfigurationSample(
 				configurations = self.configurations,
-				posterior = self.posterior / sum_calib,
+				posterior = numpy.exp(self.posterior) / sum_calib,
 				log_BF = self.log_BF,
 				configuration_size = self.configuration_size,
 				log_prior = self.log_prior,
@@ -304,17 +312,20 @@ class TwoDConfigurationSample(TwoDConfigurationSample_prototype):
 			float(posterior2),
 			self.sample_2_label,
 			float(posterior))
-	
-def finemap(z_scores, cov_matrix, n, labels, kstart=1, kmax=5, max_iter=100000, output="configuration", prior="independence", v_scale=0.0025, g="BRIC", verbose=False, sample_label="Unnamed sample"):
+
+def finemap(z_scores, beta_scores, cov_matrix, n, kstart=1, kmax=5, corr_thresh=0.9, max_iter=100000, output="configuration", prior="independence_robust", v_scale=0.0025, g="BRIC", eigen_thresh=0.1, verbose=False):
 	'''
 		Main function for fine-mapping using stochastic search for one trait #
-		Arg1: z-scores: numpy.array
-		Arg2: cov_matrix numpy.array, correlation-structure (TwoD) array
-		Arg3: n: int, sample size
+		Arg1: z_scores: numpy.array
+		Arg2: beta_scores: numpy.array
+		Arg3: cov_matrix numpy.array, correlation-structure (TwoD) array
+		Arg4: n: int, sample size
 		Arg kstart: int, full exploration of sets with #kstart causal variants
 		Arg kmax: int, maximum number of causal variants
+		Arg corr_thresh: int, excluding configurations with correlation > corr_thresh
 		Arg max_iter: int, iterations of stochastic search
-		Arg prior= string ("independence" or "gprior")
+                Arg output: int, "configuration" or "marginal"
+		Arg prior= string ("independence", "independence_robust" or "gprior") independence_robust does filter out configurations with possible mis-matches between the correlation matrix and effect size direction
 		Arg v_scale = float, prior variance of the independence prior, recommended 0.05 **2 (following FINEMAP, Benner et al 2016)
 		Arg g: string, g-parameter of the g-prior, recommended g="BRIC" g=max(n,#SNPs**2), other options g="BIC" where g=n (Bayes Information Criterion), or  g="RIC" where g=#SNPs**2 (Risk Inflation Criterion) see Mixtures of g Priors for Bayesian Variable Selection Liang et al 2008
 		Arg verbose = False: boolean, print the progress of the stochastic search
@@ -327,6 +338,14 @@ def finemap(z_scores, cov_matrix, n, labels, kstart=1, kmax=5, max_iter=100000, 
 	assert not kstart > kmax, 'Incorrect number of causal variants specified, kmax (%i) must be greater than kstart (%s)' % (kmax, kstart)
 	assert not numpy.any(numpy.isnan(z_scores)), 'Missing values detected in z-scores'
 	assert not numpy.any(numpy.isnan(cov_matrix)), 'Missing values detected in covariance matrix'
+
+	# compute the correlation from the aligned beta
+	# note this is an approximation with maf = 0.5
+	# these correlations are NOT used for inference, 
+	# only for qc if the correlation between trait and SNP is aligned with the SNP x SNP correlation matrix
+	#gwas_cor_aligned = gwas_b_v2*allele_flip * numpy.sqrt(2*gwas_maf_hg37_v2*(1-gwas_maf_hg37_v2))
+
+	cor_scores = beta_scores *  numpy.sqrt(2*0.5*(0.5))
 
 	# Initialise
 	score_cache = dict()
@@ -369,7 +388,7 @@ def finemap(z_scores, cov_matrix, n, labels, kstart=1, kmax=5, max_iter=100000, 
 			new_configs = create_neighborhood(current_config, len(z_scores), kstart, kmax, neighbourhood_cache)
 
 			# Evaluate probabilities of these configs
-			results_nh = compare_neighborhood(new_configs, z_scores, cov_matrix, kmax, n, score_cache, prior, v_scale=v_scale, g=g, labels=labels)
+			results_nh = compare_neighborhood(new_configs, z_scores, cor_scores, cov_matrix, kmax, n, score_cache, prior, corr_thresh,  v_scale=v_scale, g=g)
 
 			# Add new entries into the results list
 			result_list.append(results_nh)
@@ -462,15 +481,17 @@ def create_neighborhood(current_config, m, kstart, kmax, neighbourhood_cache):
 	neighbourhood_cache[tuple(current_config)] = new_configs	
 	return new_configs
 
-def compare_neighborhood(configs, z_scores, cov_matrix, kmax, n, score_cache, labels, prior="independence", v_scale=0.0025, g="BRIC", sample_label="Unnamed sample"):
+def compare_neighborhood(configs, z_scores,  cor_scores, cov_matrix, kmax, n, score_cache, prior="independence_robust", corr_thresh=0.9, v_scale=0.0025, g="BRIC", eigen_thresh=0.1):
 	'''
 		Compare the moves with respect to the unscaled log posterior probability
 		Arg1: array of arrays
 		Arg2: numpy.array (OneD)
-		Arg3: numpy.array (TwoD)
-		Arg4: kmax: int, maximum number of causal SNPs
-		Arg5: n: int, sample size
-		Arg prior: string, "independence" or "gprior"
+		Arg3: numpy.array (OneD)
+		Arg4: numpy.array (TwoD)
+		Arg5: kmax: int, maximum number of causal SNPs
+		Arg6: n: int, sample size
+		Arg prior: string, independence_robust, "independence" or "gprior"
+		Arg corr_thresh: int, excluding configurations with correlation > corr_thresh
 		Arg v_scale = float, prior variance of the independence prior, recommended 0.05**2 (following FINEMAP, Benner et al 2016)
 		Arg g: string, g-parameter of the g-prior, recommended g="BRIC" g=max(n,#SNPs**2), other options g="BIC" where g=n (Bayes Information Criterion), or  g="RIC" where g=#SNPs**2 (Risk Inflation Criterion) see Mixtures of g Priors for Bayesian Variable Selection Liang et al 2008
 	'''
@@ -487,13 +508,24 @@ def compare_neighborhood(configs, z_scores, cov_matrix, kmax, n, score_cache, la
 			continue
 
 		z_tuple = numpy.take(z_scores, configuration)
+		cor_tuple = numpy.take(cor_scores, configuration)
 		cov_tuple = cov_matrix[numpy.ix_(configuration, configuration)]
+		if numpy.max(numpy.tril(cov_tuple,k=-1)) > corr_thresh:
+			i = i+1
+			continue			
+		if numpy.min(numpy.tril(cov_tuple,k=-1)) < -corr_thresh:
+			i = i+1
+			continue
+
 		tuple_size = len(z_tuple)
 		if prior == "independence":
 			v = numpy.eye(tuple_size) * v_scale
 			log_BF[i] = calc_logBF(z_tuple, cov_tuple, v, n)
+		elif prior == "independence_robust":
+			v = numpy.eye(tuple_size) * v_scale
+			log_BF[i] = calc_robust_logBF(z_tuple, cor_tuple, cov_tuple, v, n, eigen_thresh)
 		elif prior == "gprior":
-			log_BF[i] = calc_loggBF(z_tuple, cov_tuple, g, n)
+			log_BF[i] = calc_loggBF(z_tuple, cov_tuple, n, g=g)
 		else:
 			assert False, "%s is not one of independence or gprior" % (prior)
 		score_cache[tuple(configuration)] = log_BF[i]
@@ -501,7 +533,7 @@ def compare_neighborhood(configs, z_scores, cov_matrix, kmax, n, score_cache, la
 
 	return OneDConfigurationSample(
 			configurations = dict((tuple(config), index) for index, config in enumerate(configs)),
-			posterior = numpy.exp(log_BF + log_prior),
+			posterior = (log_BF + log_prior),
 			log_BF = log_BF,
 			configuration_size = configuration_size,
 			log_prior = log_prior,
@@ -521,14 +553,64 @@ def calc_logBF(z, cov, v, n):
 	z = numpy.matrix(z)
 	v = numpy.matrix(v)
 	m = z.shape[1]
-	coeff = 1. / math.sqrt(numpy.linalg.det((numpy.matrix(numpy.eye(m)) + n * numpy.matrix(v) * numpy.matrix(cov))))
+	try: 
+		coeff = 1. / math.sqrt(numpy.linalg.det((numpy.matrix(numpy.eye(m)) + n * numpy.matrix(v) * numpy.matrix(cov))))
+	except ValueError:
+	    	print cov
+		eigen_vec=numpy.linalg.eig(numpy.matrix(cov))[0]
+		Q=numpy.linalg.eig(numpy.matrix(cov))[1]
+		eigen_pos = eigen_vec
+		eigen_pos[eigen_vec<0] = 0
+		cov=Q*numpy.diag(eigen_pos)*Q.transpose()
+		coeff = 1. / math.sqrt(numpy.linalg.det((numpy.matrix(numpy.eye(m)) + n * numpy.matrix(v) * numpy.matrix(cov))))
 	exponent = 0.5 * z * \
 		numpy.matrix(numpy.linalg.pinv(((n * v).I + cov), 0.0001)) * z.T
 	return numpy.array(numpy.log(coeff) + exponent)[0][0]
 
+
+def calc_robust_logBF(z, cor, cov, v, n, eigen_thresh):
+	'''
+		Compute Bayes Factors with assumption of independent variances, takes care of issues with negative definit correlation matrices
+		%https://www.nag.co.uk/IndustryArticles/fixing-a-broken-correlation-matrix.pdf
+		Arg1: numpy.array (1D)
+		Arg2: numpy.array (2D)
+		Arg3: numpy.array diagonal matrix of prior variances
+		Arg4: int sample size
+		Returntype: numpy.array
+	'''
+	z = numpy.matrix(z)
+	cor = numpy.matrix(cor)
+	v = numpy.matrix(v)
+	m = z.shape[1]
+	try: 
+		coeff = 1. / math.sqrt(numpy.linalg.det((numpy.matrix(numpy.eye(m)) + n * numpy.matrix(v) * numpy.matrix(cov))))
+	except ValueError:
+	    	print cov
+		eigen_vec=numpy.linalg.eig(numpy.matrix(cov))[0]
+		Q=numpy.linalg.eig(numpy.matrix(cov))[1]
+		eigen_pos = eigen_vec
+		eigen_pos[eigen_vec<0] = 0
+		cov=Q*numpy.diag(eigen_pos)*Q.transpose()
+		coeff = 1. / math.sqrt(numpy.linalg.det((numpy.matrix(numpy.eye(m)) + n * numpy.matrix(v) * numpy.matrix(cov))))
+	exponent = 0.5 * z * \
+		numpy.matrix(numpy.linalg.pinv(((n * v).I + cov), 0.0001)) * z.T
+	log_BF=numpy.array(numpy.log(coeff) + exponent)[0][0]
+
+	if(m>1):
+		if(check_eigenvals(cor,cov,eigen_thresh) == False): 
+			log_BF=0.
+	else: 
+		log_BF=log_BF
+
+	return log_BF
+
+
+
+
 def calc_loggBF(z, cov, n, g="BRIC"):
 	'''
 		Compute Bayes Factors with gprior method
+		http://ftp.isds.duke.edu/WorkingPapers/05-12.pdf
 		Arg1: numpy.array (1D)
 		Arg2: numpy.array (2D)
 		Arg3: int sample size
@@ -601,3 +683,22 @@ def merge_samples(samples):
 			configuration_size = configuration_size,
 			log_prior = log_prior
 		)
+
+def check_eigenvals(cor,Sigma,eigen_thresh=0.1):
+	''' input 
+	# z: vector of z-scores (aligned to the same reference as Sigma)
+	# Sigma: correlation matrix
+	'''
+
+	assert cor.shape[1] == Sigma.shape[1], 'Covariance matrix has %i rows, %i expected' % (Sigma.shape[1], cor.shape[1])
+
+	dim=cor.shape[1]
+	S_tanh = numpy.matrix(numpy.zeros((dim+1, dim+1)))
+	S_tanh[0,0] = 1
+	S_tanh[1:dim+1,1:dim+1] = Sigma
+	S_tanh[0,1:dim+1] = cor
+	S_tanh[1:dim+1,0] = numpy.transpose(cor)
+
+	return(numpy.min(numpy.linalg.eigvals(S_tanh)) > eigen_thresh)
+
+
