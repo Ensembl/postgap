@@ -698,7 +698,6 @@ class GWAS_File(GWAS_source):
 			max_lines_to_return_threshold     = len(gwas_cluster.ld_snps)
 		)
 		logging.info( "ld_gwas_associations.found_list: " + pformat(ld_gwas_associations.get_found_list()) )
-		# TODO: Figure out which snps couldn't be found in the file and include them with imputed p values.
 		
 		ld_snps_converted_to_gwas_snps = []
 		ld_snps_that_could_not_be_converted_to_gwas_snps = []
@@ -810,16 +809,17 @@ class GWAS_File(GWAS_source):
 				approximated_zscore = None
 			)
 			
+			# TODO insert study info (from command line? config file?)
 			gwas_association = GWAS_Association(
 				pvalue                            = float(parsed["Pvalue"]),
 				pvalue_description		  = 'Manual',
 				snp                               = snp,
-				disease                           = Disease(name = 'TODO', efo = 'EFO_TODO'),
+				disease                           = Disease(name = 'Manual', efo = 'EFO_Manual'),
 				reported_trait                    = "Manual",
 				source                            = "Manual",
-				publication			  = "PMID0",
+				publication			  = "PMID000",
 				study                             = "Manual",
-				sample_size                       = 1000, # TODO
+				sample_size                       = 1000,
 				odds_ratio                        = "Manual",
 				beta_coefficient                  = float(parsed["Beta"]),
 				beta_coefficient_unit             = "Manual",

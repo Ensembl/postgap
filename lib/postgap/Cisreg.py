@@ -105,7 +105,6 @@ class GTEx(Cisreg_source):
 		cisreg_with_pvalues = self._snp_pvalues(snp)
 		
 		if cisreg_with_pvalues is None:
-		irint "Found %i associations" % (len(res))
 			return []
 		
 		if len(cisreg_with_pvalues) == 0:
