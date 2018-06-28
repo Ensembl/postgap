@@ -48,7 +48,7 @@ def finemap_gwas_cluster(cluster, populations):
 	elif postgap.Globals.GWAS_SUMMARY_STATS_FILE is not None:
 		ld_snps, ld_matrix, z_scores, betas = extract_z_scores_from_file(cluster)
 	else:
-		ld_snps, ld_matrix, z_scores = impute_z_scores(cluster) # TODO: Betas -> waiting for formula
+		ld_snps, ld_matrix, z_scores, betas = impute_z_scores(cluster)
 
 	## Define experiment label (serves for debugging logs)
 	chrom = ld_snps[0].chrom
@@ -160,6 +160,7 @@ def impute_z_scores(cluster):
 	gwas_snp_hash = dict((gwas_snp.snp.rsID, gwas_snp) for gwas_snp in cluster.gwas_snps)
 	missing_indices = numpy.array([index for index, ld_snp in enumerate(ld_snps) if ld_snp.rsID not in gwas_snp_hash]).astype(int)
 	known_z_scores = numpy.array([gwas_snp_hash[ld_snp.rsID].z_score for ld_snp in ld_snps if ld_snp.rsID in gwas_snp_hash])
+	known_betas = numpy.array([gwas_snp_hash[ld_snp.rsID].beta_coefficient for ld_snp in ld_snps if ld_snp.rsID in gwas_snp_hash])
 
 	# Generate LD matrix of known values
 	ld_matrix_known = numpy.delete(ld_matrix, missing_indices, axis=1)
@@ -174,20 +175,25 @@ def impute_z_scores(cluster):
 	ld_matrix_known_shrink = shrink_lambda *  numpy.diag(numpy.ones(ld_matrix_known.shape[0])) + (1-shrink_lambda) * ld_matrix_known
 	ld_matrix_k2m_shrink = (1-shrink_lambda) * ld_matrix_k2m
 	z_shrink_imputed = numpy.dot(numpy.dot(ld_matrix_k2m_shrink,numpy.linalg.pinv(ld_matrix_known_shrink, 0.0001)) , known_z_scores)
+	beta_shrink_imputed = numpy.dot(numpy.dot(ld_matrix_k2m_shrink,numpy.linalg.pinv(ld_matrix_known_shrink, 0.0001)) , known_betas)
 
 	# Aggregate z_scores into a single vector
 	z_scores = []
+	betas = []
 	for i in ld_snps:
 		z_scores.append(0)
-	for index, z_score in zip(missing_indices, z_shrink_imputed):
+		betas.append(0)
+	for index, z_score, beta in zip(missing_indices, z_shrink_imputed, beta_shrink_imputed):
 		z_scores[index] = z_score
+		betas[index] = beta
 	for index, ld_snp in enumerate(ld_snps):
 		if ld_snp.rsID in gwas_snp_hash:
 			z_scores[index] = gwas_snp_hash[ld_snp.rsID].z_score
+			betas[index] = gwas_snp_hash[ld_snp.rsID].beta
 
 	assert len(ld_snps) ==  ld_matrix.shape[0]
 	assert len(ld_snps) ==  ld_matrix.shape[1]
-	return ld_snps, ld_matrix, z_scores
+	return ld_snps, ld_matrix, z_scores, betas
 
 def compute_joint_posterior(cluster, associations):
 	"""
@@ -251,6 +257,7 @@ def compute_gene_tissue_joint_posterior(cluster, tissue, gene, eQTL_snp_hash):
 		assert ld_matrix_known_shrink.size > 0, (missing_indices, ld_matrix, ld_matrix_known)
 		ld_matrix_k2m_shrink = (1-shrink_lambda) * ld_matrix_k2m
 		z_shrink_imputed = numpy.dot(numpy.dot(ld_matrix_k2m_shrink,numpy.linalg.pinv(ld_matrix_known_shrink, 0.0001)) , known_z_scores)
+		beta_shrink_imputed = numpy.dot(numpy.dot(ld_matrix_k2m_shrink,numpy.linalg.pinv(ld_matrix_known_shrink, 0.0001)) , known_betas)
 
 		# Aggregate z_scores into a single vector
 		z_scores = []
@@ -258,9 +265,9 @@ def compute_gene_tissue_joint_posterior(cluster, tissue, gene, eQTL_snp_hash):
 		for i in cluster.ld_snps:
 			z_scores.append(0)
 			betas.append(0)
-		for index, z_score in zip(missing_indices, z_shrink_imputed):
+		for index, z_score, beta in zip(missing_indices, z_shrink_imputed, beta_shrink_imputed):
 			z_scores[index] = z_score
-			# TODO Betas -> waiting for formula?
+			betas[index] = beta
 		for index, ld_snp in enumerate(cluster.ld_snps):
 			if ld_snp.rsID in eQTL_snp_hash:
 				z_scores[index] = eQTL_snp_hash[ld_snp.rsID][0]
