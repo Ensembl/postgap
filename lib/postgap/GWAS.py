@@ -834,26 +834,28 @@ class GWAS_File(GWAS_source):
 			)
 			
 			# TODO insert study info (from command line? config file?)
-			gwas_association = GWAS_Association(
-				pvalue                            = float(parsed["Pvalue"]),
-				pvalue_description		  = 'Manual',
-				snp                               = snp,
-				disease                           = Disease(name = 'Manual', efo = 'EFO_Manual'),
-				reported_trait                    = "Manual",
-				source                            = "Manual",
-				publication			  = "PMID000",
-				study                             = "Manual",
-				sample_size                       = 1000,
-				odds_ratio                        = "Manual",
-				odds_ratio_ci_start				  = None,
-				odds_ratio_ci_end				  = None,
-				beta_coefficient                  = float(parsed["Beta"]),
-				beta_coefficient_unit             = "Manual",
-				beta_coefficient_direction        = "Manual",
-				rest_hash                         = None,
-				risk_alleles_present_in_reference = None,
-			)
-			
+			try:
+				gwas_association = GWAS_Association(
+					pvalue                            = float(parsed["Pvalue"]),
+					pvalue_description		  = 'Manual',
+					snp                               = snp,
+					disease                           = Disease(name = 'Manual', efo = 'EFO_Manual'),
+					reported_trait                    = "Manual",
+					source                            = "Manual",
+					publication			  = "PMID000",
+					study                             = "Manual",
+					sample_size                       = 1000,
+					odds_ratio                        = "Manual",
+					odds_ratio_ci_start		  = None,
+					odds_ratio_ci_end		  = None,
+					beta_coefficient                  = float(parsed["Beta"]),
+					beta_coefficient_unit             = "Manual",
+					beta_coefficient_direction        = "Manual",
+					rest_hash                         = None,
+					risk_alleles_present_in_reference = None,
+				)
+			except ValueError:
+				continue
 
 			callback(gwas_association)
 			
