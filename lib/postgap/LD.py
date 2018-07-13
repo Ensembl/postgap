@@ -184,6 +184,9 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, population='EUR'):
 
 	return r2_dict
 
+class UnitLDMatrixerror(Exception):
+	pass
+
 def get_pairwise_ld(ld_snps, population='EUR'):
 	"""
 
@@ -285,6 +288,6 @@ def get_pairwise_ld(ld_snps, population='EUR'):
 	# Healthcheck for the matrix. An LD matrix should never be the unity 
 	# matrix, but sometimes it is.
 	if numpy.count_nonzero(r2_array) == 0:
-		raise Exception("LD matrix is identity matrix!")
+		raise UnitLDMatrixerror("LD matrix is identity matrix!")
 		
 	return SNP_ids, r2_array + numpy.identity(len(SNP_ids))

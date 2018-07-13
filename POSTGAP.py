@@ -51,6 +51,7 @@ import sys
 from pprint import pformat
 
 r2_cache = collections.defaultdict(dict)
+r2_sets = set()
 GRCh38_snp_locations= dict()
 known_chroms = map(str, range(1,22)) + ['X','Y']
 
@@ -317,15 +318,21 @@ def genecluster_association_table(association):
 
 	"""
 	results = []
-	for snp1 in association.cluster.ld_snps:
-		for snp2 in association.cluster.ld_snps:
-			if snp1.rsID not in r2_cache or snp2.rsID not in r2_cache[snp1.rsID]:
-				ld_snp_ids, r_matrix = postgap.LD.get_pairwise_ld(association.cluster.ld_snps)
-				r_index = dict((snp, index) for index, snp in enumerate(ld_snp_ids))
-				for SNPA in ld_snp_ids:
-					for SNPB in ld_snp_ids:
-						r2_cache[SNPA][SNPB] = r_matrix.item((r_index[SNPA], r_index[SNPB]))**2
-				break
+	snp_set = frozenset(association.cluster.ld_snps)
+	if snp_set not in r2_sets:
+		for snp1 in association.cluster.ld_snps:
+			for snp2 in association.cluster.ld_snps:
+				if snp1.rsID not in r2_cache or snp2.rsID not in r2_cache[snp1.rsID]:
+					try: 
+						ld_snp_ids, r_matrix = postgap.LD.get_pairwise_ld(association.cluster.ld_snps)
+					except postgap.LD.UnitLDMatrixerror:
+						break
+					r2_sets.add(snp_set)
+					r_index = dict((snp, index) for index, snp in enumerate(ld_snp_ids))
+					for SNPA in ld_snp_ids:
+						for SNPB in ld_snp_ids:
+							r2_cache[SNPA][SNPB] = r_matrix.item((r_index[SNPA], r_index[SNPB]))**2
+					break
 
 	GRCh38_gene = postgap.Ensembl_lookup.get_ensembl_gene(association.gene.id, postgap.Ensembl_lookup.GRCH38_ENSEMBL_REST_SERVER)
 	if GRCh38_gene is None:
