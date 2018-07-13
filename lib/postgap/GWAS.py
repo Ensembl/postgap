@@ -339,7 +339,20 @@ class GWASCatalog(GWAS_source):
 							logging.warning(str(e));
 							logging.warning("Skipping this snp.")
 							continue
-						
+
+						ci_start_value = None
+						ci_end_value = None
+
+						if not current_association["range"] == None:
+							ci_values = re.findall('\d+\.\d+', current_association["range"])
+
+							if ci_values:
+								try:
+									ci_start_value = ci_values[0]
+									ci_end_value = ci_values[1]
+								except:
+									pass
+
 
 						list_of_GWAS_Associations.append(
 							GWAS_Association(
@@ -367,7 +380,8 @@ class GWASCatalog(GWAS_source):
 								risk_alleles_present_in_reference = risk_alleles_present_in_reference,
 								
 								odds_ratio                 = current_association["orPerCopyNum"],
-
+								odds_ratio_ci_start        = ci_start_value,
+								odds_ratio_ci_end 		   = ci_end_value,
 								beta_coefficient           = current_association["betaNum"],
 								beta_coefficient_unit      = current_association["betaUnit"],
 								beta_coefficient_direction = current_association["betaDirection"]
@@ -493,6 +507,8 @@ class GRASP(GWAS_source):
 						study = None,
 						sample_size = int(items[24]),
 						odds_ratio = None,
+						odds_ratio_ci_start = None,
+						odds_ratio_ci_end = None,
 						beta_coefficient = None,
 						beta_coefficient_unit = None,
 						beta_coefficient_direction = None,
@@ -516,6 +532,8 @@ class GRASP(GWAS_source):
 					study = None,
 					sample_size = int(items[24]),
 					odds_ratio = None,
+					odds_ratio_ci_start=None,
+					odds_ratio_ci_end=None,
 					beta_coefficient = None,
 					beta_coefficient_unit = None,
 					beta_coefficient_direction = None,
@@ -536,6 +554,8 @@ class GRASP(GWAS_source):
 				study = items[7],
 				sample_size = int(items[24]),
 				odds_ratio = None,
+				odds_ratio_ci_start=None,
+				odds_ratio_ci_end=None,
 				beta_coefficient = None,
 				beta_coefficient_unit = None,
 				beta_coefficient_direction = None,
@@ -596,6 +616,8 @@ class Phewas_Catalog(GWAS_source):
 					study = None,
 					sample_size = int(items[3]),
 					odds_ratio = float(items[5]),
+					odds_ratio_ci_start=None,
+					odds_ratio_ci_end=None,
 					beta_coefficient = None,
 					beta_coefficient_unit = None,
 					beta_coefficient_direction = None,
@@ -615,6 +637,8 @@ class Phewas_Catalog(GWAS_source):
 				study = None,
 				sample_size = int(items[3]),
 				odds_ratio = float(items[5]),
+				odds_ratio_ci_start=None,
+				odds_ratio_ci_end=None,
 				beta_coefficient = None,
 				beta_coefficient_unit = None,
 				beta_coefficient_direction = None,
@@ -821,6 +845,8 @@ class GWAS_File(GWAS_source):
 				study                             = "Manual",
 				sample_size                       = 1000,
 				odds_ratio                        = "Manual",
+				odds_ratio_ci_start				  = None,
+				odds_ratio_ci_end				  = None,
 				beta_coefficient                  = float(parsed["Beta"]),
 				beta_coefficient_unit             = "Manual",
 				beta_coefficient_direction        = "Manual",
@@ -884,6 +910,8 @@ class GWAS_DB(GWAS_source):
 					study = None,
 					sample_size = "N/A",
 					odds_ratio = None,
+					odds_ratio_ci_start=None,
+					odds_ratio_ci_end=None,
 					beta_coefficient = None,
 					beta_coefficient_unit = None,
 					beta_coefficient_direction = None,
@@ -904,6 +932,8 @@ class GWAS_DB(GWAS_source):
 				study = None,
 				sample_size = "N/A",
 				odds_ratio = None,
+				odds_ratio_ci_start=None,
+				odds_ratio_ci_end=None,
 				beta_coefficient = None,
 				beta_coefficient_unit = None,
 				beta_coefficient_direction = None,

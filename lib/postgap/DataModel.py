@@ -55,6 +55,8 @@ GWAS_Association = collections.namedtuple(
 		'publication',
 		'study',
 		'odds_ratio',
+		'odds_ratio_ci_start',
+		'odds_ratio_ci_end',
 		'beta_coefficient',
 		'beta_coefficient_unit',
 		'beta_coefficient_direction',
