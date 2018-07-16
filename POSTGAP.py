@@ -53,7 +53,7 @@ from pprint import pformat
 r2_cache = collections.defaultdict(dict)
 r2_sets = set()
 GRCh38_snp_locations= dict()
-known_chroms = map(str, range(1,22)) + ['X','Y']
+known_chroms = map(str, range(1,23)) + ['X','Y']
 
 '''
 Development TODO list:
