@@ -826,15 +826,15 @@ class GWAS_File(GWAS_source):
 			if not want_this_gwas_association_filter(parsed["Pvalue"]):
 				continue
 
-			snp = SNP(
-				rsID  = parsed["MarkerName"],
-				chrom = parsed["Chromosome"],
-				pos   = int(parsed["Position"]),
-				approximated_zscore = None
-			)
-			
-			# TODO insert study info (from command line? config file?)
 			try:
+				snp = SNP(
+					rsID  = parsed["MarkerName"],
+					chrom = parsed["Chromosome"],
+					pos   = int(parsed["Position"]),
+					approximated_zscore = None
+				)
+				
+				# TODO insert study info (from command line? config file?)
 				gwas_association = GWAS_Association(
 					pvalue                            = float(parsed["Pvalue"]),
 					pvalue_description		  = 'Manual',
