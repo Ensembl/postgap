@@ -48,8 +48,6 @@ import postgap.FinemapIntegration
 import postgap.Finemap
 from postgap.Utils import *
 import logging
-import scipy
-
 
 import sys
 

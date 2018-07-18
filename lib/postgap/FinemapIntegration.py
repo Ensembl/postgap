@@ -27,7 +27,8 @@ limitations under the License.
 	<http://www.ensembl.org/Help/Contact>.
 
 """
-import scipy.stats
+# Hack to lazy load scipy only if required
+scipy = None
 import numpy
 import postgap.Globals
 import collections
@@ -331,4 +332,7 @@ def z_score_from_pvalue(p_value, direction):
 		Arg2: float
 		Returntype: float
 	"""
+	if scipy is None:
+		import scipy
+		import scipy.stats
 	return -scipy.stats.norm.ppf(p_value/2) * sign(direction)

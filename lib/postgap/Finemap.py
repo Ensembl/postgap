@@ -5,14 +5,9 @@
 
 import numpy
 import math
-import scipy
-import scipy.stats
 import itertools as it
 import operator
 import random
-import sklearn
-from scipy.stats import norm
-from sklearn import preprocessing
 import collections
 
 OneDConfigurationSample_prototype = collections.namedtuple(
