@@ -600,6 +600,7 @@ def compute_v2g_scores(reg, cisreg):
 		Returntype: dict(Gene: dict(string: float)), dict(Gene: float)
 
 	"""
+
 	intermediary_scores = dict()
 	gene_scores = dict()
 	for gene in cisreg:
@@ -613,7 +614,11 @@ def compute_v2g_scores(reg, cisreg):
 				intermediary_scores[gene]['VEP_count'] += 1
 				intermediary_scores[gene]['VEP_sum'] += float(evidence.score) 
 
-		# Ad hoc bounds defined here:
+			if evidence.source == 'GTEx':
+				intermediary_scores[gene][evidence.tissue] = float(evidence.score)
+
+
+			# Ad hoc bounds defined here:
 		# PCHiC
 		intermediary_scores[gene]['PCHiC'] = min(intermediary_scores[gene]['PCHiC'], 1)
 
@@ -699,3 +704,13 @@ def gene_to_phenotypes(gene):
 		phenotype_cache[gene['stable_id']] = postgap.Ensembl_lookup.get_gene_phenotypes(gene)
 
 	return phenotype_cache[gene['stable_id']]
+
+def get_all_tissues():
+	server = 'https://rest.ensembl.org'
+	ext = '/eqtl/tissue/homo_sapiens?'
+	try:
+		tissues = postgap.REST.get(server, ext)
+		return tissues
+
+	except:
+		return None

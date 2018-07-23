@@ -91,6 +91,9 @@ def main():
 	logging.info(pformat(options))
 	efo_iris = []
 
+
+	postgap.Globals.ALL_TISSUES=postgap.Integration.get_all_tissues()
+
 	if options.efos is not None:
 		efo_iris = postgap.EFO.query_iris_for_efo_short_form_list(options.efos)
 	else:
@@ -294,7 +297,7 @@ def pretty_output(associations):
 		Returntype: String
 
 	"""
-	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'GRCh38_chrom', 'GRCh38_pos', 'afr_maf', 'amr_maf', 'eas_maf', 'eur_maf', 'sas_maf', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'GRCh38_gene_chrom', 'GRCh38_gene_pos', 'disease_name', 'disease_efo_id', 'score', 'rank', 'r2', 'cluster_id', 'gwas_source', 'gwas_snp', 'gwas_pvalue', 'gwas_pvalue_description', 'gwas_odds_ratio', 'gwas_odds_ratio_ci_start', 'gwas_odds_ratio_ci_end', 'gwas_beta', 'gwas_size', 'gwas_pmid', 'gwas_study', 'gwas_reported_trait', 'ls_snp_is_gwas_snp', 'vep_terms', 'vep_sum', 'vep_mean'] + [source.display_name for source in postgap.Cisreg.sources + postgap.Reg.sources])
+	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'GRCh38_chrom', 'GRCh38_pos', 'afr_maf', 'amr_maf', 'eas_maf', 'eur_maf', 'sas_maf', 'gnomad', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'GRCh38_gene_chrom', 'GRCh38_gene_pos', 'disease_name', 'disease_efo_id', 'score', 'rank', 'r2', 'cluster_id', 'gwas_source', 'gwas_snp', 'gwas_pvalue', 'gwas_pvalue_description', 'gwas_odds_ratio', 'gwas_odds_ratio_ci_start', 'gwas_odds_ratio_ci_end', 'gwas_beta', 'gwas_size', 'gwas_pmid', 'gwas_study', 'gwas_reported_trait', 'ls_snp_is_gwas_snp', 'vep_terms', 'vep_sum', 'vep_mean'] + [tissue_name for tissue_name in postgap.Globals.ALL_TISSUES] + [source.display_name for source in postgap.Cisreg.sources + postgap.Reg.sources])
 	content = filter(lambda X: len(X) > 0, map(pretty_cluster_association, associations))
 	return "\n".join([header] + content)
 
@@ -366,6 +369,7 @@ def genecluster_association_table(association):
 				eas_maf = 'N/A'
 				eur_maf = 'N/A'
 				sas_maf = 'N/A'
+				gnomad = 'N/A'
 
 				vep_terms = []
 				for evidence in gene_snp_association.cisregulatory_evidence:
@@ -390,6 +394,8 @@ def genecluster_association_table(association):
 								eur_maf = MAFs['eur_maf']
 							if 'sas_maf' in MAFs:
 								sas_maf = MAFs['sas_maf']
+							if 'gnomad' in MAFs:
+								gnomad = MAFs['gnomad']
 							break
 
 				if 'VEP_mean' in gene_snp_association.intermediary_scores:
@@ -401,6 +407,15 @@ def genecluster_association_table(association):
 					vep_sum = gene_snp_association.intermediary_scores['VEP_sum']
 				else:
 					vep_sum = 0
+
+				tissue_score = dict()
+
+				for tissue_name in postgap.Globals.ALL_TISSUES:
+					if tissue_name in gene_snp_association.intermediary_scores:
+						tissue_score[tissue_name] = gene_snp_association.intermediary_scores[tissue_name]
+					else:
+						tissue_score[tissue_name] = 0
+
 
 				r2_distance = read_pairwise_ld(gene_snp_association.snp, gwas_snp.snp)
 
@@ -418,6 +433,7 @@ def genecluster_association_table(association):
 					eas_maf,
 					eur_maf,
 					sas_maf,
+					gnomad,
 					association.gene.name, 
 					association.gene.id, 
 					association.gene.chrom, 
@@ -448,6 +464,7 @@ def genecluster_association_table(association):
 					vep_mean
 				]
 
+				row += [tissue_score[tissue_name] for tissue_name in postgap.Globals.ALL_TISSUES]
 				row += [gene_snp_association.intermediary_scores[functional_source.display_name] for functional_source in postgap.Cisreg.sources + postgap.Reg.sources]
 				results.append(row)
 
