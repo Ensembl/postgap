@@ -177,13 +177,18 @@ class VEP_reg(Reg_source):
 
 		snp_hash = dict( (snp.rsID, snp) for snp in snps)
 		res = []
+
+		#import pprint
+		#pp = pprint.PrettyPrinter(indent=4)
+		#pp.pprint(list)
+
 		for hit in list:
 			if 'colocated_variants' in hit:
 				for variant in hit['colocated_variants']:
 					if variant['id'] == hit['id']:
 						res.append(Regulatory_Evidence(
 							snp = snp_hash[hit['input']],
-							score = 0,
+							score = self.get_score(hit),
 							source = self.display_name,
 							study = None,
 							tissue = None,
@@ -196,6 +201,17 @@ class VEP_reg(Reg_source):
 		logging.info("\tFound %i interactions in VEP" % (len(res)))
 
 		return res
+
+	def get_score(self, hit):
+		score_val=0
+		if 'regulatory_feature_consequences' in hit:
+			for reg_feature in hit['regulatory_feature_consequences']:
+				if 'regulatory_feature_id' in reg_feature:
+					if reg_feature['regulatory_feature_id']:
+						score_val = 1
+						break
+
+		return score_val
 
 	def remove_none_elements(self, list):
 		return filter(self.exists, list)
