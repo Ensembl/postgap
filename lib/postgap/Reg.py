@@ -178,10 +178,6 @@ class VEP_reg(Reg_source):
 		snp_hash = dict( (snp.rsID, snp) for snp in snps)
 		res = []
 
-		#import pprint
-		#pp = pprint.PrettyPrinter(indent=4)
-		#pp.pprint(list)
-
 		for hit in list:
 			if 'colocated_variants' in hit:
 				for variant in hit['colocated_variants']:
