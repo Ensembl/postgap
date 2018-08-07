@@ -45,6 +45,7 @@ import postgap.EFO
 import postgap.Globals
 import postgap.Integration
 from postgap.Utils import *
+import os.path
 
 
 import sys
@@ -93,6 +94,33 @@ def main():
 
 
 	postgap.Globals.ALL_TISSUES=postgap.Integration.get_all_tissues()
+
+
+	if options.hdf5 is not None and options.sqlite is not None:
+		if os.path.exists(options.hdf5):
+			postgap.Globals.GTEx_path = options.hdf5
+
+			if os.path.exists(options.sqlite):
+				postgap.Globals.SQLite_connection = options.sqlite
+			else:
+				postgap.Globals.GTEx_path = None
+				postgap.Globals.SQLite_connection = None
+				logging.warning("SQLite path not found. REST API will be used")
+
+		else:
+			postgap.Globals.GTEx_path = None
+			postgap.Globals.SQLite_connection = None
+			logging.warning("Hdf5 path not found. REST API will be used")
+
+	else:
+		postgap.Globals.GTEx_path = None
+		postgap.Globals.SQLite_connection = None
+
+		if options.hdf5 is not None and options.sqlite is None:
+			logging.warning("SQLite path not found. REST API will be used")
+
+		if options.sqlite is not None and options.hdf5 is None:
+			logging.warning("Hdf5 path not found. REST API will be used")
 
 	if options.efos is not None:
 		efo_iris = postgap.EFO.query_iris_for_efo_short_form_list(options.efos)
@@ -229,6 +257,8 @@ def get_options():
     parser.add_argument('--bayesian', action = 'store_true')
     parser.add_argument('--work_dir', default = 'postgap_temp_work_dir')
     parser.add_argument('--summary_stats')
+    parser.add_argument('--hdf5')
+    parser.add_argument('--sqlite')
     options = parser.parse_args()
 
     postgap.Globals.DATABASES_DIR = options.databases

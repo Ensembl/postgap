@@ -69,6 +69,7 @@ class GTEx(Cisreg_source):
 			Returntype: [ Cisregulatory_Evidence ]
 
 		"""
+
 		res = concatenate(map(self.snp, snps))
 		logging.info("\tFound %i interactions in GTEx" % (len(res)))
 		return res
@@ -254,11 +255,13 @@ class GTEx(Cisreg_source):
 
 		"""
 		try:
+
 			snp_cursor = get_sqlite_values(['hdf5_index', 'external_id'], 'snp', 'external_id', [snp.rsID])
 			if snp_cursor is None:
 				raise ValueError('SNP: empty cursor')
 
 			snp_val = snp_cursor.fetchone()
+
 			if snp_val is None:
 				raise ValueError('SNP: empty fetch')
 
@@ -283,6 +286,7 @@ class GTEx(Cisreg_source):
 				gene_index_list = set(p_val_index[2])
 				gene_list_filtered = [gene_range[k] for k in gene_index_list]
 				gene_array_names = {k:(''.join(chr(i) for i in hdf5_file.get('dim_labels/2')[k])) for k in gene_list_filtered}
+
 
 			res = []
 			for k in range(0, len(p_val_index[0])):
@@ -336,6 +340,7 @@ class VEP(Cisreg_source):
 			Returntype: [ Regulatory_Evidence ]
 
 		"""
+
 		list = concatenate(self.get(chunk) for chunk in chunks(snps, 199))
 		'''
 
@@ -477,7 +482,7 @@ class Fantom5(Cisreg_source):
 			Returntype: [ Regulatory_Evidence ]
 
 		"""
-		
+
 		logging.info("\tSearching for overlaps from %i SNPs to Fantom5" % len(snps))
 		
 		intersection = postgap.BedTools.overlap_snps_to_bed(snps, postgap.Globals.DATABASES_DIR + "/Fantom5.bed")
@@ -540,6 +545,7 @@ class DHS(Cisreg_source):
 			Returntype: [ Regulatory_Evidence ]
 
 		"""
+
 		logging.info("\tSearching for gene associations in DHS")
 		
 		intersection = postgap.BedTools.overlap_snps_to_bed(snps, postgap.Globals.DATABASES_DIR + "/DHS.bed")
@@ -641,7 +647,7 @@ class PCHIC(Cisreg_source):
 			Returntype: [ Regulatory_Evidence ]
 
 		"""
-		
+
 		logging.info("\tSearching for gene associations in PCHIC")
 		
 		intersection = postgap.BedTools.overlap_snps_to_bed(snps, postgap.Globals.DATABASES_DIR + "/pchic.bed")
@@ -707,6 +713,7 @@ class nearest_gene(Cisreg_source):
 			Returntype: dict(rsID => Gene)
 
 		"""
+
 		snps = list(snps)
 		bed = postgap.Globals.DATABASES_DIR + "/Ensembl_TSSs.bed"
 		res = postgap.BedTools.closest(snps, bed)
