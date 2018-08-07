@@ -244,21 +244,27 @@ class GTEx(Cisreg_source):
 		except Exception, e:
 			return None
 
-	def _snp_hdf5(snp):
+	def _snp_hdf5(self, snp):
 		"""
 
 			Returns all SNPs associated to a SNP in GTEx
 			Args:
-			* string (rsID)
+			* SNP
 			Returntype: [ Cisregulatory_Evidence ]
 
 		"""
 		try:
 			snp_cursor = get_sqlite_values(['hdf5_index', 'external_id'], 'snp', 'external_id', [snp.rsID])
 			if snp_cursor is None:
-				raise ValueError('SNP not found')
+				raise ValueError('SNP: empty cursor')
 
-			hdf5_snp_index = snp_cursor.fetchone()[0] - 1
+			snp_val = snp_cursor.fetchone()
+			if snp_val is None:
+				raise ValueError('SNP: empty fetch')
+
+			hdf5_snp_index = snp_val[0]
+			hdf5_snp_index = hdf5_snp_index  - 1
+
 
 			with h5py.File(postgap.Globals.GTEx_path) as hdf5_file:
 				tissue_array_names = {k: (''.join(chr(i) for i in hdf5_file.get('dim_labels/1')[k]))
@@ -266,8 +272,9 @@ class GTEx(Cisreg_source):
 
 				hdf5_gene_boundaries = hdf5_file.get('boundaries/3')[hdf5_snp_index]
 
-				p_val = numpy.array([hdf5_file['matrix'][1,:, int(hdf5_gene_boundaries[0][0]):int(hdf5_gene_boundaries[0][1]) + 1, hdf5_snp_index]])
-				beta = numpy.array([hdf5_file['matrix'][0,:, int(hdf5_gene_boundaries[0][0]):int(hdf5_gene_boundaries[0][1]) + 1, hdf5_snp_index]])
+
+				beta = numpy.array([hdf5_file['matrix'][0, :, int(hdf5_gene_boundaries[0][0]):int(hdf5_gene_boundaries[0][1]) + 1, hdf5_snp_index]])
+				p_val = numpy.array([hdf5_file['matrix'][1, :, int(hdf5_gene_boundaries[0][0]):int(hdf5_gene_boundaries[0][1]) + 1, hdf5_snp_index]])
 
 				p_val_index = numpy.where(p_val > 0)
 
@@ -280,24 +287,29 @@ class GTEx(Cisreg_source):
 			res = []
 			for k in range(0, len(p_val_index[0])):
 				pvalue = p_val[p_val_index[0][k]][p_val_index[1][k]][p_val_index[2][k]]
-				beta = beta[p_val_index[0][k]][p_val_index[1][k]][p_val_index[2][k]]
+
+				try:
+					beta = beta[p_val_index[0][k]][p_val_index[1][k]][p_val_index[2][k]]
+				except:
+					beta = None
 
 				if postgap.Globals.PERFORM_BAYESIAN:
 					z_score = postgap.FinemapIntegration.z_score_from_pvalue(pvalue,beta),
 				else:
 					z_score = None
 
+
 				res.append([
 					Cisregulatory_Evidence(
 						snp = snp,
-						gene=postgap.Ensembl_lookup.get_ensembl_gene(gene_array_names[gene_range_filtered[k]]),
+						gene= postgap.Ensembl_lookup.get_ensembl_gene(gene_array_names[gene_range_filtered[k]]),
 						tissue = tissue_array_names[p_val_index[1][k]],
 						score = 1 - float(pvalue),
 						source = self.display_name,
 						study = None,
 						info = None,
 						z_score = z_score,
-						pvalue = p_value,
+						pvalue = pvalue,
 						beta = beta
 					)
 				])
@@ -305,7 +317,7 @@ class GTEx(Cisreg_source):
 			return res
 
 		except Exception as e:
-			logging.warning("Got exception when quering snp_tisuue")
+			logging.warning("Got exception when quering snp_hdf5")
 			logging.warning("The exception is %s" % (e))
 			logging.warning("Returning 'None' and pretending this didn't happen.")
 			return []
@@ -739,6 +751,7 @@ def get_sqlite_values(columns, dimension, filtername, args):
 			sql += " WHERE %s" % filtername + " in ({seq})".format(seq=', '.join(map("'{0}'".format, args)))
 
 		db = sqlite3.connect(postgap.Globals.SQLite_connection)
+
 		cursor = db.cursor().execute(sql)
 		db.close
 

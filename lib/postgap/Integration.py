@@ -648,7 +648,16 @@ def cisregulatory_evidence(ld_snps, tissues):
 		logging.info("Searching for cis-regulatory data on %i SNPs in (%s)" % (len(ld_snps), ", ".join(postgap.Globals.Cisreg_adaptors)))
 		evidence = concatenate(source().run(ld_snps, tissues) for source in postgap.Cisreg.get_filtered_subclasses(postgap.Globals.Cisreg_adaptors))
 
-	filtered_evidence = filter(lambda association: association.gene is not None and association.gene.biotype == "protein_coding", evidence)
+	flaten_evidence = []
+	for evi in evidence:
+		if type(evi)==list:
+			for e in evi:
+				flaten_evidence.append(e)
+		else:
+			flaten_evidence.append(evi)
+
+
+	filtered_evidence = filter(lambda association: association is not None and association.gene is not None and association.gene.biotype == "protein_coding", flaten_evidence)
 
 	# Group by snp, then gene:
 	res = collections.defaultdict(lambda: collections.defaultdict(list))
@@ -709,7 +718,7 @@ def get_all_tissues():
 	server = 'https://rest.ensembl.org'
 	ext = '/eqtl/tissue/homo_sapiens?'
 	try:
-		tissues = postgap.REST.get(server, ext)
+		tissues = ['GTEx_' + t for t in postgap.REST.get(server, ext)]
 		return tissues
 
 	except:

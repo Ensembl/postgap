@@ -297,7 +297,7 @@ def pretty_output(associations):
 		Returntype: String
 
 	"""
-	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'GRCh38_chrom', 'GRCh38_pos', 'afr_maf', 'amr_maf', 'eas_maf', 'eur_maf', 'sas_maf', 'gnomad', 'gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'GRCh38_gene_chrom', 'GRCh38_gene_pos', 'disease_name', 'disease_efo_id', 'score', 'rank', 'r2', 'cluster_id', 'gwas_source', 'gwas_snp', 'gwas_pvalue', 'gwas_pvalue_description', 'gwas_odds_ratio', 'gwas_odds_ratio_ci_start', 'gwas_odds_ratio_ci_end', 'gwas_beta', 'gwas_size', 'gwas_pmid', 'gwas_study', 'gwas_reported_trait', 'ls_snp_is_gwas_snp', 'vep_terms', 'vep_sum', 'vep_mean'] + [tissue_name for tissue_name in postgap.Globals.ALL_TISSUES] + [source.display_name for source in postgap.Cisreg.sources + postgap.Reg.sources])
+	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'GRCh38_chrom', 'GRCh38_pos', 'afr_maf', 'amr_maf', 'eas_maf', 'eur_maf', 'sas_maf', 'gnomad', 'gnomad_sas', 'gnomad_oth', 'gnomad_asj', 'gnomad_nfe', 'gnomad_afr', 'gnomad_amr', 'gnomad_fin', 'gnomad_eas','gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'GRCh38_gene_chrom', 'GRCh38_gene_pos', 'disease_name', 'disease_efo_id', 'score', 'rank', 'r2', 'cluster_id', 'gwas_source', 'gwas_snp', 'gwas_pvalue', 'gwas_pvalue_description', 'gwas_odds_ratio', 'gwas_odds_ratio_ci_start', 'gwas_odds_ratio_ci_end', 'gwas_beta', 'gwas_size', 'gwas_pmid', 'gwas_study', 'gwas_reported_trait', 'ls_snp_is_gwas_snp', 'vep_terms', 'vep_sum', 'vep_mean'] + [tissue_name for tissue_name in postgap.Globals.ALL_TISSUES] + [source.display_name for source in postgap.Cisreg.sources + postgap.Reg.sources])
 	content = filter(lambda X: len(X) > 0, map(pretty_cluster_association, associations))
 	return "\n".join([header] + content)
 
@@ -370,6 +370,15 @@ def genecluster_association_table(association):
 				eur_maf = 'N/A'
 				sas_maf = 'N/A'
 				gnomad = 'N/A'
+				gnomad_sas = 'N/A'
+				gnomad_oth = 'N/A'
+				gnomad_asj = 'N/A'
+				gnomad_nfe = 'N/A'
+				gnomad_afr = 'N/A'
+				gnomad_amr = 'N/A'
+				gnomad_fin = 'N/A'
+				gnomad_eas = 'N/A'
+
 
 				vep_terms = []
 				for evidence in gene_snp_association.cisregulatory_evidence:
@@ -396,6 +405,24 @@ def genecluster_association_table(association):
 								sas_maf = MAFs['sas_maf']
 							if 'gnomad' in MAFs:
 								gnomad = MAFs['gnomad']
+							if 'gnomad_sas' in MAFs:
+								gnomad_sas = MAFs['gnomad_sas']
+							if 'gnomad_oth' in MAFs:
+								gnomad_oth = MAFs['gnomad_oth']
+							if 'gnomad_asj' in MAFs:
+								gnomad_asj = MAFs['gnomad_asj']
+							if 'gnomad_nfe' in MAFs:
+								gnomad_nfe = MAFs['gnomad_nfe']
+							if 'gnomad_afr' in MAFs:
+								gnomad_afr = MAFs['gnomad_afr']
+							if 'gnomad_amr' in MAFs:
+								gnomad_amr = MAFs['gnomad_amr']
+							if 'gnomad_fin' in MAFs:
+								gnomad_fin = MAFs['gnomad_fin']
+							if 'gnomad_eas' in MAFs:
+								gnomad_eas = MAFs['gnomad_eas']
+
+
 							break
 
 				if 'VEP_mean' in gene_snp_association.intermediary_scores:
@@ -434,6 +461,14 @@ def genecluster_association_table(association):
 					eur_maf,
 					sas_maf,
 					gnomad,
+					gnomad_sas,
+					gnomad_oth,
+					gnomad_asj,
+					gnomad_nfe,
+					gnomad_afr,
+					gnomad_amr,
+					gnomad_fin,
+					gnomad_eas,
 					association.gene.name, 
 					association.gene.id, 
 					association.gene.chrom, 
