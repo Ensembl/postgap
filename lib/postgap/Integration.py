@@ -716,8 +716,7 @@ def get_all_tissues():
 	server = 'https://rest.ensembl.org'
 	ext = '/eqtl/tissue/homo_sapiens?'
 	try:
-		tissues = ['GTEx_' + t for t in postgap.REST.get(server, ext)]
-		return tissues
+		return postgap.REST.get(server, ext)
 
 	except:
 		return None
