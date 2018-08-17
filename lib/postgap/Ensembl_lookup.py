@@ -36,6 +36,7 @@ from postgap.Utils import *
 GRCH37_ENSEMBL_REST_SERVER = "http://grch37.rest.ensembl.org"
 GRCH38_ENSEMBL_REST_SERVER = "http://rest.ensembl.org"
 known_genes = {}
+known_snps = {}
 
 def get_gene(gene_name, ENSEMBL_REST_SERVER = GRCH37_ENSEMBL_REST_SERVER):
 	"""
@@ -132,16 +133,17 @@ def get_snp_locations(rsIDs, ENSEMBL_REST_SERVER = GRCH37_ENSEMBL_REST_SERVER):
 	if len(rsIDs) == 0:
 		return []
 
-	res = get_snp_locations_simple(rsIDs, ENSEMBL_REST_SERVER) 
+	unknown_rsIDs = filter(lambda rsID: (rsID, ENSEMBL_REST_SERVER) not in known_snps, rsIDs)
+
+	res = get_snp_locations_simple(unknown_rsIDs, ENSEMBL_REST_SERVER) 
 
 	if len(res) == 0:
-		if len(rsIDs) == 1:
-			return []
+		if len(unknown_rsIDs) == 1:
+			res = []
 		else:
-			return get_snp_locations(rsIDs[:len(rsIDs)/2]) + get_snp_locations(rsIDs[len(rsIDs)/2:])
-	else:
-		return res
+			res = get_snp_locations(unknown_rsIDs[:len(unknown_rsIDs)/2]) + get_snp_locations(unknown_rsIDs[len(unknown_rsIDs)/2:])
 	
+	return [known_snps[(rsID, ENSEMBL_REST_SERVER)] for rsID in rsIDs if (rsID, ENSEMBL_REST_SERVER) in known_snps]
 
 
 def get_snp_locations_simple(rsIDs, ENSEMBL_REST_SERVER = GRCH37_ENSEMBL_REST_SERVER):
@@ -201,13 +203,14 @@ def get_snp_locations_simple(rsIDs, ENSEMBL_REST_SERVER = GRCH37_ENSEMBL_REST_SE
 	for rsID in rsIDs:
 		if rsID in hash:
 			for mapping in hash[rsID]['mappings']:
-				results.append(
-					SNP(
-						rsID = rsID,
-						chrom = mapping['seq_region_name'],
-						pos = (int(mapping['start']) + int(mapping['end'])) / 2,
-						approximated_zscore = None
-					)
+				snp = SNP(
+					rsID = rsID,
+					chrom = mapping['seq_region_name'],
+					pos = (int(mapping['start']) + int(mapping['end'])) / 2,
+					approximated_zscore = None
 				)
+				results.append(snp)
+				known_snps[(rsID, ENSEMBL_REST_SERVER)] = snp
+
 	return results
 
