@@ -394,11 +394,11 @@ def genecluster_association_table(association):
 				if gene_snp_association.snp.chrom not in known_chroms or GRCh38_snp_locations[gene_snp_association.snp.rsID].chrom not in known_chroms:
 					continue
 
-				afr_maf = 'N/A'
-				amr_maf = 'N/A'
-				eas_maf = 'N/A'
-				eur_maf = 'N/A'
-				sas_maf = 'N/A'
+				afr = 'N/A'
+				amr = 'N/A'
+				eas = 'N/A'
+				eur = 'N/A'
+				sas = 'N/A'
 				gnomad = 'N/A'
 				gnomad_sas = 'N/A'
 				gnomad_oth = 'N/A'
@@ -423,16 +423,16 @@ def genecluster_association_table(association):
 					if evidence.source == "VEP_reg":
 						MAFs = evidence.info['MAFs']
 						if MAFs is not None:
-							if 'afr_maf' in MAFs:
-								afr_maf = MAFs['afr_maf']
-							if 'amr_maf' in MAFs:
-								amr_maf = MAFs['amr_maf']
-							if 'eas_maf' in MAFs:
-								eas_maf = MAFs['eas_maf']
-							if 'eur_maf' in MAFs:
-								eur_maf = MAFs['eur_maf']
-							if 'sas_maf' in MAFs:
-								sas_maf = MAFs['sas_maf']
+							if 'afr' in MAFs:
+								afr = MAFs['afr']
+							if 'amr' in MAFs:
+								amr = MAFs['amr']
+							if 'eas' in MAFs:
+								eas = MAFs['eas']
+							if 'eur' in MAFs:
+								eur = MAFs['eur']
+							if 'sas' in MAFs:
+								sas = MAFs['sas']
 							if 'gnomad' in MAFs:
 								gnomad = MAFs['gnomad']
 							if 'gnomad_sas' in MAFs:
@@ -485,11 +485,11 @@ def genecluster_association_table(association):
 					gene_snp_association.snp.pos, 
 					GRCh38_snp_locations[gene_snp_association.snp.rsID].chrom,
 					GRCh38_snp_locations[gene_snp_association.snp.rsID].pos,
-					afr_maf,
-					amr_maf,
-					eas_maf,
-					eur_maf,
-					sas_maf,
+					afr,
+					amr,
+					eas,
+					eur,
+					sas,
 					gnomad,
 					gnomad_sas,
 					gnomad_oth,
