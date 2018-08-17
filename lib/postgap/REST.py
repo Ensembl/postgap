@@ -197,7 +197,7 @@ def get(server, ext, data=None):
 					logging.info("Error is expected behaviour by the eqtl server and will be passed on.")
 					raise EQTL400error(r)
 
-				if "/lookup/symbol" or '/lookup/id' in url:
+				if "/lookup/symbol" in url or '/lookup/id' in url:
 					logging.info("Error is expected behaviour by the Ensembl gene lookup and will be passed on.")
 					raise GENE400error(r)
 				
