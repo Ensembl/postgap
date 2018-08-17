@@ -182,6 +182,10 @@ class VEP_reg(Reg_source):
 			if 'colocated_variants' in hit:
 				for variant in hit['colocated_variants']:
 					if variant['id'] == hit['id']:
+						if ('minor_allele') in variant and ('frequencies' in variant) and (variant['minor_allele'] in variant['frequencies']):
+							MAFs = variant['frequencies'][variant['minor_allele']]
+						else:
+							MAFs = None
 						res.append(Regulatory_Evidence(
 							snp = snp_hash[hit['input']],
 							score = self.get_score(hit),
@@ -189,7 +193,7 @@ class VEP_reg(Reg_source):
 							study = None,
 							tissue = None,
 							info = {
-								'MAFs': variant
+								'MAFs': MAFs
 							}
 						))
 						break
