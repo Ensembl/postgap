@@ -273,7 +273,7 @@ class GTEx(Cisreg_source):
 
 
 			with h5py.File(postgap.Globals.GTEx_path) as hdf5_file:
-				tissue_array_names = {k: (''.join(chr(i) for i in hdf5_file.get('dim_labels/1')[k]))
+				tissue_array_names = {k: (''.join(chr(i) for i in hdf5_file.get('dim_labels/1')[k]).rstrip('\0'))
 									  for k in range(0, len(hdf5_file.get('dim_labels/1')))}
 
 				hdf5_gene_boundaries = hdf5_file.get('boundaries/3')[hdf5_snp_index]
@@ -288,7 +288,7 @@ class GTEx(Cisreg_source):
 				gene_range_filtered = [gene_range[k] for k in p_val_index[2]]
 				gene_index_list = set(p_val_index[2])
 				gene_list_filtered = [gene_range[k] for k in gene_index_list]
-				gene_array_names = {k:(''.join(chr(i) for i in hdf5_file.get('dim_labels/2')[k])) for k in gene_list_filtered}
+				gene_array_names = {k:(''.join(chr(i) for i in hdf5_file.get('dim_labels/2')[k])).rstrip('\0') for k in gene_list_filtered}
 
 
 			res = []
