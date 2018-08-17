@@ -203,15 +203,13 @@ class VEP_reg(Reg_source):
 		return res
 
 	def get_score(self, hit):
-		score_val=0
 		if 'regulatory_feature_consequences' in hit:
 			for reg_feature in hit['regulatory_feature_consequences']:
 				if 'regulatory_feature_id' in reg_feature:
 					if reg_feature['regulatory_feature_id']:
-						score_val = 1
-						break
+						return 1
 
-		return score_val
+		return 0
 
 	def remove_none_elements(self, list):
 		return filter(self.exists, list)
