@@ -389,7 +389,7 @@ class GWASCatalog(GWAS_source):
 						)
 
 		if len(list_of_GWAS_Associations) > 0:
-			logging.info("Successfully fetched " +  str(len(list_of_GWAS_Associations)) + " SNPs and pvalues.")
+			logging.info("Fetched " +  str(len(list_of_GWAS_Associations)) + " SNPs and pvalues.")
 		if len(list_of_GWAS_Associations) == 0:
 			logging.info("Found no associated SNPs and pvalues.")
 	
