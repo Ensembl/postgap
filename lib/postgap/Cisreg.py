@@ -294,6 +294,9 @@ class GTEx(Cisreg_source):
 			res = []
 			for k in range(0, len(p_val_index[0])):
 				pvalue = p_val[p_val_index[0][k]][p_val_index[1][k]][p_val_index[2][k]]
+				
+				if pvalue > 1 or pvalue < 0:
+					continue
 
 				try:
 					beta = beta[p_val_index[0][k]][p_val_index[1][k]][p_val_index[2][k]]
