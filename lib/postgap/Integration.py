@@ -713,8 +713,8 @@ def gene_to_phenotypes(gene):
 	return phenotype_cache[gene['stable_id']]
 
 def get_all_tissues():
-	server = 'https://rest.ensembl.org'
-	ext = '/eqtl/tissue/homo_sapiens?'
+	server = 'http://rest.ensembl.org'
+	ext = '/eqtl/tissue/homo_sapiens?content-type=application/json'
 	try:
 		return postgap.REST.get(server, ext)
 
