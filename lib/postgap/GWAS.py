@@ -77,7 +77,7 @@ class GWASCatalog(GWAS_source):
 	def query(self, efo):
 		logging.info("Querying GWAS catalog for " + efo);
 		server = 'http://www.ebi.ac.uk'
-		url = '/gwas/labs/rest/api/efoTraits/search/findByEfoUri?uri=%s' % (efo)
+		url = '/gwas/rest/api/efoTraits/search/findByEfoUri?uri=%s' % (efo)
 
 		hash = postgap.REST.get(server, url)
 
@@ -429,7 +429,10 @@ class Neale_UKB(GWAS_source):
 			snp, disease, reported_trait, p_value, sample_size, source, study, odds_ratio, beta_coefficient, beta_coefficient_direction = line.strip().split('\t')
 		except:
 			return None
-		
+
+
+
+
 		if reported_trait in diseases:
 			return GWAS_Association(
 				pvalue = float(p_value),

@@ -108,9 +108,11 @@ class GTEx(Cisreg_source):
 		if cisreg_with_pvalues is None:
 			return []
 
-		if not options.PERFORM_BAYESIAN:
+
+		if not postgap.Globals.PERFORM_BAYESIAN:
 			return cisreg_with_pvalues
-		
+
+
 		if len(cisreg_with_pvalues) == 0:
 			# Empty list
 			return cisreg_with_pvalues

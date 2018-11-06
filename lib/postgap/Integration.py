@@ -123,7 +123,7 @@ def scan_disease_databases(diseases, efos):
 
 		if gwas_association.snp not in associations_by_snp or associations_by_snp[gwas_association.snp].pvalue < gwas_association.pvalue:
 			associations_by_snp[gwas_association.snp] = GWAS_SNP(
-				snp = gwas_association.snp,
+				snp = SNP ( rsID=gwas_association.snp ,chrom=None, pos=None, approximated_zscore= None),
 				pvalue = gwas_association.pvalue,
 				evidence = [ gwas_association ],
 				z_score   = z_score,

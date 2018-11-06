@@ -54,7 +54,7 @@ class timeout_handler:
 		logging.warning("Waiting for " + self.url)
 		signal.signal(signal.SIGALRM, self.handler_long)
 		# Set second timeout
-		signal.alarm(30)
+		signal.alarm(60)
 
 	def handler_long(self, signum, frame):
 		logging.error("Killing request for url: "  + self.url)
