@@ -361,12 +361,7 @@ class GWASCatalog(GWAS_source):
 									efo  = efo
 								),
 								reported_trait = diseaseTrait,
-								snp     = SNP(
-									rsID  = current_snp["rsId"],
-									chrom = None,
-									pos   = None,
-									approximated_zscore = None
-								),
+								snp     = current_snp["rsId"],
 								pvalue  = current_association["pvalue"],
 								pvalue_description = current_association["pvalueDescription"],
 								source  = 'GWAS Catalog',
@@ -885,18 +880,11 @@ class GWAS_File(GWAS_source):
 				continue
 
 			try:
-				snp = SNP(
-					rsID  = parsed["MarkerName"],
-					chrom = parsed["Chromosome"],
-					pos   = int(parsed["Position"]),
-					approximated_zscore = None
-				)
-				
 				# TODO insert study info (from command line? config file?)
 				gwas_association = GWAS_Association(
 					pvalue                            = float(parsed["Pvalue"]),
 					pvalue_description		  = 'Manual',
-					snp                               = snp,
+					snp                               = parsed["MarkerName"],
 					disease                           = Disease(name = 'Manual', efo = 'EFO_Manual'),
 					reported_trait                    = "Manual",
 					source                            = "Manual",
