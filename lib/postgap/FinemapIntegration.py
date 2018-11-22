@@ -332,6 +332,7 @@ def z_score_from_pvalue(p_value, direction):
 		Arg2: float
 		Returntype: float
 	"""
+	global scipy
 	if scipy is None:
 		import scipy
 		import scipy.stats
