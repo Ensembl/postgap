@@ -3,6 +3,7 @@
 mkdir -p bin
 
 ## Tabix, bgzip
+echo Installing TABIX
 git clone https://github.com/samtools/htslib.git
 cd htslib
 git checkout 1.3.2
@@ -11,6 +12,7 @@ cp tabix bgzip ../bin
 cd ..
 
 ## vcfkeepsamples
+echo Installing VCFlib
 git clone --recursive https://github.com/vcflib/vcflib.git
 cd vcflib
 git checkout v1.0.0-rc1
@@ -19,6 +21,7 @@ cp bin/vcfkeepsamples ../bin
 cd ..
 
 ## bcftools
+echo Installing BCFtools
 git clone https://github.com/samtools/bcftools.git
 cd bcftools
 git checkout 1.3.1
@@ -27,6 +30,7 @@ cp bcftools ../bin
 cd ..
 
 # vcftools
+echo Installing VCFtools
 git clone https://github.com/vcftools/vcftools.git
 cd vcftools
 git checkout v0.1.14
@@ -37,6 +41,7 @@ cp src/cpp/vcftools ../bin
 cd ..
 
 # bedtools
+echo Installing BEDtools
 git clone https://github.com/arq5x/bedtools2.git
 cd bedtools2
 git checkout v2.26.0
