@@ -2,7 +2,7 @@ DEST_DIR=~/hps/postgap/databases
 DIR_REGEX=~\/hps\/postgap\/databases
 
 default: download process
-download: create_dir d_GRASP d_Phewas_Catalog d_GWAS_DB d_Fantom5 d_DHS d_Regulome d_pchic d_1000Genomes
+download: create_dir d_GRASP d_Phewas_Catalog d_GWAS_DB d_Fantom5 d_DHS d_Regulome d_pchic d_1000Genomes d_GERP
 process: GRASP Phewas_Catalog GWAS_DB Fantom5 DHS Regulome tabix pchic 1000Genomes
 
 clean_raw:
@@ -20,6 +20,9 @@ d_GRASP:
 
 GRASP:
 	unzip -qc ${DEST_DIR}/raw/GRASP.zip | python preprocessing/pad_columns.py 70 | awk 'BEGIN {FS="\t"} $$11 < 1e-4' | python preprocessing/EFO_suggest.py 13 preprocessing/grasp_suggestions.txt preprocessing/mesh_suggestions.txt preprocessing/GWAS_Catalog_suggestions.txt > ${DEST_DIR}/GRASP.txt
+
+d_GERP:
+	wget -nc http://ftp.ensembl.org/pub/grch37/release-94/compara/conservation_scores/37_mammals.epo_low_coverage/gerp_conservation_scores.homo_sapiens.bw -qO ${DEST_DIR}/GERP.bw
 
 d_Phewas_Catalog:
 	wget -nc http://phewascatalog.org/files/phewas-catalog.csv.zip -qO ${DEST_DIR}/raw/Phewas_Catalog.csv.zip

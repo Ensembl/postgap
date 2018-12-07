@@ -23,6 +23,7 @@ wget https://storage.googleapis.com/postgap-data/Regulome.bed.gz
 wget https://storage.googleapis.com/postgap-data/Regulome.bed.gz.tbi
 wget https://storage.googleapis.com/postgap-data/pchic.bed.gz
 wget https://storage.googleapis.com/postgap-data/pchic.bed.gz.tbi
+wget https://storage.googleapis.com/postgap-data/GERP.bw
 
 # Population structure data
 mkdir 1000Genomes
