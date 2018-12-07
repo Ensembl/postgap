@@ -49,6 +49,38 @@ make
 cp bin/bedtools bin/intersectBed ../bin
 cd ..
 
+# libBigWig
+echo Installing libBigWig
+git clone https://github.com/dpryan79/libBigWig.git
+cd libBigWig
+make
+cd ..
+
+# htslib
+echo Installing HTSlib
+git clone https://github.com/samtools/htslib.git
+cd htslib 
+git checkout 1.9
+make
+cd ..
+
+# GSL
+echo Installing GSL
+wget ftp://www.mirrorservice.org/sites/ftp.gnu.org/gnu/gsl/gsl-latest.tar.gz 
+tar -xvzpf gsl-latest.tar.gz
+cd gsl*
+./configure
+make
+cd ..
+
+# Wiggletools
+echo Installing Wiggletools
+git clone https://github.com/Ensembl/WiggleTools.git
+cd WiggleTools
+make
+cp bin/wiggletools ../bin
+cd ..
+
 # pybedtools v0.7.8, requests, pandas
 pip install pybedtools==0.7.4 requests pandas flask cherrypy
 
