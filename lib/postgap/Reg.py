@@ -34,6 +34,8 @@ import postgap.BedTools
 from postgap.Utils import *
 import logging
 import requests
+import subprocess
+import tempfile
 
 class Reg_source(object):
 	def run(self, ld_snps, tissues):
@@ -246,6 +248,49 @@ class VEP_reg(Reg_source):
 					return self.get(chunk[:len(chunk)/2]) + self.get(chunk[len(chunk)/2:])
 			raise
 
+class GERP(Reg_source):
+	display_name = 'GERP'
+	def run(self, ld_snps, tissues):
+		"""
+
+			Extract GERP score at snps of interest
+			Args:
+			* [ SNP ]
+			* [ string ]
+			Returntype: [ Regulatory_Evidence ]
+
+		"""
+		print 'GERP'
+		# Create temp file
+		snp_file, snp_file_name = tempfile.mkstemp(suffix='.bed')
+		h = open(snp_file_name, 'w')
+		h.write("\n".join("\t".join(map(str, [snp.chrom, snp.pos - 1, snp.pos + 1, snp.rsID])) for snp in ld_snps))
+		h.close()
+
+		# Run WiggleTools
+		process = subprocess.Popen(['wiggletools','apply_paste', '-', 'meanI', snp_file_name, postgap.Globals.DATABASES_DIR + '/GERP.bw'], stdout=subprocess.PIPE)
+		(output, err) = process.communicate()
+		if process.wait():
+			raise Exception(err)
+
+		# Parse results
+		snp_hash = dict((snp.rsID, snp) for snp in ld_snps)
+		res = []
+		for line in output.split("\n"):
+			items = line.split('\t')
+			if len(items) == 5 and items[-1] != 'nan' and items[3] in snp_hash:
+				res.append(Regulatory_Evidence(
+						snp = snp_hash[items[3]],
+						score = float(items[4]),
+						source = self.display_name,
+						study = None,
+						tissue = None,
+						info = None
+					)
+				)
+
+		return res
+		
 
 def get_filtered_subclasses(subclasses_filter):
 
