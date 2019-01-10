@@ -2,6 +2,12 @@
 
 The `tests` folder contains three types of quality control utilities for POSTGAP output, namely **health checks**, **data checks** and **reports**.
 
+If you want to try the tests on a subset of the full dataset (`postgap.<date>.txt.gz`), the following filters the full dataset for a specific EFO code.
+
+```
+gzcat postgap.<date>.txt.gz | awk -F '\t' '{ if ((NR == 1) || ($27 == "EFO_0000270")) { print } }' | gzip > ./sample_data/postgap.<date>.asthma.txt.gz
+```
+
 ## Health checks
 
 These are unit tests that:
