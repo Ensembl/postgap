@@ -4,10 +4,10 @@
 # built-ins
 import sys
 import unittest
+import argparse
 
 # pipped
 import pandas as pd
-import papermill as pm
 # ------------------------------------------------
 
 def add_postgap(suite, postgap):
@@ -30,11 +30,24 @@ def add_postgap(suite, postgap):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='run the postgap unit tests')
+    parser.add_argument('filename', type=str, help='a postgap output file (gzipped tsv file)')
+    parser.add_argument('--skip-data-checks', default=False, action='store_true', help='skip the data checks')
+    parser.add_argument('--skip-health-checks', default=False, action='store_true', help='skip the health checks')
+
+    args = parser.parse_args()
+
     loader = unittest.TestLoader()
-    suite = loader.discover('.')
-    
-    filename = sys.argv[1]
-    postgap = pd.read_csv(filename, sep='\t', na_values=['None'])
+
+    pattern = 'test*.py'
+    if (args.skip_data_checks):
+        suite = loader.discover('./health_checks')
+    elif (args.skip_health_checks):
+        suite = loader.discover('./data_checks')
+    else:
+        suite = loader.discover('.')
+
+    postgap = pd.read_csv(args.filename, sep='\t', na_values=['None'])
 
     suite_with_postgap = add_postgap(suite, postgap)
     result = unittest.TextTestRunner(verbosity=2).run(suite_with_postgap)

@@ -22,3 +22,5 @@ databases
 *.pyc
 tests/venv
 *.DS_Store
+venv
+.vscode
