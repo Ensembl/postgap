@@ -261,6 +261,7 @@ class GERP(Reg_source):
 
 		"""
 		print 'GERP'
+		ld_snps.sort(key=lambda x: (x.chrom, x.pos))
 		# Create temp file
 		snp_file, snp_file_name = tempfile.mkstemp(suffix='.bed')
 		h = open(snp_file_name, 'w')
