@@ -113,13 +113,16 @@ def scan_disease_databases(diseases, efos):
 		
 		if postgap.Globals.PERFORM_BAYESIAN:
 			if gwas_association.odds_ratio is not None:
-				z_score = postgap.FinemapIntegration.z_score_from_pvalue(gwas_association.pvalue, gwas_association.odds_ratio)
+				z_score = postgap.FinemapIntegration.z_score_from_pvalue(gwas_association.pvalue, gwas_association.odds_ratio - 1)
+				beta = math.log(gwas_association.odds_ratio)
 			elif gwas_association.beta_coefficient is not None:
 				z_score = postgap.FinemapIntegration.z_score_from_pvalue(gwas_association.pvalue, gwas_association.beta_coefficient)
+				beta = gwas_association.beta_coefficient
 			else:
 				continue
 		else:
 			z_score = None
+			beta = None
 
 		if gwas_association.snp not in associations_by_snp or associations_by_snp[gwas_association.snp].pvalue < gwas_association.pvalue:
 			associations_by_snp[gwas_association.snp] = GWAS_SNP(
@@ -127,6 +130,7 @@ def scan_disease_databases(diseases, efos):
 				pvalue = gwas_association.pvalue,
 				evidence = [ gwas_association ],
 				z_score   = z_score,
+				beta     = beta
 			)
 
 	gwas_snps = associations_by_snp.values()
@@ -281,6 +285,7 @@ def get_gwas_snp_locations(gwas_snps):
 			pvalue = original_gwas_snp[mapped_snp.rsID].pvalue,
 			evidence = original_gwas_snp[mapped_snp.rsID].evidence,
 			z_score   = original_gwas_snp[mapped_snp.rsID].z_score,
+			beta     = original_gwas_snp[mapped_snp.rsID].beta
 		)
 		for mapped_snp in mapped_snps
 		if mapped_snp.rsID in original_gwas_snp

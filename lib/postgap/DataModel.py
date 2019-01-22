@@ -74,7 +74,8 @@ GWAS_SNP = collections.namedtuple(
 		'pvalue',
 		'z_score',
 		'evidence',
-   ]
+		'beta'
+	]
 )
 
 GWAS_Cluster = collections.namedtuple(
