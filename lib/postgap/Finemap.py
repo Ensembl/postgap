@@ -324,7 +324,7 @@ class TwoDConfigurationSample(TwoDConfigurationSample_prototype):
 			self.sample_2_label,
 			float(posterior))
 
-def finemap(z_scores, beta_scores, cov_matrix, n, labels, sample_label, kstart=1, kmax=5, corr_thresh=0.9, max_iter=100000, output="configuration", prior="independence_robust", v_scale=0.0025, g="BRIC", eigen_thresh=0.1, verbose=False):
+def finemap(z_scores, beta_scores, cov_matrix, n, labels, sample_label, mafs = None, annotations=None, kstart=1, kmax=5, corr_thresh=0.9, max_iter=100000, output="configuration", prior="independence_robust", v_scale=0.0025, g="BRIC", eigen_thresh=0.1, verbose=False):
 	'''
 		Main function for fine-mapping using stochastic search for one trait #
 		Arg1: z_scores: numpy.array
