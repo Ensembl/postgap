@@ -283,6 +283,8 @@ class GWASCatalog(GWAS_source):
 					
 					if current_snp["rsId"] == '6':
 						continue
+					if current_snp["rsId"][-1] == u'\xa0':
+						current_snp["rsId"] = current_snp["rsId"].strip()
 
 					logging.debug("    received association with snp rsId: " + '{:12}'.format(current_snp["rsId"]) + " with a pvalue of " + str(current_association["pvalue"]))
 					
@@ -674,7 +676,8 @@ class Phewas_Catalog(GWAS_source):
 					beta_coefficient = None,
 					beta_coefficient_unit = None,
 					beta_coefficient_direction = None,
-					rest_hash = None
+					rest_hash = None,
+					risk_alleles_present_in_reference = None
 				)
 
 		if items[2] in diseases: 
@@ -695,7 +698,8 @@ class Phewas_Catalog(GWAS_source):
 				beta_coefficient = None,
 				beta_coefficient_unit = None,
 				beta_coefficient_direction = None,
-				rest_hash = None
+				rest_hash = None,
+				risk_alleles_present_in_reference = None
 			)
 
 		return None
@@ -794,7 +798,8 @@ class GWAS_File(GWAS_source):
 					snp      = gwas_association.snp,
 					pvalue   = gwas_association.pvalue,
 					z_score  = None,
-					evidence = [ gwas_association ]
+					evidence = [ gwas_association ],
+					beta     = gwas_association.beta_coefficient
 				)
 				ld_snps_converted_to_gwas_snps.append(gwas_snp)
 			
