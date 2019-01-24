@@ -162,7 +162,7 @@ def gwas_snps_to_genes(gwas_snps, population, tissue_weights):
 
 	return clusters_to_genes(cluster_gwas_snps(gwas_snps, populations), populations, tissue_weights)
 
-def clusters_to_genes(clusters, population, tissue_weights):
+def clusters_to_genes(clusters, populations, tissue_weights):
 	"""
 
 		Associates genes to a set of clusters 

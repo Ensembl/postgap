@@ -287,6 +287,7 @@ def compute_gene_tissue_joint_posterior(cluster, tissue, gene, eQTL_snp_hash, gw
 	"""
 		Compute posterior of gene expression regulation at the specified cluster and tissue
 		Arg1: GWAS_Cluster
+<<<<<<< HEAD
 		Arg2: Tissue (string)
 		Arg3: Gene
 		Arg4: Hash string (rsID) => (Float (z-score), Float (beta))
@@ -307,6 +308,28 @@ def compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotati
 		Arg2: Tissue (string)
 		Arg3: Gene
 		Arg4: Hash string (rsID) => (Float (z-score), Float (beta))
+=======
+		Arg2: Tissue (string)
+		Arg3: Gene
+		Arg4: Hash string (rsID) => (Float (z-score), Float (beta))
+		Arg5: Hash of hashes: configuration => posterior
+		Arg6: Numpy Vector
+		Arg7: Numpy 2D Array
+		Returntype: Float
+	"""
+	## eQTL posteriors
+	eQTL_configuration_posteriors = compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotations)
+	## Joint posterior
+	return eQTL_configuration_posteriors.joint_posterior(gwas_configuration_posteriors)[0]
+
+def compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotations):
+	"""
+		Compute posterior of gene expression regulation at the specified cluster and tissue
+		Arg1: GWAS_Cluster
+		Arg2: Tissue (string)
+		Arg3: Gene
+		Arg4: Hash string (rsID) => (Float (z-score), Float (beta))
+>>>>>>> Creating space for ML method
 		Arg5: Numpy Vector
 		Arg6: Numpy 2D Array
 		Returntype: Float
