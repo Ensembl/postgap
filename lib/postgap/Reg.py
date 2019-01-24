@@ -260,18 +260,18 @@ class GERP(Reg_source):
 			Returntype: [ Regulatory_Evidence ]
 
 		"""
-		print 'GERP'
 		ld_snps.sort(key=lambda x: (x.chrom, x.pos))
 		# Create temp file
 		snp_file, snp_file_name = tempfile.mkstemp(suffix='.bed')
 		h = open(snp_file_name, 'w')
-		h.write("\n".join("\t".join(map(str, [snp.chrom, snp.pos - 1, snp.pos + 1, snp.rsID])) for snp in ld_snps))
+		h.write("\n".join("\t".join(map(str, [snp.chrom, snp.pos - 1, snp.pos + 1, snp.rsID])) for snp in sorted(ld_snps, key = lambda snp: (snp.chrom, snp.pos))))
 		h.close()
 
 		# Run WiggleTools
 		process = subprocess.Popen(['wiggletools','apply_paste', '-', 'meanI', snp_file_name, postgap.Globals.DATABASES_DIR + '/GERP.bw'], stdout=subprocess.PIPE)
 		(output, err) = process.communicate()
 		if process.wait():
+			print ['wiggletools','apply_paste', '-', 'meanI', snp_file_name, postgap.Globals.DATABASES_DIR + '/GERP.bw']
 			raise Exception(err)
 
 		# Parse results
