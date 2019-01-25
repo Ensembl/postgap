@@ -110,6 +110,8 @@ def scan_disease_databases(diseases, efos):
 		# Looking at you GWAS DB, "p-value = 0", pshaw!
 		if gwas_association.pvalue <= 0:
 			continue
+		if gwas_association.sample_size <= 0:
+			continue
 		
 		if postgap.Globals.PERFORM_BAYESIAN:
 			if gwas_association.odds_ratio is not None:
