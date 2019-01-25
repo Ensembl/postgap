@@ -161,7 +161,7 @@ def impute_z_scores(cluster):
 	gwas_snp_hash = dict((gwas_snp.snp.rsID, gwas_snp) for gwas_snp in cluster.gwas_snps)
 	missing_indices = numpy.array([index for index, ld_snp in enumerate(ld_snps) if ld_snp.rsID not in gwas_snp_hash]).astype(int)
 	known_z_scores = numpy.array([gwas_snp_hash[ld_snp.rsID].z_score for ld_snp in ld_snps if ld_snp.rsID in gwas_snp_hash])
-	known_betas = numpy.array([gwas_snp_hash[ld_snp.rsID].beta_coefficient for ld_snp in ld_snps if ld_snp.rsID in gwas_snp_hash])
+	known_betas = numpy.array([gwas_snp_hash[ld_snp.rsID].beta for ld_snp in ld_snps if ld_snp.rsID in gwas_snp_hash])
 
 	# Generate LD matrix of known values
 	ld_matrix_known = numpy.delete(ld_matrix, missing_indices, axis=1)
