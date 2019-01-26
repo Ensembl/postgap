@@ -839,13 +839,7 @@ class GWAS_File(GWAS_source):
 		return snp_name_filter
 
 	def create_pvalue_filter(self, pvalue_threshold):
-		
-		def filter_for_pvalues_smaller_than(pvalue):
-			if float(pvalue) < pvalue_threshold:
-				return True
-			return False
-		
-		return filter_for_pvalues_smaller_than
+		return lambda pvalue: float(pvalue) < pvalue_threshold
 	
 	def parse_gwas_data_file(
 			self, 
