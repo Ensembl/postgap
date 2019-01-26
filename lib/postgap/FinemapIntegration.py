@@ -110,6 +110,7 @@ def compute_ld_matrix(cluster):
 def extract_z_scores_from_file(cluster):
 	'''
 		Extracts Z-scores from summary stats file, computes LD matrix
+		TODO: It is inefficient torun through a 1GB file once per locus, this should be done only once
 		Arg1: Cluster
 		Returntype: [SNP], numpy.matrix (square LD matrix), numpy.matrix (Z-score vector)
 	'''
