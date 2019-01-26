@@ -888,7 +888,7 @@ class GWAS_File(GWAS_source):
 					publication			  = "PMID000",
 					study                             = "Manual",
 					sample_size                       = 1000,
-					odds_ratio                        = "Manual",
+					odds_ratio                        = None,
 					odds_ratio_ci_start		  = None,
 					odds_ratio_ci_end		  = None,
 					beta_coefficient                  = float(parsed["Beta"]),
