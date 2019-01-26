@@ -864,7 +864,7 @@ class GWAS_File(GWAS_source):
 		number_of_lines_returned = 0
 		for line in file:
 			# Skip the line with headers
-			if line.startswith("Chromosome"):
+			if line.startswith("Chromosome") or line.startswith("chr\t"):
 				continue
 			
 			items = line.rstrip().split('\t')
