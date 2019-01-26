@@ -870,9 +870,7 @@ class GWAS_File(GWAS_source):
 			items = line.rstrip().split('\t')
 			
 			parsed = dict()
-			for column_index in range(len(column_labels)):
-				
-				column_label = column_labels[column_index]
+			for column_index, column_label in enumerate(column_labels):
 				parsed[column_label] = items[column_index]
 			
 			if not want_this_gwas_association_filter(parsed["Pvalue"]):
