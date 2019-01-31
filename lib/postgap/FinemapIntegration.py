@@ -80,9 +80,10 @@ def extract_snp_mafs(cluster, associations, populations):
 	"""
 	maf_hash = collections.defaultdict(int)
 	for association in associations:
-		for evidence in association.cisregulatory_evidence:
-			if evidence.source == 'VEP_reg' and population in evidence.info['MAFs']:
-				maf_hash[association.snp.rsID] = evidence.info['MAFs'][population]
+		for evidence in association.regulatory_evidence:
+                    if evidence.info['MAFs'] is not None:
+			if evidence.source == 'VEP_reg' and populations in evidence.info['MAFs']:
+				maf_hash[association.snp.rsID] = evidence.info['MAFs'][populations]
 	return numpy.array([maf_hash[snp.rsID] for snp in cluster.ld_snps])
 
 def extract_snp_annotations(cluster, associations):
@@ -95,7 +96,7 @@ def extract_snp_annotations(cluster, associations):
 	for association in associations:
 		for evidence in association.cisregulatory_evidence:
 			annotation_hash[evidence.source][evidence.snp.rsID] = evidence.score
-	return numpy.array([[annotation_hash[snp.rsID] for snp in cluster.ld_snps] for annotation in sorted(annotation_hash.keys())])
+	return numpy.array([[annotation_hash[annotation][snp.rsID] for snp in cluster.ld_snps] for annotation in sorted(annotation_hash.keys())])
 
 def compute_ld_matrix(cluster, population):
 	'''
