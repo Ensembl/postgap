@@ -79,6 +79,7 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 			log_BF = None,
 			configuration_size = configuration_size,
 			log_prior = None,
+                        labels = self.labels,
 			sample_label = self.sample_label
 		)
 
@@ -308,7 +309,7 @@ class TwoDConfigurationSample(TwoDConfigurationSample_prototype):
 			self.sample_2_label,
 			float(posterior))
 
-def finemap(z_scores, beta_scores, cov_matrix, n, labels, sample_label, mafs = None, annotations=None, kstart=1, kmax=5, corr_thresh=0.9, max_iter=100000, output="configuration", prior="independence_robust", v_scale=0.0025, g="BRIC", eigen_thresh=0.1, verbose=False):
+def finemap(z_scores, beta_scores, cov_matrix, n, labels, sample_label, updated_lambdas, mafs, annotations, kstart=1, kmax=5, corr_thresh=0.9, max_iter=100000, output="configuration", prior="independence_robust", v_scale=0.0025, g="BRIC", eigen_thresh=0.1, verbose=False):
 	'''
 		Main function for fine-mapping using stochastic search for one trait #
 		Arg1: z_scores: numpy.array
@@ -317,6 +318,9 @@ def finemap(z_scores, beta_scores, cov_matrix, n, labels, sample_label, mafs = N
 		Arg4: n: int, sample size
 		Arg5: list of strings, snp rsIDs
 		Arg6: name of cluster (arbitrary) for easier reporting
+                Arg7: numpy.array (1D), annotation effect size which is estimated by MLE
+                Arg8: numpy.array (1D), minor allele frequency at cluster
+                Arg9: numpy.array (2D), functional annotation matrix
 		Arg kstart: int, full exploration of sets with #kstart causal variants
 		Arg kmax: int, maximum number of causal variants
 		Arg corr_thresh: int, excluding configurations with correlation > corr_thresh
@@ -361,6 +365,8 @@ def finemap(z_scores, beta_scores, cov_matrix, n, labels, sample_label, mafs = N
 		g = g, 
 		labels=labels,
 		sample_label = sample_label
+                annotations = cluster.annotations,
+                lambdas = updated_lambdas
 	)
 
 	# Simple search
@@ -385,8 +391,68 @@ def finemap(z_scores, beta_scores, cov_matrix, n, labels, sample_label, mafs = N
 			# Generate new configs
 			new_configs = create_neighborhood(current_config, len(z_scores), kstart, kmax, neighbourhood_cache)
 
-			# Evaluate probabilities of these configs
-			results_nh = compare_neighborhood(new_configs, z_scores, cor_scores, cov_matrix, kmax, n, score_cache, prior, corr_thresh,  v_scale=v_scale, g=g)
+                        ### EM Algorithm
+                        ## E-step
+                        # compute PIPs within the list
+                        results_temp = compare_neighborhood(merge_samples(result_list).configurations, 
+                                                            z_scores,  
+                                                            cor_scores, 
+                                                            cov_matrix, 
+                                                            kmax, 
+                                                            n, 
+                                                            score_cache, 
+                                                            labels,
+                                                            sample_label,
+                                                            annotations, 
+                                                            updated_lambdas,
+                                                            prior, 
+                                                            corr_thresh,  
+                                                            v_scale=v_scale, 
+                                                            g=g)
+                        PIPs = results_temp.normalise_posteriors().marginals(len(z_scores)).posterior
+       
+                        # Q cost function
+                        def Q_function(lambdas):
+                            '''
+                                compute Q cost function in E-step
+                                Arg1: numpy.array (1D), annotation effect size which will be estimated by EM
+                                Returntype: float, negative Q value for minimization
+                            '''
+                            Q = 0
+                            for i in range(len(z_scores)):
+                                annot = annotations[:,i]
+                                logistic_const = (1 + numpy.exp(-sum(annot * updated_lambdas))) 
+                                logistic_param = (1 + numpy.exp(-sum(annot * lambdas )))
+                                Q = Q +(\
+                                        PIPs[i]/(1-PIPs[i]) *( 1 - 1/logistic_const ) \
+                                        + 1/logistic_const \
+                                        ) * numpy.log( 1 - 1/logistic_param )
+                            return -Q
+
+                        ## M-step
+                        # Estimate parameters by maximising Q cost function        
+                        result_Q = optimize.minimize(Q_function, updated_lambdas, method='L-BFGS-B')
+                        if result_Q.success:
+                            updated_lambdas= 1 / (1 + numpy.exp(-result_Q.x)) 
+                        else:
+                            updated_lambdas= updated_lambdas 
+			
+                        # Evaluate probabilities of these configs
+			results_nh = compare_neighborhood(new_configs, 
+                                                          z_scores, 
+                                                          cor_scores, 
+                                                          cov_matrix, 
+                                                          kmax, 
+                                                          n, 
+                                                          score_cache, 
+                                                          labels, 
+                                                          sample_label,
+                                                          annotations,
+                                                          updated_lambdas,
+                                                          prior, 
+                                                          corr_thresh,
+                                                          v_scale=v_scale, 
+                                                          g=g)
 
 			# Add new entries into the results list
 			result_list.append(results_nh)
@@ -479,7 +545,7 @@ def create_neighborhood(current_config, m, kstart, kmax, neighbourhood_cache):
 	neighbourhood_cache[tuple(current_config)] = new_configs	
 	return new_configs
 
-def compare_neighborhood(configs, z_scores,  cor_scores, cov_matrix, kmax, n, score_cache, labels, sample_label, prior="independence_robust", corr_thresh=0.9, v_scale=0.0025, g="BRIC", eigen_thresh=0.1):
+def compare_neighborhood(configs, z_scores,  cor_scores, cov_matrix, kmax, n, score_cache, labels, sample_label, annotations, lambdas, prior="independence_robust", corr_thresh=0.9, v_scale=0.0025, g="BRIC", eigen_thresh=0.1):
 	'''
 		Compare the moves with respect to the unscaled log posterior probability
 		Arg1: array of arrays
@@ -490,6 +556,8 @@ def compare_neighborhood(configs, z_scores,  cor_scores, cov_matrix, kmax, n, sc
 		Arg6: n: int, sample size
 		Arg7: list of strings, rsIDs
 		Arg8: string, name of cluster (arbitrary)
+                Arg9: numpy.array (2D), functional annotation matrix
+                Arg10: numpy.array (1D), annotation effect size which will be estimated by EM
 		Arg prior: string, independence_robust, "independence" or "gprior"
 		Arg corr_thresh: int, excluding configurations with correlation > corr_thresh
 		Arg v_scale = float, prior variance of the independence prior, recommended 0.05**2 (following FINEMAP, Benner et al 2016)
@@ -497,8 +565,14 @@ def compare_neighborhood(configs, z_scores,  cor_scores, cov_matrix, kmax, n, sc
 	'''
 	nh_size = len(configs)
 	configuration_size = numpy.array([len(configuration) for configuration in configs])
-	log_prior = calc_logbinom(configuration_size, kmax, len(z_scores))
-	log_BF = numpy.zeros(len(configs))
+        
+        # binomial prior without functional annotations
+	# log_prior = calc_logbinom(configuration_size, kmax, len(z_scores))
+        
+        # logistic prior with functional annotations
+        log_prior = calc_config_loglogis_prior(annotations, lambdas, configs)
+         
+	log_BF = numpy.zeros(nh_size)
 	i=0
 
 	for configuration in configs:
@@ -682,6 +756,8 @@ def merge_samples(samples):
 			log_BF = log_BF,
 			configuration_size = configuration_size,
 			log_prior = log_prior
+                        labels = None, 
+                        sample_label = None
 		)
 
 def check_eigenvals(cor,Sigma,eigen_thresh=0.1):
@@ -827,5 +903,25 @@ def mk_modified_clusters(p_cluster, W = [0.01, 0.1, 0.5], pi = 0.001):
                                         p_cluster.annotations,
                                         None,
                                         lambdas)
+
+
+def calc_config_loglogis_prior(annotations, lambdas, configurations, pi_EM = 0.001):
+    '''
+        compute log logistic prior at config
+        Arg1: numpy.array (2D), functional annotations
+        Arg2: numpy.array (1D), annotation effect sizes
+        Arg3: array of arrays
+        Arg pi_EM: predefined parameter for setting intercept in logistic prior during EM calculation
+    '''
+    logprior = 0
+    config_logprior = []
+    for configuration in configurations: 
+        for j in range(annotations.shape[1]):
+            if j in configuration:
+                logprior = logprior + numpy.log(set_prior(pi_EM, annotations[:,j], lambdas))
+            else:
+                logprior = logprior + numpy.log(1 - set_prior(pi_EM, annotations[:,j], lambdas))
+        config_logprior.append(logprior)
+    return config_logprior
 
 
