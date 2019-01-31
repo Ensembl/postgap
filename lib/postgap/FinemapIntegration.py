@@ -43,7 +43,8 @@ def compute_gwas_posteriors(cluster_associations, populations):
 		Returntype: [(GWAS_Cluster, GeneSNP_Associations)]
 	"""
 	prepped_clusters = [(prepare_cluster_for_finemap(cluster, associations, populations), associations) for cluster, associations in cluster_associations]
-	# TODO: implement EM
+	# MLE calculation 
+        modified_clusters= [(mk_modified_clusters(cluster), associations) for cluster, associations in prepped_clusters]
 	return [(finemap_gwas_cluster(cluster), associations) for cluster, associations in prepped_clusters]
 
 def prepare_cluster_for_finemap(cluster, associations, populations):

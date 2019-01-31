@@ -701,4 +701,131 @@ def check_eigenvals(cor,Sigma,eigen_thresh=0.1):
 
 	return(numpy.min(numpy.linalg.eigvals(S_tanh)) > eigen_thresh)
 
+def calc_approx_v(maf, sampN):
+    '''
+        compute approximate prior
+        Arg1: float, Minor Allele Frequency (MAF) at SNP
+        Arg2: int, sample size at SNP
+        Returntype: float, approximate prior, v
+    '''
+    if maf != 0.:
+        approx_v = 1.0 * maf * (1.0 - maf) * sampN
+        approx_v = 1.0 / approx_v
+    else:
+        approx_v = .001
+    return approx_v
+
+def calc_logBF_ind(v, w, z_score):
+    '''
+        compute log Bayes Factor for one specified variance of prior(W)
+        Arg1: float, approximate v prior at SNP
+        Arg2: float, predefined variance of prior, w
+        Arg3: float, z_score at SNP
+        Returntype: float, log Bayes factor in the case of single prior, w
+    '''
+    r = w / (v + w)
+    logBF_ind = numpy.log(numpy.sqrt(1.0 - r)) + (z_score * z_score * r / 2.0)
+    return logBF_ind
+
+def sumlog(logx, logy):
+    '''
+        compute log(x + y) = log( exp( log(x) ) + exp( log(y) ) )
+    '''
+    if logx > logy:
+        return logx + numpy.log(1 + numpy.exp(logy - logx))
+    else:
+        return logy + numpy.log(1 + numpy.exp(logx - logy))
+
+def calc_logBF(v, W, z_score):
+    '''
+        compute averaged prior
+        Arg1: float, approximate v prior at SNP
+        Arg2: numpy.array (1D), prior variances
+        Arg3: float, z_score at SNP
+        Returntype: float, averaged snp log Bayes factor over W vector
+    '''
+    logBF_SNP = calc_logBF_ind(v, W[0], z_score)
+    
+    for i in range(1, len(W)):
+        logBF_SNP = sumlog(logBF_SNP, calc_logBF_ind(v, W[i], z_score))
+    logBF_SNP = logBF_SNP - numpy.log(len(W))
+    return logBF_SNP
+
+def set_prior(pi, annot, lambdas):
+    '''
+        compute logistic prior at SNP
+        we assume intecept is based on probability of pi which can be predefined by user
+        So, we don't estimate this parameter in the model but we put this value in the model
+        Arg1: float, a predefined probability for intercept where there is no annotation at SNP 
+        Arg2: numpy.array (1D), annotation information at SNP
+        Arg3: numpy.array (1D), annotation effect sizes
+        Returntype: float, logistic prior probability at SNP
+    '''
+    logitprior = numpy.log(pi) - numpy.log(1 - pi)
+    logitprior = logitprior + sum( annot * lambdas )
+#     for i in range(len(annot)):
+#         if annot[i]:
+#             logitprior = logitprior + lambdas[i]
+    prior = 1.0 / (1.0 + numpy.exp(-logitprior))
+    return prior
+
+GWAS_Cluster_prototype_with_lambdas = collections.namedtuple(
+        'GWAS_Cluster',
+        [
+                'gwas_snps',
+                'ld_snps',
+                'ld_matrix',
+                'z_scores',
+                'betas',
+                'mafs',
+                'annotations',
+                'gwas_configuration_posteriors',
+                'lambdas'
+        ]
+)
+class GWAS_Cluster_with_lambdas(GWAS_Cluster_prototype_with_lambdas):
+    pass
+
+
+def mk_modified_clusters(p_cluster, W = [0.01, 0.1, 0.5], pi = 0.001):
+    '''
+        compute MLE(Maximum Likelihood Estimate) of annotation effect size
+        build clusters with this MLE
+        Arg1: GWAS_Cluster
+        Returntype: GWAS_Cluster_with_lambdas
+        Arg W: variance of prior which will be averaged over [0.01, 0.1, 0.5]
+        Arg pi: predefined parameter for setting intercept in logistic prior
+        '''
+    MAFs       = map(float, p_cluster.mafs)
+    sample_size= p_cluster.gwas_snps[0].evidence[0].sample_size
+    approx_v   = [calc_approx_v(maf, sample_size)  for maf in MAFs]
+    z_scores   = p_cluster.z_scores
+    logBFs     = [calc_logBF(approx_v[i], W, z_scores[i]) for i in range(len(z_scores))]
+    mat_annot  = p_cluster.annotations.T
+
+    def f_llk(lambdas):
+        priors = [set_prior(pi, annot, lambdas) for annot in mat_annot]
+
+        lsum = 0
+        for i in range(len(priors)):
+            lsum = lsum + sumlog(logBFs[i] + numpy.log(priors[i]), numpy.log(1 - priors[i]))
+        return -lsum
+
+    initial_lambdas = [0.000001] * mat_annot.shape[1]
+    result = optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B')
+    if result.success:
+        lambdas= 1 / (1 + numpy.exp(-result.x))
+    else:
+        lambdas= initial_lambdas
+
+    return GWAS_Cluster_with_lambdas(   p_cluster.gwas_snps,
+                                        p_cluster.ld_snps,
+                                        p_cluster.ld_matrix,
+                                        z_scores,
+                                        p_cluster.betas,
+                                        MAFs,
+                                        p_cluster.annotations,
+                                        None,
+                                        lambdas)
+
 
