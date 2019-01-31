@@ -384,6 +384,9 @@ def merge_clusters(cluster, other_cluster):
 		ld_snps = merged_ld_snps,
 		ld_matrix = None,
 		z_scores = None,
+                betas = None,
+                mafs = None,
+                annotations = None,
 		gwas_configuration_posteriors = None
 	)
 
