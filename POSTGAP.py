@@ -254,7 +254,7 @@ def get_options():
     parser.add_argument('--GWAS', default=None, nargs='*', choices=(GWAS_options))
     parser.add_argument('--Cisreg', default=None, nargs='*', choices=(CisReg_options))
     parser.add_argument('--Reg', default=None, nargs='*', choices=(Reg_options))
-    parser.add_argument('--bayesian', action = 'store_true')
+    parser.add_argument('--bayesian', action = 'store_true', help='EXPERIMENTAL')
     parser.add_argument('--work_dir', default = 'postgap_temp_work_dir')
     parser.add_argument('--summary_stats')
     parser.add_argument('--hdf5')

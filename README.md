@@ -85,8 +85,8 @@ The summary statistics file should be tab delimited with the following columns:
 * SE
 * Pvalue
 
-Bayesian mode
--------------
+Bayesian mode (EXPERIMENTAL)
+----------------------------
 
 For an EFO, you can trigger the Bayesian calculations with:
 
