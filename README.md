@@ -131,3 +131,7 @@ Testing
 cat scripts/testing/all_efos.txt | xargs -n1 python POSTGAP.py --efos > table.tsv
 ```
 
+More Info
+---------
+
+Checkout out our [Wiki](https://github.com/Ensembl/postgap/wiki)
