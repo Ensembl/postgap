@@ -53,19 +53,19 @@ import sys
 
 phenotype_cache = ()
 
-def diseases_to_genes(diseases, efos, populations, tissues):
+def diseases_to_genes(diseases, efos, population, tissues):
 	"""
 
 		Associates genes from a list of diseases
 		Args:
 		* [ string ] (trait descriptions - free strings)
 		* [ string ] (trait EFO identifiers)
-		* [ string ] (population names)
+		* string (population name)
 		* [ string ] (tissue names)
 		Returntype: [ GeneCluster_Association ]
 
 	"""
-	return gwas_snps_to_genes(diseases_to_gwas_snps(diseases, efos), populations, tissues)
+	return gwas_snps_to_genes(diseases_to_gwas_snps(diseases, efos), population, tissues)
 
 def diseases_to_gwas_snps(diseases, efos):
 	"""
@@ -144,13 +144,13 @@ def scan_disease_databases(diseases, efos):
 
 	return gwas_snps
 
-def gwas_snps_to_genes(gwas_snps, populations, tissue_weights):
+def gwas_snps_to_genes(gwas_snps, population, tissue_weights):
 	"""
 
 		Associates Genes to gwas_snps of interest
 		Args:
 		* [ GWAS_Association ]
-		* { population_name: scalar (weight) }
+		* string (population name)
 		* { tissue_name: scalar (weight) }
 		Returntype: [ GeneCluster_Association ]
 
@@ -159,8 +159,8 @@ def gwas_snps_to_genes(gwas_snps, populations, tissue_weights):
 	if tissue_weights is None:
 		tissue_weights = gwas_snps_to_tissue_weights(gwas_snps)
 
-	clusters = cluster_gwas_snps(gwas_snps, populations)
-	res = concatenate(cluster_to_genes(cluster, tissue_weights, populations) for cluster in clusters)
+	clusters = cluster_gwas_snps(gwas_snps, population)
+	res = concatenate(cluster_to_genes(cluster, tissue_weights, population) for cluster in clusters)
 
 	logging.info("\tFound %i genes associated to all clusters" % (len(res)))
 
@@ -169,18 +169,18 @@ def gwas_snps_to_genes(gwas_snps, populations, tissue_weights):
 	else:
 		return sorted(res, key=lambda X: X.score)
 
-def clusters_to_genes(clusters, populations, tissue_weights):
+def clusters_to_genes(clusters, population, tissue_weights):
 	"""
 
 		Associates genes to a set of clusters 
 		Args:
 		* [ Cluster ]
-		* { population_name: scalar (weight) }
+		* string (population name)
 		* {tissue_name: scalar (weight) }
 		Returntype: [ string ]
 
 	"""
-	res = concatenate(cluster_to_genes(cluster, tissue_weights, populations) for cluster in clusters)
+	res = concatenate(cluster_to_genes(cluster, tissue_weights, population) for cluster in clusters)
 
 	logging.info("\tFound %i genes associated to all clusters" % (len(res)))
 
@@ -200,12 +200,12 @@ def gwas_snps_to_tissue_weights(gwas_snps):
 	"""
 	return ['Whole_Blood'] # See FORGE??
 
-def cluster_gwas_snps(gwas_snps, populations):
+def cluster_gwas_snps(gwas_snps, population):
 	"""
 
 		Bundle together gwas_snps within LD threshold
 		* [ GWAS_SNP ]
-		* [ Bio::Ensembl::Variation::Population ]
+		* String (population name)
 		Returntype: [ GWAS_Cluster ]
 
 	"""
@@ -215,7 +215,7 @@ def cluster_gwas_snps(gwas_snps, populations):
 
 	# For every gwas snp location, create the preclusters by simple LD expansion of independent SNPs.
 	#
-	preclusters = filter (lambda X: X is not None, [ gwas_snp_to_precluster(gwas_snp_location, populations) for gwas_snp_location in gwas_snp_locations ])
+	preclusters = filter (lambda X: X is not None, [ gwas_snp_to_precluster(gwas_snp_location, population) for gwas_snp_location in gwas_snp_locations ])
 	for precluster in preclusters:
 		for gwas_snp in precluster.gwas_snps:
 			assert gwas_snp.snp.rsID in [ld_snp.rsID for ld_snp in precluster.ld_snps]
@@ -237,7 +237,7 @@ def cluster_gwas_snps(gwas_snps, populations):
 	if postgap.Globals.PERFORM_BAYESIAN:
 		# Perform GWAS finemapping of the clusters
 		# 
-		clusters = [postgap.FinemapIntegration.finemap_gwas_cluster(cluster, populations) for cluster in raw_clusters]
+		clusters = [postgap.FinemapIntegration.finemap_gwas_cluster(cluster, population) for cluster in raw_clusters]
 	else:
 		clusters = raw_clusters
 	
@@ -249,17 +249,17 @@ def cluster_gwas_snps(gwas_snps, populations):
 
 	return clusters
 
-def gwas_snp_to_precluster(gwas_snp, populations):
+def gwas_snp_to_precluster(gwas_snp, population):
     """
 
         Extract neighbourhood of GWAS snp
         Args:
         * [ GWAS_SNP ]
-        * [ string ] (populations)
+	* string (population name)
         Returntype: GWAS_Cluster
 
     """
-    mapped_ld_snps = postgap.LD.calculate_window(gwas_snp.snp)
+    mapped_ld_snps = postgap.LD.calculate_window(gwas_snp.snp, population=population)
     logging.info("Found %i SNPs in the vicinity of %s" % (len(mapped_ld_snps), gwas_snp.snp.rsID))
     return GWAS_Cluster(
 		gwas_snps = [ gwas_snp ],
@@ -404,14 +404,14 @@ def merge_clusters(cluster, other_cluster):
 		gwas_configuration_posteriors = None
 	)
 
-def cluster_to_genes(cluster, tissues, populations):
+def cluster_to_genes(cluster, tissues, population):
     """
 
         Associated Genes to a cluster of gwas_snps
         Args:
         * [ Cluster ]
         * { tissue_name: scalar (weights) }
-        * { population_name: scalar (weight) }
+	* string (population name)
         Returntype: [ GeneCluster_Association ]
 
     """
@@ -439,7 +439,7 @@ def cluster_to_genes(cluster, tissues, populations):
     else:
       # Compute LD from top SNP
       top_gwas_hit = sorted(cluster.gwas_snps, key=lambda X: X.pvalue)[-1]
-      ld = postgap.LD.get_lds_from_top_gwas(top_gwas_hit.snp, cluster.ld_snps, populations)
+      ld = postgap.LD.get_lds_from_top_gwas(top_gwas_hit.snp, cluster.ld_snps, population=population)
 
       # Obtain interaction data from LD snps
       associations = ld_snps_to_genes([snp for snp in cluster.ld_snps if snp in ld], tissues)

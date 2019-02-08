@@ -123,7 +123,7 @@ def main():
 
 	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0:
 		logging.info("Starting diseases_to_genes")
-		res = postgap.Integration.diseases_to_genes(options.diseases, expanded_efo_iris, "CEPH", options.tissues)
+		res = postgap.Integration.diseases_to_genes(options.diseases, expanded_efo_iris, options.population, options.tissues)
 		if options.bayesian:
 			pickle.dump(res, open("postgap_output", "w")) # DEBUG remove hard coded path
 		logging.info("Done with diseases_to_genes")
@@ -143,7 +143,7 @@ def main():
 	if options.json_output:
 		formatted_results = json.dumps(objectToDict(res))
 	elif options.rsID is None and options.coords is None:
-		formatted_results = pretty_output(res)
+		formatted_results = pretty_output(res, options.population)
 	else:
 		formatted_results = pretty_snp_output(res)
 
@@ -293,7 +293,7 @@ def get_options():
     parser.add_argument('--diseases', nargs='*', help='Phenotype description')
     parser.add_argument('--rsID', help='SNP rsID')
     parser.add_argument('--coords', nargs=3, help='SNP position in format rsID chrom_name position')
-    # parser.add_argument('--populations', nargs='*', default=['1000GENOMES:phase_3:GBR'])
+    parser.add_argument('--population', choices=(['AFR','AMR','EAS','EUR','SAS']), default='EUR')
     parser.add_argument('--tissues', nargs='*', help='EXPERIMENTAL')
     parser.add_argument('--output', help='Name of output file')
     parser.add_argument('--species', nargs='*', default = 'Human', help='Name of species')
@@ -372,34 +372,37 @@ def pretty_snp_association(association):
 	results += [str(association.intermediary_scores[functional_source.display_name]) for functional_source in postgap.Cisreg.sources]
 	return "\t".join(results)
 
-def pretty_output(associations):
+def pretty_output(associations, population):
 	"""
 
 		Prints association stats in roughly the same format as STOPGAP for a cluster of SNPs
 		Args: [ GeneCluster_Association ]
+		Arg2: string, population name
 		Returntype: String
 
 	"""
 	header = "\t".join(['ld_snp_rsID', 'chrom', 'pos', 'GRCh38_chrom', 'GRCh38_pos', 'afr', 'amr', 'eas', 'eur', 'sas', 'gnomad', 'gnomad_sas', 'gnomad_oth', 'gnomad_asj', 'gnomad_nfe', 'gnomad_afr', 'gnomad_amr', 'gnomad_fin', 'gnomad_eas','gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'GRCh38_gene_chrom', 'GRCh38_gene_pos', 'disease_name', 'disease_efo_id', 'score', 'rank', 'r2', 'cluster_id', 'gwas_source', 'gwas_snp', 'gwas_pvalue', 'gwas_pvalue_description', 'gwas_odds_ratio', 'gwas_odds_ratio_ci_start', 'gwas_odds_ratio_ci_end', 'gwas_beta', 'gwas_size', 'gwas_pmid', 'gwas_study', 'gwas_reported_trait', 'ls_snp_is_gwas_snp', 'vep_terms', 'vep_sum', 'vep_mean'] + ["GTEx_" + tissue_name for tissue_name in postgap.Globals.ALL_TISSUES] + [source.display_name for source in postgap.Cisreg.sources + postgap.Reg.sources]).encode('utf-8')
-	content = filter(lambda X: len(X) > 0, map(pretty_cluster_association, associations))
+	content = filter(lambda X: len(X) > 0, [pretty_cluster_association(association, population) for association in associations])
 	return "\n".join([header] + content)
 
-def pretty_cluster_association(association):
+def pretty_cluster_association(association, population):
 	"""
 
 		Prints association stats in roughly the same format as STOPGAP for a cluster of SNPs
-		Args: GeneCluster_Association
+		Arg1: GeneCluster_Association
+		Arg2: string, population name
 		Returntype: String
 
 	"""
-	results = genecluster_association_table(association)
+	results = genecluster_association_table(association, population)
 	return "\n".join("\t".join([unicode(element).encode('utf-8') for element in row]) for row in results)
 
-def genecluster_association_table(association):
+def genecluster_association_table(association, population):
 	"""
 
 		Returns association stats in roughly the same format as STOPGAP for a cluster of SNPs
 		Arg1: GeneCluster_Association
+		Arg2: string, population name
 		Returntype: [[ string or float ]]
 
 	"""
@@ -410,7 +413,7 @@ def genecluster_association_table(association):
 			for snp2 in association.cluster.ld_snps:
 				if snp1.rsID not in r2_cache or snp2.rsID not in r2_cache[snp1.rsID]:
 					try: 
-						ld_snp_ids, r_matrix = postgap.LD.get_pairwise_ld(association.cluster.ld_snps)
+						ld_snp_ids, r_matrix = postgap.LD.get_pairwise_ld(association.cluster.ld_snps, population)
 					except postgap.LD.UnitLDMatrixerror:
 						break
 					r2_sets.add(snp_set)

@@ -38,7 +38,7 @@ from postgap.DataModel import *
 import postgap.Globals
 import logging
 
-def calculate_window(snp, window_len=500000, population='EUR', cutoff=0.7):
+def calculate_window(snp, population, window_len=500000, cutoff=0.7):
 	"""
 
 		Given a SNP id, calculate the pairwise LD between all SNPs within window_size base pairs.
@@ -110,7 +110,7 @@ def calculate_window(snp, window_len=500000, population='EUR', cutoff=0.7):
 	else:
 		return ld_snps + [snp]
 
-def get_lds_from_top_gwas(gwas_snp, ld_snps, population='EUR'):
+def get_lds_from_top_gwas(gwas_snp, ld_snps, population):
 	"""
 
 		For large numbers of SNPs, best to specify SNP region with chrom:to-from, e.g. 1:7654947-8155562
@@ -187,7 +187,7 @@ def get_lds_from_top_gwas(gwas_snp, ld_snps, population='EUR'):
 class UnitLDMatrixerror(Exception):
 	pass
 
-def get_pairwise_ld(ld_snps, population='EUR'):
+def get_pairwise_ld(ld_snps, population):
 	"""
 
 		For large numbers of SNPs, best to specify SNP region with chrom:to-from, e.g. 1:7654947-8155562
