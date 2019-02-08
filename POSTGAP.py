@@ -170,6 +170,128 @@ def main():
 
 	output.write(formatted_results + "\n")
 
+commandline_description = """
+    Search GWAS/Regulatory/Cis-regulatory databases for causal genes. 
+
+    For help on commandline options, run with --help flag
+    
+    Tab delimited format of the output:
+    1	ld_snp_rsID	rsID of putative causal SNP (LD SNP) being tested
+    2	chrom		chromosome name of LD SNP
+    3	pos		position of LD SNP on chromosome
+    4	GRCh38_chrom	chromosome name of LD SNP on GRCh38
+    5	GRCh38_pos	position of LD SNP on chromosome in GRCh38	
+    6	afr		1000 Genomes MAF for AFR 	
+    7	amr		1000 Genomes MAF for AMR
+    8	eas		1000 Genomes MAF for EAS
+    9	eur		1000 Genomes MAF for EUR
+    10	sas		1000 Genomes MAF for SAS
+    11	gnomad		Overall gnomaD MAF
+    12	gnomad_sas	gnomaD MAF for SAS
+    13	gnomad_oth	gnomaD MAF for OTH
+    14	gnomad_asj	gnomaD MAF for ASJ
+    15	gnomad_nfe	gnomaD MAF for NFE
+    16	gnomad_afr	gnomaD MAF for AFR
+    17	gnomad_amr	gnomaD MAF for AMR
+    18	gnomad_fin	gnomaD MAF for FIN
+    19	gnomad_eas	gnomaD MAF for EAS
+    20	gene_symbol	HGNC symbol of gene being tested
+    21	gene_id		Ensembl ID of gene being tested
+    22	gene_chrom	Chromosome name of gene being tested
+    23	gene_tss	Position on the chromosome of TSS of gene being tested
+    24	GRCh38_gene_chrom	Chromosome name of gene being tested in GRCh38
+    25	GRCh38_gene_pos	Position on the chromosome of TSS of gene being tested on GRCh38
+    26	disease_name	Normalised name of disease or trait being tested
+    27	disease_efo_id	Ontology ID of disease or trait being tested
+    28	score		Stopgap V2G score tying LD SNP to gene	
+    29	rank		Rank of gene's V2G score among other genes tied to LD SNP
+    30	r2		Pearson correlation of LD SNP to the GWAS SNP with lowest p-value
+    31  cluster_id	Internal ID to LD SNP cluster
+    32	gwas_source	Source database of GWAS SNPs
+    33	gwas_snp	SNPs associated to disease by GWAS
+    34	gwas_pvalue	P-values of reported associations
+    35	gwas_pvalue_description	Description of study associated to p-value
+    36	gwas_odds_ratio	Odds ratio
+    37	gwas_odds_ratio_ci_start	Lower limit of OR confidence interval
+    38	gwas_odds_ratio_ci_end	Upper limit of OR confidence interval
+    39	gwas_beta	GWAS Beta coefficient
+    40	gwas_size	Sample sizes of reported associations
+    41	gwas_pmid	Source publication PubmedID of reported associations
+    42	gwas_study	Study identifier
+    43	gwas_reported_trait	Disease or trait of reported association
+    44	ld_snp_is_gwas_snp	1 if LD SNP is one of the GWAS SNPs, 0 otherwise
+    45	vep_terms	VEP consequence terms associated to LD_SNP
+    46	vep_sum		Sum of consequence impacts of LD SNP across all transcripts of gene:
+				'HIGH': 4,
+				'MEDIUM': 3,
+				'LOW': 2,
+				'MODIFIER': 1,
+				'MODERATE': 1
+    47	vep_mean	Mean of consequence impacts of LD SNP across all transcripts of gene:
+				'HIGH': 4,
+				'MEDIUM': 3,
+				'LOW': 2,
+				'MODIFIER': 1,
+				'MODERATE': 1
+    48	GTEx_Thyroid	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    49	GTEx_Testis	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    50	GTEx_Artery_Tibial	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    51	GTEx_Nerve_Tibial	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    52	GTEx_Brain_Frontal_Cortex_BA9	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    53	GTEx_Artery_Aorta	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    54	GTEx_Vagina	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    55	GTEx_Brain_Hypothalamus	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    56	GTEx_Whole_Blood	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    57	GTEx_Breast_Mammary_Tissue	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    58	GTEx_Pituitary	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    59	GTEx_Small_Intestine_Terminal_Ileum	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    60	GTEx_Adrenal_Gland	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    61	GTEx_Heart_Atrial_Appendage	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    62	GTEx_Stomach	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    63	GTEx_Brain_Caudate_basal_ganglia	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    64	GTEx_Colon_Transverse	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    65	GTEx_Brain_Cerebellum	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    66	GTEx_Esophagus_Muscularis	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    67	GTEx_Liver	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    68	GTEx_Muscle_Skeletal	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    69	GTEx_Prostate	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    70	GTEx_Pancreas	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    71	GTEx_Adipose_Subcutaneous	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    72	GTEx_Spleen	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    73	GTEx_Colon_Sigmoid	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    74	GTEx_Brain_Anterior_cingulate_cortex_BA24	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    75	GTEx_Esophagus_Gastroesophageal_Junction	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    76	GTEx_Brain_Hippocampus	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    77	GTEx_Brain_Cortex	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    78	GTEx_Heart_Left_Ventricle	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    79	GTEx_Cells_Transformed_fibroblasts	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    80	GTEx_Uterus	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    81	GTEx_Ovary	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    82	GTEx_Cells_EBV-transformed_lymphocytes	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    83	GTEx_Artery_Coronary	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    84	GTEx_Adipose_Visceral_Omentum	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    85	GTEx_Brain_Nucleus_accumbens_basal_ganglia	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    86	GTEx_Brain_Cerebellar_Hemisphere	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    87	GTEx_Esophagus_Mucosa	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    88	GTEx_Skin_Not_Sun_Exposed_Suprapubic	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    89	GTEx_Brain_Putamen_basal_ganglia	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    90	GTEx_Lung	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    91	GTEx_Skin_Sun_Exposed_Lower_leg	1 - pvalue of association between the LD SNP and the Gene in GTEx for that tissue
+    92	GTEx		Maximum of all the above GTEx scores
+    93	VEP		Max of consequence impacts of LD SNP across all transcripts of gene:
+				'HIGH': 4,
+				'MEDIUM': 3,
+				'LOW': 2,
+				'MODIFIER': 1,
+				'MODERATE': 1
+    94	Fantom5		Maximum score of FANTOM5 link between LD SNP and gene, normalised for FDR
+    95	DHS		Maximum score of ENCODE DHS link between LD SNP and gene, normalised for FDR
+    96	PCHiC		Maximum score of CHiCAGO links between LD SNP and gene across tissues, normalised for FDR
+    97	Nearest		1 if gene has the nearest protein-coding TSS to LD SNP, 0 otherwise	
+    99	Regulome	1 if LD SNP is of Category 1 or 2, 0.5 if LD SNP in Category 3
+    100	GERP	GERP conservation score across mammalian species
+    """
+
 def get_options():
     """
 
@@ -182,83 +304,35 @@ def get_options():
             }
 
     """
-    parser = argparse.ArgumentParser(description=
-    """
-    Search GWAS/Regulatory/Cis-regulatory databases for causal genes. 
-    
-    Tab delimited format:
-    1	ld_snp_rsID	rsID of putative causal SNP (LD SNP) being tested
-    2	chrom		chromosome name of LD SNP
-    3	pos		position of LD SNP on chromosome
-    4	gene_symbol	HGNC symbol of gene being tested
-    5	gene_id		Ensembl ID of gene being tested
-    6	gene_chrom	Chromosome name of gene being tested
-    7	gene_tss	Position on the chromosome of TSS of gene being tested
-    8	disease_name	Normalised name of disease or trait being tested
-    9	disease_efo_id	Ontology ID of disease or trait being tested
-    10	score		Stopgap V2G score tying LD SNP to gene	
-    11	rank		Rank of gene's V2G score among other genes tied to LD SNP
-    12	r2		Pearson correlation of LD SNP to the GWAS SNP with lowest p-value
-    13	gwas_source	Source database of GWAS SNPs
-    14	gwas_snp	SNPs associated to disease by GWAS
-    15	gwas_pvalue	P-values of reported associations
-    16	gwas_size	Sample sizes of reported associations
-    17	gwas_pmid	Source publication PubmedID of reported associations
-    18	gwas_reported_trait	Disease or trait of reported association
-    19	ld_snp_is_gwas_snp	1 if LD SNP is one of the GWAS SNPs, 0 otherwise
-    20	vep_terms	VEP consequence terms associated to LD_SNP
-    21	vep_sum		Sum of consequence impacts of LD SNP across all transcripts of gene:
-				'HIGH': 4,
-				'MEDIUM': 3,
-				'LOW': 2,
-				'MODIFIER': 1,
-				'MODERATE': 1
-    22	vep_mean	Mean of consequence impacts of LD SNP across all transcripts of gene:
-				'HIGH': 4,
-				'MEDIUM': 3,
-				'LOW': 2,
-				'MODIFIER': 1,
-				'MODERATE': 1
-    23	GTEx		1 if LD SNP is an eQTL to the gene, with p-value < 2.5e-5 
-    24	VEP		Max of consequence impacts of LD SNP across all transcripts of gene:
-				'HIGH': 4,
-				'MEDIUM': 3,
-				'LOW': 2,
-				'MODIFIER': 1,
-				'MODERATE': 1
-    25	Fantom5		Score of FANTOM5 link between LD SNP and gene, normalised for FDR
-    26	DHS		Score of ENCODE DHS link between LD SNP and gene, normalised for FDR
-    27	PCHiC		Sum of scores of CHiCAGO links between LD SNP and gene across tissues, normalised for FDR
-    28	Nearest		1 if gene has the nearest protein-coding TSS to LD SNP, 0 otherwise	
-    29	Regulome	2 if LD SNP is of Category 1 or 2, 1 if LD SNP in Category 3
-    """,
-    formatter_class = RawTextHelpFormatter
-		    )
+    parser = argparse.ArgumentParser(description=commandline_description, formatter_class = RawTextHelpFormatter)
 
     GWAS_options = ["GWAS_Catalog", "GRASP", "Phewas_Catalog", "GWAS_DB"]
     CisReg_options = ["GTEx", "VEP", "Fantom5", "DHS", "PCHiC", "Nearest"]
     Reg_options = ["Regulome", "VEP_reg"]
 
-    parser.add_argument('--efos', nargs='*')
-    parser.add_argument('--diseases', nargs='*')
-    parser.add_argument('--rsID')
-    parser.add_argument('--coords', nargs=3)
+    parser.add_argument('--efos', nargs='*', help='Phenotypic ontology term')
+    parser.add_argument('--diseases', nargs='*', help='Phenotype description')
+    parser.add_argument('--rsID', help='SNP rsID')
+    parser.add_argument('--coords', nargs=3, help='SNP position in format rsID chrom_name position')
     # parser.add_argument('--populations', nargs='*', default=['1000GENOMES:phase_3:GBR'])
-    parser.add_argument('--tissues', nargs='*')
-    parser.add_argument('--output')
-    parser.add_argument('--species', nargs='*', default = 'Human')
-    parser.add_argument('--database_dir', dest = 'databases', default = 'databases')
-    parser.add_argument('--debug', '-g', action = 'store_true')
-    parser.add_argument('--json_output', '-j', action = 'store_true')
-    parser.add_argument('--child_terms', action = 'store_true')
-    parser.add_argument('--GWAS', default=None, nargs='*', choices=(GWAS_options))
-    parser.add_argument('--Cisreg', default=None, nargs='*', choices=(CisReg_options))
-    parser.add_argument('--Reg', default=None, nargs='*', choices=(Reg_options))
+    parser.add_argument('--tissues', nargs='*', help='EXPERIMENTAL')
+    parser.add_argument('--output', help='Name of output file')
+    parser.add_argument('--species', nargs='*', default = 'Human', help='Name of species')
+    parser.add_argument('--database_dir', dest = 'databases', default = 'databases', help='Directory where data files are stored')
+    parser.add_argument('--debug', '-g', action = 'store_true', help='Debug mode')
+    parser.add_argument('--json_output', '-j', action = 'store_true', help='JSON output')
+    parser.add_argument('--child_terms', action = 'store_true', help='Search for children terms of selected phenotype ontology term(s)')
+    parser.add_argument('--GWAS', default=None, nargs='*', choices=(GWAS_options), help='GWAS databases to query')
+    parser.add_argument('--Cisreg', default=None, nargs='*', choices=(CisReg_options), help='Cisregulatory databases to query')
+    parser.add_argument('--Reg', default=None, nargs='*', choices=(Reg_options), help='Regulatory databases to query')
     parser.add_argument('--bayesian', action = 'store_true', help='EXPERIMENTAL')
-    parser.add_argument('--work_dir', default = 'postgap_temp_work_dir')
-    parser.add_argument('--summary_stats')
-    parser.add_argument('--hdf5')
-    parser.add_argument('--sqlite')
+    parser.add_argument('--work_dir', default = 'postgap_temp_work_dir', help='Working directory for output file')
+    parser.add_argument('--summary_stats', help='Location of input summary statistics file')
+    parser.add_argument('--hdf5',help='Location of eQTL HDF5 file')
+    parser.add_argument('--sqlite',help='Location of eQTL sqlite file')
+    if len(sys.argv) == 1:
+	    print commandline_description
+	    sys.exit(0)
     options = parser.parse_args()
 
     postgap.Globals.DATABASES_DIR = options.databases
