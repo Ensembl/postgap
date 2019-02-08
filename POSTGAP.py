@@ -56,27 +56,6 @@ r2_sets = set()
 GRCh38_snp_locations= dict()
 known_chroms = map(str, range(1,23)) + ['X','Y']
 
-'''
-Development TODO list:
-
-A. Datasets to integrate:
-	-Cisregulatory annotations:
-		PCHIC (STOPGAP Scoring: Single cell line: +1, multiple cell lines: +2)
-
-	-Epigenetic activity:
-		PhyloP (STOPGAP Scoring: FPR 0-0.6: +2, 0.6-0.85: +1,0.85-1: +0)
-
-B. Code improvements:
-	Pathways analysis (Downstream)
-	Take into account population composition in LD calcs
-
-C. Model improvements:
-	Replace PICS with Bayesian model
-	Fine mapping of summary data
-	Tissue selection
-
-'''
-
 def main():
 	"""
 
