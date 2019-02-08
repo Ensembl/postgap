@@ -115,7 +115,7 @@ def scan_disease_databases(diseases, efos):
 		
 		if postgap.Globals.PERFORM_BAYESIAN:
 			if gwas_association.odds_ratio is not None:
-				z_score = postgap.FinemapIntegration.z_score_from_pvalue(gwas_association.pvalue, gwas_association.odds_ratio - 1)
+				z_score = postgap.FinemapIntegration.z_score_from_pvalue(gwas_association.pvalue, float(gwas_association.odds_ratio) - 1)
 				beta = math.log(gwas_association.odds_ratio)
 			elif gwas_association.beta_coefficient is not None:
 				z_score = postgap.FinemapIntegration.z_score_from_pvalue(gwas_association.pvalue, gwas_association.beta_coefficient)
