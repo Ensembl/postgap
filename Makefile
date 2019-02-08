@@ -89,6 +89,7 @@ bgz:
 d_1000Genomes:
 	mkdir -p ${DEST_DIR}/raw/1000Genomes
 	cat ./preprocessing/links.txt | xargs -n1 wget -nc -P ${DEST_DIR}/raw/1000Genomes/
+	wget -nc -P ${DEST_DIR}/raw/1000Genomes/ http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel
 
 efo_list:
 	cut -f71 ${DEST_DIR}/GRASP.txt | tr ',' '\n' | sort | uniq > ${DEST_DIR}/raw/GRASP.efos.txt
@@ -105,17 +106,26 @@ script: efo_list
 
 define process_1000Genomes_file
 gzip -dc $(1) \
-| vcfkeepsamples - `cat ./preprocessing/EUR_samples.txt`\
+| vcfkeepsamples - `cat ${DEST_DIR}/1000Genomes/$(2).samples.txt`\
 | vcftools --vcf - --maf 0.01 --min-alleles 2 --max-alleles 2 --recode --stdout \
 | bcftools convert -Ob \
-> ${DEST_DIR}/1000Genomes/EUR/`basename $(1) | sed -e 's/vcf.gz/bcf/'`;
+> ${DEST_DIR}/1000Genomes/$(2)/`basename $(1) | sed -e 's/vcf.gz/bcf/'`;
+endef
+
+define process_1000Genomes_superpopulation
+echo _$(1)_
+mkdir -p ${DEST_DIR}/1000Genomes/$(1)
+$(eval vcf_files := $(wildcard ${DEST_DIR}/raw/1000Genomes/*.vcf.gz))
+$(foreach file, $(vcf_files), $(call process_1000Genomes_file,$(file),$(1)))
+$(eval bcf_files := $(wildcard ${DEST_DIR}/1000Genomes/$(1)/*.bcf))
+$(foreach file, $(bcf_files), bcftools index $(file);)
 endef
 
 .PHONY: 1000Genomes
 
+superpopulations :=AFR AMR EAS EUR SAS
+
 1000Genomes:
-	mkdir -p ${DEST_DIR}/1000Genomes/EUR
-	$(eval vcf_files := $(wildcard ${DEST_DIR}/raw/1000Genomes/*.vcf.gz))
-	$(foreach file, $(vcf_files), $(call process_1000Genomes_file, $(file)))
-	$(eval bcf_files := $(wildcard ${DEST_DIR}/1000Genomes/*.bcf))
-	$(foreach file, $(bcf_files), bcftools index $(file);)
+	mkdir -p ${DEST_DIR}/1000Genomes
+	$(foreach superpopulation, $(superpopulations), grep $(superpopulation) ${DEST_DIR}/raw/1000Genomes/integrated_call_samples_v3.20130502.ALL.panel | cut -f1 > ${DEST_DIR}/1000Genomes/$(superpopulation).samples.txt;)
+	$(foreach superpopulation, $(superpopulations), $(call process_1000Genomes_superpopulation,$(superpopulation)))
