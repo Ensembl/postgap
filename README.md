@@ -76,8 +76,8 @@ python POSTGAP.py --summary_stats my_stats.txt
 ```
 
 The summary statistics file should be tab delimited with the following columns:
-* Chromosome
-* Position
+* Chromosome (GRCh37)
+* Position (GRCh37)
 * MarkerName
 * Effect_allele
 * Non_Effect_allele
@@ -98,7 +98,6 @@ In this case, POSTGAP produces an output file, 'postgap_output', which can be di
 ```
 python extract_data.py
 ```
-
 
 Output
 ------
@@ -128,7 +127,7 @@ Testing
 -------
 
 ```
-cat scripts/testing/all_efos.txt | xargs -n1 python POSTGAP.py --efos > table.tsv
+python postgap_and_tests.py --database_dir /path/to/postgap/databases --efos EFO_0008263 --output EFO_0008263.txt --GWAS GWAS_Catalog
 ```
 
 More Info
