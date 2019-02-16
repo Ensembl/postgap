@@ -110,12 +110,6 @@ If you wish, you can redirect this into a file:
 python POSTGAP.py --disease autism --output results.txt
 ```
 
-or an SQLITE database:
-
-```
-python POSTGAP.py --disease autism --db results.sqlite3
-```
-
 If you want a JSON dump of all the data retrieved by the pipeline:
 
 ```
