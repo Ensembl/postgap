@@ -1,5 +1,5 @@
-POSTGAP
-=======
+Post-GWAS Analysis Pipeline
+===========================
 
 Copyright holder: [EMBL-European Bioinformatics Institute](http://www.ebi.ac.uk) (Apache 2 License)
 
@@ -133,4 +133,4 @@ python postgap_and_tests.py --database_dir /path/to/postgap/databases --efos EFO
 More Info
 ---------
 
-Checkout out our [Wiki](https://github.com/Ensembl/postgap/wiki)
+Check out our [Wiki](https://github.com/Ensembl/postgap/wiki)
