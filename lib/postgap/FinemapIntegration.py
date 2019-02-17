@@ -204,8 +204,6 @@ def compute_joint_posterior(cluster, associations):
 		Arg4: [GeneSNP_Association]
 		Returntype: Hash of hashes: Gene => Tissue => Float
 	"""
-	print "Computing finemap on new cluster"
-	print cluster
 	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
 	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
 	gene_tissue_snp_eQTL_hash = organise_eQTL_data(associations)
