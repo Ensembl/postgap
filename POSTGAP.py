@@ -521,13 +521,12 @@ def genecluster_association_table(association, population):
 				else:
 					vep_sum = 0
 
-				tissue_score = dict()
-
+				tissue_eQTL_scores = []
 				for tissue_name in postgap.Globals.ALL_TISSUES:
 					if tissue_name in gene_snp_association.intermediary_scores:
-						tissue_score[tissue_name] = gene_snp_association.intermediary_scores[tissue_name]
+						tissue_eQTL_scores.append(gene_snp_association.intermediary_scores[tissue_name])
 					else:
-						tissue_score[tissue_name] = 0
+						tissue_eQTL_scores.append(0)
 
 
 				r2_distance = read_pairwise_ld(gene_snp_association.snp, gwas_snp.snp)
@@ -585,7 +584,7 @@ def genecluster_association_table(association, population):
 					vep_mean
 				]
 
-				row += [tissue_score[tissue_name] for tissue_name in postgap.Globals.ALL_TISSUES]
+				row += tissue_eQTL_scores
 				row += [gene_snp_association.intermediary_scores[functional_source.display_name] for functional_source in postgap.Cisreg.sources + postgap.Reg.sources]
 				results.append(row)
 
