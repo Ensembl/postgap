@@ -203,7 +203,7 @@ def compute_joint_posterior(cluster, associations):
 		Compute collocation posterior of gene expression and GWAS phenotype at the specified cluster and tissue
 		Arg1: GWAS_Cluser
 		Arg4: [GeneSNP_Association]
-		Returntype: Hash of hashes: Gene => Tissue => Float
+		Returntype: Hash of hashes: Gene => Tissue => (rsID=>CLUSTER) => Float
 	"""
 	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
 	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
@@ -216,7 +216,7 @@ def compute_gene_joint_posterior(cluster, gene, tissue_snp_eQTL_hash):
 		Arg1: GWAS_Cluster
 		Arg2: Gene
 		Arg4: Hash of hashes: Tissue => SNP => (Float, Float)
-		Returntype: Hash of hashes: Tissue => Float
+		Returntype: Hash of hashes: Tissue => (rsID|CLUSTER) => Float
 	"""
 	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
 	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
@@ -229,7 +229,7 @@ def compute_gene_tissue_joint_posterior(cluster, tissue, gene, eQTL_snp_hash):
 		Arg2: Tissue (string)
 		Arg3: Gene
 		Arg4: Hash string (rsID) => (Float (z-score), Float (beta))
-		Returntype: Float
+		Returntype: Hash String (rsID|CLUSTER) => Float
 	"""
 	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
 	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
@@ -295,7 +295,12 @@ def compute_gene_tissue_joint_posterior(cluster, tissue, gene, eQTL_snp_hash):
 	)
 
 	## Joint posterior
-	res = eQTL_configuration_posteriors.joint_posterior(cluster.gwas_configuration_posteriors)[0]
+	sum_posteriors, config_sample = eQTL_configuration_posteriors.joint_posterior(cluster.gwas_configuration_posteriors)
+
+	# Organise information into a hash 
+	res = dict((config, config_sample.posterior[config_sample.configurations[config]]) for config in config_sample.configurations)
+	res['_CLUSTER'] = sum_posteriors
+
 	return res
 
 
