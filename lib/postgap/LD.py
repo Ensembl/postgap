@@ -213,7 +213,9 @@ def get_pairwise_ld(ld_snps, population):
 	### Find the relevant BCF file
 	chrom_file = os.path.join(postgap.Globals.DATABASES_DIR, '1000Genomes', population, 'ALL.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf' % (chrom))
 	if not os.path.isfile(chrom_file):
-		return [], numpy.zeros((0,0))
+		SNP_ids  = [ ld_snp.rsID for ld_snp in ld_snps ]
+		r2_array = numpy.zeros((len(ld_snps), len(ld_snps)))
+		return SNP_ids, r2_array
 
 	### get a list of rsIDs into a file
 	rsID_file, rsID_file_name = tempfile.mkstemp()
