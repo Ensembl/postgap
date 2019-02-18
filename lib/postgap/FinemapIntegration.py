@@ -35,21 +35,21 @@ import collections
 
 from postgap.DataModel import *
 
-def finemap_gwas_cluster(cluster, populations):
+def finemap_gwas_cluster(cluster, population):
 	'''
 
 		Enriches GWAS clusters with z-scores and GWAS posteriors
 		Arg1: GWAS_Cluster
-		Arg2: {population (string): weight (float)}
+		Arg2: population (string)
 		Returntype: GWAS_Cluster
 
 	'''
 	if len(cluster.ld_snps) == len(cluster.gwas_snps):
-		ld_snps, ld_matrix, z_scores, betas = compute_ld_matrix(cluster)
+		ld_snps, ld_matrix, z_scores, betas = compute_ld_matrix(cluster, population)
 	elif postgap.Globals.GWAS_SUMMARY_STATS_FILE is not None:
-		ld_snps, ld_matrix, z_scores, betas = extract_z_scores_from_file(cluster)
+		ld_snps, ld_matrix, z_scores, betas = extract_z_scores_from_file(cluster, population)
 	else:
-		ld_snps, ld_matrix, z_scores, betas = impute_z_scores(cluster)
+		ld_snps, ld_matrix, z_scores, betas = impute_z_scores(cluster, population)
 
 	## Define experiment label (serves for debugging logs)
 	chrom = ld_snps[0].chrom
@@ -78,15 +78,16 @@ def finemap_gwas_cluster(cluster, populations):
 	assert len(ld_snps) ==  ld_matrix.shape[1]
 	return GWAS_Cluster(cluster.gwas_snps, ld_snps, ld_matrix, z_scores, configuration_posteriors) 
 
-def compute_ld_matrix(cluster):
+def compute_ld_matrix(cluster, population):
 	'''
 		Computes LD matrix, re-orders SNPs zccordingly, and extract Z-scores from 
 		Cluster data.
 		Arg1: Cluster
+		Arg2: population (string)
 		Returntype: [SNP], numpy.matrix (square LD matrix), numpy.matrix (Z-score vector)
 	'''
 	## Compute ld_matrix
-	ld_snp_ids, ld_matrix = postgap.LD.get_pairwise_ld(cluster.ld_snps)
+	ld_snp_ids, ld_matrix = postgap.LD.get_pairwise_ld(cluster.ld_snps, population)
 
 	## Update list of LD SNPs
 	ld_snp_hash = dict((ld_snp.rsID, ld_snp) for index, ld_snp in enumerate(cluster.ld_snps))
@@ -107,7 +108,7 @@ def compute_ld_matrix(cluster):
 	assert len(ld_snps) ==  ld_matrix.shape[1]
 	return ld_snps, ld_matrix, z_scores, betas
 
-def extract_z_scores_from_file(cluster):
+def extract_z_scores_from_file(cluster, population):
 	'''
 		Extracts Z-scores from summary stats file, computes LD matrix
 		TODO: It is inefficient torun through a 1GB file once per locus, this should be done only once
@@ -134,7 +135,7 @@ def extract_z_scores_from_file(cluster):
 	found_ld_snps = [ld_snp_hash[rsID] for rsID in ld_snp_results]
 
 	## Compute ld_matrix
-	ld_snp_ids, ld_matrix = postgap.LD.get_pairwise_ld(found_ld_snps)
+	ld_snp_ids, ld_matrix = postgap.LD.get_pairwise_ld(found_ld_snps, population)
 
 	## Update list of LD SNPs
 	ld_snps = [ld_snp_hash[rsID] for rsID in ld_snp_ids]
@@ -145,14 +146,14 @@ def extract_z_scores_from_file(cluster):
 	assert len(ld_snps) ==  ld_matrix.shape[1]
 	return ld_snps, ld_matrix, z_scores, betas
 
-def impute_z_scores(cluster):
+def impute_z_scores(cluster, population):
 	'''
 		Imputes Z-scores from available data, computes LD matrix
 		Arg1: Cluster
 		Returntype: [SNP], numpy.matrix (square LD matrix), numpy.matrix (Z-score vector)
 	'''
 	## Compute ld_matrix
-	ld_snp_ids, ld_matrix = postgap.LD.get_pairwise_ld(cluster.ld_snps)
+	ld_snp_ids, ld_matrix = postgap.LD.get_pairwise_ld(cluster.ld_snps, population)
 
 	## Update list of LD SNPs
 	ld_snp_hash = dict((ld_snp.rsID, ld_snp) for index, ld_snp in enumerate(cluster.ld_snps))
