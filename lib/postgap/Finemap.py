@@ -38,23 +38,39 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 
 	def normalise_posteriors(self):
 		'''
-			Return identical OneDConfigurationSample but with updated posteriors that add up to 1
+			Return identical OneDConfigurationSample but with updated non-log posteriors that add up to 1
 			Arg1: OneDConfigurationSample
 			Returntype: OneDConfigurationSample
 		'''
 		max_logpp_unscaled = numpy.max(self.posterior)
-		assert not numpy.isinf(numpy.exp(max_logpp_unscaled)), 'max BF going to infinity'
-		sum_calib = numpy.sum(numpy.exp(self.posterior-max_logpp_unscaled)) * numpy.exp(max_logpp_unscaled)
-		assert not numpy.isinf(sum_calib), 'calibration going to infinity'
-		return OneDConfigurationSample(
-				configurations = self.configurations,
-				posterior = numpy.exp(self.posterior) / sum_calib,
-				log_BF = self.log_BF,
-				configuration_size = self.configuration_size,
-				log_prior = self.log_prior,
-				labels = self.labels,
-				sample_label = self.sample_label
-			)
+		# Check if max_logpp_unscaled is so large that it overflows the exponential function 
+		if numpy.exp(-max_logpp_unscaled) > 0:
+			sum_calib = numpy.sum(numpy.exp(self.posterior-max_logpp_unscaled))
+			assert not numpy.isinf(sum_calib), 'calibration going to infinity'
+			normalisation_factor = numpy.exp(-max_logpp_unscaled) / sum_calib
+			assert not numpy.isinf(normalisation_factor), 'normalisation going to infinity'
+			return OneDConfigurationSample(
+					configurations = self.configurations,
+					posterior = numpy.exp(self.posterior) * normalisation_factor, 
+					log_BF = self.log_BF,
+					configuration_size = self.configuration_size,
+					log_prior = self.log_prior,
+					labels = self.labels,
+					sample_label = self.sample_label
+				)
+		else:
+			# If exponentiation is overflowed, reduce the posterior of non-maximal points to 0 
+			posterior_max_points = numpy.where(self.posterior == max_logpp_unscaled, 1, 0)
+			return OneDConfigurationSample(
+					configurations = self.configurations,
+					posterior = posterior_max_points / numpy.sum(posterior_max_points), 
+					log_BF = self.log_BF,
+					configuration_size = self.configuration_size,
+					log_prior = self.log_prior,
+					labels = self.labels,
+					sample_label = self.sample_label
+				)
+
 
 	def marginals(self, singleton_count):
 		'''
