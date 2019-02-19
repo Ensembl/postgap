@@ -364,7 +364,7 @@ def finemap(z_scores, beta_scores, cov_matrix, n, labels, sample_label, updated_
 		v_scale = v_scale, 
 		g = g, 
 		labels=labels,
-		sample_label = sample_label
+		sample_label = sample_label,
                 annotations = cluster.annotations,
                 lambdas = updated_lambdas
 	)
@@ -743,7 +743,7 @@ def merge_samples(samples):
 	log_prior = numpy.zeros(len(configurations))
 
 	for configuration in configurations:
-		sample, old_index = configurations_old[configuration]
+            sample, old_index = configurations_old[configuration]
 		new_index = configurations[configuration]
 		posterior[new_index] = sample.posterior[old_index]
 		configuration_size[new_index] = sample.configuration_size[old_index]
@@ -755,7 +755,7 @@ def merge_samples(samples):
 			posterior = posterior,
 			log_BF = log_BF,
 			configuration_size = configuration_size,
-			log_prior = log_prior
+			log_prior = log_prior,
                         labels = None, 
                         sample_label = None
 		)
@@ -790,6 +790,23 @@ def calc_approx_v(maf, sampN):
     else:
         approx_v = .001
     return approx_v
+
+def calc_approx_v_cc(maf, sampN_case, sampN_control):
+    '''
+        compute approximate prior for case-control studies
+        Arg1: float, Minor Allele Frequency (MAF) at SNP
+        Arg2: int, sample size for case at SNP
+        Arg3: int, sample size for control SNP
+    '''
+    if maf > 0.5:
+        maf = 1 - maf 
+    num      = sampN_case + sampN_control 
+    tmp1     = 2*maf*(1-maf) + 4*maf*maf
+    interior = 2*maf*(1-maf) + 2*maf*maf
+    tmp2     = interior * interior
+    denom    = sampN_case * sampN_control * (tmp1 - tmp2)
+    approx_v_cc = num / denom
+    return approx_v_cc
 
 def calc_logBF_ind(v, w, z_score):
     '''
@@ -874,7 +891,10 @@ def mk_modified_clusters(p_cluster, W = [0.01, 0.1, 0.5], pi = 0.001):
         '''
     MAFs       = map(float, p_cluster.mafs)
     sample_size= p_cluster.gwas_snps[0].evidence[0].sample_size
-    approx_v   = [calc_approx_v(maf, sample_size)  for maf in MAFs]
+    #To DO: Setting option for quantative and qualitative trait (Default for GWAS is qualitative and for eQTL is quantitative)
+    #approx_v   = [calc_approx_v(maf, sample_size)  for maf in MAFs]
+    #To DO: sampN_case / sampN_control setting
+    approx_v   = [calc_approx_v_cc(maf, sample_size, samplze_size)  for maf in MAFs]
     z_scores   = p_cluster.z_scores
     logBFs     = [calc_logBF(approx_v[i], W, z_scores[i]) for i in range(len(z_scores))]
     mat_annot  = p_cluster.annotations.T
