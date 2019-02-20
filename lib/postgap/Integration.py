@@ -177,7 +177,7 @@ def clusters_to_genes(clusters, populations, tissue_weights):
         # If required, perform genome-wide GWAS finemapping
 	if postgap.Globals.PERFORM_BAYESIAN:
 		cluster_associations = postgap.FinemapIntegration.compute_gwas_posteriors(cluster_associations, populations)
-	print cluster_associations[0][0].ld_matrix
+	#print cluster_associations[0][0].ld_matrix
 	
         # Perform cluster by cluster finemapping
 	res = concatenate(cluster_to_genes(cluster, associations, tissue_weights, populations) for cluster, associations in cluster_associations)

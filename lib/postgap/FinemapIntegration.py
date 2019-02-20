@@ -44,7 +44,7 @@ def compute_gwas_posteriors(cluster_associations, populations):
 	"""
 	prepped_clusters = [(prepare_cluster_for_finemap(cluster, associations, populations), associations) for cluster, associations in cluster_associations]
 	# MLE calculation 
-        modified_clusters= [(mk_modified_clusters(cluster), associations) for cluster, associations in prepped_clusters]
+        modified_clusters= [(postgap.finemap.mk_modified_clusters(cluster), associations) for cluster, associations in prepped_clusters]
 	return [(finemap_gwas_cluster(cluster), associations) for cluster, associations in prepped_clusters]
 
 def prepare_cluster_for_finemap(cluster, associations, populations):
@@ -57,15 +57,17 @@ def prepare_cluster_for_finemap(cluster, associations, populations):
 		Returntype: GWAS_Cluster
 
 	'''
-	mafs = extract_snp_mafs(cluster, associations, populations) 
-	annotations = extract_snp_annotations(cluster, associations)
-
 	if len(cluster.ld_snps) == len(cluster.gwas_snps):
 		ld_snps, ld_matrix, z_scores, betas = compute_ld_matrix(cluster)
 	elif postgap.Globals.GWAS_SUMMARY_STATS_FILE is not None:
 		ld_snps, ld_matrix, z_scores, betas = extract_z_scores_from_file(cluster)
 	else:
 		ld_snps, ld_matrix, z_scores, betas = impute_z_scores(cluster)
+        
+        cluster_f = GWAS_Cluster(cluster.gwas_snps, ld_snps, ld_matrix, z_scores, betas, None, None, None)
+        
+        mafs = extract_snp_mafs(cluster_f, associations, populations)
+	annotations = extract_snp_annotations(cluster_f, associations)
 
 	assert len(ld_snps) ==  ld_matrix.shape[0]
 	assert len(ld_snps) ==  ld_matrix.shape[1]
@@ -81,9 +83,10 @@ def extract_snp_mafs(cluster, associations, populations):
 	maf_hash = collections.defaultdict(int)
 	for association in associations:
 		for evidence in association.regulatory_evidence:
-                    if evidence.info['MAFs'] is not None:
-			if evidence.source == 'VEP_reg' and populations in evidence.info['MAFs']:
-				maf_hash[association.snp.rsID] = evidence.info['MAFs'][populations]
+                    if evidence.info is not None:
+                        if evidence.info['MAFs'] is not None:
+                            if evidence.source == 'VEP_reg' and populations in evidence.info['MAFs']:
+                                maf_hash[association.snp.rsID] = evidence.info['MAFs'][populations]
 	return numpy.array([maf_hash[snp.rsID] for snp in cluster.ld_snps])
 
 def extract_snp_annotations(cluster, associations):
