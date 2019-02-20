@@ -9,6 +9,7 @@ import itertools as it
 import operator
 import random
 import collections
+from scipy import optimize
 
 OneDConfigurationSample_prototype = collections.namedtuple(
 	'OneDConfigurationSample', 
@@ -381,7 +382,7 @@ def finemap(z_scores, beta_scores, cov_matrix, n, labels, sample_label, updated_
 		g = g, 
 		labels=labels,
 		sample_label = sample_label,
-                annotations = cluster.annotations,
+                annotations = annotations,
                 lambdas = updated_lambdas
 	)
 
@@ -759,7 +760,7 @@ def merge_samples(samples):
 	log_prior = numpy.zeros(len(configurations))
 
 	for configuration in configurations:
-            sample, old_index = configurations_old[configuration]
+                sample, old_index = configurations_old[configuration]
 		new_index = configurations[configuration]
 		posterior[new_index] = sample.posterior[old_index]
 		configuration_size[new_index] = sample.configuration_size[old_index]
