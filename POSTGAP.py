@@ -62,8 +62,9 @@ def main():
 		Reads commandline parameters, prints corresponding associated genes with evidence info
 
 	"""
-	
-	logging.config.fileConfig('configuration/logging.conf')
+	postgap_path = os.path.dirname(os.path.realpath(__file__))
+	print postgap_path
+	logging.config.fileConfig(postgap_path + '/configuration/logging.conf')
 
 	options = get_options()
 	
