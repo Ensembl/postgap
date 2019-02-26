@@ -144,6 +144,8 @@ class GTEx(Cisreg_source):
 			else:
 				z_score = None
 
+			assert cisreg_with_beta.beta is not None
+
 			combined_cisreg_evidence = Cisregulatory_Evidence(
 				snp    = cisreg_with_pvalue.snp,
 				gene   = cisreg_with_pvalue.gene,
@@ -202,6 +204,9 @@ class GTEx(Cisreg_source):
 				for eQTL in eQTLs
 			]
 		except:
+			logging.warning("Got exception when quering _snp_betas")
+			logging.warning("The exception is %s" % (e))
+			logging.warning("Returning 'None' and pretending this didn't happen.")
 			return None
 
 	def _snp_pvalues(self, snp):
@@ -248,6 +253,9 @@ class GTEx(Cisreg_source):
 			]
 
 		except Exception, e:
+			logging.warning("Got exception when quering _snp_pvalues")
+			logging.warning("The exception is %s" % (e))
+			logging.warning("Returning 'None' and pretending this didn't happen.")
 			return None
 
 	def _snp_hdf5(self, snp):
@@ -301,12 +309,14 @@ class GTEx(Cisreg_source):
 					continue
 
 				try:
-					beta = beta[p_val_index[0][k]][p_val_index[1][k]][p_val_index[2][k]]
-				except:
-					beta = None
+					beta_val = beta[p_val_index[0][k]][p_val_index[1][k]][p_val_index[2][k]]
+				except Exception as e:
+					logging.warning("Got exception when quering getting BETA value from snp_hdf5")
+					logging.warning("The exception is %s" % (e))					
+					continue
 
 				if postgap.Globals.PERFORM_BAYESIAN:
-					z_score = postgap.FinemapIntegration.z_score_from_pvalue(pvalue,beta),
+					z_score = postgap.FinemapIntegration.z_score_from_pvalue(pvalue,beta_val),
 				else:
 					z_score = None
 
@@ -322,7 +332,7 @@ class GTEx(Cisreg_source):
 						info = None,
 						z_score = z_score,
 						pvalue = pvalue,
-						beta = beta
+						beta = float(beta_val)
 					)
 				])
 

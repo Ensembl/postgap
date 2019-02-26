@@ -236,7 +236,11 @@ def compute_gene_tissue_joint_posterior(cluster, tissue, gene, eQTL_snp_hash):
 	## Determine which SNPs are missing values
 	missing_indices = numpy.array([index for index, ld_snp in enumerate(cluster.ld_snps) if ld_snp.rsID not in eQTL_snp_hash]).astype(int)
 	known_z_scores = numpy.array([eQTL_snp_hash[ld_snp.rsID][0] for ld_snp in cluster.ld_snps if ld_snp.rsID in eQTL_snp_hash])
+	
 	known_betas = numpy.array([eQTL_snp_hash[ld_snp.rsID][1] for ld_snp in cluster.ld_snps if ld_snp.rsID in eQTL_snp_hash])
+	
+	assert all(beta is not None for beta in known_betas)
+	
 	assert len(known_z_scores) > 0
 	assert len(missing_indices) != len(cluster.ld_snps), (missing_indices, known_z_scores)
 	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
