@@ -429,9 +429,11 @@ def genecluster_association_table(association, population):
 
 	GRCh38_gene = postgap.Ensembl_lookup.get_ensembl_gene(association.gene.id, postgap.Ensembl_lookup.GRCH38_ENSEMBL_REST_SERVER)
 	if GRCh38_gene is None:
+		logging.info("%s not mapped onto GRCh38 - skipping" % association.gene.id)
 		return []
 
 	if GRCh38_gene.chrom not in known_chroms:
+		logging.info("%s not on the principal GRCh38 assembly - skipping" % GRCh38_gene.chrom)
 		return []
 
 	GRCh38_snps = postgap.Ensembl_lookup.get_snp_locations([ld_snp.rsID for ld_snp in association.cluster.ld_snps if ld_snp.rsID not in GRCh38_snp_locations], postgap.Ensembl_lookup.GRCH38_ENSEMBL_REST_SERVER)
@@ -445,13 +447,16 @@ def genecluster_association_table(association, population):
 		for gwas_association in gwas_snp.evidence:
 			pmid = clean_pmid(gwas_association.publication)
 			if pmid is None:
+				logging.info("PMID missing - skipping variant")
 				continue
 
 			for gene_snp_association in association.evidence:
 				if gene_snp_association.snp.rsID not in GRCh38_snp_locations:
+					logging.info("%s not on GRCh38 - skipping" % gene_snp_association.snp.rsID)
 					continue
 
 				if gene_snp_association.snp.chrom not in known_chroms or GRCh38_snp_locations[gene_snp_association.snp.rsID].chrom not in known_chroms:
+					logging.info("%s not on main GRCh37 (%s) & GRCh38 assembly (%s) - skipping" % (gene_snp_association.snp.rsID, gene_snp_association.snp.chrom, GRCh38_snp_locations[gene_snp_association.snp.rsID].chrom))
 					continue
 
 				afr = 'N/A'
@@ -543,6 +548,7 @@ def genecluster_association_table(association, population):
 				r2_distance = read_pairwise_ld(gene_snp_association.snp, gwas_snp.snp)
 
 				if r2_distance < 0.7:
+					logging.info("%s LD from GWAS SNP < 0.7 - skipping" % gene_snp_association.snp.rsID)
 					continue
 
 				row = [
