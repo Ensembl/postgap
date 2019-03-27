@@ -115,7 +115,7 @@ class VEP_reg(Reg_source):
 			Returntype: [ Regulatory_Evidence ]
 
 		"""
-		list = concatenate(self.get(chunk) for chunk in chunks(snps, 199))
+		list = concatenate(self.get(chunk) for chunk in chunks(snps, 1))
 		'''
 
 			Example output from VEP:
