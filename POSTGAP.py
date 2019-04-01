@@ -126,7 +126,7 @@ def main():
 		logging.info("Starting diseases_to_genes")
 		res = postgap.Integration.diseases_to_genes(options.diseases, expanded_efo_iris, options.population, options.tissues)
 		if options.bayesian:
-			pickle.dump(res, open("postgap_output", "w")) # DEBUG remove hard coded path
+			pickle.dump(res, open(options.output+'.pkl', "w")) # DEBUG remove hard coded path
 		logging.info("Done with diseases_to_genes")
 	elif options.rsID is not None:
 		res = postgap.Integration.rsIDs_to_genes(options.rsID, options.tissues)
@@ -139,7 +139,7 @@ def main():
 	if options.output is None:
 		output = sys.stdout
 	else:
-		output = open(options.output, "w")
+		output = open(options.output+'.txt', "w")
 
 	if options.json_output:
 		formatted_results = json.dumps(objectToDict(res))
@@ -289,6 +289,7 @@ def get_options():
     GWAS_options = ["GWAS_Catalog", "GRASP", "Phewas_Catalog", "GWAS_DB"]
     CisReg_options = ["GTEx", "VEP", "Fantom5", "DHS", "PCHiC", "Nearest"]
     Reg_options = ["Regulome", "VEP_reg"]
+    TYPE_options = ['binom','ML','EM', 'ML_EM']
 
     parser.add_argument('--efos', nargs='*', help='Phenotypic ontology term')
     parser.add_argument('--diseases', nargs='*', help='Phenotype description')
@@ -305,6 +306,7 @@ def get_options():
     parser.add_argument('--GWAS', default=None, nargs='*', choices=(GWAS_options), help='GWAS databases to query')
     parser.add_argument('--Cisreg', default=None, nargs='*', choices=(CisReg_options), help='Cisregulatory databases to query')
     parser.add_argument('--Reg', default=None, nargs='*', choices=(Reg_options), help='Regulatory databases to query')
+    parser.add_argument('--TYPE', default= 'binom')
     parser.add_argument('--bayesian', action = 'store_true', help='EXPERIMENTAL')
     parser.add_argument('--work_dir', default = 'postgap_temp_work_dir', help='Working directory for output file')
     parser.add_argument('--summary_stats', help='Location of input summary statistics file')
@@ -320,7 +322,13 @@ def get_options():
     postgap.Globals.DEBUG = postgap.Globals.DEBUG or options.debug
     postgap.Globals.GWAS_SUMMARY_STATS_FILE = options.summary_stats
     postgap.Globals.PERFORM_BAYESIAN = options.bayesian
-    
+   
+    if options.TYPE is not None:
+        postgap.Globals.TYPE = options.TYPE
+
+    if options.output is not None:
+        postgap.Globals.OUTPUT = options.output
+
     if options.efos is not None:
         postgap.Globals.work_directory = options.work_dir + "/" + "_".join(options.efos)
     

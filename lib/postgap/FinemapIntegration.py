@@ -33,6 +33,8 @@ import numpy
 import postgap.Globals
 import collections
 
+import cPickle as pickle
+
 from postgap.DataModel import *
 
 def compute_gwas_posteriors(cluster_associations, populations):
@@ -40,14 +42,20 @@ def compute_gwas_posteriors(cluster_associations, populations):
 		Compute posterior of GWAS causality across all clusters
 		Arg1: [(GWAS_Cluster, GeneSNP_Association)]
 		Arg2: dict(string => float)
+                Arg3: binom/ ML/ EM/ ML_EM
 		Returntype: [(GWAS_Cluster, GeneSNP_Associations)]
 	"""
-	prepped_clusters = [(prepare_cluster_for_finemap(cluster, associations, populations), associations) for cluster, associations in cluster_associations]
-	# MLE calculation 
-        modified_clusters= [(postgap.finemap.mk_modified_clusters(cluster), associations) for cluster, associations in prepped_clusters]
+	#prepped_clusters = [(prepare_cluster_for_finemap(cluster, associations, populations), associations) for cluster, associations in cluster_associations]
+        prepped_clusters = []
+        for cluster, associations in cluster_associations:
+                if ( len(cluster.ld_snps) < 300 ):
+                    continue
+                prepped_clusters.append( (prepare_cluster_for_finemap(cluster, associations, populations), associations) )
+        # MLE calculation 
+        prepped_clusters= [(postgap.Finemap.mk_modified_clusters(cluster), associations) for cluster, associations in prepped_clusters]
 	return [(finemap_gwas_cluster(cluster), associations) for cluster, associations in prepped_clusters]
 
-def prepare_cluster_for_finemap(cluster, associations, populations):
+def prepare_cluster_for_finemap(cluster, associations, populations, tissue_weights=['Whole_Blood']):
 	'''
 
 		Enriches GWAS clusters with z-scores, betas, MAFs and annotations
@@ -57,6 +65,7 @@ def prepare_cluster_for_finemap(cluster, associations, populations):
 		Returntype: GWAS_Cluster
 
 	'''
+
 	if len(cluster.ld_snps) == len(cluster.gwas_snps):
 		ld_snps, ld_matrix, z_scores, betas = compute_ld_matrix(cluster, population)
 	elif postgap.Globals.GWAS_SUMMARY_STATS_FILE is not None:
@@ -65,9 +74,12 @@ def prepare_cluster_for_finemap(cluster, associations, populations):
 		ld_snps, ld_matrix, z_scores, betas = impute_z_scores(cluster, population)
         
         cluster_f = GWAS_Cluster(cluster.gwas_snps, ld_snps, ld_matrix, z_scores, betas, None, None, None)
-        
-        mafs = extract_snp_mafs(cluster_f, associations, populations)
-	annotations = extract_snp_annotations(cluster_f, associations)
+
+        #mafs = extract_snp_mafs(cluster_f, associations, populations)
+        mafs = extract_snp_mafs(cluster_f, associations, 'eur')
+        mafs = mafs.astype(float)
+        annotations = (extract_snp_annotations(cluster_f, associations) > 0.).astype('float')
+        #annotations = extract_snp_annotations(cluster_f, associations) 
 
 	assert len(ld_snps) ==  ld_matrix.shape[0]
 	assert len(ld_snps) ==  ld_matrix.shape[1]
@@ -85,8 +97,8 @@ def extract_snp_mafs(cluster, associations, populations):
 		for evidence in association.regulatory_evidence:
                     if evidence.info is not None:
                         if evidence.info['MAFs'] is not None:
-                            if evidence.source == 'VEP_reg' and populations in evidence.info['MAFs']:
-                                maf_hash[association.snp.rsID] = evidence.info['MAFs'][populations]
+			    if evidence.source == 'VEP_reg' and populations in evidence.info['MAFs']:
+				maf_hash[association.snp.rsID] = evidence.info['MAFs'][populations]
 	return numpy.array([maf_hash[snp.rsID] for snp in cluster.ld_snps])
 
 def extract_snp_annotations(cluster, associations):
@@ -96,10 +108,32 @@ def extract_snp_annotations(cluster, associations):
 		Returntype: Numpy 2D array
 	"""
 	annotation_hash = collections.defaultdict(lambda: collections.defaultdict(float))
-	for association in associations:
-		for evidence in association.cisregulatory_evidence:
-			annotation_hash[evidence.source][evidence.snp.rsID] = evidence.score
-	return numpy.array([[annotation_hash[annotation][snp.rsID] for snp in cluster.ld_snps] for annotation in sorted(annotation_hash.keys())])
+	#for association in associations:
+	#	for evidence in association.cisregulatory_evidence:
+	#		annotation_hash[evidence.source][evidence.snp.rsID] = evidence.score
+
+        #sig_comb_lst = ['Adipose_Visceral_Omentum_RPGRIP1L',
+        #                'Muscle_Skeletal_FTO',
+        #                'Pancreas_IRX3',
+        #                'Pituitary_AKTIP',
+        #                'Thyroid_RPGRIP1L']
+        for association in associations:
+                for evidence in association.cisregulatory_evidence:
+                    if evidence.source in ['GTEx']:
+                        continue
+                    #if evidence.source =='GTEx':
+                    #    comb = evidence.tissue+'_'+evidence.gene.name
+                    #    if comb in sig_comb_lst:
+                    #        pVal  = 1. - evidence.score
+                    #        if pVal < 1e-03 :
+                    #            SCORE =1.
+                    #        else:
+                    #            SCORE =0.
+                    #        annotation_hash[comb][evidence.snp.rsID] = SCORE  
+                    else:
+                        annotation_hash[evidence.source][evidence.snp.rsID] = evidence.score
+
+        return numpy.array([[annotation_hash[annotation][snp.rsID] for snp in cluster.ld_snps] for annotation in sorted(annotation_hash.keys())])
 
 def compute_ld_matrix(cluster, population):
 	'''
@@ -244,21 +278,33 @@ def finemap_gwas_cluster(cluster):
 	sample_sizes = map(lambda gwas_snp: max(gwas_association.sample_size for gwas_association in gwas_snp.evidence), cluster.gwas_snps)
 	sample_size = sum(sample_sizes) / len(sample_sizes)
 
-
-	## Compute posteriors
-	configuration_posteriors = postgap.Finemap.finemap(
+	## Compute posterior
+        if postgap.Globals.TYPE == 'binom' or postgap.Globals.TYPE =='ML':
+	    configuration_posteriors = postgap.Finemap.finemap_v1(
 		z_scores     = numpy.array(cluster.z_scores),
 		beta_scores  = numpy.array(cluster.betas),
 		cov_matrix   = cluster.ld_matrix,
 		n            = sample_size,
 		labels       = ld_snp_ids,
 		sample_label = sample_label,
- 		kmax         = 1,
+ 		lambdas      = cluster.lambdas,
 		mafs         = cluster.mafs,
-		annotations  = cluster.annotations
-	)
-
-	return GWAS_Cluster(cluster.gwas_snps, cluster.ld_snps, cluster.ld_matrix, cluster.z_scores, cluster.betas, cluster.mafs, cluster.annotations, configuration_posteriors) 
+		annotations  = cluster.annotations,
+	    )
+        elif postgap.Globals.TYPE == 'EM' or postgap.Globals.TYPE == 'ML_EM':
+            configuration_posteriors = postgap.Finemap.finemap_v2(
+                z_scores     = numpy.array(cluster.z_scores),
+                beta_scores  = numpy.array(cluster.betas),
+                cov_matrix   = cluster.ld_matrix,
+                n            = sample_size,
+                labels       = ld_snp_ids,
+                sample_label = sample_label,
+                lambdas      = cluster.lambdas,
+                mafs         = cluster.mafs,
+                annotations  = cluster.annotations,
+            )
+        print postgap.Globals.TYPE
+	return GWAS_Cluster_with_lambdas(cluster.gwas_snps, cluster.ld_snps, cluster.ld_matrix, cluster.z_scores, cluster.betas, cluster.mafs, cluster.annotations, configuration_posteriors, cluster.lambdas) 
 
 def compute_joint_posterior(cluster, associations):
 	"""
@@ -268,10 +314,14 @@ def compute_joint_posterior(cluster, associations):
 		Arg3: String
 		Returntype: Hash of hashes: Gene => Tissue => Float
 	"""
+	print "Computing finemap on new cluster"
+	#print cluster
+
 	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
 	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
 	gene_tissue_snp_eQTL_hash = organise_eQTL_data(associations)
-	return dict((gene, compute_gene_joint_posterior(cluster, gene, gene_tissue_snp_eQTL_hash[gene], gwas_configuration_posteriors, mafs, annotations)) for gene in gene_tissue_snp_eQTL_hash)
+
+	return dict((gene, compute_gene_joint_posterior(cluster, gene, gene_tissue_snp_eQTL_hash[gene], cluster.gwas_configuration_posteriors, cluster.mafs, cluster.annotations)) for gene in gene_tissue_snp_eQTL_hash)
 
 def compute_gene_joint_posterior(cluster, gene, tissue_snp_eQTL_hash, gwas_configuration_posteriors, mafs, annotations):
 	"""
@@ -288,11 +338,10 @@ def compute_gene_joint_posterior(cluster, gene, tissue_snp_eQTL_hash, gwas_confi
 	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
 	return dict((tissue, compute_gene_tissue_joint_posterior(cluster, gene, tissue, tissue_snp_eQTL_hash[tissue], gwas_configuration_posteriors, mafs, annotations)) for tissue in tissue_snp_eQTL_hash)
 
-def compute_gene_tissue_joint_posterior(cluster, tissue, gene, eQTL_snp_hash, gwas_configuration_posteriors):
+def compute_gene_tissue_joint_posterior(cluster, gene, tissue, eQTL_snp_hash, gwas_configuration_posteriors, mafs, annotations):
 	"""
 		Compute posterior of gene expression regulation at the specified cluster and tissue
 		Arg1: GWAS_Cluster
-<<<<<<< HEAD
 		Arg2: Tissue (string)
 		Arg3: Gene
 		Arg4: Hash string (rsID) => (Float (z-score), Float (beta))
@@ -313,28 +362,6 @@ def compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotati
 		Arg2: Tissue (string)
 		Arg3: Gene
 		Arg4: Hash string (rsID) => (Float (z-score), Float (beta))
-=======
-		Arg2: Tissue (string)
-		Arg3: Gene
-		Arg4: Hash string (rsID) => (Float (z-score), Float (beta))
-		Arg5: Hash of hashes: configuration => posterior
-		Arg6: Numpy Vector
-		Arg7: Numpy 2D Array
-		Returntype: Float
-	"""
-	## eQTL posteriors
-	eQTL_configuration_posteriors = compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotations)
-	## Joint posterior
-	return eQTL_configuration_posteriors.joint_posterior(gwas_configuration_posteriors)[0]
-
-def compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotations):
-	"""
-		Compute posterior of gene expression regulation at the specified cluster and tissue
-		Arg1: GWAS_Cluster
-		Arg2: Tissue (string)
-		Arg3: Gene
-		Arg4: Hash string (rsID) => (Float (z-score), Float (beta))
->>>>>>> Creating space for ML method
 		Arg5: Numpy Vector
 		Arg6: Numpy 2D Array
 		Returntype: Float
@@ -395,18 +422,20 @@ def compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotati
 	end = max(ld_snp.pos for ld_snp in cluster.ld_snps)
 	sample_label = 'eQTL_Cluster_%s:%i-%i_%s' % (chrom, start, end, gene)
 
-	## Compute posteriors
-	return postgap.Finemap.finemap(
-		z_scores     = numpy.array(z_scores),
-		beta_scores  = numpy.array(betas),
-		cov_matrix   = cluster.ld_matrix,
-		n            = 500, #TODO extract eQTL sample sizes
- 		kmax         = 1,
-		sample_label = sample_label,
-		labels       = [ld_snp.rsID for ld_snp in cluster.ld_snps],
-		mafs         = mafs,
-		annotations  = annotations
-	)
+        ## Compute posterior
+        return postgap.Finemap.finemap_v1(
+                z_scores     = numpy.array(z_scores),
+                beta_scores  = numpy.array(betas),
+                cov_matrix   = cluster.ld_matrix,
+                n            = 500, #TODO extract eQTL sample sizes
+                labels       = [ld_snp.rsID for ld_snp in cluster.ld_snps],
+                sample_label = sample_label,
+                lambdas      = cluster.lambdas,
+                mafs         = mafs,
+                annotations  = annotations,
+                kmax         = 3, #eQTL_kmax
+                kstart       = 1 #eQTL_kstart
+            )
 
 def organise_eQTL_data(associations):
 	"""
@@ -445,4 +474,6 @@ def z_score_from_pvalue(p_value, direction):
 	if scipy is None:
 		import scipy
 		import scipy.stats
+        if p_value==0:
+            p_value=4.2e-317
 	return -scipy.stats.norm.ppf(p_value/2) * sign(direction)
