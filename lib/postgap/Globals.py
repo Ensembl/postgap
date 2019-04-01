@@ -29,6 +29,8 @@ limitations under the License.
 """
 from postgap.DataModel import Region
 
+TYPE = None
+OUTPUT = None
 DATABASES_DIR = None
 SPECIES = None
 

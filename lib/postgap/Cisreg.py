@@ -352,7 +352,7 @@ class VEP(Cisreg_source):
 				res.append(Cisregulatory_Evidence(
 					snp = snp_hash[hit['input']],
 					gene = postgap.Ensembl_lookup.get_ensembl_gene(consequence['gene_id']),
-					score = VEP_impact_to_score[consequence['impact']],
+					score = VEP_impact_to_score[consequence['impact']]/4.,
 					source = self.display_name,
 					study = None,
 					tissue = None,
@@ -600,7 +600,7 @@ class PCHIC(Cisreg_source):
 		
 		intersection = postgap.BedTools.overlap_snps_to_bed(snps, postgap.Globals.DATABASES_DIR + "/pchic.bed")
 		snp_hash = dict( (snp.rsID, snp) for snp in snps)
-		res = filter (lambda X: X is not None and X.score, (self.get_evidence(feature, snp_hash) for feature in intersection))
+		res = filter (lambda X: X is not None and X.score >5., (self.get_evidence(feature, snp_hash) for feature in intersection))
 
 		logging.info("\tFound %i gene associations in PCHIC" % len(res))
 
@@ -640,8 +640,9 @@ class PCHIC(Cisreg_source):
 		return Cisregulatory_Evidence(
 			snp = snp,
 			gene = gene,
-			score = float(feature[3]) / 645.0974, # Divide by max value in dataset
-			source = self.display_name,
+			#score = float(feature[3]) / 645.0974, # Divide by max value in dataset
+                        score = float(feature[3]),
+                        source = self.display_name,
 			study = None,
 			tissue = None,
 			info = None,
@@ -694,7 +695,7 @@ class nearest_gene(Cisreg_source):
 				pvalue = None,
 				beta = None
 				)
-			for row in res ]
+			for row in res if abs(int(row[2]) - int(row[6]) ) < 100000 ]
 
 
 def get_filtered_subclasses(subclasses_filter):
