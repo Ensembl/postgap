@@ -112,7 +112,7 @@ def scan_disease_databases(diseases, efos):
 			continue
 		
 		if postgap.Globals.PERFORM_BAYESIAN:
-			if gwas_association.odds_ratio is not None:
+			if gwas_association.odds_ratio is not None and type(gwas_association.odds_ratio)==float:
 				z_score = postgap.FinemapIntegration.z_score_from_pvalue(gwas_association.pvalue, gwas_association.odds_ratio - 1)
 				beta = math.log(gwas_association.odds_ratio)
 			elif gwas_association.beta_coefficient is not None:
@@ -172,8 +172,9 @@ def clusters_to_genes(clusters, populations, tissue_weights):
 
 	"""
 	# Collect regulatory and cis-regulatory evidence across clusters
-	cluster_associations = [(cluster, ld_snps_to_genes(cluster.ld_snps, tissue_weights)) for cluster in clusters]
-      
+	#cluster_associations = [(cluster, ld_snps_to_genes(cluster.ld_snps, tissue_weights)) for cluster in clusters]
+        with open('cluster_association.pkl') as f:
+                cluster_associations= pickle.load(f)
         # If required, perform genome-wide GWAS finemapping
 	if postgap.Globals.PERFORM_BAYESIAN:
 		cluster_associations = postgap.FinemapIntegration.compute_gwas_posteriors(cluster_associations, populations)
