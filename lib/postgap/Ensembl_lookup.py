@@ -32,11 +32,14 @@ import postgap.REST
 from postgap.DataModel import *
 import postgap.Globals
 from postgap.Utils import *
+import logging
 
 GRCH37_ENSEMBL_REST_SERVER = "http://grch37.rest.ensembl.org"
 GRCH38_ENSEMBL_REST_SERVER = "http://rest.ensembl.org"
 known_genes = {}
 known_snps = {}
+# Naughty hack only take into account main assembly, since patches filtered later on
+known_chroms = map(str, range(1,23)) + ['X','Y']
 
 def get_gene(gene_name, ENSEMBL_REST_SERVER = GRCH37_ENSEMBL_REST_SERVER):
 	"""
@@ -210,7 +213,8 @@ def get_snp_locations_simple(rsIDs, ENSEMBL_REST_SERVER = GRCH37_ENSEMBL_REST_SE
 					approximated_zscore = None
 				)
 				results.append(snp)
-				known_snps[(rsID, ENSEMBL_REST_SERVER)] = snp
+				if mapping['seq_region_name'] in known_chroms:
+					known_snps[(rsID, ENSEMBL_REST_SERVER)] = snp
 
 	return results
 
