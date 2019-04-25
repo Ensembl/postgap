@@ -48,7 +48,7 @@ from postgap.Utils import *
 import os.path
 
 
-import sys
+
 from pprint import pformat
 
 r2_cache = collections.defaultdict(dict)
@@ -122,11 +122,16 @@ def main():
 	if options.Reg is not None:
 		postgap.Globals.Reg_adaptors = options.Reg
 
-	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0:
+	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0 or len(postgap.Globals.GWAS_SUMMARY_STATS_FILE) > 0:
 		logging.info("Starting diseases_to_genes")
 		res = postgap.Integration.diseases_to_genes(options.diseases, expanded_efo_iris, options.population, options.tissues)
-		if options.bayesian:
-			pickle.dump(res, open("postgap_output", "w")) # DEBUG remove hard coded path
+		if options.bayesian and options.output2 is not None:
+			#pickle.dump(res, open(options.output + "_bayesian", "w"))
+			output2 = open(options.output2, "w")
+			gene_results = pretty_gene_output(res)
+			output2.write(gene_results + "\n")
+
+
 		logging.info("Done with diseases_to_genes")
 	elif options.rsID is not None:
 		res = postgap.Integration.rsIDs_to_genes(options.rsID, options.tissues)
@@ -310,6 +315,7 @@ def get_options():
     parser.add_argument('--summary_stats', help='Location of input summary statistics file')
     parser.add_argument('--hdf5',help='Location of eQTL HDF5 file')
     parser.add_argument('--sqlite',help='Location of eQTL sqlite file')
+    parser.add_argument('--output2', help='gene-cluster association output file')
     if len(sys.argv) == 1:
 	    print commandline_description
 	    sys.exit(0)
@@ -331,8 +337,10 @@ def get_options():
     postgap.Globals.finemap_eqtl_clusters_directory = postgap.Globals.work_directory + "/eqtl_clusters"
 
     assert postgap.Globals.DATABASES_DIR is not None
-    assert options.rsID is None or (options.efos is None and options.diseases is None)
-    assert options.rsID is not None or options.efos is not None or options.diseases is not None or options.coords is not None
+
+    if postgap.Globals.GWAS_SUMMARY_STATS_FILE is None:
+    	assert options.rsID is None or (options.efos is None and options.diseases is None)
+    	assert options.rsID is not None or options.efos is not None or options.diseases is not None or options.coords is not None
     
     import os
     assert os.path.isdir(postgap.Globals.DATABASES_DIR), "--database_dir parameter " + options.databases + " does not point to an existing directory!"
