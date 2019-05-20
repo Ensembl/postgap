@@ -51,6 +51,7 @@ def finemap_gwas_cluster(cluster, population):
 	else:
 		ld_snps, ld_matrix, z_scores, betas = impute_z_scores(cluster, population)
 
+
 	## Define experiment label (serves for debugging logs)
 	chrom = ld_snps[0].chrom
 	start = min(ld_snp.pos for ld_snp in ld_snps)

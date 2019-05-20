@@ -128,8 +128,9 @@ def main():
 		if options.bayesian and options.output2 is not None:
 			#pickle.dump(res, open(options.output + "_bayesian", "w"))
 			output2 = open(options.output2, "w")
-			gene_results = pretty_gene_output(res)
-			output2.write(gene_results + "\n")
+			output2.write(pretty_gene_output(res))
+			output2.close()
+
 
 
 		logging.info("Done with diseases_to_genes")
@@ -351,6 +352,27 @@ def get_options():
         options.diseases = []
 
     return options
+
+def pretty_gene_output(associations):
+    str_associations=""
+    line = []
+    for gene_association in associations:
+        
+        gene_id = gene_association.gene.id
+        chrom = gene_association.gene.chrom
+        
+        for tissue, dict_posterior in gene_association.collocation_posterior.items():
+            posterior = str(dict_posterior['_CLUSTER'])
+
+            del line [:]
+            line.append (gene_id)
+            line.append (chrom)
+            line.append (tissue)
+            line.append (posterior)
+
+            str_associations +='\t'.join(line[:]) + '\n'
+
+    return str_associations
 
 def pretty_snp_output(associations):
 	"""

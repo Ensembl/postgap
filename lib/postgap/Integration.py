@@ -234,13 +234,25 @@ def cluster_gwas_snps(gwas_snps, population):
 		for gwas_snp in cluster.gwas_snps:
 			assert gwas_snp.snp.rsID in [ld_snp.rsID for ld_snp in cluster.ld_snps]
 
+	clusters = []
+
 	if postgap.Globals.PERFORM_BAYESIAN:
 		# Perform GWAS finemapping of the clusters
 		# 
-		clusters = [postgap.FinemapIntegration.finemap_gwas_cluster(cluster, population) for cluster in raw_clusters]
+		for cluster in raw_clusters:
+			try:
+				clusters.append(postgap.FinemapIntegration.finemap_gwas_cluster(cluster, population))
+			except:
+				continue
+				
+		if not clusters:
+			clusters = raw_clusters
+		#clusters = [postgap.FinemapIntegration.finemap_gwas_cluster(cluster, population) for cluster in raw_clusters]
 	else:
 		clusters = raw_clusters
 	
+
+
 	logging.info("Found %i clusters from %i GWAS SNP locations" % (len(clusters), len(gwas_snp_locations)))
 
 	for cluster in filtered_preclusters:

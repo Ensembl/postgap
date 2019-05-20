@@ -38,6 +38,8 @@ from postgap.DataModel import *
 import postgap.Globals
 import logging
 
+import pprint
+
 def calculate_window(snp, population, window_len=500000, cutoff=0.7):
 	"""
 
@@ -232,7 +234,8 @@ def get_pairwise_ld(ld_snps, population):
 		"-w", str((end - start) + 1),
  		"-x"
 	]
-	logging.debug(" ".join(ld_comm))
+	logging.info(" ".join(ld_comm))
+	#logging.debug(" ".join(ld_comm))
 
 	process = Popen(ld_comm, stdout=PIPE, stderr=PIPE)
 	(output, err) = process.communicate()
@@ -283,13 +286,21 @@ def get_pairwise_ld(ld_snps, population):
 		r2_array[snp_1_rank][snp_2_rank] = float(column[ column_with_linkage_disequilibrium ])
 		r2_array[snp_2_rank][snp_1_rank] = float(column[ column_with_linkage_disequilibrium ])
 
+
+
+	# Healthcheck for the matrix. An LD matrix should never be the unity 
+	# matrix, but sometimes it is.
+	if numpy.count_nonzero(r2_array) == 0:		
+		logging.error("LD matrix is identity matrix!")
+		#return SNP_ids, r2_array
+		#return dict((snp, 1) for snp in ld_snps)
+		#pp = pprint.PrettyPrinter(indent=4)
+		#pp.pprint(r2_array)
+		raise UnitLDMatrixerror("LD matrix is identity matrix!")
+
 	### Clean up
 	os.remove(rsID_file_name)
 	os.close(rsID_file)
 
-	# Healthcheck for the matrix. An LD matrix should never be the unity 
-	# matrix, but sometimes it is.
-	if numpy.count_nonzero(r2_array) == 0:
-		raise UnitLDMatrixerror("LD matrix is identity matrix!")
 		
 	return SNP_ids, r2_array + numpy.identity(len(SNP_ids))
