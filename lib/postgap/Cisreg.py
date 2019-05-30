@@ -122,16 +122,8 @@ class GTEx(Cisreg_source):
 		if len(cisreg_with_pvalues) == 0:
 			# Empty list
 			return cisreg_with_pvalues
-		
+                        
 		cisreg_betas = self._snp_betas(snp)
-		
-		# Where there are pvalues, there must be betas
-		if cisreg_betas is None:
-			logging.warning("Got exception in _snp_rest")
-			logging.warning("The exception is cisreg_betas is None")
-			logging.warning("Returning 'None' and pretending this didn't happen.")
-			return None
-			#raise Exception
 		
 		if len(cisreg_betas) == 0:
 			logging.warning("Got exception in _snp_rest")
@@ -145,6 +137,9 @@ class GTEx(Cisreg_source):
 		combined_cisreg_evidence_list = []
 		
 		for cisreg_with_pvalue in cisreg_with_pvalues:
+                        if cisreg_with_pvalue.gene is None:
+                                continue
+
 			try:
 				matching_cisreg_betas = filter(lambda X: X.gene.id == cisreg_with_pvalue.gene.id and X.tissue == cisreg_with_pvalue.tissue, cisreg_betas)
 
@@ -157,7 +152,6 @@ class GTEx(Cisreg_source):
 				logging.warning("Got exception in _snp_rest")
 				logging.warning("The exception is matching_cisreg_betas != 1; (matching_cisreg_betas = %i)" % len(matching_cisreg_betas))
 				continue
-				#raise Exception
 			
 			cisreg_with_beta = matching_cisreg_betas[0]
 
