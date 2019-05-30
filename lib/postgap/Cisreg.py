@@ -116,13 +116,17 @@ class GTEx(Cisreg_source):
 		if len(cisreg_with_pvalues) == 0:
 			# Empty list
 			return cisreg_with_pvalues
-		
-		cisreg_betas = self._snp_betas(snp)
+                        
+		#cisreg_betas = self._snp_betas(snp)
 		
 		# Where there are pvalues, there must be betas
-		if cisreg_betas is None:
-			raise Exception
-		
+		#if cisreg_betas is None:
+		#	raise Exception
+		while(True):
+                        cisreg_betas = self._snp_betas(snp)
+                        if cisreg_betas is not None and len(cisreg_betas) > 0:
+                                break
+                
 		if len(cisreg_betas) == 0:
 			raise Exception
 		
@@ -131,11 +135,19 @@ class GTEx(Cisreg_source):
 		combined_cisreg_evidence_list = []
 		
 		for cisreg_with_pvalue in cisreg_with_pvalues:
-			
-			matching_cisreg_betas = filter(lambda X: X.gene.id == cisreg_with_pvalue.gene.id and X.tissue == cisreg_with_pvalue.tissue, cisreg_betas)
+                        if cisreg_with_pvalue.gene is None:
+                                continue
+                        matching_cisreg_betas = []
+                        for cisreg_beta in cisreg_betas:
+                                if cisreg_beta.gene is None:
+                                        continue
+                                if cisreg_beta.gene.id == cisreg_with_pvalue.gene.id and cisreg_beta.tissue == cisreg_with_pvalue.tissue:
+                                        matching_cisreg_betas.append(cisreg_beta)        
+			#matching_cisreg_betas = filter(lambda X: X.gene.id == cisreg_with_pvalue.gene.id and X.tissue == cisreg_with_pvalue.tissue, cisreg_betas)
 			
 			if len(matching_cisreg_betas) != 1:
-				raise Exception
+                                continue
+				#raise Exception
 			
 			cisreg_with_beta = matching_cisreg_betas[0]
 
@@ -349,7 +361,7 @@ class VEP(Cisreg_source):
 
 		"""
 
-		list = concatenate(self.get(chunk) for chunk in chunks(snps, 199))
+		list = concatenate(self.get(chunk) for chunk in chunks(snps, 1))
 		'''
 
 			Example output from VEP:

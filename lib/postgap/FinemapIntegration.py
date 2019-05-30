@@ -48,7 +48,7 @@ def compute_gwas_posteriors(cluster_associations, populations):
 	#prepped_clusters = [(prepare_cluster_for_finemap(cluster, associations, populations), associations) for cluster, associations in cluster_associations]
         prepped_clusters = []
         for cluster, associations in cluster_associations:
-                if ( len(cluster.ld_snps) < 300 ):
+                if ( len(cluster.ld_snps) < 100 ):
                     continue
                 prepped_clusters.append( (prepare_cluster_for_finemap(cluster, associations, populations), associations) )
         # MLE calculation 
@@ -180,6 +180,7 @@ def extract_z_scores_from_file(cluster):
 		# Chromosome	Position	MarkerName	Effect_allele	Non_Effect_allele	Beta	SE	Pvalue
 		#1	751343	rs28544273	A	T	-0.0146	0.0338	0.6651
 		chromosome, position, rsID, effect_allele, non_effect_allele, beta, se, pvalue = line.rstrip().split('\t')
+                rsID = rsID.strip() 
 		if rsID in ld_snp_hash:
 			ld_snp_results[rsID] = (float(pvalue), float(beta))
 			missing -= 1
