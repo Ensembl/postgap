@@ -67,3 +67,5 @@ PERFORM_BAYESIAN = False
 ALL_TISSUES=[]
 
 EQTL_QUERY_SIZE = None
+
+source_list=[]
