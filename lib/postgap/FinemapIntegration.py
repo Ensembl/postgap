@@ -53,6 +53,7 @@ def compute_gwas_posteriors(cluster_associations, populations):
                 prepped_clusters.append( (prepare_cluster_for_finemap(cluster, associations, populations), associations) )
         # MLE calculation 
         prepped_clusters= [(postgap.Finemap.mk_modified_clusters(cluster), associations) for cluster, associations in prepped_clusters]
+        pickle.dump(prepped_clusters, open('prepped_clusters.pkl', "w"))
 	return [(finemap_gwas_cluster(cluster), associations) for cluster, associations in prepped_clusters]
 
 def prepare_cluster_for_finemap(cluster, associations, populations, tissue_weights=['Whole_Blood']):
@@ -131,7 +132,9 @@ def extract_snp_annotations(cluster, associations):
                     #        annotation_hash[comb][evidence.snp.rsID] = SCORE  
                     else:
                         annotation_hash[evidence.source][evidence.snp.rsID] = evidence.score
-
+        # Annotation naming automatically === 
+        postgap.Globals.source_lst = sorted(annotation_hash.keys())
+        # ====
         return numpy.array([[annotation_hash[annotation][snp.rsID] for snp in cluster.ld_snps] for annotation in sorted(annotation_hash.keys())])
 
 def compute_ld_matrix(cluster, population):
@@ -278,6 +281,11 @@ def finemap_gwas_cluster(cluster):
 	sample_sizes = map(lambda gwas_snp: max(gwas_association.sample_size for gwas_association in gwas_snp.evidence), cluster.gwas_snps)
 	sample_size = sum(sample_sizes) / len(sample_sizes)
 
+        # Extract GWAS_lambdas(F.A effect size) ===
+        with open('GWAS_lambdas.txt','a') as fw1:
+            for idx,L in enumerate(cluster.lambdas):
+                fw1.write( '\t'.join( map(str, [sample_label, postgap.Globals.source_lst[idx],L] ))+'\n' )
+        # ======
 	## Compute posterior
         if postgap.Globals.TYPE == 'binom' or postgap.Globals.TYPE =='ML':
 	    configuration_posteriors = postgap.Finemap.finemap_v1(
@@ -417,6 +425,14 @@ def compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotati
 	start = min(ld_snp.pos for ld_snp in cluster.ld_snps)
 	end = max(ld_snp.pos for ld_snp in cluster.ld_snps)
 	sample_label = 'eQTL_Cluster_%s:%i-%i_%s' % (chrom, start, end, gene)
+        
+        # Learn F.A parameters in eQTL ====
+        cluster_label = 'Cluster_%s:%i-%i' % (chrom, start, end)
+        lambdas = postgap.Finemap.mk_eqtl_lambdas(cluster, numpy.array(z_scores))
+        with open('eQTL_lambdas.txt','a') as fw2:
+            for idx,L in enumerate(lambdas):
+                fw2.write( '\t'.join( map(str, [cluster_label, tissue, gene.name, postgap.Globals.source_lst[idx],L] ))+'\n' )
+        # ======
 
         ## Compute posterior
         return postgap.Finemap.finemap_v1(
@@ -426,10 +442,10 @@ def compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotati
                 n            = 500, #TODO extract eQTL sample sizes
                 labels       = [ld_snp.rsID for ld_snp in cluster.ld_snps],
                 sample_label = sample_label,
-                lambdas      = cluster.lambdas,
+                lambdas      = lambdas, #cluster.lambdas, # Update the lambdas with eQTL data
                 mafs         = mafs,
                 annotations  = annotations,
-                kmax         = 3, #eQTL_kmax
+                kmax         = 2, #eQTL_kmax
                 kstart       = 1 #eQTL_kstart
             )
 

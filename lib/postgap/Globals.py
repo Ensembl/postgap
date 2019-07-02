@@ -65,3 +65,5 @@ GWAS_SUMMARY_STATS_FILE = None
 PERFORM_BAYESIAN = False
 
 ALL_TISSUES=[]
+
+source_list=[]
