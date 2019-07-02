@@ -330,7 +330,7 @@ class TwoDConfigurationSample(TwoDConfigurationSample_prototype):
 			float(posterior))
 
                 
-def finemap_v1(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambdas, mafs, annotations, kstart=1, kmax=3, corr_thresh=0.9, max_iter=100, output="configuration", prior="independence_robust", v_scale=0.0025, g="BRIC", eigen_thresh=0.1, verbose=False):
+def finemap_v1(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambdas, mafs, annotations, kstart=1, kmax=2, corr_thresh=0.9, max_iter=100, output="configuration", prior="independence_robust", v_scale=0.0025, g="BRIC", eigen_thresh=0.1, verbose=False):
 	'''
 		Main function for fine-mapping using stochastic search for one trait #
 		Arg1: z_scores: numpy.array
@@ -454,7 +454,7 @@ def finemap_v1(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambd
 			assert False, "%s unkown" % {output}
 
 
-def finemap_v2(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambdas, mafs, annotations, kstart=1, kmax=3, corr_thresh=0.9, max_iter=100, output="configuration", prior="independence_robust", v_scale=0.0025, g="BRIC", eigen_thresh=0.1, verbose=False):
+def finemap_v2(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambdas, mafs, annotations, kstart=1, kmax=2, corr_thresh=0.9, max_iter=100, output="configuration", prior="independence_robust", v_scale=0.0025, g="BRIC", eigen_thresh=0.1, verbose=False):
 	'''
 		Main function for fine-mapping using stochastic search for one trait #
 		Arg1: z_scores: numpy.array
@@ -1008,6 +1008,31 @@ def set_prior(pi, annot, lambdas):
 #             logitprior = logitprior + lambdas[i]
     prior = 1.0 / (1.0 + numpy.exp(-logitprior))
     return prior
+
+### The function for leanring F.A parameters in eQTL
+def mk_eqtl_lambdas(p_cluster, z_scores, W = [0.01, 0.1, 0.5], pi = 0.01):
+    initial_lambdas = [0.000001] * p_cluster.annotations.shape[0]
+    MAFs            = map(float, p_cluster.mafs)
+    if postgap.Globals.TYPE == 'binom' or postgap.Globals.TYPE == 'EM':
+        lambdas = initial_lambdas
+    else:
+        sample_size= p_cluster.gwas_snps[0].evidence[0].sample_size
+        approx_v   = [calc_approx_v(maf, sample_size)  for maf in MAFs]
+        logBFs     = [calc_logBF(approx_v[i], W, z_scores[i]) for i in range(len(z_scores))]
+        mat_annot  = p_cluster.annotations.T
+
+        def f_llk(lambdas_):
+            priors = [set_prior(pi, annot, lambdas_) for annot in mat_annot]
+            lsum = 0
+            for i in range(len(priors)):
+                lsum = lsum + sumlog(logBFs[i] + numpy.log(priors[i]), numpy.log(1 - priors[i]))
+            return -lsum
+        result = optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B')
+        if result.success:
+            lambdas= 1 / (1 + numpy.exp(-result.x))
+        else:
+            lambdas= initial_lambdas
+    return lambdas
 
 def mk_modified_clusters(p_cluster, W = [0.01, 0.1, 0.5], pi = 0.01):
     '''

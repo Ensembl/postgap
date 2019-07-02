@@ -173,10 +173,20 @@ def clusters_to_genes(clusters, populations, tissue_weights):
 	"""
 	# Collect regulatory and cis-regulatory evidence across clusters
 	cluster_associations = [(cluster, ld_snps_to_genes(cluster.ld_snps, tissue_weights)) for cluster in clusters]
+        with open('cluster_association.pkl','w') as f:
+                pickle.dump(cluster_associations,f)
         #with open('cluster_association.pkl') as f:
         #        cluster_associations= pickle.load(f)
         # If required, perform genome-wide GWAS finemapping
-	if postgap.Globals.PERFORM_BAYESIAN:
+        
+        # Extract the GWAS and eQTL F.A parameters (lambdas)
+        with open('GWAS_lambdas.txt','w') as fw1:
+                fw1.write('cluster\tsource\tlambdas\n')
+        with open('eQTL_lambdas.txt','w') as fw2:
+                fw2.write('cluster\ttissue\tgene\tlambdas\n')
+        # ===
+	
+        if postgap.Globals.PERFORM_BAYESIAN:
 		cluster_associations = postgap.FinemapIntegration.compute_gwas_posteriors(cluster_associations, populations)
 	#print cluster_associations[0][0].ld_matrix
 	
