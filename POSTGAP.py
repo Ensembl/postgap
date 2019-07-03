@@ -122,7 +122,7 @@ def main():
 	if options.Reg is not None:
 		postgap.Globals.Reg_adaptors = options.Reg
 
-	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0 or len(postgap.Globals.GWAS_SUMMARY_STATS_FILE) > 0:
+	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0 or len(str(postgap.Globals.GWAS_SUMMARY_STATS_FILE)) > 0:
 		logging.info("Starting diseases_to_genes")
 		res = postgap.Integration.diseases_to_genes(options.diseases, expanded_efo_iris, options.population, options.tissues)
 		if options.bayesian and options.output2 is not None:
@@ -355,22 +355,33 @@ def get_options():
 
 def pretty_gene_output(associations):
     str_associations=""
-    line = []
+
     for gene_association in associations:
         
         gene_id = gene_association.gene.id
-        chrom = gene_association.gene.chrom
+        cluster = gene_association.cluster.gwas_configuration_posteriors.sample_label
+
+        snp_numerator = 0
+        snps_cluster = {}
+        for snp_id in gene_association.cluster.gwas_configuration_posteriors.labels:
+            snps_cluster[snp_numerator]=snp_id
+            snp_numerator += 1
         
         for tissue, dict_posterior in gene_association.collocation_posterior.items():
-            posterior = str(dict_posterior['_CLUSTER'])
+            gene_tissue_posterior = str(dict_posterior['_CLUSTER'])
 
-            del line [:]
-            line.append (gene_id)
-            line.append (chrom)
-            line.append (tissue)
-            line.append (posterior)
+ 
+            for snp_index in snps_cluster:
+                posterior_key = (snp_index,)
+                line = []
+                line.append (gene_id)
+                line.append (cluster)
+                line.append (snps_cluster[snp_index])
+                line.append (str(dict_posterior[posterior_key]))
+                line.append (tissue)
+                line.append (gene_tissue_posterior)
 
-            str_associations +='\t'.join(line[:]) + '\n'
+                str_associations +='\t'.join(line) + '\n'
 
     return str_associations
 
