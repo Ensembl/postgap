@@ -1,0 +1,93 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Colocalization Report</title>
+    <style type="text/css">
+ 		body { font: 12pt Georgia, "Times New Roman", Times, serif; line-height: 1.3; padding-top: 50px; } 
+ 		div.results { display: block; text-align: center; width: 100%; }
+
+ 		h1 { font: 32pt "Trebuchet MS", Arial, Helvetica, sans-serif; font-weight: bold; }
+
+ 		h2 { font: 24pt "Trebuchet MS", Arial, Helvetica, sans-serif; font-weight: bold; }
+
+ 		.data_table {
+ 		  margin: auto;
+		  font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+		  border-collapse: collapse;
+		  width: 85%;
+		}
+
+		.data_table td, .data_table th {
+		  border: 1px solid #ddd;
+		  padding: 8px;
+		}
+
+		.data_table tr:nth-child(even){background-color: #f2f2f2;}
+
+		.data_table tr:hover {background-color: #ddd;}
+
+		.data_table th {
+		  padding-top: 12px;
+		  padding-bottom: 12px;
+		  text-align: center;
+		  background-color: #3e8298;
+		  color: white;
+		}
+
+  	</style>
+</head>
+
+<body>
+<div class="results">
+	<h1>Colocalization Report</h1>
+</div>
+
+
+<div class="results">
+	<h2>Genes</h2>
+    <table class="data_table">
+		<tr>
+			<th><span style="font-weight: bold;">Gene</span></th>
+			<th><span style="font-weight: bold;">Cluster</span></th>
+			<th><span style="font-weight: bold;">Tissue</span></th>
+			<th><span style="font-weight: bold;">Posterior</span></th>
+		</tr>
+		{% for gene in gene_list %}
+			<tr><td><a href="http://www.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g={{gene[0]}}">{{gene[0]}}</a></td><td>{{gene[1]}}</td><td>{{gene[2]}}</td><td>{{gene[3]}}</td></tr>
+		{% endfor %}
+
+    </table>
+</div>
+
+<div class="results">
+	<h2>Snps</h2>
+   	<table class="data_table">
+		<tr>
+			<th><span style="font-weight: bold;">Snp</span></th>
+			<th><span style="font-weight: bold;">Gene</span></th>
+			<th><span style="font-weight: bold;">Tissue</span></th>
+			<th><span style="font-weight: bold;">Posterior</span></th>
+		</tr>
+		{% for snp in snp_list %}
+			<tr><td><a href="http://www.ensembl.org/Homo_sapiens/Variation/Explore?v={{snp[0]}}">{{snp[0]}}</a></td><td>{{snp[1]}}</td><td>{{snp[2]}}</td><td>{{snp[3]}}</td></tr>
+		{% endfor %}
+    </table>
+</div>
+
+<div class="results">
+	<h2>Pathways</h2>
+   	<table class="data_table">
+		<tr>
+			<th><span style="font-weight: bold;">stId</span></th>
+			<th><span style="font-weight: bold;">Name</span></th>
+			<th><span style="font-weight: bold;">Score</span></th>
+		</tr>
+		{% for pathway in pathway_list %}
+			<tr><td><a href="https://reactome.org/content/detail/{{pathway[0]}}">{{pathway[0]}}</a></td><td>{{pathway[1]}}</td><td>{{pathway[2]}}</td></tr>
+		{% endfor %}
+    </table>
+</div>
+
+
+</body>
