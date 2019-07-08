@@ -180,9 +180,9 @@ def clusters_to_genes(clusters, populations, tissue_weights):
         # If required, perform genome-wide GWAS finemapping
         
         # Extract the GWAS and eQTL F.A parameters (lambdas)
-        with open('GWAS_lambdas.txt','w') as fw1:
+        with open('GWAS_lambdas_'+postgap.Globals.GWAS_SUMMARY_STATS_FILE,'w') as fw1:
                 fw1.write('cluster\tsource\tlambdas\n')
-        with open('eQTL_lambdas.txt','w') as fw2:
+        with open('eQTL_lambdas_'+postgap.Globals.GWAS_SUMMARY_STATS_FILE,'w') as fw2:
                 fw2.write('cluster\ttissue\tgene\tlambdas\n')
         # ===
 	
