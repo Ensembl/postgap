@@ -39,14 +39,12 @@ import requests
 
 def main():
 
-	html_template = 'geneReport.html'
-
 	#get options
 	options = get_options()
 
 	#assert that files exists
 	assert os.path.exists(options.result_file), "result file " + options.result_file + " can't be found."
-	assert os.path.exists(html_template), "HTML template file " + html_template + " can't be found."
+	assert os.path.exists(options.template), "HTML template file " + options.template + " can't be found."
 	
 	#get top 10 genes
 	top_10_genes, top_10_snps = get_top_10_genes_snps(options.result_file)
@@ -55,10 +53,10 @@ def main():
 	top_10_pathways = get_top_10_pathways(top_10_genes)
 
 	#load template and render the html file out
-	template_file = open(html_template, 'r')
+	template_file = open(options.template, 'r')
 	template_data = str(template_file.read())
 	t = Template(template_data)
-	output_html=open(options.html, "w+") 
+	output_html=open(options.output, "w+") 
 	output_html.write(t.render(gene_list=top_10_genes, snp_list=top_10_snps, pathway_list=top_10_pathways))
 	output_html.close
 
@@ -67,7 +65,8 @@ def get_options():
 	parser = argparse.ArgumentParser(description="Creates a HTML report based on POSTGAP (--output2) results", formatter_class = RawTextHelpFormatter)
 
 	requiredNamed = parser.add_argument_group('required arguments')
-	requiredNamed.add_argument('--html', help='Name of the HTML output file', required=True)
+	requiredNamed.add_argument('--output', help='Name of the HTML output file', required=True)
+	requiredNamed.add_argument('--template', help='Name of the HTML template file', required=True)
 	requiredNamed.add_argument('--result_file', help='Name of the POSTGAP (--output2) results file', required=True)
 	options = parser.parse_args()
 
