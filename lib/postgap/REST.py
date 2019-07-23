@@ -105,8 +105,10 @@ def get(server, ext, data=None):
 
 	"""
 	maximum_retries = 10
+
 	
 	for retries in range(maximum_retries):
+		
 		if DEBUG:
 			logging.debug("REST JSON Query: %s%s" % (server, ext))
 			start_time = time.time()
@@ -134,6 +136,8 @@ def get(server, ext, data=None):
 
 		if not r.ok:
 			
+			logging.debug("Something went wrong code: %s" % (r.status_code))
+
 			http_response_code = None
 			
 			try:
@@ -162,26 +166,24 @@ def get(server, ext, data=None):
 			
 			logging.error("Error code: %s (%s) %s" % (http_response_code, r.status_code, response_as_string ) )
 
-			if retries == 5:
-				logging.critical("Giving up.")
-				r.raise_for_status()
+			#if retries == 5:
+			#	logging.critical("Giving up.")
+			#	r.raise_for_status()
 
 			if 'Retry-After' in r.headers:
+				if r.status_code == 429:
+					logging.error("Got error 429 'Too Many Requests'" )
+				
 				logging.error("Will try again in %s seconds." % r.headers['Retry-After'])
 				time.sleep(int(r.headers['Retry-After']))
+
+			elif r.status_code == 502:
+				logging.error("Got error 502 'Bad Gateway'. Will try again in %s seconds." % 2)
+				time.sleep(2) # Sleep while server cools down
 
 			elif r.status_code == requests.codes.forbidden:
 				logging.error("Got 'forbidden' error: Will try again in %s seconds." % 600)
 				time.sleep(600) # Sleep 10 minutes while server calms down
-			elif r.status_code == 429:
-				
-				# Too Many Requests
-				#
-				# This seems to never get run, because it is handled by the
-				# "if 'Retry-After' in r.headers:" further up.
-				#
-				logging.error("Got error 429 'Too Many Requests'. Will try again in %s seconds." % 10)
-				time.sleep(10) # Sleep while server cools down
 			elif r.status_code == 104 \
 				or r.status_code == requests.codes.gateway_timeout \
 				or r.status_code == requests.codes.request_timeout:
@@ -190,6 +192,11 @@ def get(server, ext, data=None):
 				time.sleep(60) # Sleep 1 minute while server cools down
 			elif r.status_code == 400:
 				
+				if retries < 5:
+					logging.error("Will try again in %s seconds." % 2)
+					time.sleep(2)
+					continue
+
 				# Check for errors that aren't actually errors
 				
 				url = server + ext

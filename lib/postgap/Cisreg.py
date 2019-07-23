@@ -44,6 +44,7 @@ import sys
 import numpy
 import postgap.FinemapIntegration
 
+
 VEP_impact_to_score = {
 	'HIGH': 4,
 	'MEDIUM': 3,
@@ -88,8 +89,13 @@ class GTEx(Cisreg_source):
 		else:
 			res = self._snp_hdf5(snp)
 
+		number_of_associated_genes = 0
+		if res is not None:
+			number_of_associated_genes = len(res)
+			
+
 		logging.info(
-			"\tFound %i genes associated the SNP %s in GTEx" % (len(res), snp.rsID))
+			"\tFound %i genes associated the SNP %s in GTEx" % (number_of_associated_genes, snp.rsID))
 
 		return res
 
@@ -121,21 +127,37 @@ class GTEx(Cisreg_source):
 		
 		# Where there are pvalues, there must be betas
 		if cisreg_betas is None:
-			raise Exception
+			logging.warning("Got exception in _snp_rest")
+			logging.warning("The exception is cisreg_betas is None")
+			logging.warning("Returning 'None' and pretending this didn't happen.")
+			return None
+			#raise Exception
 		
 		if len(cisreg_betas) == 0:
-			raise Exception
+			logging.warning("Got exception in _snp_rest")
+			logging.warning("The exception is the length of cisreg_betas is 0")
+			logging.warning("Returning 'None' and pretending this didn't happen.")
+			return None
+			#raise Exception
 		
 		# Match them up:
 		
 		combined_cisreg_evidence_list = []
 		
 		for cisreg_with_pvalue in cisreg_with_pvalues:
-			
-			matching_cisreg_betas = filter(lambda X: X.gene.id == cisreg_with_pvalue.gene.id and X.tissue == cisreg_with_pvalue.tissue, cisreg_betas)
+			try:
+				matching_cisreg_betas = filter(lambda X: X.gene.id == cisreg_with_pvalue.gene.id and X.tissue == cisreg_with_pvalue.tissue, cisreg_betas)
+
+			except Exception as e:
+				logging.warning("Got exception matching_cisreg_betas in _snp_rest")
+				logging.warning("The exception is %s" % (e))
+				continue
 			
 			if len(matching_cisreg_betas) != 1:
-				raise Exception
+				logging.warning("Got exception in _snp_rest")
+				logging.warning("The exception is matching_cisreg_betas != 1; (matching_cisreg_betas = %i)" % len(matching_cisreg_betas))
+				continue
+				#raise Exception
 			
 			cisreg_with_beta = matching_cisreg_betas[0]
 
@@ -171,11 +193,12 @@ class GTEx(Cisreg_source):
 			Returntype: [ Cisregulatory_Evidence ]
 
 		"""
-
-		server = "http://rest.ensembl.org"
-		ext = "/eqtl/variant_name/%s/%s?content-type=application/json;statistic=beta" % ('homo_sapiens', snp.rsID);
 		try:
+			server = "http://rest.ensembl.org"
+			ext = "/eqtl/variant_name/%s/%s?content-type=application/json;statistic=beta" % ('homo_sapiens', snp.rsID);
+
 			eQTLs = postgap.REST.get(server, ext)
+		
 
 			'''
 				Example return object:
@@ -203,7 +226,8 @@ class GTEx(Cisreg_source):
 				)
 				for eQTL in eQTLs
 			]
-		except:
+
+		except Exception as e:
 			logging.warning("Got exception when quering _snp_betas")
 			logging.warning("The exception is %s" % (e))
 			logging.warning("Returning 'None' and pretending this didn't happen.")
@@ -235,7 +259,6 @@ class GTEx(Cisreg_source):
 				},
 			    ]
 			'''
-
 			return [
 				Cisregulatory_Evidence(
 					snp = snp,
@@ -424,6 +447,7 @@ class VEP(Cisreg_source):
 		snp_hash = dict( (snp.rsID, snp) for snp in snps)
 		transcript_consequences = filter(lambda X: 'transcript_consequences' in X, list)
 		res = []
+
 		for hit in transcript_consequences:
 			for consequence in hit['transcript_consequences']:
 				res.append(Cisregulatory_Evidence(
@@ -530,6 +554,7 @@ class Fantom5(Cisreg_source):
 			8. end
 			9. rsID
 		'''
+
 		gene = postgap.Ensembl_lookup.get_gene(feature[3])
 		if gene is None:
 			return None
@@ -600,6 +625,7 @@ class DHS(Cisreg_source):
 			9. rsID
 
 		'''
+
 		gene = postgap.Ensembl_lookup.get_gene(feature[3])
 		if gene is None:
 			return None
@@ -701,6 +727,7 @@ class PCHIC(Cisreg_source):
 			9. rsID
 
 		'''
+
 		gene = postgap.Ensembl_lookup.get_gene(feature[4])
 		if gene is None:
 			return None
@@ -750,6 +777,7 @@ class nearest_gene(Cisreg_source):
 			8. HGNC
 
 		'''
+
 		return [ Cisregulatory_Evidence(
 				gene = postgap.Ensembl_lookup.get_gene(row[7]),
 				snp = snp_hash[row[3]],
