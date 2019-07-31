@@ -119,7 +119,7 @@ def extract_snp_annotations(cluster, associations):
         #                'Pituitary_AKTIP',
         #                'Thyroid_RPGRIP1L']
         for association in associations:
-                for evidence in association.cisregulatory_evidence:
+                for evidence in association.cisregulatory_evidence + association.regulatory_evidence:
                     if evidence.source in ['GTEx']:
                         continue
                     #if evidence.source =='GTEx':
