@@ -60,6 +60,7 @@ def calculate_window(snp, population, window_len=500000, cutoff=0.7):
 	### Find the relevant 1000 genomes BCF
 	chrom_file = os.path.join(postgap.Globals.DATABASES_DIR, '1000Genomes', population, "ALL.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf" % (snp.chrom))
 	if not os.path.isfile(chrom_file):
+		logging.warning('Could not find BCF file %s', chrom_file)
 		return [snp]
 
 	### use ld_vcf
