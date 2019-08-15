@@ -56,14 +56,6 @@ cd libBigWig
 make
 cd ..
 
-# htslib
-echo Installing HTSlib
-git clone https://github.com/samtools/htslib.git
-cd htslib 
-git checkout 1.9
-make
-cd ..
-
 # GSL
 echo Installing GSL
 wget ftp://www.mirrorservice.org/sites/ftp.gnu.org/gnu/gsl/gsl-latest.tar.gz 
