@@ -15,7 +15,7 @@ cd ..
 echo Installing VCFlib
 git clone --recursive https://github.com/vcflib/vcflib.git
 cd vcflib
-git checkout v1.0.0-rc1
+git checkout v1.0.0-rc2
 make
 cp bin/vcfkeepsamples ../bin
 cd ..
