@@ -73,14 +73,7 @@ make
 cp bin/wiggletools ../bin
 cd ..
 
-# pybedtools v0.7.8, requests, pandas
-pip install pybedtools==0.7.4 requests pandas flask cherrypy
+pip install --user pybedtools==0.7.4 requests pandas flask cherrypy h5py==2.8.0 pysqlite
 
 # ld_vcf from ensembl-variation
 gcc -Wall -O3 C/ld_vcf.c -I htslib -o bin/ld_vcf -Lhtslib -Wl,-rpath,htslib -lhts -lm
-
-# h5py
-pip install h5py==2.8.0
-
-#sqlite
-pip install pysqlite
