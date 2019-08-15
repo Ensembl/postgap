@@ -325,6 +325,12 @@ def get_options():
     postgap.Globals.DATABASES_DIR = options.databases
     postgap.Globals.SPECIES = options.species
     postgap.Globals.DEBUG = postgap.Globals.DEBUG or options.debug
+
+    if postgap.Globals.DEBUG:
+	logging.getLogger().setLevel(logging.DEBUG)
+    else:
+	logging.getLogger().setLevel(logging.ERROR)
+
     postgap.Globals.GWAS_SUMMARY_STATS_FILE = options.summary_stats
     postgap.Globals.PERFORM_BAYESIAN = options.bayesian
     
