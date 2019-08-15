@@ -31,7 +31,7 @@ from postgap.DataModel import Region
 
 DATABASES_DIR = None
 SPECIES = None
-DEBUG = True
+DEBUG = False
 
 BLACKLISTED_REGIONS = [
 	Region(chrom = '6', start=28477797, end=33448354), # MHC
