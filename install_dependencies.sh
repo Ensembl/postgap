@@ -58,7 +58,7 @@ cd ..
 
 # GSL
 echo Installing GSL
-wget ftp://www.mirrorservice.org/sites/ftp.gnu.org/gnu/gsl/gsl-latest.tar.gz 
+wget ftp://www.mirrorservice.org/sites/ftp.gnu.org/gnu/gsl/gsl-2.5.tar.gz 
 tar -xvzpf gsl-2.5.tar.gz
 cd gsl-2.5
 ./configure
