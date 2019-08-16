@@ -191,14 +191,7 @@ def get(server, ext, data=None):
 				logging.error("Got 'timeout error': Will try again in %s seconds." % 60)
 				time.sleep(60) # Sleep 1 minute while server cools down
 			elif r.status_code == 400:
-				
-				if retries < 5:
-					logging.error("Will try again in %s seconds." % 2)
-					time.sleep(2)
-					continue
-
 				# Check for errors that aren't actually errors
-				
 				url = server + ext
 				if "/eqtl/" in url:
 					logging.info("Error is expected behaviour by the eqtl server and will be passed on.")
@@ -223,6 +216,10 @@ def get(server, ext, data=None):
 						raise Variation400error(r)
 				
 				# requests.exceptions.HTTPError: 400 Client Error: Bad Request for url: http://grch37.rest.ensembl.org/overlap/region/Human/5:117435127-119583975?feature=gene;content-type=application/json
+				if retries < 5:
+					logging.error("Will try again in %s seconds." % 2)
+					time.sleep(2)
+					continue
 				logging.error("Will try again in %s seconds." % 60)
 				time.sleep(60) # Sleep 1 minute while server cools down
 			else:
