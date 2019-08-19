@@ -69,8 +69,8 @@ Or a manually defined variant:
 python POSTGAP.py --coords my_variant 1 1234567 
 ```
 
-Direct data upload
-------------------
+Analysing your own summary statistics
+-------------------------------------
 
 To short cut the GWAS databases and enter you own data with a file:
 ```
