@@ -36,9 +36,13 @@ Flatfile preparation
   Everytime you run POSTGAP, add ```--database_dir /path/to/databases_dir``` to the command line.
 
 * Manually (*sloooow*)
-  This script will create a ```databases_dir``` directory for you:
-  1. Type ```make download``` to download public databases.
-  2. Type ```make process``` to preprocess the databases. **Warning** this may take days as it needs to split the entire 1000 Genomes files by population.
+  The following will create a ```databases_dir``` directory for you:
+  ```
+  cd scripts/build_data_files
+  make download
+  make process
+  ```
+  **Warning** this may take days as it needs to split the entire 1000 Genomes files by population.
 
 Running
 -------
