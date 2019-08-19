@@ -17,7 +17,9 @@ Add the ```lib/``` directory to your ```$PYTHONPATH``` environment variable.
 Installing dependencies
 -----------------------
 
-To install all dependencies run ```sh install_dependencies.sh```
+The `ubuntu_environment.sh` describes a recipe to install all basic C dependencies on a fresh ubuntu server. 
+
+To install all binformatic dependencies run ```sh install_dependencies.sh```. 
 
 Add the ```bin``` directory to your ```$PATH``` environment variable.
 
