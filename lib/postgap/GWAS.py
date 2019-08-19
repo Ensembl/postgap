@@ -749,7 +749,7 @@ class GWAS_File(GWAS_source):
 			gwas_data_file                    = gwas_data_file,
 			want_this_gwas_association_filter = pvalue_filter,
 			callback                          = pvalue_filtered_gwas_associations.add_to_found_list,
-			max_lines_to_return_threshold     = None
+			max_lines_to_return_threshold     = None,
 		)
 		
 		logging.info( "Found " + str(len(pvalue_filtered_gwas_associations.get_found_list())) + " gwas associations with a pvalue of " + str(postgap.Globals.GWAS_PVALUE_CUTOFF) + " or less.")
@@ -847,41 +847,29 @@ class GWAS_File(GWAS_source):
 			callback, 
 			want_this_gwas_association_filter,
 			max_lines_to_return_threshold = None,
-			column_labels = [
-				"Chromosome",
-				"Position",
-				"MarkerName",
-				"Effect_allele",
-				"Non_Effect_allele",
-				"Beta",
-				"SE",
-				"Pvalue"
-			]
 		):
 		
+
 		file = open(gwas_data_file)
-		
+		column_labels = file.readline().strip().split('\t')
+
 		number_of_lines_returned = 0
 		for line in file:
-			# Skip the line with headers
-			if line.startswith("Chromosome") or line.startswith("chr\t"):
-				continue
-			
 			items = line.rstrip().split('\t')
 			
 			parsed = dict()
 			for column_index, column_label in enumerate(column_labels):
 				parsed[column_label] = items[column_index]
 			
-			if not want_this_gwas_association_filter(parsed["Pvalue"]):
+			if not want_this_gwas_association_filter(parsed["p-value"]):
 				continue
 
 			try:
 				# TODO insert study info (from command line? config file?)
 				gwas_association = GWAS_Association(
-					pvalue                            = float(parsed["Pvalue"]),
+					pvalue                            = float(parsed["p-value"]),
 					pvalue_description		  = 'Manual',
-					snp                               = parsed["MarkerName"],
+					snp                               = parsed["variant_id"],
 					disease                           = Disease(name = 'Manual', efo = 'EFO_Manual'),
 					reported_trait                    = "Manual",
 					source                            = "Manual",
@@ -891,7 +879,7 @@ class GWAS_File(GWAS_source):
 					odds_ratio                        = None,
 					odds_ratio_ci_start		  = None,
 					odds_ratio_ci_end		  = None,
-					beta_coefficient                  = float(parsed["Beta"]),
+					beta_coefficient                  = float(parsed["beta"]),
 					beta_coefficient_unit             = "Manual",
 					beta_coefficient_direction        = "Manual",
 					rest_hash                         = None,

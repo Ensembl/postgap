@@ -77,15 +77,12 @@ To short cut the GWAS databases and enter you own data with a file:
 python POSTGAP.py --summary_stats my_stats.txt
 ```
 
-The summary statistics file should be tab delimited with the following columns:
-* Chromosome (GRCh37)
-* Position (GRCh37)
-* MarkerName
-* Effect_allele
-* Non_Effect_allele
-* Beta
-* SE
-* Pvalue
+The summary statistics file should be tab delimited which follows the [GWAS Catalog recommentations](https://www.ebi.ac.uk/gwas/docs/methods/summary-statistics).
+
+In particular, it must have the following columns:
+- variant_id
+- p-value
+- beta
 
 Bayesian mode (EXPERIMENTAL)
 ----------------------------
