@@ -17,9 +17,9 @@ Add the ```lib/``` directory to your ```$PYTHONPATH``` environment variable.
 Installing dependencies
 -----------------------
 
-The `ubuntu_environment.sh` describes a recipe to install all basic C dependencies on a fresh ubuntu server. 
+The `scripts/installation/ubuntu_environment.sh` describes a recipe to install all basic C dependencies on a fresh ubuntu server (requires root access). 
 
-To install all binformatic dependencies run ```sh install_dependencies.sh```. 
+To install all binformatic dependencies run ```sh scripts/installations/install_dependencies.sh```. 
 
 Add the ```bin``` directory to your ```$PATH``` environment variable.
 
@@ -29,7 +29,7 @@ Flatfile preparation
 * Via the FTP site (*recommended*)
 
   The following script downloads a bunch of files into PWD.
-  ```sh download.sh```
+  ```sh scripts/installation/download.sh```
 
   Ideally, save these files in a separate directory, which we will call ```databases_dir````
 
