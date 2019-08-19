@@ -74,7 +74,7 @@ Analysing your own summary statistics
 
 To short cut the GWAS databases and enter you own data with a file:
 ```
-python POSTGAP.py --summary_stats my_stats.txt
+python POSTGAP.py --summary_stats tests/sample_data/example.tsv
 ```
 
 The summary statistics file should be tab delimited which follows the [GWAS Catalog recommentations](https://www.ebi.ac.uk/gwas/docs/methods/summary-statistics).
