@@ -35,6 +35,7 @@ import os
 import csv
 from jinja2 import Template
 import requests
+import collections
 
 
 def main():
@@ -46,11 +47,7 @@ def main():
 	assert os.path.exists(options.result_file), "result file " + options.result_file + " can't be found."
 	assert os.path.exists(options.template), "HTML template file " + options.template + " can't be found."
 	
-	#get top 10 genes
-	top_10_genes, top_10_snps = get_top_10_genes_snps(options.result_file)
-
-	#get top 10 pathways
-	top_10_pathways = get_top_10_pathways(top_10_genes)
+	top_10_genes, top_10_snps, top_10_pathways = get_top_10s(options.result_file)
 
 	#load template and render the html file out
 	template_file = open(options.template, 'r')
@@ -72,64 +69,40 @@ def get_options():
 
 	return options
 
-def get_top_10_genes_snps(result_file):
+def get_top_10s(result_file):
 
-	top_10_genes = [[0 for x in range(4)] for y in range(10)]
-	top_10_snps = [[0 for x in range(4)] for y in range(10)]
+	gene_cluster_tissue_posterior = collections.defaultdict(float)
+	gene_posterior = collections.defaultdict(float)
+	snp_table = []
 
 	source_file = open(result_file, 'r')
 	reader = csv.reader(source_file, delimiter='\t')
 
 	for row in reader:
+		gene, cluster, snp, snp_gene_tissue_posterior, tissue, gene_tissue_posterior = row
+		gene_cluster_tissue_posterior[(gene, cluster.replace('GWAS_Cluster_', ''), tissue)] = float(gene_tissue_posterior)
+		gene_posterior[gene] += float(gene_tissue_posterior)
+		snp_table.append((snp, gene, tissue, snp_gene_tissue_posterior))
 
-		gene = row[0]
-		cluster = row[1].replace('GWAS_Cluster_', '')
-		snp = row[2]
-		snp_gene_tissue_posterior = row[3]
-		tissue = row[4]
-		gene_cluster_tissue_posterior = row[5]
-
-		for i in range(10):
-			if top_10_genes[i][0] != gene or top_10_genes[i][1] != cluster or top_10_genes[i][2] != tissue:
-				if top_10_genes[i][3] < gene_cluster_tissue_posterior:
-					item = [gene, cluster, tissue, gene_cluster_tissue_posterior]
-					top_10_genes.insert(i, item)
-					del top_10_genes[-1]
-					break
-
-		for i in range(10):
-			if top_10_snps[i][0] != snp or top_10_snps[i][1] != gene or top_10_snps[i][2] != tissue:
-				if top_10_snps[i][3] < snp_gene_tissue_posterior:
-					item = [snp, gene, tissue, snp_gene_tissue_posterior]
-					top_10_snps.insert(i, item)
-					del top_10_snps[-1]
-					break
-
-	return top_10_genes, top_10_snps
-
-def get_top_10_pathways(top_10_genes):
-
-	#get the list of genes
-	gene_list = []
-	for gene in top_10_genes:
-		if not gene[0] in gene_list:
-			gene_list.append(gene[0])
+	gene_table = [tuple(list(gene_cluster_tissue_tuple) + [gene_cluster_tissue_posterior[gene_cluster_tissue_tuple]]) for gene_cluster_tissue_tuple in gene_cluster_tissue_posterior]
+	sorted_gene_table = sorted(gene_table, key=lambda row: -float(row[3]))
+	sorted_snp_table = sorted(snp_table, key=lambda row: -float(row[3]))
 
 	#call reactome
-	genes_to_analyse = '\n'.join([str(i) for i in gene_list])
+	genes_to_analyse = '\n'.join('\t'.join([gene, str(gene_posterior[gene])]) for gene in gene_posterior)
 	headers = {'Content-Type': 'text/plain',}
-	res = requests.post('https://reactome.org/AnalysisService/identifiers/projection/?pageSize=10&page=1', headers=headers, data=genes_to_analyse)
+	res = requests.post('https://reactome.org/AnalysisService/identifiers/projection?sortBy=fdr&pageSize=10&page=1', headers=headers, data=genes_to_analyse)
 	pathways_jdata = res.json()
 
-	top_10_pathways = []
-	for i in range(10):
-		pathway_stdi = pathways_jdata['pathways'][i]['stId']
-		pathway_name = pathways_jdata['pathways'][i]['name']
-		pathway_score = 1 - float(pathways_jdata['pathways'][i]['entities']['fdr'])
-		item = [pathway_stdi, pathway_name, pathway_score]
-		top_10_pathways.insert(i, item)
+	pathway_table = []
+	for pathway in pathways_jdata['pathways']:
+		pathway_stdi = pathway['stId']
+		pathway_name = pathway['name']
+		pathway_score = float(pathway['entities']['fdr'])
+		pathway_table.append([pathway_stdi, pathway_name, pathway_score])
 
-	return top_10_pathways
+	sorted_pathway_table = sorted(pathway_table, key=lambda row: row[2])
+	return sorted_gene_table[:10], sorted_snp_table[:10], sorted_pathway_table[:10]
 
 
 if __name__ == "__main__":
