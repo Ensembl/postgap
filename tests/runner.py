@@ -5,6 +5,7 @@
 import sys
 import unittest
 import argparse
+import os.path
 
 # pipped
 import pandas as pd
@@ -40,12 +41,13 @@ if __name__ == '__main__':
     loader = unittest.TestLoader()
 
     pattern = 'test*.py'
+    dir_path = os.path.dirname(os.path.realpath(__file__))
     if (args.skip_data_checks):
-        suite = loader.discover('./health_checks')
+        suite = loader.discover(os.path.join(dir_path, 'tests/health_checks'))
     elif (args.skip_health_checks):
-        suite = loader.discover('./data_checks')
+        suite = loader.discover(os.path.join(dir_path, 'tests/data_checks'))
     else:
-        suite = loader.discover('.')
+        suite = loader.discover(dir_path)
 
     postgap = pd.read_csv(args.filename, sep='\t', na_values=['None'])
 
