@@ -123,9 +123,7 @@ python POSTGAP.py --disease autism --json
 Testing
 -------
 
-```
-python postgap_and_tests.py --database_dir /path/to/postgap/databases --efos EFO_0008263 --output EFO_0008263.txt --GWAS GWAS_Catalog
-```
+You can check the output with the following commands using the [data tests](./tests/README.md).
 
 More Info
 ---------
