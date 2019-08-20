@@ -4,11 +4,9 @@ import unittest
 # ------------------------------------------------
 
 VALID_CHROMOSOMES = [*[str(chr) for chr in range(23)], 'X', 'Y']
-VALID_GWAS_SOURCES = ['GWAS Catalog']
+VALID_GWAS_SOURCES = ["GWAS_Catalog", "GRASP", "Phewas_Catalog", "GWAS_DB", "Manual"]
 VALID_SNP_ID_REGEX = '^rs\d+$'
 VALID_GENE_ID_REGEX = '^ENSG\d+$'
-VALID_EFO_ID_REGEX = '^EFO_\d+$'
-
 
 class TestPostgapBase(unittest.TestCase):
     """
@@ -83,12 +81,6 @@ class TestPostgapBase(unittest.TestCase):
         Check if all values in a `pandas.Series` are valid SNP ids.
         """
         self.assert_series_matches_regex(series, VALID_SNP_ID_REGEX)
-
-    def assert_series_valid_efo_id(self, series):
-        """
-        Check if all values in a `pandas.Series` are valid EFO ids.
-        """
-        self.assert_series_matches_regex(series, VALID_EFO_ID_REGEX)
 
     def assert_series_valid_genomic_coord(self, series):
         """

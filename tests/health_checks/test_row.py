@@ -76,8 +76,6 @@ class TestPostgapRow(TestPostgapBase):
     # disease_name
 
     # disease_efo_id
-    def test_col_format_disease_efo_id(self):
-        self.assert_series_valid_efo_id(self.pg.disease_efo_id)
 
     # r2
     def test_col_format_r2(self):
