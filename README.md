@@ -24,13 +24,13 @@ The `scripts/installation/ubuntu_environment.sh` describes a recipe to install a
 
 To install all binformatic dependencies run ```sh scripts/installations/install_dependencies.sh```. 
 
-Add the ```bin``` directory to your ```$PATH``` environment variable.
+Add the ```./bin/``` directory to your ```$PATH``` environment variable.
 
 ## Flatfile preparation
 
 ### Via the FTP site (*recommended*)
 
-  The following script downloads a bunch of files into PWD:
+  The following script downloads a bunch of files into ```$PWD```:
   ```
   sh scripts/installation/download.sh
   ```
