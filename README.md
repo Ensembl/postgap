@@ -81,7 +81,7 @@ To short cut the GWAS databases and enter you own data with a file:
 python POSTGAP.py --summary_stats tests/sample_data/example.tsv
 ```
 
-The summary statistics file should be tab delimited which follows the [GWAS Catalog recommentations](https://www.ebi.ac.uk/gwas/docs/methods/summary-statistics).
+The summary statistics file should be tab delimited and follow the [GWAS Catalog recommentations](https://www.ebi.ac.uk/gwas/docs/methods/summary-statistics).
 
 In particular, it must have the following columns:
 - variant_id
@@ -94,12 +94,20 @@ Bayesian mode (EXPERIMENTAL)
 For an EFO, you can trigger the Bayesian calculations with:
 
 ```
-python POSTGAP.py --efos EFO_0000196 --bayesian
+python POSTGAP.py --efos EFO_0000196 --bayesian --output2 output2.txt
 ```
 
-In this case, POSTGAP produces an output file, 'postgap_output', which can be displayed as:
+In this case, POSTGAP produces a tab-delimited output file, 'output2.txt'. The columns represent:
+1. Gene ID
+2. Cluster description
+3. SNP ID
+4. Colocalisation posterior probability at that SNP
+5. Tissue
+6. Colocalisation posterior probability over the whole cluster
+
+It can be displayed as:
 ```
-python extract_data.py
+python scripts/present_results/postgap_html_report.py --result_file output2.txt --template scripts/present_results/geneReport.html --output report.html
 ```
 
 Output
