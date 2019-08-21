@@ -1,5 +1,4 @@
-Post-GWAS Analysis Pipeline
-===========================
+# Post-GWAS Analysis Pipeline
 
 Copyright holder: [EMBL-European Bioinformatics Institute](http://www.ebi.ac.uk) (Apache 2 License)
 
@@ -9,13 +8,11 @@ Its original design was based on [STOPGAP](http://www.nature.com/ng/journal/v47/
 
 ![Pipeline diagram](https://github.com/Ensembl/postgap/blob/master/POSTGAP%20pipeline.png "Pipeline diagram")
 
-Installing
-----------
+# Installation
 
 Add the ```lib/``` directory to your ```$PYTHONPATH``` environment variable.
 
-Installing dependencies
------------------------
+## Installing dependencies
 
 The `scripts/installation/ubuntu_environment.sh` describes a recipe to install all basic C dependencies on a fresh ubuntu server (requires root access). 
 
@@ -23,10 +20,9 @@ To install all binformatic dependencies run ```sh scripts/installations/install_
 
 Add the ```bin``` directory to your ```$PATH``` environment variable.
 
-Flatfile preparation
---------------------
+## Flatfile preparation
 
-* Via the FTP site (*recommended*)
+### Via the FTP site (*recommended*)
 
   The following script downloads a bunch of files into PWD.
   ```sh scripts/installation/download.sh```
@@ -35,7 +31,7 @@ Flatfile preparation
 
   Everytime you run POSTGAP, add ```--database_dir /path/to/databases_dir``` to the command line.
 
-* Manually (*sloooow*)
+### Manually (*sloooow*)
   The following will create a ```databases_dir``` directory for you:
   ```
   cd scripts/build_data_files
@@ -44,8 +40,7 @@ Flatfile preparation
   ```
   **Warning** this may take days as it needs to split the entire 1000 Genomes files by population.
 
-Running
--------
+# Running
 
 By default, run from the root directory the command: 
 
@@ -73,8 +68,7 @@ Or a manually defined variant:
 python POSTGAP.py --coords my_variant 1 1234567 
 ```
 
-Analysing your own summary statistics
--------------------------------------
+## Analysing your own summary statistics
 
 To short cut the GWAS databases and enter you own data with a file:
 ```
@@ -88,8 +82,7 @@ In particular, it must have the following columns:
 - p-value
 - beta
 
-Bayesian mode (EXPERIMENTAL)
-----------------------------
+## Bayesian mode (EXPERIMENTAL)
 
 For an EFO, you can trigger the Bayesian calculations with:
 
@@ -110,8 +103,7 @@ It can be displayed as:
 python scripts/present_results/postgap_html_report.py --result_file output2.txt --template scripts/present_results/geneReport.html --output report.html
 ```
 
-Output
-------
+### Output
 
 By default, the script writes out a tab delimited file to standard out.
 
@@ -128,12 +120,10 @@ python POSTGAP.py --disease autism --output results.json --json
 python POSTGAP.py --disease autism --json
 ```
 
-Testing
--------
+# Testing
 
 You can check the output with the following commands using the [data tests](./tests/README.md).
 
-More Info
----------
+# More Info
 
 Check out our [Wiki](https://github.com/Ensembl/postgap/wiki)
