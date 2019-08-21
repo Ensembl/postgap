@@ -30,10 +30,12 @@ Add the ```bin``` directory to your ```$PATH``` environment variable.
 
 ### Via the FTP site (*recommended*)
 
-  The following script downloads a bunch of files into PWD.
-  ```sh scripts/installation/download.sh```
+  The following script downloads a bunch of files into PWD:
+  ```
+  sh scripts/installation/download.sh
+  ```
 
-  Ideally, save these files in a separate directory, which we will call ```databases_dir````
+  Ideally, save these files in a separate directory, which we will call ```databases_dir```.
 
   Everytime you run POSTGAP, add ```--database_dir /path/to/databases_dir``` to the command line.
 
