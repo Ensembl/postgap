@@ -10,6 +10,12 @@ Its original design was based on [STOPGAP](http://www.nature.com/ng/journal/v47/
 
 # Installation
 
+## Virtual machine
+
+If you wish to shortcut all of the instructions, you can simply use our [VirtualBox](https://www.virtualbox.org/) [virtual machine](ftp://ftp.ebi.ac.uk/pub/databases/post-gwas/postgap.ova).
+
+## Installing the Python library
+
 Add the ```lib/``` directory to your ```$PYTHONPATH``` environment variable.
 
 ## Installing dependencies
