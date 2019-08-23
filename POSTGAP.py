@@ -324,9 +324,8 @@ def get_options():
 
     postgap.Globals.DATABASES_DIR = options.databases
     postgap.Globals.SPECIES = options.species
-    postgap.Globals.DEBUG = postgap.Globals.DEBUG or options.debug
 
-    if postgap.Globals.DEBUG:
+    if options.debug:
 	logging.getLogger().setLevel(logging.DEBUG)
     else:
 	logging.getLogger().setLevel(logging.ERROR)

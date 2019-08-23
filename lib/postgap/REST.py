@@ -34,8 +34,6 @@ import time
 import logging
 import httplib
 
-from postgap.Globals import *
-
 import signal
 
 class timeout_handler:
@@ -109,9 +107,8 @@ def get(server, ext, data=None):
 	
 	for retries in range(maximum_retries):
 		
-		if DEBUG:
-			logging.debug("REST JSON Query: %s%s" % (server, ext))
-			start_time = time.time()
+		logging.debug("REST JSON Query: %s%s" % (server, ext))
+		start_time = time.time()
 
 		try:
 			if data is None:
@@ -227,8 +224,7 @@ def get(server, ext, data=None):
 				r.raise_for_status()
 			continue
 
-		if DEBUG:
-			logging.debug("Time: %f" % (time.time() - start_time))
+		logging.debug("Time: %f" % (time.time() - start_time))
 
 		try:
 			return r.json()

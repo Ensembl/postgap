@@ -684,11 +684,10 @@ def cisregulatory_evidence(ld_snps, tissues):
 		assert type(association) is postgap.DataModel.Cisregulatory_Evidence, "association is Cisregulatory_Evidence"
 		res[association.snp][association.gene].append(association)
 
-	if postgap.Globals.DEBUG:
-		if postgap.Globals.Cisreg_adaptors == None:
-			logging.info(("Found %i cis-regulatory interactions in all databases" % (len(res))))
-		else:
-			logging.info(("Found %i cis-regulatory interactions in (%s)" % (len(res), ", ".join(postgap.Globals.Cisreg_adaptors))))
+	if postgap.Globals.Cisreg_adaptors == None:
+		logging.debug(("Found %i cis-regulatory interactions in all databases" % (len(res))))
+	else:
+		logging.debug(("Found %i cis-regulatory interactions in (%s)" % (len(res), ", ".join(postgap.Globals.Cisreg_adaptors))))
 	return res
 
 def regulatory_evidence(snps, tissues):
