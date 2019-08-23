@@ -305,7 +305,7 @@ class GTEx(Cisreg_source):
 			hdf5_snp_index = hdf5_snp_index  - 1
 
 
-			with h5py.File(postgap.Globals.GTEx_path) as hdf5_file:
+			with h5py.File(postgap.Globals.GTEx_path, 'r') as hdf5_file:
 				tissue_array_names = {k: (''.join(chr(i) for i in hdf5_file.get('dim_labels/1')[k]).rstrip('\0'))
 									  for k in range(0, len(hdf5_file.get('dim_labels/1')))}
 
