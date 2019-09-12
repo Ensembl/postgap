@@ -29,6 +29,7 @@ limitations under the License.
 """
 # Hack to lazy load scipy only if required
 scipy = None
+import os.path
 import numpy
 import postgap.Globals
 import collections
@@ -56,7 +57,7 @@ def compute_gwas_posteriors(cluster_associations, populations):
                 prepped_clusters.append( (prepped_cluster, filtered_associations) )
         # MLE calculation 
         modified_clusters= [(postgap.Finemap.mk_modified_clusters(cluster), associations) for cluster, associations in prepped_clusters]
-        pickle.dump(modified_clusters, open('prepped_clusters_'+postgap.Globals.GWAS_SUMMARY_STATS_FILE+'.pkl', "w"))
+        pickle.dump(modified_clusters, open('prepped_clusters_'+os.path.basename(postgap.Globals.GWAS_SUMMARY_STATS_FILE)+'.pkl', "w"))
 	return [(finemap_gwas_cluster(cluster), associations) for cluster, associations in modified_clusters]
 
 def prepare_cluster_for_finemap(cluster, associations, populations, tissue_weights=['Whole_Blood']):
@@ -285,7 +286,7 @@ def finemap_gwas_cluster(cluster):
 	sample_size = sum(sample_sizes) / len(sample_sizes)
 
         # Extract GWAS_lambdas(F.A effect size) ===
-        with open('GWAS_lambdas_'+postgap.Globals.GWAS_SUMMARY_STATS_FILE,'a') as fw1:
+        with open('GWAS_lambdas_'+os.path.basename(postgap.Globals.GWAS_SUMMARY_STATS_FILE),'a') as fw1:
             for idx,L in enumerate(cluster.lambdas):
                 fw1.write( '\t'.join( map(str, [sample_label, postgap.Globals.source_lst[idx],L] ))+'\n' )
         # ======
