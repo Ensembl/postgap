@@ -160,7 +160,7 @@ def gwas_snps_to_genes(gwas_snps, population, tissue_weights):
 	if tissue_weights is None:
 		tissue_weights = gwas_snps_to_tissue_weights(gwas_snps)
 
-	return clusters_to_genes(cluster_gwas_snps(gwas_snps, populations), populations, tissue_weights)
+	return clusters_to_genes(cluster_gwas_snps(gwas_snps, population), population, tissue_weights)
 
 def clusters_to_genes(clusters, population, tissue_weights):
 	"""
@@ -189,11 +189,11 @@ def clusters_to_genes(clusters, population, tissue_weights):
         # ===
 	
         if postgap.Globals.PERFORM_BAYESIAN:
-		cluster_associations = postgap.FinemapIntegration.compute_gwas_posteriors(cluster_associations, populations)
+		cluster_associations = postgap.FinemapIntegration.compute_gwas_posteriors(cluster_associations, population)
 	#print cluster_associations[0][0].ld_matrix
 	
         # Perform cluster by cluster finemapping
-	res = concatenate(cluster_to_genes(cluster, associations, tissue_weights, populations) for cluster, associations in cluster_associations)
+	res = concatenate(cluster_to_genes(cluster, associations, tissue_weights, population) for cluster, associations in cluster_associations)
 
 	logging.info("\tFound %i genes associated to all clusters" % (len(res)))
 
@@ -416,7 +416,7 @@ def merge_clusters(cluster, other_cluster):
 		gwas_configuration_posteriors = None
 	)
 
-def cluster_to_genes(cluster, associations, tissues, populations):
+def cluster_to_genes(cluster, associations, tissues, population):
     """
 
         Associated Genes to a cluster of gwas_snps
