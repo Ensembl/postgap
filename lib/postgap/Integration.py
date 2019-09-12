@@ -230,28 +230,15 @@ def cluster_gwas_snps(gwas_snps, population):
 	# For every gwas snp location, create the preclusters by simple LD expansion of independent SNPs.
 	#
 	preclusters = filter (lambda X: X is not None, [ gwas_snp_to_precluster(gwas_snp_location, population) for gwas_snp_location in gwas_snp_locations ])
-	
+
 	# Remove preclusters having a SNP in a blacklisted region
 	#
 	filtered_preclusters = postgap.RegionFilter.region_filter(preclusters)
-	
+
 	# Merge precluster that share one or more GWAS_Cluster.ld_snps.
 	#
-	raw_clusters = merge_preclusters_ld(merge_preclusters_distance(filtered_preclusters))
+	clusters = merge_preclusters_ld(merge_preclusters_distance(filtered_preclusters))
 
-	if postgap.Globals.PERFORM_BAYESIAN:
-		# Perform GWAS finemapping of the clusters
-		# 
-		clusters = []
-		for cluster in raw_clusters:
-			try:
-				clusters.append(postgap.FinemapIntegration.finemap_gwas_cluster(cluster, population))
-			except:
-				continue
-				
-	else:
-		clusters = raw_clusters
-	
 	logging.info("Found %i clusters from %i GWAS SNP locations" % (len(clusters), len(gwas_snp_locations)))
 
 	return clusters
