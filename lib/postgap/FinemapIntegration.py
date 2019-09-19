@@ -72,9 +72,9 @@ def prepare_cluster_for_finemap(cluster, associations, populations, tissue_weigh
 
 	if len(cluster.ld_snps) == len(cluster.gwas_snps):
 		ld_snps, ld_matrix, z_scores, betas = compute_ld_matrix(cluster)
-	elif postgap.Globals.GWAS_SUMMARY_STATS_FILE is not None:
-                ld_snps, ld_matrix, z_scores, betas = extract_z_scores_from_file(cluster)
 	else:
+		if postgap.Globals.GWAS_SUMMARY_STATS_FILE is not None:
+			cluster = extract_z_scores_from_file(cluster)
 		ld_snps, ld_matrix, z_scores, betas = impute_z_scores(cluster)
 
         cluster_f = GWAS_Cluster(cluster.gwas_snps, ld_snps, ld_matrix, z_scores, betas, None, None, None)
@@ -174,12 +174,12 @@ def extract_z_scores_from_file(cluster):
 	'''
 		Extracts Z-scores from summary stats file, computes LD matrix
 		Arg1: Cluster
-		Returntype: [SNP], numpy.matrix (square LD matrix), numpy.matrix (Z-score vector)
+		Returntype: Cluster
 	'''
 	ld_snp_hash = dict((ld_snp.rsID, ld_snp) for index, ld_snp in enumerate(cluster.ld_snps))
 
 	## Extract or impute missing z_scores
-	ld_snp_results = dict()
+	all_gwas_snps = list(cluster.gwas_snps)
 	missing = len(ld_snp_hash)
 	file = open(postgap.Globals.GWAS_SUMMARY_STATS_FILE)
 	for line in file:
@@ -188,25 +188,49 @@ def extract_z_scores_from_file(cluster):
 		chromosome, position, rsID, effect_allele, non_effect_allele, beta, se, pvalue = line.rstrip().split('\t')
                 rsID = rsID.strip() 
 		if rsID in ld_snp_hash:
-			ld_snp_results[rsID] = (float(pvalue), float(beta))
+			all_gwas_snps.append(
+				GWAS_SNP(
+					snp = ld_snp_hash[rsID],
+					pvalue = pvalue,
+					z_score = postgap.FinemapIntegration.z_score_from_pvalue(pvalue, beta),
+					beta = beta,
+					evidence = [
+						GWAS_Association(
+							pvalue                            = float(pvalue),
+							pvalue_description		  = 'Manual',
+							snp                               = rsID,
+							disease                           = Disease(name = 'Manual', efo = 'EFO_Manual'),
+							reported_trait                    = "Manual",
+							source                            = "Manual",
+							publication			  = "PMID000",
+							study                             = "Manual",
+							sample_size                       = 1000,
+							odds_ratio                        = "Manual",
+							odds_ratio_ci_start		  = None,
+							odds_ratio_ci_end		  = None,
+							beta_coefficient                  = float(beta),
+							beta_coefficient_unit             = "Manual",
+							beta_coefficient_direction        = "Manual",
+							rest_hash                         = None,
+							risk_alleles_present_in_reference = None,
+						)
+					]
+				)
+			)
 			missing -= 1
 			if missing == 0:
 				break
 	
-	# Update list of SNPss	
-	found_ld_snps = [ld_snp_hash[rsID] for rsID in ld_snp_results]
-
-	## Compute ld_matrix
-	ld_snp_ids, ld_matrix = postgap.LD.get_pairwise_ld(found_ld_snps)
-
-	## Update list of LD SNPs
-	ld_snps = [ld_snp_hash[rsID] for rsID in ld_snp_ids]
-	z_scores = [z_score_from_pvalue(ld_snp_results[rsID][0], ld_snp_results[rsID][1]) for rsID in ld_snp_ids]
-	betas = [ld_snp_results[rsID][1] for rsID in ld_snp_ids]
-
-	assert len(ld_snps) ==  ld_matrix.shape[0]
-	assert len(ld_snps) ==  ld_matrix.shape[1]
-	return ld_snps, ld_matrix, z_scores, betas
+	return GWAS_Cluster(
+		gwas_snps = all_gwas_snps,
+		ld_snps = cluster.ld_snps,
+		ld_matrix = None,
+		z_scores = None,
+                betas = None,
+                mafs = None,
+                annotations = None,
+		gwas_configuration_posteriors = None
+	)
 
 def impute_z_scores(cluster):
 	'''
