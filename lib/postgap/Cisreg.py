@@ -32,6 +32,7 @@ import collections
 
 from postgap.DataModel import *
 from postgap.Utils import *
+from postgap.REST import Variation400error
 import postgap.REST
 import postgap.Globals 
 import BedTools
@@ -508,6 +509,11 @@ class VEP(Cisreg_source):
 				else:
 					return self.get(chunk[:len(chunk)/2]) + self.get(chunk[len(chunk)/2:])
 			raise
+		except Variation400error as error:
+			if len(chunk) == 1:
+				return []
+			else:
+				return self.get(chunk[:len(chunk)/2]) + self.get(chunk[len(chunk)/2:])
 				
 
 class Fantom5(Cisreg_source):

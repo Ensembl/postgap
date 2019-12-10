@@ -36,6 +36,7 @@ import logging
 import requests
 import subprocess
 import tempfile
+from postgap.REST import Variation400error
 
 class Reg_source(object):
 	def run(self, ld_snps, tissues):
@@ -247,6 +248,11 @@ class VEP_reg(Reg_source):
 				else:
 					return self.get(chunk[:len(chunk)/2]) + self.get(chunk[len(chunk)/2:])
 			raise
+		except Variation400error as error:
+			if len(chunk) == 1:
+				return []
+			else:
+				return self.get(chunk[:len(chunk)/2]) + self.get(chunk[len(chunk)/2:])
 
 class GERP(Reg_source):
 	display_name = 'GERP'

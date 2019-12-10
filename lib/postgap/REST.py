@@ -211,7 +211,13 @@ def get(server, ext, data=None):
 					if " not found for" in response["error"]:
 						logging.warning("Error is expected behaviour by the variation endpoint and will be passed on.")
 						raise Variation400error(r)
-				
+
+				if "/vep/" in url:
+					response = r.json()
+					if "No variant found with ID" in response["error"]:
+						logging.warning("Error is expected behaviour by the vep endpoint and will be passed on.")
+						raise Variation400error(r)
+
 				# requests.exceptions.HTTPError: 400 Client Error: Bad Request for url: http://grch37.rest.ensembl.org/overlap/region/Human/5:117435127-119583975?feature=gene;content-type=application/json
 				if retries < 5:
 					logging.warning("Will try again in %s seconds." % 2)
