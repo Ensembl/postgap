@@ -122,18 +122,18 @@ def get(server, ext, data=None):
 		except requests.exceptions.ConnectionError:
 			# A timeout can creep up as a connection error, so catching this as well.
 			# requests.exceptions.ConnectionError: HTTPConnectionPool(host='grch37.rest.ensembl.org', port=80): Read timed out.
-			logging.error("Got a requests.exceptions.ConnectionError when querying %s%s" % (server, ext) )
+			logging.warning("Got a requests.exceptions.ConnectionError when querying %s%s" % (server, ext) )
 			continue
 		except requests.exceptions.ChunkedEncodingError:
 			# Happens every now and then when the eqtl server feels a bit 
 			# stressed.
-			logging.error("Got a requests.exceptions.ChunkedEncodingError when querying %s%s" % (server, ext) )
+			logging.warning("Got a requests.exceptions.ChunkedEncodingError when querying %s%s" % (server, ext) )
 			continue
 
 
 		if not r.ok:
 			
-			logging.debug("Something went wrong code: %s" % (r.status_code))
+			logging.warning("Something went wrong code: %s" % (r.status_code))
 
 			http_response_code = None
 			
@@ -149,10 +149,10 @@ def get(server, ext, data=None):
 				#logging.critical(error_message)
 				#raise RuntimeError(error_message)
 			
-			logging.error("Failed to get proper response to query %s%s" % (server, ext) )
-			logging.error("With headers:" + repr(headers))
+			logging.warning("Failed to get proper response to query %s%s" % (server, ext) )
+			logging.warning("With headers:" + repr(headers))
 			if data is not None:
-				logging.error("With data:" + repr(data))
+				logging.warning("With data:" + repr(data))
 			
 			response_as_string = None
 			
@@ -161,7 +161,7 @@ def get(server, ext, data=None):
 			except ValueError:
 				response_as_string = "<Error when stringifying>" + repr(r) + "</Error when stringifying>"
 			
-			logging.error("Error code: %s (%s) %s" % (http_response_code, r.status_code, response_as_string ) )
+			logging.warning("Error code: %s (%s) %s" % (http_response_code, r.status_code, response_as_string ) )
 
 			#if retries == 5:
 			#	logging.critical("Giving up.")
@@ -169,33 +169,33 @@ def get(server, ext, data=None):
 
 			if 'Retry-After' in r.headers:
 				if r.status_code == 429:
-					logging.error("Got error 429 'Too Many Requests'" )
+					logging.warning("Got error 429 'Too Many Requests'" )
 				
-				logging.error("Will try again in %s seconds." % r.headers['Retry-After'])
+				logging.warning("Will try again in %s seconds." % r.headers['Retry-After'])
 				time.sleep(int(r.headers['Retry-After']))
 
 			elif r.status_code == 502:
-				logging.error("Got error 502 'Bad Gateway'. Will try again in %s seconds." % 2)
+				logging.warning("Got error 502 'Bad Gateway'. Will try again in %s seconds." % 2)
 				time.sleep(2) # Sleep while server cools down
 
 			elif r.status_code == requests.codes.forbidden:
-				logging.error("Got 'forbidden' error: Will try again in %s seconds." % 600)
+				logging.warning("Got 'forbidden' error: Will try again in %s seconds." % 600)
 				time.sleep(600) # Sleep 10 minutes while server calms down
 			elif r.status_code == 104 \
 				or r.status_code == requests.codes.gateway_timeout \
 				or r.status_code == requests.codes.request_timeout:
 
-				logging.error("Got 'timeout error': Will try again in %s seconds." % 60)
+				logging.warning("Got 'timeout error': Will try again in %s seconds." % 60)
 				time.sleep(60) # Sleep 1 minute while server cools down
 			elif r.status_code == 400:
 				# Check for errors that aren't actually errors
 				url = server + ext
 				if "/eqtl/" in url:
-					logging.info("Error is expected behaviour by the eqtl server and will be passed on.")
+					logging.warning("Error is expected behaviour by the eqtl server and will be passed on.")
 					raise EQTL400error(r)
 
 				if "/lookup/symbol" in url or '/lookup/id' in url:
-					logging.info("Error is expected behaviour by the Ensembl gene lookup and will be passed on.")
+					logging.warning("Error is expected behaviour by the Ensembl gene lookup and will be passed on.")
 					raise GENE400error(r)
 				
 				if "/variation/" in url:
@@ -209,18 +209,18 @@ def get(server, ext, data=None):
 					# Error code: Bad Request (400) {"error": "rs24449894 not found for homo_sapiens"}
 					#
 					if " not found for" in response["error"]:
-						logging.info("Error is expected behaviour by the variation endpoint and will be passed on.")
+						logging.warning("Error is expected behaviour by the variation endpoint and will be passed on.")
 						raise Variation400error(r)
 				
 				# requests.exceptions.HTTPError: 400 Client Error: Bad Request for url: http://grch37.rest.ensembl.org/overlap/region/Human/5:117435127-119583975?feature=gene;content-type=application/json
 				if retries < 5:
-					logging.error("Will try again in %s seconds." % 2)
+					logging.warning("Will try again in %s seconds." % 2)
 					time.sleep(2)
 					continue
-				logging.error("Will try again in %s seconds." % 60)
+				logging.warning("Will try again in %s seconds." % 60)
 				time.sleep(60) # Sleep 1 minute while server cools down
 			else:
-				logging.error("Got status code %s (%s)." % (r.status_code, http_response_code))
+				logging.warning("Got status code %s (%s)." % (r.status_code, http_response_code))
 				r.raise_for_status()
 			continue
 
