@@ -137,7 +137,7 @@ def main():
 	elif options.rsID is not None:
 		res = postgap.Integration.rsIDs_to_genes(options.rsID, options.tissues)
 	elif options.coords is not None:
-		snp = postgap.DataModel.SNP(rsID = options.coords[0], chrom = options.coords[1], pos = int(options.coords[2]))
+		snp = postgap.DataModel.SNP(rsID = options.coords[0], chrom = options.coords[1], pos = int(options.coords[2]), approximated_zscore=None)
 		if options.tissues is None:
 			options.tissues = ["Whole_Blood"]
 		res = postgap.Integration.ld_snps_to_genes([snp], options.tissues)
