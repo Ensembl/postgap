@@ -97,7 +97,7 @@ def scan_disease_databases(diseases, efos):
 		gwas_associations = postgap.GWAS.GWAS_File().run(diseases, efos)
 	elif postgap.Globals.GWAS_adaptors == None:
 		logging.info("Searching for GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (", ".join(diseases), ", ".join(efos)))
-		gwas_associations = concatenate(source().run(diseases, efos) for source in postgap.GWAS.sources)
+		gwas_associations = concatenate(source().run(diseases, efos) for source in [postgap.GWAS.GWASCatalog])
 	else:
 		logging.info("Searching for GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in (%s)" % (", ".join(diseases), ", ".join(efos), ", ".join(postgap.Globals.GWAS_adaptors)))
 		gwas_associations = concatenate(source().run(diseases, efos) for source in postgap.GWAS.get_filtered_subclasses(postgap.Globals.GWAS_adaptors))
