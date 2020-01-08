@@ -122,7 +122,7 @@ def main():
 	if options.Reg is not None:
 		postgap.Globals.Reg_adaptors = options.Reg
 
-	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0 or postgap.Globals.GWAS_SUMMARY_STATS_FILE is not None > 0:
+	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0 or postgap.Globals.GWAS_SUMMARY_STATS_FILE is not None:
 		logging.info("Starting diseases_to_genes")
 		res = postgap.Integration.diseases_to_genes(options.diseases, expanded_efo_iris, options.population, options.tissues)
 		if options.bayesian and options.output2 is not None:
