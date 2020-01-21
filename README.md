@@ -48,7 +48,7 @@ Add the ```./bin/``` directory to your ```$PATH``` environment variable.
 
 # Running
  
-Everytime you run POSTGAP, add ```--database_dir /path/to/databases_dir``` to the command line, the database directory path corresponds to the directory created above.
+Everytime you run POSTGAP, add ```--database_dir /path/to/databases_dir``` to the command line, where the database directory path corresponds to the directory created above.
 
 By default, run from the root directory the command: 
 
