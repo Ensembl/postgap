@@ -37,8 +37,6 @@ Add the ```./bin/``` directory to your ```$PATH``` environment variable.
 
   Ideally, save these files in a separate directory, which we will call ```databases_dir```.
 
-  Everytime you run POSTGAP, add ```--database_dir /path/to/databases_dir``` to the command line.
-
 ### Manually (*sloooow*)
   The following will create a ```databases_dir``` directory for you:
   ```
@@ -49,6 +47,8 @@ Add the ```./bin/``` directory to your ```$PATH``` environment variable.
   **Warning** this may take days as it needs to split the entire 1000 Genomes files by population.
 
 # Running
+ 
+Everytime you run POSTGAP, add ```--database_dir /path/to/databases_dir``` to the command line, the database directory path corresponds to the directory created above.
 
 By default, run from the root directory the command: 
 
