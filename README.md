@@ -22,7 +22,7 @@ Add the ```lib/``` directory to your ```$PYTHONPATH``` environment variable.
 
 The `scripts/installation/ubuntu_environment.sh` describes a recipe to install all basic C and Python dependencies on a fresh ubuntu server (requires root access). 
 
-To install all binformatic dependencies run ```sh scripts/installations/install_dependencies.sh```. 
+To install all binformatic dependencies run ```sh scripts/installation/install_dependencies.sh```. 
 
 Add the ```./bin/``` directory to your ```$PATH``` environment variable.
 
