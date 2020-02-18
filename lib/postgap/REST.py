@@ -178,6 +178,10 @@ def get(server, ext, data=None):
 				logging.warning("Got error 502 'Bad Gateway'. Will try again in %s seconds." % 2)
 				time.sleep(2) # Sleep while server cools down
 
+			elif r.status_code == 500:
+				logging.warning("Got error 500 'Internal server error'. Will try again in %s seconds." % 60)
+				time.sleep(2) # Sleep while server restarts 
+
 			elif r.status_code == requests.codes.forbidden:
 				logging.warning("Got 'forbidden' error: Will try again in %s seconds." % 600)
 				time.sleep(600) # Sleep 10 minutes while server calms down
