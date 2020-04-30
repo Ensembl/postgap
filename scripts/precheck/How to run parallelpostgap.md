@@ -31,7 +31,7 @@ The command to run it:
 
 GWAS dataset will be splitted into small datasets by chromosomes to run analyses in parellel.
 
-*parameter settings: path/to/file, and others. to be continued ...*
+Here we use one GWAs summary statistics to show how to run the command. *Summary statistics were downloaded from the NHGRI-EBI GWAS Catalog (Buniello, MacArthur et al., 2019) for study GCST009246 (Liu C et al., 2019) downloaded on 27/04/2020.* One column name was changed from "SNP" to "variant_id" to carry out analysis.
 
 ## Outputs
 
