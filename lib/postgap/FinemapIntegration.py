@@ -48,16 +48,13 @@ def compute_gwas_posteriors(cluster_associations, populations):
 	#prepped_clusters = [(prepare_cluster_for_finemap(cluster, associations, populations), associations) for cluster, associations in cluster_associations]
         prepped_clusters = []
         for cluster, associations in cluster_associations:
-	        prepped_cluster = prepare_cluster_for_finemap(cluster, associations, populations)
-                if ( len(prepped_cluster.ld_snps) < 10 ):
+                if ( len(cluster.ld_snps) < 2 ): #hsw
                     continue
-		prepped_cluster_rsIDs = [ld_snp.rsID for ld_snp in prepped_cluster.ld_snps]
-		filtered_associations = [association for association in associations if association.snp.rsID in prepped_cluster_rsIDs]
-                prepped_clusters.append( (prepped_cluster, filtered_associations) )
+                prepped_clusters.append( (prepare_cluster_for_finemap(cluster, associations, populations), associations) )
         # MLE calculation 
-        modified_clusters= [(postgap.Finemap.mk_modified_clusters(cluster), associations) for cluster, associations in prepped_clusters]
-        pickle.dump(modified_clusters, open('prepped_clusters_'+postgap.Globals.GWAS_SUMMARY_STATS_FILE+'.pkl', "w"))
-	return [(finemap_gwas_cluster(cluster), associations) for cluster, associations in modified_clusters]
+        prepped_clusters= [(postgap.Finemap.mk_modified_clusters(cluster), associations) for cluster, associations in prepped_clusters]
+        pickle.dump(prepped_clusters, open(postgap.Globals.OUTPUT+'_prepped_clusters.pkl', "w"))
+        return [(finemap_gwas_cluster(cluster), associations) for cluster, associations in prepped_clusters]
 
 def prepare_cluster_for_finemap(cluster, associations, populations, tissue_weights=['Whole_Blood']):
 	'''
@@ -70,11 +67,12 @@ def prepare_cluster_for_finemap(cluster, associations, populations, tissue_weigh
 
 	'''
 
-	if len(cluster.ld_snps) == len(cluster.gwas_snps):
-		ld_snps, ld_matrix, z_scores, betas = compute_ld_matrix(cluster)
+#	if len(cluster.ld_snps) == len(cluster.gwas_snps):
+#		ld_snps, ld_matrix, z_scores, betas = compute_ld_matrix(cluster)
+#	elif postgap.Globals.GWAS_SUMMARY_STATS_FILE is not None:
+    if postgap.Globals.GWAS_SUMMARY_STATS_FILE is not None:
+        ld_snps, ld_matrix, z_scores, betas = extract_z_scores_from_file(cluster)
 	else:
-		if postgap.Globals.GWAS_SUMMARY_STATS_FILE is not None:
-			cluster = extract_z_scores_from_file(cluster)
 		ld_snps, ld_matrix, z_scores, betas = impute_z_scores(cluster)
 
         cluster_f = GWAS_Cluster(cluster.gwas_snps, ld_snps, ld_matrix, z_scores, betas, None, None, None)
@@ -96,14 +94,21 @@ def extract_snp_mafs(cluster, associations, populations):
 		Arg2: String
 		Returntype: Numpy vector
 	"""
-	maf_hash = collections.defaultdict(int)
-	for association in associations:
-		for evidence in association.regulatory_evidence:
-                    if evidence.info is not None:
-                        if evidence.info['MAFs'] is not None:
-			    if evidence.source == 'VEP_reg' and populations in evidence.info['MAFs']:
-				maf_hash[association.snp.rsID] = evidence.info['MAFs'][populations]
-	return numpy.array([maf_hash[snp.rsID] for snp in cluster.ld_snps])
+#	maf_hash = collections.defaultdict(int)
+#	for association in associations:
+#		for evidence in association.regulatory_evidence:
+#                    if evidence.info is not None:
+#                        if evidence.info['MAFs'] is not None:
+#			    if evidence.source == 'VEP_reg' and populations in evidence.info['MAFs']:
+#				maf_hash[association.snp.rsID] = evidence.info['MAFs'][populations]
+        maf_hash=dict()
+        for line in open(postgap.Globals.GWAS_SUMMARY_STATS_FILE):
+                chromosome, position, rsID, effect_allele, non_effect_allele, beta, se, pvalue, z_score, MAF = line.rstrip().split('\t')
+                if chromosome =='Chromosome':
+                    continue
+                rsID = rsID.strip()# hsw
+                maf_hash[rsID]=float(MAF)
+        return numpy.array([maf_hash[snp.rsID] for snp in cluster.ld_snps])
 
 def extract_snp_annotations(cluster, associations):
 	"""
@@ -122,24 +127,10 @@ def extract_snp_annotations(cluster, associations):
         #                'Pituitary_AKTIP',
         #                'Thyroid_RPGRIP1L']
         for association in associations:
-                for evidence in association.cisregulatory_evidence + association.regulatory_evidence:
-                    if evidence.source in ['GTEx']:
-                        continue
-                    #if evidence.source =='GTEx':
-                    #    comb = evidence.tissue+'_'+evidence.gene.name
-                    #    if comb in sig_comb_lst:
-                    #        pVal  = 1. - evidence.score
-                    #        if pVal < 1e-03 :
-                    #            SCORE =1.
-                    #        else:
-                    #            SCORE =0.
-                    #        annotation_hash[comb][evidence.snp.rsID] = SCORE  
-                    else:
-                        annotation_hash[evidence.source][evidence.snp.rsID] = evidence.score
-        # Annotation naming automatically === 
-        postgap.Globals.source_lst = sorted(annotation_hash.keys())
+                for evidence in association.regulatory_evidence:
+                    annotation_hash[evidence.source][evidence.snp.rsID] = evidence.score
         # ====
-        return numpy.array([[annotation_hash[annotation][snp.rsID] for snp in cluster.ld_snps] for annotation in sorted(annotation_hash.keys())])
+        return numpy.array([[annotation_hash[annotation][snp.rsID] for snp in cluster.ld_snps] for annotation in postgap.Globals.source_lst])
 
 def compute_ld_matrix(cluster):
 	'''
@@ -174,63 +165,39 @@ def extract_z_scores_from_file(cluster):
 	'''
 		Extracts Z-scores from summary stats file, computes LD matrix
 		Arg1: Cluster
-		Returntype: Cluster
+		Returntype: [SNP], numpy.matrix (square LD matrix), numpy.matrix (Z-score vector)
 	'''
 	ld_snp_hash = dict((ld_snp.rsID, ld_snp) for index, ld_snp in enumerate(cluster.ld_snps))
-
 	## Extract or impute missing z_scores
-	all_gwas_snps = list(cluster.gwas_snps)
+	ld_snp_results = dict()
 	missing = len(ld_snp_hash)
+        found_ld_snps = []
 	file = open(postgap.Globals.GWAS_SUMMARY_STATS_FILE)
 	for line in file:
 		# Chromosome	Position	MarkerName	Effect_allele	Non_Effect_allele	Beta	SE	Pvalue
 		#1	751343	rs28544273	A	T	-0.0146	0.0338	0.6651
-		chromosome, position, rsID, effect_allele, non_effect_allele, beta, se, pvalue = line.rstrip().split('\t')
-                rsID = rsID.strip() 
+		chromosome, position, rsID, effect_allele, non_effect_allele, beta, se, pvalue, z_score, MAF = line.rstrip().split('\t')
+                rsID = rsID.strip()# hsw  
 		if rsID in ld_snp_hash:
-			all_gwas_snps.append(
-				GWAS_SNP(
-					snp = ld_snp_hash[rsID],
-					pvalue = pvalue,
-					z_score = postgap.FinemapIntegration.z_score_from_pvalue(pvalue, beta),
-					beta = beta,
-					evidence = [
-						GWAS_Association(
-							pvalue                            = float(pvalue),
-							pvalue_description		  = 'Manual',
-							snp                               = rsID,
-							disease                           = Disease(name = 'Manual', efo = 'EFO_Manual'),
-							reported_trait                    = "Manual",
-							source                            = "Manual",
-							publication			  = "PMID000",
-							study                             = "Manual",
-							sample_size                       = 1000,
-							odds_ratio                        = "Manual",
-							odds_ratio_ci_start		  = None,
-							odds_ratio_ci_end		  = None,
-							beta_coefficient                  = float(beta),
-							beta_coefficient_unit             = "Manual",
-							beta_coefficient_direction        = "Manual",
-							rest_hash                         = None,
-							risk_alleles_present_in_reference = None,
-						)
-					]
-				)
-			)
+			ld_snp_results[rsID] = (float(pvalue), float(beta))
+                        found_ld_snps.append(ld_snp_hash[rsID])
 			missing -= 1
 			if missing == 0:
 				break
 	
-	return GWAS_Cluster(
-		gwas_snps = all_gwas_snps,
-		ld_snps = cluster.ld_snps,
-		ld_matrix = None,
-		z_scores = None,
-                betas = None,
-                mafs = None,
-                annotations = None,
-		gwas_configuration_posteriors = None
-	)
+	# Update list of SNPss	
+#	found_ld_snps = [ld_snp_hash[rsID] for rsID in ld_snp_results]
+
+	## Compute ld_matrix
+	ld_snp_ids, ld_matrix = postgap.LD.get_pairwise_ld(found_ld_snps)
+
+	## Update list of LD SNPs
+	ld_snps = [ld_snp_hash[rsID] for rsID in ld_snp_ids]
+	z_scores = [z_score_from_pvalue(ld_snp_results[rsID][0], ld_snp_results[rsID][1]) for rsID in ld_snp_ids]
+	betas = [ld_snp_results[rsID][1] for rsID in ld_snp_ids]
+	assert len(ld_snps) ==  ld_matrix.shape[0]
+	assert len(ld_snps) ==  ld_matrix.shape[1]
+	return ld_snps, ld_matrix, z_scores, betas
 
 def impute_z_scores(cluster):
 	'''
@@ -307,11 +274,13 @@ def finemap_gwas_cluster(cluster):
 	sample_sizes = map(lambda gwas_snp: max(gwas_association.sample_size for gwas_association in gwas_snp.evidence), cluster.gwas_snps)
 	sample_size = sum(sample_sizes) / len(sample_sizes)
 
-        # Extract GWAS_lambdas(F.A effect size) ===
-        with open('GWAS_lambdas_'+postgap.Globals.GWAS_SUMMARY_STATS_FILE,'a') as fw1:
+        # hwangse ====
+        with open(postgap.Globals.OUTPUT+'_GWAS_lambdas.txt','a') as fw1: 
             for idx,L in enumerate(cluster.lambdas):
-                fw1.write( '\t'.join( map(str, [sample_label, postgap.Globals.source_lst[idx],L] ))+'\n' )
+                if len(postgap.Globals.source_lst) == len(cluster.lambdas):
+                    fw1.write( '\t'.join( map(str, [sample_label, postgap.Globals.source_lst[idx],L] ))+'\n' )
         # ======
+
 	## Compute posterior
         if postgap.Globals.TYPE == 'binom' or postgap.Globals.TYPE =='ML':
 	    configuration_posteriors = postgap.Finemap.finemap_v1(
@@ -324,6 +293,7 @@ def finemap_gwas_cluster(cluster):
  		lambdas      = cluster.lambdas,
 		mafs         = cluster.mafs,
 		annotations  = cluster.annotations,
+                kmax         = postgap.Globals.kmax_gwas
 	    )
         elif postgap.Globals.TYPE == 'EM' or postgap.Globals.TYPE == 'ML_EM':
             configuration_posteriors = postgap.Finemap.finemap_v2(
@@ -336,6 +306,7 @@ def finemap_gwas_cluster(cluster):
                 lambdas      = cluster.lambdas,
                 mafs         = cluster.mafs,
                 annotations  = cluster.annotations,
+                kmax         = postgap.Globals.kmax_gwas
             )
         print postgap.Globals.TYPE
 	return GWAS_Cluster_with_lambdas(cluster.gwas_snps, cluster.ld_snps, cluster.ld_matrix, cluster.z_scores, cluster.betas, cluster.mafs, cluster.annotations, configuration_posteriors, cluster.lambdas) 
@@ -386,10 +357,11 @@ def compute_gene_tissue_joint_posterior(cluster, gene, tissue, eQTL_snp_hash, gw
 	"""
 	## eQTL posteriors
 	eQTL_configuration_posteriors = compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotations)
-	## Joint posterior
+        ## Joint posterior
         joint_out =eQTL_configuration_posteriors.joint_posterior(gwas_configuration_posteriors)
-        pickle.dump(joint_out[1], open(postgap.Globals.OUTPUT+'_'+str(tissue)+'_'+str(gene.name)+'_snp_posterior.pkl', "w")) # DEBUG remove hard coded path
-	return joint_out[0]
+        pickle.dump(joint_out[0], open(postgap.Globals.OUTPUT+'_'+str(tissue)+'_'+str(gene.name)+'_snp_clpp.pkl', "w")) # DEBUG remove hard coded path
+        pickle.dump(joint_out[1], open(postgap.Globals.OUTPUT+'_'+str(tissue)+'_'+str(gene.name)+'_eqtl_PIP.pkl', "w"))
+	return joint_out[2], joint_out[3]
 
 def compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotations):
 	"""
@@ -453,11 +425,11 @@ def compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotati
 	start = min(ld_snp.pos for ld_snp in cluster.ld_snps)
 	end = max(ld_snp.pos for ld_snp in cluster.ld_snps)
 	sample_label = 'eQTL_Cluster_%s:%i-%i_%s' % (chrom, start, end, gene)
-        
-        # Learn F.A parameters in eQTL ====
+
+        # hwangse ====
         cluster_label = 'Cluster_%s:%i-%i' % (chrom, start, end)
         lambdas = postgap.Finemap.mk_eqtl_lambdas(cluster, numpy.array(z_scores))
-        with open('eQTL_lambdas_'+postgap.Globals.GWAS_SUMMARY_STATS_FILE,'a') as fw2:
+        with open(postgap.Globals.OUTPUT+'_eQTL_lambdas.txt','a') as fw2: 
             for idx,L in enumerate(lambdas):
                 fw2.write( '\t'.join( map(str, [cluster_label, tissue, gene.name, postgap.Globals.source_lst[idx],L] ))+'\n' )
         # ======
@@ -467,13 +439,13 @@ def compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotati
                 z_scores     = numpy.array(z_scores),
                 beta_scores  = numpy.array(betas),
                 cov_matrix   = cluster.ld_matrix,
-                n            = 500, #TODO extract eQTL sample sizes
+                n            = 1000, #TODO extract eQTL sample sizes
                 labels       = [ld_snp.rsID for ld_snp in cluster.ld_snps],
                 sample_label = sample_label,
-                lambdas      = lambdas, #cluster.lambdas, # Update the lambdas with eQTL data
+                lambdas      = lambdas, # hwangsw cluster.lambdas,
                 mafs         = mafs,
                 annotations  = annotations,
-                kmax         = 2, #eQTL_kmax
+                kmax         = postgap.Globals.kmax_eqtl, #eQTL_kmax
                 kstart       = 1 #eQTL_kstart
             )
 
@@ -486,7 +458,8 @@ def organise_eQTL_data(associations):
 	res = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(float)))
 	for association in associations:
 		for evidence in association.cisregulatory_evidence:
-			if evidence.source == 'GTEx':
+			#if evidence.source == 'GTEx':
+			if evidence.source == 'S_GTEx':
 				res[association.gene][evidence.tissue][association.snp.rsID] = (evidence.z_score, evidence.beta)
 	return res
 	

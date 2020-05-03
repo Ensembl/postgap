@@ -184,6 +184,24 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 		posterior2 = numpy.take(sample2.posterior, ids2)
 		configuration_size = numpy.take(self.configuration_size, ids1)
 
+				posterior1_class = OneDConfigurationSample(
+                        configurations = configurations,
+                        posterior = posterior1,
+                        log_BF = None,
+                        configuration_size = configuration_size,
+                        log_prior = None,
+                        labels = sample1_labels,
+                        sample_label = 'eqtl_PIP'
+                )
+                posterior2_class = OneDConfigurationSample(
+                        configurations = configurations,
+                        posterior = posterior2,
+                        log_BF = None,
+                        configuration_size = configuration_size,
+                        log_prior = None,
+                        labels = sample1_labels,
+                        sample_label = 'gwas_PIP'
+                )
                 posterior = posterior1 * posterior2
                 #posterior_snp = posterior.normalise_posteriors().marginals(len(sample1_labels)).posterior
                 posterior_class = OneDConfigurationSample(
@@ -195,11 +213,13 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
                         labels = sample1_labels,
                         sample_label = 'CLPP'
                 )
-                clpp_values =posterior_class.normalise_posteriors().marginals(len(sample1_labels)).posterior
+                eqtl_PIP_values =posterior1_class.marginals(len(sample1_labels)).posterior
+                gwas_PIP_values =posterior2_class.marginals(len(sample2_labels)).posterior
+                snp_clpp_values =posterior_class.marginals(len(sample1_labels)).posterior
                 #pickle.dump(snp_posterior, open(postgap.Globals.OUTPUT+'_'+tissue+'_'+gene+'_snp_posterior.pkl', "w")) # DEBUG remove hard coded path
 		coloc_evidence = numpy.sum(posterior)
 
-		return coloc_evidence, clpp_values, TwoDConfigurationSample(
+		return snp_clpp_values, eqtl_PIP_values, gwas_PIP_values, coloc_evidence, TwoDConfigurationSample(
 				configurations = configurations,
 				posterior = posterior,
 				configuration_size = configuration_size,
@@ -330,7 +350,7 @@ class TwoDConfigurationSample(TwoDConfigurationSample_prototype):
 			float(posterior))
 
                 
-def finemap_v1(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambdas, mafs, annotations, kstart=1, kmax=2, corr_thresh=0.9, max_iter=100, output="configuration", prior="independence_robust", v_scale=0.0025, g="BRIC", eigen_thresh=0.1, verbose=False):
+def finemap_v1(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambdas, mafs, annotations, kstart=1, kmax=1, corr_thresh=0.9, max_iter=1000, output="configuration", prior="independence_robust", v_scale=0.0025, g="BRIC", eigen_thresh=0.1, verbose=False):
 	'''
 		Main function for fine-mapping using stochastic search for one trait #
 		Arg1: z_scores: numpy.array
@@ -454,7 +474,7 @@ def finemap_v1(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambd
 			assert False, "%s unkown" % {output}
 
 
-def finemap_v2(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambdas, mafs, annotations, kstart=1, kmax=2, corr_thresh=0.9, max_iter=100, output="configuration", prior="independence_robust", v_scale=0.0025, g="BRIC", eigen_thresh=0.1, verbose=False):
+def finemap_v2(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambdas, mafs, annotations, kstart=1, kmax=1, corr_thresh=0.9, max_iter=1000, output="configuration", prior="independence_robust", v_scale=0.0025, g="BRIC", eigen_thresh=0.1, verbose=False):
 	'''
 		Main function for fine-mapping using stochastic search for one trait #
 		Arg1: z_scores: numpy.array
@@ -576,9 +596,21 @@ def finemap_v2(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambd
 
                         ## M-step
                         # Estimate parameters by maximising Q cost function        
-                        result_Q = optimize.minimize(Q_function, lambdas, method='L-BFGS-B')
+                        #result_Q = optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B', bounds=[(0,30),(0,30),(0,30)])
+                        #result_Q = optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B', bounds=[(-10,50),(-10,50),(-10,50)])
+                        #result_Q = optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B', bounds=[(0.00001,30),(0.00001,30),(0.00001,30)])
+                        #result_Q = optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B')
+                        result_Q = optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B', bounds=[(-30,30),(-30,30),(-30,30)])
                         if result_Q.success:
-                            lambdas= 1 / (1 + numpy.exp(-result_Q.x)) 
+                            #result_Q1 = (result_Q.x - numpy.mean(result_Q.x))/numpy.std(result_Q.x)
+                            #lambdas  = 0.8 / (1.0 + numpy.exp(-result_Q1))
+                            #lambdas  = 0.8 / (1.0 + numpy.exp(-result_Q.x))
+                            lambdas  = 0.8*(result_Q.x - numpy.min(result_Q.x)) / (numpy.max(result_Q.x) - numpy.min(result_Q.x))
+                            #lambdas  = 0.8*(result_Q.x - numpy.mean(result_Q.x)) / (numpy.max(result_Q.x) - numpy.min(result_Q.x))
+                            #lambdas= 1.0 / (1.0 + numpy.exp(-numpy.array(result_Q.x)/sum(result_Q.x)))
+                            #lambdas = lambdas.tolist()
+                            #lambdas= 1.0 / (1.0 + numpy.exp(-result_Q.x)) 
+                            #lambdas= result_Q.x
 		
                         # Evaluate probabilities of these configs
 			results_nh = compare_neighborhood(configs  = new_configs, 
@@ -861,9 +893,15 @@ def calc_logbinom(subset_size, k, m):
 		Returntype: float
 	'''
 	if k == 1:
-		return numpy.zeros(m)
-	else:
 		p = float(1) / m
+		p_binom = p**subset_size * (1 - p)**(m - subset_size)
+        return numpy.log(p_binom)
+		#return numpy.zeros(m)
+	else:
+		#p = float(1) / m
+        #p_binom = p**subset_size * (1 - p)**(m - subset_size)
+        #return numpy.log(p_binom)
+        p = float(1) / m
 		p_binom = p**subset_size * (1 - p)**(m - subset_size)
 		p_k = numpy.zeros(k - 1)
 		for i in range(1, k):
@@ -930,6 +968,7 @@ def calc_approx_v(maf, sampN):
     '''
     if maf != 0.:
         approx_v = 1.0 * maf * (1.0 - maf) * sampN
+		#approx_v = 2.0 * maf * (1.0 - maf) * sampN
         approx_v = 1.0 / approx_v
     else:
         approx_v = .0001
@@ -1001,17 +1040,43 @@ def set_prior(pi, annot, lambdas):
         Arg3: numpy.array (1D), annotation effect sizes
         Returntype: float, logistic prior probability at SNP
     '''
-    logitprior = numpy.log(pi) - numpy.log(1 - pi)
-    logitprior = logitprior + sum( annot * lambdas )
-#     for i in range(len(annot)):
-#         if annot[i]:
-#             logitprior = logitprior + lambdas[i]
+    annot = annot.transpose()
+    #lambdas = (numpy.array(lambdas)/sum(lambdas)).tolist()
+    #logitprior = numpy.log(pi) - numpy.log(1 - pi)
+    #logitprior = logitprior + sum( annot * lambdas )
+    logitprior = sum( annot * lambdas )
+
+    #for i in range(len(annot)):
+    #    if annot[i]:
+    #        logitprior = logitprior + lambdas[i]
+    #prior = 1.0 / (1.0 + numpy.exp(-logitprior/100.0))
     prior = 1.0 / (1.0 + numpy.exp(-logitprior))
+    return prior
+
+def set_prior_prob(pi, annot, lambdas):
+    '''
+        Arg1: float, a predefined probability for intercept where there is no annotation at SNP 
+        Arg2: numpy.array (1D), annotation information at SNP
+        Arg3: numpy.array (1D), annotation effect sizes
+        Returntype: float, logistic prior probability at SNP
+    '''
+    annot = annot.transpose()
+    #lambdas = (numpy.array(lambdas)/sum(lambdas)).tolist()
+    #logitprior = numpy.log(pi) - numpy.log(1 - pi)
+    #logitprior = logitprior + sum( annot * lambdas )
+    logitprior = sum( annot * lambdas )
+
+    #for i in range(len(annot)):
+    #    if annot[i]:
+    #        logitprior = logitprior + lambdas[i]
+    prior = 1.0 / (1.0 + numpy.exp(-logitprior))
+    #prior = 1.0 / (1.0 + numpy.exp(-logitprior))
     return prior
 
 ### The function for leanring F.A parameters in eQTL
 def mk_eqtl_lambdas(p_cluster, z_scores, W = [0.01, 0.1, 0.5], pi = 0.01):
-    initial_lambdas = [0.000001] * p_cluster.annotations.shape[0]
+    initial_lambdas = [0.0001] * p_cluster.annotations.shape[0]
+    #initial_lambdas = [-19.9999] * p_cluster.annotations.shape[0]
     MAFs            = map(float, p_cluster.mafs)
     if postgap.Globals.TYPE == 'binom' or postgap.Globals.TYPE == 'EM':
         lambdas = initial_lambdas
@@ -1025,11 +1090,26 @@ def mk_eqtl_lambdas(p_cluster, z_scores, W = [0.01, 0.1, 0.5], pi = 0.01):
             priors = [set_prior(pi, annot, lambdas_) for annot in mat_annot]
             lsum = 0
             for i in range(len(priors)):
+                if priors[i] < 1.2683388472255632e-301:
+                    priors[i] = 1.2683388472255632e-301
+                if priors[i] > 0.9999999999999999:
+                    priors[i] = 0.9999999999999999
                 lsum = lsum + sumlog(logBFs[i] + numpy.log(priors[i]), numpy.log(1 - priors[i]))
             return -lsum
-        result = optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B')
+        #result = optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B', bounds=[(0,30),(0,30),(0,30)])
+        #result = optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B', bounds=[(-10,50),(-10,50),(-10,50)])
+        #result = optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B', bounds=[(0.00001,30),(0.00001,30),(0.00001,30)])
+        #result = optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B')
+        result = optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B', bounds=[(-30,30),(-30,30),(-30,30)])
         if result.success:
-            lambdas= 1 / (1 + numpy.exp(-result.x))
+            #result_1 = (result.x - numpy.mean(result.x))/numpy.std(result.x)
+            #lambdas  = 0.8 / (1.0 + numpy.exp(-result_1))
+            #lambdas  = 0.8 / (1.0 + numpy.exp(-result.x))
+            lambdas  = 0.8*(result.x - numpy.min(result.x)) / (numpy.max(result.x) - numpy.min(result.x))
+            #lambdas  = 0.8*(result.x - numpy.mean(result.x)) / (numpy.max(result.x) - numpy.min(result.x))
+            #lambdas= 1.0 / (1.0 + numpy.exp(-result.x))
+            #lambdas = lambdas.tolist()
+            #lambdas= result.x
         else:
             lambdas= initial_lambdas
     return lambdas
@@ -1043,7 +1123,8 @@ def mk_modified_clusters(p_cluster, W = [0.01, 0.1, 0.5], pi = 0.01):
         Arg W: variance of prior which will be averaged over [0.01, 0.1, 0.5]
         Arg pi: predefined parameter for setting intercept in logistic prior
         '''
-    initial_lambdas = [0.000001] * p_cluster.annotations.shape[0]
+    #initial_lambdas = [-2.0] * p_cluster.annotations.shape[0]
+    initial_lambdas = [0.0001] * p_cluster.annotations.shape[0]
     z_scores        = p_cluster.z_scores
     MAFs            = map(float, p_cluster.mafs)
     if postgap.Globals.TYPE == 'binom' or postgap.Globals.TYPE == 'EM':
@@ -1062,12 +1143,29 @@ def mk_modified_clusters(p_cluster, W = [0.01, 0.1, 0.5], pi = 0.01):
             priors = [set_prior(pi, annot, lambdas_) for annot in mat_annot]
             lsum = 0
             for i in range(len(priors)):
+                if priors[i] < 1.2683388472255632e-301:
+                    priors[i] = 1.2683388472255632e-301
+                if priors[i] > 0.9999999999999999:
+                    priors[i] = 0.9999999999999999
                 lsum = lsum + sumlog(logBFs[i] + numpy.log(priors[i]), numpy.log(1 - priors[i]))
             return -lsum
 
-        result = optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B')
+        #result = optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B', bounds=[(0.00001,30),(0.00001,30),(0.00001,30)])
+        #result = optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B', bounds=[(0,30),(0,30),(0,30)])
+        result = optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B', bounds=[(-30,30),(-30,30),(-30,30)])
+        #result = optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B', bounds=[(0,2),(0,2),(0,2)])
+        #result = optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B')
         if result.success:
-            lambdas= 1 / (1 + numpy.exp(-result.x))
+            #result_2 = (result.x - numpy.mean(result.x))/numpy.std(result.x)
+            #lambdas  = 0.8 / (1.0 + numpy.exp(-result_2))
+            #lambdas  = 0.8 / (1.0 + numpy.exp(-result.x))
+            lambdas  = 0.8*(result.x - numpy.min(result.x)) / (numpy.max(result.x) - numpy.min(result.x))
+            #lambdas  = 0.8*(result.x - numpy.mean(result.x)) / (numpy.max(result.x) - numpy.min(result.x))
+            #lambdas= 1.0 / (1.0 + numpy.exp(-numpy.array(result.x)/sum(result.x)))
+            #lambdas= 1.0 / (1.0 + numpy.exp(-result.x))
+            #lambdas = lambdas.tolist()
+            #lambdas= 1.0 / (1.0 + numpy.exp(-result.x))
+            #lambdas= result.x
         else:
             lambdas= initial_lambdas
 
@@ -1081,7 +1179,6 @@ def mk_modified_clusters(p_cluster, W = [0.01, 0.1, 0.5], pi = 0.01):
                                         None,
                                         lambdas)
 
-
 def calc_config_loglogis_prior(annotations, lambdas, configurations, pi_EM = 0.001):
     '''
         compute log logistic prior at config
@@ -1094,9 +1191,19 @@ def calc_config_loglogis_prior(annotations, lambdas, configurations, pi_EM = 0.0
     for configuration in configurations:
         logprior = 0
         for snp in range(annotations.shape[1]):
+            #set_prior_out = set_prior(pi_EM, annotations[:,snp], lambdas) 
+            set_prior_out = set_prior_prob(pi_EM, annotations[:,snp], lambdas) 
             if snp in configuration:
-                logprior = logprior + numpy.log(set_prior(pi_EM, annotations[:,snp], lambdas))
+                if set_prior_out < 1e-301:
+                    logprior = logprior + numpy.log(1e-301)
+                else:
+                    logprior = logprior + numpy.log(set_prior_out)
             else:
-                logprior = logprior + numpy.log(1 - set_prior(pi_EM, annotations[:,snp], lambdas))
+                if set_prior_out > (1-1e-16):
+                    logprior = logprior + numpy.log(1- (1-1e-16) )
+                else:
+                    logprior = logprior + numpy.log(1 - set_prior_out)
         config_logprior.append(logprior)
+    #config_logprior = numpy.array(config_logprior)/float(sum(config_logprior))
+    #config_logprior = config_logprior.tolist()
     return config_logprior
