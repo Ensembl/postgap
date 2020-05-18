@@ -218,7 +218,7 @@ def get(server, ext, data=None):
 
 				if "/vep/" in url:
 					response = r.json()
-					if "No variant found with ID" in response["error"]:
+					if "No variant found with ID" in response["error"] or "No mappings found for variant" in response["error"]:
 						logging.warning("Error is expected behaviour by the vep endpoint and will be passed on.")
 						raise Variation400error(r)
 
