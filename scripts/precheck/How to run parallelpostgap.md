@@ -23,11 +23,13 @@ Please specify several parameters, when running parallelpostgap.py.
 
 * --database_dir (optional): the directory where data files are stored, and the default directory is "databases/";
 * --summary_stats (required): the location of your GWAS summary statistics;
-* --time_interval (optional): the sleeping time (in second) added between analyses of chromosomes, which is 180s by default.
+* --submit_interval (optional): the sleeping time (in second) added between analyses of chromosomes, which is 90s by default.
+* --check_interval (optional): the sleeping time (in second) added to check again whether all the analyses of chromosomes finished, which is 300s by default.
+* --memory (optional): the memory of a node (in GB) requested to carry out analyses, which is 2GB by default.
 
 The command to run it:
 
-`python scripts/precheck/parallelpostgap.py --summary_stats tests/sample_data/example_GWASsumstats.xlsx --time_interval 30`
+`python scripts/precheck/parallelpostgap.py --summary_stats tests/sample_data/example_GWASsumstats.xlsx --submit_interval 60 --check_interval 90 --memory 1`
 
 GWAS dataset will be splitted into small datasets by chromosomes to run analyses in parellel.
 
