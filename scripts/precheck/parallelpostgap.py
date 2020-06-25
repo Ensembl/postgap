@@ -2,7 +2,7 @@
 """
 Spyder Editor
 
-This is a script file to run postgap.py in parallel
+This is a script file for preworks before running postgap.py in parallel
 """
 
 import argparse
@@ -22,7 +22,9 @@ parser.add_argument('--database_dir', type=str, default='databases/', help='dire
 parser.add_argument('--summary_stats', required=True, type=str, help='location of input summary statistics file')
 parser.add_argument('--submit_interval', type=int, default=90, help='sleeping time (s) added to start the analysis of the next chromosome')
 parser.add_argument('--check_interval', type=int, default=300, help='sleeping time (s) added to check again if all the analyses of chromosomes have been done')
-parser.add_argument('--memory', type=int, default=2, help='request a node with how large memory (GB) to run a job')
+parser.add_argument('--memory', type=int, default=2, help='memory of a node (GB) requested to run a job')
+parser.add_argument('--kstart', type=int, default=1, help='how many causal variants to start with in the full exploration of sets')
+parser.add_argument('--kmax', type=int, default=1, help='maximum number of causal variants')
 
 args = parser.parse_args()
 database_dir = args.database_dir
@@ -30,6 +32,8 @@ sumstats = args.summary_stats
 submitgap = args.submit_interval
 checkgap = args.check_interval
 memory = args.memory
+kstart = args.kstart
+kmax = args.kmax
 
 rerunlimts = 3
 
@@ -41,7 +45,7 @@ def get_checkline(filepath='dir/to/file.tsv'):
 
 	return checkline
 
-def submit_a_chromosome(chr, memory=str(2)):
+def submit_a_chromosome(chr, memory=str(2), kstart=str(1), kmax=str(5)):
 	"""
 	Note: type(memory) is 'str'
 	database_dir, tempdir, fnstart, filetype, starttime take global varables
@@ -53,13 +57,16 @@ def submit_a_chromosome(chr, memory=str(2)):
 	# res & op2 may exist when re-run jobs
 	if os.path.exists(tempdir + chrname + '_res.txt'): os.remove(tempdir + chrname + '_res.txt')
 	if os.path.exists(tempdir + chrname + '_op2.txt'): os.remove(tempdir + chrname + '_op2.txt')
-	
+	# it cannot overwrite .err & .out
+	if os.path.exists(tempdir + jobname + '.err'): os.remove(tempdir + jobname + '.err')
+	if os.path.exists(tempdir + jobname + '.out'): os.remove(tempdir + jobname + '.out')
+
 	memory = str(memory)
-	os.system("gsub -m " + memory + " -n " + jobname + " -d " + tempdir + " -q production-rh74 'python postgap/POSTGAP.py --database_dir " + database_dir + " --summary_stats " + tempdir + chrfile + " --hdf5 /nfs/production/panda/ensembl/funcgen/eqtl/GTEx.V6.88_38.cis.eqtls.h5 --sqlite /nfs/production/panda/ensembl/funcgen/eqtl/GTEx.V6.88_38.cis.eqtls.h5.sqlite3 --bayesian --output " + tempdir + chrname + "_res.txt --output2 " + tempdir + chrname + "_op2.txt -g' -r")
+	os.system("gsub -m " + memory + " -n " + jobname + " -d " + tempdir + " -q production-rh74 'python -m cProfile -o " + tempdir + chrname + ".profile postgap/POSTGAP.py --database_dir " + database_dir + " --summary_stats " + tempdir + chrfile + " --hdf5 /nfs/production/panda/ensembl/funcgen/eqtl/GTEx.V6.88_38.cis.eqtls.h5 --sqlite /nfs/production/panda/ensembl/funcgen/eqtl/GTEx.V6.88_38.cis.eqtls.h5.sqlite3 --bayesian --kstart " + kstart + " --kmax " + kmax + " --output " + tempdir + chrname + "_res.txt --output2 " + tempdir + chrname + "_op2.txt -g' -r")
 	
 	print(time.strftime("%H:%M:%S", time.localtime()) + ', chr' + chr + ' is submitted with ' + memory + 'G memory assigned!')
 
-def start_a_GWAS_sum_stats(chrlist, submitgap=90, memory=str(2)):
+def start_a_GWAS_sum_stats(chrlist, submitgap=90, memory=str(2), kstart=str(1), kmax=str(5)):
 	"""
 	Note: type(memory) is 'str'
 	tempdir, filename, fnstart, filetype, starttime, checkline take global varables
@@ -80,7 +87,7 @@ def start_a_GWAS_sum_stats(chrlist, submitgap=90, memory=str(2)):
 
 		# create a new file for each chromosome, and run postgap.py
 		os.system("(head -n1 " + tempdir + filename + " && awk 'NR==FNR {a[$3]; next} $" + ncol_rsid + " in a {print $0}' yalan/variants/variants_rsID_coords-chr" + n + ".tsv " + tempdir + filename + ") > " + tempdir + chrfile)
-		submit_a_chromosome(chr=n, memory=str(memory))
+		submit_a_chromosome(chr=n, memory=str(memory), kstart=str(kstart), kmax=str(kmax))
 	
 	# remove the original GWAS summary statistics file to save space
 	os.remove(tempdir + filename)
@@ -113,7 +120,7 @@ def check_a_chromosome_success(chr):
 		outtext = read_job_sum_file(path=tempdir, whichjob=jobname, sumtype='out')
 
 		if 'Successfully completed' in outtext[-23]: success = True
-		elif 'Exited with exit code' in outtext[-23]: repeat = True
+		elif 'Exited with' in outtext[-23]: repeat = True #'Exited with exit code' or 'Exited with signal termination'
 		else: # generate a NaN value, which should never happen
 			success = float('NaN')
 			print('something should never happen happened to chr ' + chr + '! that line was "' + outtext[-23].rstrip() + '" when checking')
@@ -137,7 +144,7 @@ def increse_memory(chr):
 		print('a connection error happened, no need to increase memory when re-run chr' + chr)
 	elif 'IOError' in errtext[-1]:
 		print('chr' + chr + ' gave ' + errtext[-1].rstrip() + '. performance issue with the filesystem, just try again')
-	elif 'KeyboardInterrupt\n' in errtext:
+	elif 'KeyboardInterrupt\n' in errtext or 'Terminated\n' in errtext:
 		# check stdout file to figure why it was killed
 		outtext = read_job_sum_file(path=tempdir, whichjob=jobname, sumtype='out')
 
@@ -146,8 +153,8 @@ def increse_memory(chr):
 			print('memory limit exceeded, will increase memory and re-run chr' + chr)
 			increase_mem = True
 		else:
-			print('warnings, warnings, warnings! chr' + chr + ' has an unknown error situation!')
-			sys.exit('unknown error situation, please debug')
+			print('warnings, warnings, warnings! chr' + chr + ' has an unknown error with KeyboardInterrupt/Terminated!')
+			sys.exit('unknown error with KeyboardInterrupt/Terminated, please debug')
 	else:
 		print('warnings, warnings, warnings! chr' + chr + ' has an unknown error situation!')
 		sys.exit('unknown error situation, please debug')
@@ -186,9 +193,9 @@ def trace_chromosomes_status(chrlist, init_mem=2, checkgap=checkgap, rerunlimts=
 				reruntimes = sumdf.loc[i, 'repeats']
 				
 				if reruntimes <= rerunlimts:
-					print('chr' + chr + '\'s re-run round ' + str(reruntimes) + ' starts')
 					increase_mem = increse_memory(chr=chr)
-					submit_a_chromosome(chr=chr, memory=str(round(int(init_mem) * (1 + (reruntimes if increase_mem else 0) / 2))))
+					print('chr' + chr + '\'s re-run round ' + str(reruntimes) + ' starts')
+					submit_a_chromosome(chr=chr, memory=str(int(init_mem) * (1 + (reruntimes if increase_mem else 0))), kstart=str(kstart), kmax=str(kmax))
 
 		if all(sumdf['success'] == True):
 			print('congratulations!!! all the jobs finished successfully!')
@@ -206,11 +213,41 @@ def trace_chromosomes_status(chrlist, init_mem=2, checkgap=checkgap, rerunlimts=
 	
 	return sumdf
 
+def merge_results(chrlist):
+	"""
+	filedir, tempdir, fnstart, starttime take global varables
+	"""
+	resfile = filedir + fnstart + '_results_' + starttime + '.txt'
+
+	# results file could have only column names
+	for n in chrlist:
+		chrres = tempdir + fnstart + '-chr' + n + '_res.txt'
+
+		if n == chrlist[0]:
+			os.system('cat ' + chrres + ' > ' + resfile)
+		else:
+			os.system('tail -n+2 ' + chrres + ' >> ' + resfile)
+
+def merge_output2(chrlist):
+	"""
+	filedir, tempdir, fnstart, starttime take global varables
+	"""
+	op2file = filedir + fnstart + '_output2_' + starttime + '.txt'
+
+	# output2 file could be an empty file, and has no header
+	os.system('echo -e Gene_ID$"\t"Cluster_description$"\t"SNP_ID$"\t"CLPP_at_that_SNP$"\t"Tissue$"\t"CLPP_over_the_whole_cluster > ' + op2file)
+	
+	for n in chrlist:
+		chrop2 = tempdir + fnstart + '-chr' + n + '_op2.txt'
+
+		os.system('cat ' + chrop2 + ' >> ' + op2file)
+		os.system('tail -c1 < ' + op2file + ' | read -r _ || echo ''>> ' + op2file)
+
 #0. preparations
 # get basic info about the GWAS summary statistics
 filename = sumstats.split('/')[-1]
 filedir = sumstats.replace(filename, '') if len(sumstats.split('/')) > 1 else './'
-filetype = filename.split('.')[-1] #eg:tsv
+filetype = filename.split('.')[-1] if len(filename.split('.')) > 1 else '' #eg:tsv
 fnstart = filename.replace('.' + filetype, '') #eg:WojcikGL
 print(filename + ' is in the ' + ('current directory' if filedir == './' else ('directory ' + filedir)) + '\nstart pre-checking for ' + fnstart)
 
@@ -222,20 +259,25 @@ os.makedirs(tempdir)
 #a. if it is an excel file, convert it into a tsv file
 if filetype in ['xls', 'xlsx', 'xlsm', 'xlsb']:
 	pd.read_excel(sumstats).to_csv(tempdir + fnstart + '.tsv', header=True, index=False, sep='\t')
-	print(filename + ' is an excel file, convert it into a tab-separated file')
+	print(filename + ' is an excel file, convert it into a tab-separated file, which is saved in dir ' + tempdir)
 	# update filetype and filename
 	filetype = 'tsv'
 	filename = fnstart + '.' + filetype
-else:
+elif filetype == 'out':
 	#b. if it is ".out", change it to ".tsv". Note: conflict with the ".out" file from job summary
-	if filetype == 'out':
-		os.rename(sumstats, filedir + fnstart + '.tsv')
-		print('change filename from ' + filename + ' to ' + fnstart + '.tsv')
-		# update filetype and filename
+	os.rename(sumstats, filedir + fnstart + '.tsv')
+	print('change filename from ' + filename + ' in ' + filedir + ' to ' + fnstart + '.tsv')
+	# update filetype and filename
+	filetype = 'tsv'
+	filename = fnstart + '.' + filetype
+
+	shutil.copyfile(filedir + filename, tempdir + filename)
+else:
+	if filetype == '':
 		filetype = 'tsv'
 		filename = fnstart + '.' + filetype
 
-	shutil.copyfile(filedir + filename, tempdir + filename)
+	shutil.copyfile(sumstats, tempdir + filename)
 
 # save the first line into to a variable for the following checking step
 checkline = get_checkline(filepath=tempdir + filename)
@@ -255,6 +297,7 @@ else:
 			# replace delimiter with tab, and save into a new file
 			os.rename(tempdir + filename, tempdir + fnstart + '_backup.' + filetype)
 			os.system('cat ' + tempdir + fnstart + '_backup.' + filetype + ' | tr "' + s + '" "\t" > ' + tempdir + filename)
+			os.remove(tempdir + fnstart + '_backup.' + filetype)
 
 			# update the checkline
 			checkline = get_checkline(filepath=tempdir + filename)
@@ -278,7 +321,7 @@ else:
 chrlist = [str(n) for n in range(1, 23)]
 chrlist.append('O')
 
-start_a_GWAS_sum_stats(chrlist=chrlist, submitgap=submitgap, memory=str(memory))
+start_a_GWAS_sum_stats(chrlist=chrlist, submitgap=submitgap, memory=str(memory), kstart=str(kstart), kmax=str(kmax))
 
 #5. keep tracing until all the jobs completed successfully, and make a record of running/CPU time and max/average memory
 time.sleep(300)
@@ -290,14 +333,8 @@ sumdf.to_csv(filedir + fnstart + '_jobsum_' + starttime + '.txt', header=True, i
 #6. combine all the results into one file
 print('wrap all the results together, and clean up')
 
-# results file could have only column names, and pd.concat can combine even empty dfs
-resdf = pd.concat([pd.read_csv(f, sep='\t', header=0, low_memory=False) for f in glob.glob(tempdir + fnstart + '-chr*_res.txt')], sort=False, ignore_index=True)
-resdf.to_csv(filedir + fnstart + '_results_' + starttime + '.txt', header=True, index=False, sep='\t', na_rep='N/A')
-
-# output2 file could be an empty file, which pd.read_csv cannot read
-op2df = pd.concat([pd.read_csv(f, sep='\t', header=None, low_memory=False) for f in glob.glob(tempdir + fnstart + '-chr*_op2.txt') if os.path.getsize(f) > 0], sort=False, ignore_index=True)
-op2df.to_csv(filedir + fnstart + '_output2_' + starttime + '.txt', header=['Gene_ID', 'Cluster_description', 'SNP_ID', 'CLPP_at_that_SNP', 'Tissue', 'CLPP_over_the_whole_cluster'], index=False, sep='\t', na_rep='N/A')
+merge_results(chrlist=chrlist)
+merge_output2(chrlist=chrlist)
 
 # remove all the intermediate files
-for f in glob.glob(tempdir + fnstart + '-chr*_*.txt'): os.remove(f)
-#shutil.rmtree(tempdir)
+shutil.rmtree(tempdir)
