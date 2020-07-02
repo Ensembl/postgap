@@ -108,58 +108,54 @@ def check_a_chromosome_success(chr):
 
 	success = False
 	repeat = False
+	increase_mem = False
 
 	# if jobstatus.txt is an empty file, this job isn't running; else, running
 	os.system('bjobs -J ' + jobname + ' | cat > ' + tempdir + 'jobstatus.txt')
 
 	# if this job is not running, check whether it finished successfully
 	if os.path.getsize(tempdir + 'jobstatus.txt') == 0:
-		# just wait for 30s, in case the stdout file has not been completed
-		time.sleep(30)
-
 		outtext = read_job_sum_file(path=tempdir, whichjob=jobname, sumtype='out')
 
-		if 'Successfully completed' in outtext[-23]: success = True
-		elif 'Exited with' in outtext[-23]: repeat = True #'Exited with exit code' or 'Exited with signal termination'
+		if 'Successfully completed' in outtext[-23]:
+			success = True
+		elif 'Exited with' in outtext[-23]: #'Exited with exit code' or 'Exited with signal termination'
+			repeat = True
+
+			# get Delta Memory
+			if float(outtext[-15].split()[-2]) < 0:
+				increase_mem = True
+				print('chr ' + chr + ': memory limit exceeded, will increase memory to re-run')
 		else: # generate a NaN value, which should never happen
 			success = float('NaN')
 			print('something should never happen happened to chr ' + chr + '! that line was "' + outtext[-23].rstrip() + '" when checking')
 	
 	os.remove(tempdir + 'jobstatus.txt')
 
-	return success, repeat
+	return success, repeat, increase_mem
 
-def increse_memory(chr):
+def track_error(chr):
 	"""
 	tempdir, fnstart, starttime take global varables
 	"""
 	jobname = fnstart + '-chr' + chr + '_' + starttime
 	errtext = read_job_sum_file(path=tempdir, whichjob=jobname, sumtype='err')
 
-	increase_mem = False
-
-	if 'HTTPError' in errtext[-1]:
-		print('a http error happened, no need to increase memory when re-run chr' + chr)
+	if not errtext:
+		print('chr ' + chr + ': empty error file')
+	elif 'HTTPError' in errtext[-1]:
+		print('chr ' + chr + ': http error, no need to increase memory to re-run')
 	elif 'ConnectionError' in errtext[-1]:
-		print('a connection error happened, no need to increase memory when re-run chr' + chr)
+		print('chr ' + chr + ': connection error, no need to increase memory to re-run')
 	elif 'IOError' in errtext[-1]:
 		print('chr' + chr + ' gave ' + errtext[-1].rstrip() + '. performance issue with the filesystem, just try again')
-	elif 'KeyboardInterrupt\n' in errtext or 'Terminated\n' in errtext:
-		# check stdout file to figure why it was killed
-		outtext = read_job_sum_file(path=tempdir, whichjob=jobname, sumtype='out')
-
-		# get Delta Memory
-		if float(outtext[-15].split()[-2]) < 0:
-			print('memory limit exceeded, will increase memory and re-run chr' + chr)
-			increase_mem = True
-		else:
-			print('warnings, warnings, warnings! chr' + chr + ' has an unknown error with KeyboardInterrupt/Terminated!')
-			sys.exit('unknown error with KeyboardInterrupt/Terminated, please debug')
+	elif 'KeyboardInterrupt\n' in errtext:
+		print('chr' + chr + ': KeyboardInterrupt, increase_mem should be True')
+	elif 'Terminated\n' in errtext:
+		print('chr' + chr + ': Terminated, increase_mem should be True')
 	else:
 		print('warnings, warnings, warnings! chr' + chr + ' has an unknown error situation!')
 		sys.exit('unknown error situation, please debug')
-
-	return increase_mem
 
 def trace_chromosomes_status(chrlist, init_mem=2, checkgap=checkgap, rerunlimts=3):
 	"""
@@ -175,7 +171,10 @@ def trace_chromosomes_status(chrlist, init_mem=2, checkgap=checkgap, rerunlimts=
 		for i,row in sumdf.loc[sumdf['success'] != True].iterrows():
 			chr = row['chr']
 
-			sumdf.at[i, 'success'], repeat = check_a_chromosome_success(chr=chr)
+			# just wait for 1 min, in case the stdout/stderr file has not been completed
+			time.sleep(60)
+
+			sumdf.at[i, 'success'], repeat, increase_mem = check_a_chromosome_success(chr=chr)
 
 			# when one finished successfully, record relevant parameters
 			if sumdf.loc[i, 'success'] is True:
@@ -183,6 +182,8 @@ def trace_chromosomes_status(chrlist, init_mem=2, checkgap=checkgap, rerunlimts=
 				outtext = read_job_sum_file(path=tempdir, whichjob=jobname, sumtype='out')
 				
 				sumdf.ix[i, 'run_time':'ave_mem'] = [outtext[-11].split()[-2], outtext[-19].split()[-2], outtext[-18].split()[-2] if 'MB' in outtext[-18] else 'N/A', outtext[-17].split()[-2] if 'MB' in outtext[-17] else 'N/A']
+
+				print('chr' + chr + ' finished! good good')
 
 				# once succeeds, remove the chromosomes GWAS summary statistics file to save space
 				chrfile = fnstart + '-chr' + chr + '.' + filetype
@@ -193,7 +194,7 @@ def trace_chromosomes_status(chrlist, init_mem=2, checkgap=checkgap, rerunlimts=
 				reruntimes = sumdf.loc[i, 'repeats']
 				
 				if reruntimes <= rerunlimts:
-					increase_mem = increse_memory(chr=chr)
+					track_error(chr=chr)
 					print('chr' + chr + '\'s re-run round ' + str(reruntimes) + ' starts')
 					submit_a_chromosome(chr=chr, memory=str(int(init_mem) * (1 + (reruntimes if increase_mem else 0))), kstart=str(kstart), kmax=str(kmax))
 
