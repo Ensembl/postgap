@@ -274,6 +274,7 @@ commandline_description = """
 
 
 def get_options():
+<<<<<<< HEAD
 	"""
 
 		Reads commandline parameters
@@ -332,6 +333,9 @@ def get_options():
 	parser.add_argument('--kmax_eqtl', default=None, type=int)
 	parser.add_argument('--eqtl_response_size', type=range_limited_eqtl_size, default=200,
 	help='Number of items returned in one call to EQTL, (min = 20, max = 1000, default = 200')
+	parser.add_argument('--output2', help='gene-cluster association output file')
+	parser.add_argument('--kstart', type=int, default=1, help='how many causal variants to start with in the full exploration of sets')
+	parser.add_argument('--kmax', type=int, default=5, help='maximum number of causal variants')
 
 	options = parser.parse_args()
 
@@ -387,6 +391,8 @@ def get_options():
 		options.databases + " does not point to an existing directory!"
 	assert os.path.exists(postgap.Globals.DATABASES_DIR +
 						  "/GRASP.txt"), "Can't find GRASP.txt in " + options.databases
+	postgap.Globals.KSTART = options.kstart
+	postgap.Globals.KMAX = options.kmax
 
 	if options.diseases is None:
 		options.diseases = []
