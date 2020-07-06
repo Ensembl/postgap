@@ -281,7 +281,7 @@ class VEP(Cisreg_source):
 
 		"""
 
-		list = concatenate(self.get(chunk) for chunk in chunks(snps, 1))
+		list = concatenate(self.get(chunk) for chunk in chunks(snps, 10))
 		'''
 
 			Example output from VEP:
