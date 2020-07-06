@@ -105,6 +105,22 @@ def prepare_cluster_for_finemap(cluster, associations, population, tissue_weight
 	assert len(ld_snps) == ld_matrix.shape[1]
 	return GWAS_Cluster(cluster.gwas_snps, ld_snps, ld_matrix, z_scores, betas, mafs, annotations, None)
 
+<<<<<<< HEAD
+=======
+	ld_snp_ids = [ld_snp.rsID for ld_snp in ld_snps]
+
+	## Compute posteriors
+	configuration_posteriors = postgap.Finemap.finemap(
+		z_scores     = numpy.array(z_scores),
+		beta_scores  = numpy.array(betas),
+		cov_matrix   = ld_matrix,
+		n            = sample_size,
+		labels       = ld_snp_ids,
+		sample_label = sample_label,
+		kstart       = postgap.Globals.KSTART,
+ 		kmax         = postgap.Globals.KMAX
+	)
+>>>>>>> use command line arguments kstart and kmax to compute probablities
 
 def extract_snp_mafs(cluster, associations, populations):
 	"""
@@ -536,9 +552,8 @@ def compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotati
 		lambdas=lambdas,  # cluster.lambdas, # Update the lambdas with eQTL data
 		mafs=mafs,
 		annotations=annotations,
-		# kmax=2,  # eQTL_kmax
-		kmax=postgap.Globals.kmax_eqtl,  # eQTL_kmax
-		kstart=1,  # eQTL_kstart
+ 		kstart       = postgap.Globals.KSTART,
+                kmax         = postgap.Globals.KMAX,
 		isGWAS=False
 	)
 
