@@ -399,11 +399,11 @@ def finemap_v1(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambd
 			Arg verbose = False: boolean, print the progress of the stochastic search
 			Returntype: OneDConfigurationSample
 	'''
-
+	
 	# Test inputs
-	assert len(z_scores) == cov_matrix.shape[0], 'Covariance matrix has %i rows, %i expcted' % (
+	assert len(z_scores) == cov_matrix.shape[0], 'Covariance matrix has %i rows, %i expected' % (
 		cov_matrix.shape[0], len(z_scores))
-	assert len(z_scores) == cov_matrix.shape[1], 'Covariance matrix has %i columns, %i expcted' % (
+	assert len(z_scores) == cov_matrix.shape[1], 'Covariance matrix has %i columns, %i expected' % (
 		cov_matrix.shape[0], len(z_scores))
 	assert not kstart > kmax, 'Incorrect number of causal variants specified, kmax (%i) must be greater than kstart (%s)' % (
 		kmax, kstart)
@@ -500,7 +500,7 @@ def finemap_v1(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambd
 			count += 1
 
 		res_out = merge_samples(result_list).normalise_posteriors()
-		# write GWAS lambdas ====
+		# write GWAS lambdas 
 		if isGWAS == True:
 			with open(postgap.Globals.OUTPUT+'_GWAS_lambdas.txt', 'a') as fw1:
 				for idx, L in enumerate(lambdas):
