@@ -977,7 +977,7 @@ def calc_logbinom(subset_size, k, m):
 		return(out)
 
 
-def merge_samples(samples):
+def merge_samples(samples, labels, sample_label):
 	'''
 			Return merged OneDConfigurationSample
 			Arg1: [ OneDConfigurationSample ]
