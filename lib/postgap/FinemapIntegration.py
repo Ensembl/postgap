@@ -105,23 +105,6 @@ def prepare_cluster_for_finemap(cluster, associations, population, tissue_weight
 	assert len(ld_snps) == ld_matrix.shape[1]
 	return GWAS_Cluster(cluster.gwas_snps, ld_snps, ld_matrix, z_scores, betas, mafs, annotations, None)
 
-<<<<<<< HEAD
-=======
-	ld_snp_ids = [ld_snp.rsID for ld_snp in ld_snps]
-
-	## Compute posteriors
-	configuration_posteriors = postgap.Finemap.finemap(
-		z_scores     = numpy.array(z_scores),
-		beta_scores  = numpy.array(betas),
-		cov_matrix   = ld_matrix,
-		n            = sample_size,
-		labels       = ld_snp_ids,
-		sample_label = sample_label,
-		kstart       = postgap.Globals.KSTART,
- 		kmax         = postgap.Globals.KMAX
-	)
->>>>>>> use command line arguments kstart and kmax to compute probablities
-
 def extract_snp_mafs(cluster, associations, populations):
 	"""
 			Produce vector of mafs for the SNPs in a cluster
@@ -221,22 +204,13 @@ def extract_z_scores_from_file(cluster, population):
 	ld_snp_hash = dict((ld_snp.rsID, ld_snp)
 					   for index, ld_snp in enumerate(cluster.ld_snps))
 
-	# Extract or impute missing z_scores
-	ld_snp_results = dict()
-	missing = len(ld_snp_hash)
-	file = open(postgap.Globals.GWAS_SUMMARY_STATS_FILE)
-	for line in file:
-		# Chromosome	Position	MarkerName	Effect_allele	Non_Effect_allele	Beta	SE	Pvalue
-		# 1	751343	rs28544273	A	T	-0.0146	0.0338	0.6651
-		chromosome, position, rsID, effect_allele, non_effect_allele, beta, se, pvalue = line.rstrip().split('\t')
-		rsID = rsID.strip()
-		if rsID in ld_snp_hash:
-			ld_snp_results[rsID] = (float(pvalue), float(beta))
-			missing -= 1
-			if missing == 0:
-				break
+	## Search ld snps in the GWAS summary stats file, and drop ld snps that cannot be found in the GWAS summary stats file from ld_snps
+	proper_gwas_cluster = postgap.GWAS.GWAS_File().create_gwas_cluster_with_pvalues_from_file(gwas_cluster=cluster, gwas_data_file=postgap.Globals.GWAS_SUMMARY_STATS_FILE)
 
-	# Update list of SNPss
+	## Extract z_scores for all the ld snps that can be found in the GWAS summary stats file
+	ld_snp_results = dict((ld_snp.snp, (ld_snp.pvalue, ld_snp.beta)) for index, ld_snp in enumerate(proper_gwas_cluster.ld_snps))
+	
+	# Select all the found ld snps from ld_snps
 	found_ld_snps = [ld_snp_hash[rsID] for rsID in ld_snp_results]
 
 	# Compute ld_matrix
