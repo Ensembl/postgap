@@ -180,7 +180,11 @@ def get(server, ext, data=None):
 
 			elif r.status_code == 500:
 				logging.warning("Got error 500 'Internal server error'. Will try again in %s seconds." % 60)
-				time.sleep(2) # Sleep while server restarts 
+				time.sleep(60) # Sleep while server restarts 
+
+                        elif r.status_code == 503:
+                                logging.warning("Got error 503 'Service Unavailable'. Will try again in %s seconds." % 180)
+                                time.sleep(180) # Sleep while server restarts
 
 			elif r.status_code == requests.codes.forbidden:
 				logging.warning("Got 'forbidden' error: Will try again in %s seconds." % 600)
