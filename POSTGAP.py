@@ -121,9 +121,20 @@ def main():
 	if options.Reg is not None:
 		postgap.Globals.Reg_adaptors = options.Reg
 
+<<<<<<< HEAD
 	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0 or len(str(postgap.Globals.GWAS_SUMMARY_STATS_FILE)) > 0:
 		logging.info("Starting diseases_to_genes")
 		res = postgap.Integration.diseases_to_genes(options.diseases, expanded_efo_iris, options.population, options.tissues)
+=======
+	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0 or postgap.Globals.GWAS_SUMMARY_STATS_FILE is not None or postgap.Globals.CLUSTER_FILE is not None:
+		if postgap.Globals.CLUSTER_FILE is not None:
+			logging.info("use cluster file, so skip previous steps and jump to cluster_to_genes (in gwas_snps_to_genes)")
+			res = postgap.Integration.gwas_snps_to_genes(None, options.population, options.tissues)
+		else:
+			logging.info("Starting diseases_to_genes")
+			res = postgap.Integration.diseases_to_genes(options.diseases, expanded_efo_iris, options.population, options.tissues)
+
+>>>>>>> split by clusters to speed up the analysis
 		if options.bayesian and options.output2 is not None:
 			output2 = open(options.output2, "w")
 			output2.write(pretty_gene_output(res))
@@ -278,6 +289,7 @@ commandline_description = """
 
 
 def get_options():
+<<<<<<< HEAD
 	"""
 
 		Reads commandline parameters
@@ -339,6 +351,8 @@ def get_options():
 	parser.add_argument('--output2', help='gene-cluster association output file')
 	parser.add_argument('--kstart', type=int, default=1, help='how many causal variants to start with in the full exploration of sets')
 	parser.add_argument('--kmax', type=int, default=5, help='maximum number of causal variants')
+	parser.add_argument('--cluster_dir', type=str, default=None, help='directory where to save intermediate cluster files')
+	parser.add_argument('--cluster_file', type=str, default=None, help='location of the intermediate file containing information of a cluster')
 
 	options = parser.parse_args()
 
@@ -396,6 +410,9 @@ def get_options():
 						  "/GRASP.txt"), "Can't find GRASP.txt in " + options.databases
 	postgap.Globals.KSTART = options.kstart
 	postgap.Globals.KMAX = options.kmax
+
+	postgap.Globals.CLUSTER_DIR = options.cluster_dir
+	postgap.Globals.CLUSTER_FILE = options.cluster_file
 
 	if options.diseases is None:
 		options.diseases = []

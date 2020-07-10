@@ -174,8 +174,36 @@ def gwas_snps_to_genes(gwas_snps, population, tissue_weights):
 	if tissue_weights is None:
 		tissue_weights = gwas_snps_to_tissue_weights(gwas_snps)
 
-	return clusters_to_genes(cluster_gwas_snps(gwas_snps, population), population, tissue_weights)
+	if gwas_snps is None and postgap.Globals.CLUSTER_FILE is not None:
+		cluster_fn = postgap.Globals.CLUSTER_FILE
+		infile = open(cluster_fn, 'rb')
+		cluster = pickle.load(infile)
+		infile.close()
 
+		res = cluster_to_genes(cluster, tissue_weights, population)
+
+		logging.info("\tFound %i genes associated to cluster %s" % (len(res), cluster_fn))
+	elif gwas_snps is not None:
+		clusters = cluster_gwas_snps(gwas_snps, population)
+
+		if postgap.Globals.CLUSTER_DIR is not None:
+			# create pickle files in directory cluster_dir
+			for cluster in clusters:
+				cluster_fn = cluster.gwas_configuration_posteriors.sample_label
+				outfile = open(postgap.Globals.CLUSTER_DIR + cluster_fn, 'wb')
+				pickle.dump(cluster, outfile)
+				outfile.close()
+			logging.info("save cluster info into a file")
+			sys.exit(0)
+
+		res = concatenate(cluster_to_genes(cluster, tissue_weights, population) for cluster in clusters)
+
+		logging.info("\tFound %i genes associated to all clusters" % (len(res)))
+
+	if len(res) == 0:
+		return []
+	else:
+		return sorted(res, key=lambda X: X.score)
 
 def clusters_to_genes(clusters, population, tissue_weights):
 	"""
