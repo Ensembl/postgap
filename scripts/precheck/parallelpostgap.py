@@ -25,6 +25,7 @@ parser.add_argument('--check_interval', type=int, default=300, help='sleeping ti
 parser.add_argument('--memory', type=int, default=2, help='memory of a node (GB) requested to run a job')
 parser.add_argument('--kstart', type=int, default=1, help='how many causal variants to start with in the full exploration of sets')
 parser.add_argument('--kmax', type=int, default=1, help='maximum number of causal variants')
+parser.add_argument('--split_cluster', action = 'store_true', help='split by clusters to speed up the computation')
 
 args = parser.parse_args()
 database_dir = args.database_dir
@@ -34,46 +35,165 @@ checkgap = args.check_interval
 memory = args.memory
 kstart = args.kstart
 kmax = args.kmax
+split_cluster = args.split_cluster
 
 rerunlimts = 3
 
 # load functions
-def get_checkline(filepath='dir/to/file.tsv'):
-	f = open(filepath)
-	checkline = f.readline()
+def get_basic_info(sumstats):
+	"""
+	get basic info of a GWAS summary statistics, and copy/convert it to a temporary directory
+	"""
+	filename = sumstats.split('/')[-1]
+	filedir = sumstats.replace(filename, '') if len(sumstats.split('/')) > 1 else './'
+	filetype = filename.split('.')[-1] if len(filename.split('.')) > 1 else '' #eg:tsv
+	fnstart = filename.replace('.' + filetype, '') #eg:WojcikGL
+	print('original file ' + filename + ' is in the ' + ('current directory' if filedir == './' else ('directory ' + filedir)) + '\nstart pre-checking for ' + fnstart)
+
+	# create a temporary folder for all the intermediate files that generated during the analysis
+	tempdir = filedir + fnstart + '_' + starttime + '/'
+	if not os.path.exists(tempdir):
+		os.makedirs(tempdir)
+		print('temporary directory ' + tempdir + ' is created to save intermediate files')
+
+	# check the filetype of the GWAS summary statistics
+		#a. if it is an excel file, convert it into a tsv file
+	if filetype in ['xls', 'xlsx', 'xlsm', 'xlsb']:
+		pd.read_excel(sumstats).to_csv(tempdir + fnstart + '.tsv', header=True, index=False, sep='\t')
+		print(filename + ' is an excel file, convert it to a tab-separated file and save the new file to ' + tempdir)
+		# update filetype and filename
+		filetype = 'tsv'
+		filename = fnstart + '.' + filetype
+	elif filetype == 'out':
+		#b. if it is ".out", change it to ".tsv". Note: conflict with the ".out" file from job summary
+		os.rename(sumstats, filedir + fnstart + '.tsv')
+		print('change filename from ' + filename + ' in ' + filedir + ' to ' + fnstart + '.tsv')
+		# update filetype and filename
+		filetype = 'tsv'
+		filename = fnstart + '.' + filetype
+
+		shutil.copyfile(filedir + filename, tempdir + filename)
+	else:
+		#c. if it has no suffix, add '.tsv'
+		if filetype == '':
+			filetype = 'tsv'
+			filename = fnstart + '.' + filetype
+
+		shutil.copyfile(sumstats, tempdir + filename)
+
+	print('new file ' + filename + ' is in temporary directory ' + tempdir)
+	return filedir, filename, fnstart, filetype, tempdir
+
+def get_firstline(file='dir/to/file.tsv'):
+	"""
+	get the first line in a file
+	"""
+	f = open(file)
+	firstline = f.readline()
 	f.close()
 
-	return checkline
+	return firstline
 
-def submit_a_chromosome(chr, memory=str(2), kstart=str(1), kmax=str(5)):
+def check_delimiter(file='dir/to/file.tsv'):
 	"""
-	Note: type(memory) is 'str'
-	database_dir, tempdir, fnstart, filetype, starttime take global varables
+	check whether the delimiter of a file is tab or not, and convert it to a tab-sep file if its delimiter is one of common ones
+	tempdir, filename, fnstart, filetype take global variables
+	"""
+	checkline = get_firstline(file)
+
+	if len(checkline.split('\t')) > 1:
+		print('delimiter checking passed')
+	else:
+		seplist=[' ', ',', ';', ':', '|']
+		t = 0
+		for s in seplist:
+			if len(checkline.split(s)) > 1:
+				print(filename + ' is separated by ' + ('space' if s == ' ' else s) + ', and change the delimiter to tab!')
+
+				# replace delimiter with tab, and save into a new file
+				os.rename(tempdir + filename, tempdir + fnstart + '_backup.' + filetype)
+				os.system('cat ' + tempdir + fnstart + '_backup.' + filetype + ' | tr "' + s + '" "\t" > ' + tempdir + filename)
+				os.remove(tempdir + fnstart + '_backup.' + filetype)
+
+				break
+			else:
+				t += 1
+		if t == len(seplist):
+			print('unknown delimiter, please change the delimiter to tab')
+			sys.exit('error with delimiter')
+
+def check_three_colnames(file='dir/to/file.tsv'):
+	"""
+	check whether a GWAS summary statistics uses 'variant_id/beta/p-value' as column names
+	"""
+	checkline = get_firstline(file)
+
+	if all([impnames in checkline.split() for impnames in ['variant_id', 'beta', 'p-value']]):
+		print('colnames checking passed')
+	else:
+		print('please make sure all the following information is included in your data, and please specify them with assigned column names:\nrsid -> "variant_id"\nbeta -> "beta"\np -> "p-value"')
+		sys.exit('error with column names')
+
+def define_chrlist():
+	"""
+	create a list of chromosomes
+	"""
+	chrlist = [str(n) for n in range(1, 23)]
+	chrlist.append('O')
+
+	return chrlist
+
+def submit_a_chromosome(chr, memory=str(2), kstart=str(1), kmax=str(5), split_cluster=False):
+	"""
+	submit a job to run POSTGAP for a chromosome, either to split by cluster or not
+	Note: type(memory/kstart/kmax) is 'str'
+	database_dir, tempdir, fnstart, filetype, starttime take global variables
 	"""
 	chrname = fnstart + '-chr' + chr
 	chrfile = fnstart + '-chr' + chr + '.' + filetype
-	jobname = fnstart + '-chr' + chr + '_' + starttime
+	job_chr = fnstart + '-chr' + chr + ('_spcl_' if split_cluster else '_') + starttime
 
 	# res & op2 may exist when re-run jobs
 	if os.path.exists(tempdir + chrname + '_res.txt'): os.remove(tempdir + chrname + '_res.txt')
 	if os.path.exists(tempdir + chrname + '_op2.txt'): os.remove(tempdir + chrname + '_op2.txt')
 	# it cannot overwrite .err & .out
-	if os.path.exists(tempdir + jobname + '.err'): os.remove(tempdir + jobname + '.err')
-	if os.path.exists(tempdir + jobname + '.out'): os.remove(tempdir + jobname + '.out')
+	if os.path.exists(tempdir + job_chr + '.err'): os.remove(tempdir + job_chr + '.err')
+	if os.path.exists(tempdir + job_chr + '.out'): os.remove(tempdir + job_chr + '.out')
 
+	profile_part = " -m cProfile -o " + tempdir + chrname + ("_spcl" if split_cluster else "") + ".profile"
+	eqtl_db_part = " --hdf5 /nfs/production/panda/ensembl/funcgen/eqtl/GTEx.V6.88_38.cis.eqtls.h5 --sqlite /nfs/production/panda/ensembl/funcgen/eqtl/GTEx.V6.88_38.cis.eqtls.h5.sqlite3"
+		
+	if split_cluster:
+		# if split by clusters, only a folder needed to save intermediate cluster files, no results or output2 will generate now
+		cluster_dir = tempdir + fnstart + '-chr' + chr + '_clusters/'
+
+		if not os.path.exists(cluster_dir):
+			os.makedirs(cluster_dir)
+			print('directory for clusters in chr' + chr + ' is created at ' + cluster_dir)
+		
+		outfile_part = " --cluster_dir " + cluster_dir
+	else:
+		outfile_part = " --output " + tempdir + chrname + "_res.txt --output2 " + tempdir + chrname + "_op2.txt"
+
+	POSTGAP_setting = "'python" + profile_part + " postgap/POSTGAP.py --database_dir " + database_dir + " --summary_stats " + tempdir + chrfile + eqtl_db_part + " --bayesian --kstart " + kstart + " --kmax " + kmax + outfile_part + " -g'"
+	
 	memory = str(memory)
-	os.system("gsub -m " + memory + " -n " + jobname + " -d " + tempdir + " -q production-rh74 'python -m cProfile -o " + tempdir + chrname + ".profile postgap/POSTGAP.py --database_dir " + database_dir + " --summary_stats " + tempdir + chrfile + " --hdf5 /nfs/production/panda/ensembl/funcgen/eqtl/GTEx.V6.88_38.cis.eqtls.h5 --sqlite /nfs/production/panda/ensembl/funcgen/eqtl/GTEx.V6.88_38.cis.eqtls.h5.sqlite3 --bayesian --kstart " + kstart + " --kmax " + kmax + " --output " + tempdir + chrname + "_res.txt --output2 " + tempdir + chrname + "_op2.txt -g' -r")
+	os.system("gsub -m " + memory + " -n " + job_chr + " -d " + tempdir + " -q production-rh74 " + POSTGAP_setting + " -r")
 	
 	print(time.strftime("%H:%M:%S", time.localtime()) + ', chr' + chr + ' is submitted with ' + memory + 'G memory assigned!')
 
-def start_a_GWAS_sum_stats(chrlist, submitgap=90, memory=str(2), kstart=str(1), kmax=str(5)):
+def start_a_GWAS_sum_stats(file, chrlist, split_cluster, submitgap=90, memory=str(2), kstart=str(1), kmax=str(5)):
 	"""
-	Note: type(memory) is 'str'
-	tempdir, filename, fnstart, filetype, starttime, checkline take global varables
+	start to analyse a GWAS summary statistics:
+	* split by chromosomes
+	* submit a job to run POSTGAP for each, either to split by cluster or not
+	Note: type(memory/kstart/kmax) is 'str'
+	tempdir, filename, fnstart, filetype take global variables
 	"""
 	# get which colnumn is variant_id
+	checkline = get_firstline(file)
 	ncol_rsid = str(checkline.split().index('variant_id') + 1)
-	print('column ' + ncol_rsid + ' is SNP rsid, start splitting by chromosomes and running POSTGAP:')
+	print('column ' + ncol_rsid + ' is SNP rsid, start splitting by chromosomes and running POSTGAP' + (' with splitting by clusters' if split_cluster else '') + ':')
 
 	for n in chrlist:
 		# add a sleeping time between jobs
@@ -81,31 +201,29 @@ def start_a_GWAS_sum_stats(chrlist, submitgap=90, memory=str(2), kstart=str(1), 
 			print('... wait for ' + str(submitgap) + 's, then submit the next job ...')
 			time.sleep(submitgap)
 
-		chrname = fnstart + '-chr' + n
-		chrfile = fnstart + '-chr' + n + '.' + filetype
-		jobname = fnstart + '-chr' + n + '_' + starttime
-
 		# create a new file for each chromosome, and run postgap.py
-		os.system("(head -n1 " + tempdir + filename + " && awk 'NR==FNR {a[$3]; next} $" + ncol_rsid + " in a {print $0}' yalan/variants/variants_rsID_coords-chr" + n + ".tsv " + tempdir + filename + ") > " + tempdir + chrfile)
-		submit_a_chromosome(chr=n, memory=str(memory), kstart=str(kstart), kmax=str(kmax))
+		chrfile = fnstart + '-chr' + n + '.' + filetype
+		os.system("(head -n1 " + file + " && awk 'NR==FNR {a[$3]; next} $" + ncol_rsid + " in a {print $0}' yalan/variants/variants_rsID_coords-chr" + n + ".tsv " + file + ") > " + tempdir + chrfile)
+		submit_a_chromosome(n, str(memory), str(kstart), str(kmax), split_cluster)
 	
-	# remove the original GWAS summary statistics file to save space
-	os.remove(tempdir + filename)
-	print(filename + ' saved in ' + tempdir + ' has been removed')
+	# remove the original GWAS summary statistics file in the tempdir to save space
+	os.remove(file)
+	print(file + ' has been removed to save space')
 
-def read_job_sum_file(path='dir/', whichjob='jobname', sumtype='out'):
-	f = open(path + whichjob + '.' + sumtype)
+def read_job_sum_file(path='dir/', jobname='jobname', sumtype='out'):
+	"""
+	load the stdout/stderr file of a job
+	"""
+	f = open(path + jobname + '.' + sumtype)
 	text = f.readlines()
 	f.close()
 
 	return text
 
-def check_a_chromosome_success(chr):
+def check_a_job_success(jobname):
 	"""
-	tempdir, fnstart, starttime take global varables
+	tempdir, fnstart, starttime take global variables
 	"""
-	jobname = fnstart + '-chr' + chr + '_' + starttime
-
 	success = False
 	repeat = False
 	increase_mem = False
@@ -115,7 +233,7 @@ def check_a_chromosome_success(chr):
 
 	# if this job is not running, check whether it finished successfully
 	if os.path.getsize(tempdir + 'jobstatus.txt') == 0:
-		outtext = read_job_sum_file(path=tempdir, whichjob=jobname, sumtype='out')
+		outtext = read_job_sum_file(path=tempdir, jobname=jobname, sumtype='out')
 
 		if 'Successfully completed' in outtext[-23]:
 			success = True
@@ -125,65 +243,111 @@ def check_a_chromosome_success(chr):
 			# get Delta Memory
 			if float(outtext[-15].split()[-2]) < 0:
 				increase_mem = True
-				print('chr ' + chr + ': memory limit exceeded, will increase memory to re-run')
+				print(jobname + ': memory limit exceeded, will increase memory to re-run')
 		else: # generate a NaN value, which should never happen
 			success = float('NaN')
-			print('something should never happen happened to chr ' + chr + '! that line was "' + outtext[-23].rstrip() + '" when checking')
+			print('something should never happen happened to ' + jobname + '! that line was "' + outtext[-23].rstrip() + '" when checking')
 	
 	os.remove(tempdir + 'jobstatus.txt')
 
 	return success, repeat, increase_mem
 
-def track_error(chr):
+def track_a_job_error(jobname):
 	"""
-	tempdir, fnstart, starttime take global varables
+	tempdir, fnstart, starttime take global variables
 	"""
-	jobname = fnstart + '-chr' + chr + '_' + starttime
-	errtext = read_job_sum_file(path=tempdir, whichjob=jobname, sumtype='err')
+	errtext = read_job_sum_file(path=tempdir, jobname=jobname, sumtype='err')
 
 	if not errtext:
-		print('chr ' + chr + ': empty error file')
+		return 'empty error file'
 	elif 'HTTPError' in errtext[-1]:
-		print('chr ' + chr + ': http error, no need to increase memory to re-run')
+		return 'http error, no need to increase memory to re-run'
 	elif 'ConnectionError' in errtext[-1]:
-		print('chr ' + chr + ': connection error, no need to increase memory to re-run')
+		return 'connection error, no need to increase memory to re-run'
 	elif 'IOError' in errtext[-1]:
-		print('chr' + chr + ' gave ' + errtext[-1].rstrip() + '. performance issue with the filesystem, just try again')
+		return errtext[-1].rstrip() + '. performance issue with the filesystem, just try again'
 	elif 'KeyboardInterrupt\n' in errtext:
-		print('chr' + chr + ': KeyboardInterrupt, increase_mem should be True')
+		return '\'KeyboardInterrupt\', increase_mem should be True'
 	elif 'Terminated\n' in errtext:
-		print('chr' + chr + ': Terminated, increase_mem should be True')
+		return '\'Terminated\', increase_mem should be True'
 	else:
-		print('warnings, warnings, warnings! chr' + chr + ' has an unknown error situation!')
+		print('warnings, warnings, warnings! ' + jobname + ' has an unknown error situation!')
 		sys.exit('unknown error situation, please debug')
 
-def trace_chromosomes_status(chrlist, init_mem=2, checkgap=checkgap, rerunlimts=3):
+def submit_a_cluster(cluster_dir, cluster, memory=str(2), kstart=str(1), kmax=str(5)):
+	clustername = fnstart + '-' + cluster
+	clusterfile = cluster_dir + fnstart + '-' + cluster
+	job_cluster = fnstart + '-' + cluster + '_' + starttime
+
+	# res & op2 may exist when re-run jobs
+	if os.path.exists(tempdir + clustername + '_res.txt'): os.remove(tempdir + clustername + '_res.txt')
+	if os.path.exists(tempdir + clustername + '_op2.txt'): os.remove(tempdir + clustername + '_op2.txt')
+	# it cannot overwrite .err & .out
+	if os.path.exists(tempdir + job_cluster + '.err'): os.remove(tempdir + job_cluster + '.err')
+	if os.path.exists(tempdir + job_cluster + '.out'): os.remove(tempdir + job_cluster + '.out')
+
+	profile_part = " -m cProfile -o " + tempdir + clustername + ".profile"
+	cluster_part = " --cluster_file" + clusterfile
+	eqtl_db_part = " --hdf5 /nfs/production/panda/ensembl/funcgen/eqtl/GTEx.V6.88_38.cis.eqtls.h5 --sqlite /nfs/production/panda/ensembl/funcgen/eqtl/GTEx.V6.88_38.cis.eqtls.h5.sqlite3"
+	outfile_part = " --output " + tempdir + clustername + "_res.txt --output2 " + tempdir + cluname + "_op2.txt"
+
+	POSTGAP_setting = "'python" + profile_part + " postgap/POSTGAP.py --database_dir " + database_dir + " --summary_stats " + tempdir + chrfile + cluster_part + eqtl_db_part + " --bayesian --kstart " + kstart + " --kmax " + kmax + outfile_part + " -g'"
+	
+	memory = str(memory)
+	os.system("gsub -m " + memory + " -n " + job_cluster + " -d " + tempdir + " -q production-rh74 " + POSTGAP_setting + " -r")
+	
+	print(time.strftime("%H:%M:%S", time.localtime()) + ', ' + cluster + ' is submitted with ' + memory + 'G memory assigned!')
+
+def continue_chromosome_clusters(chr):
+	cluster_dir = tempdir + fnstart + '-chr' + chr + '_clusters/'
+	chrclusters = os.listdir(cluster_dir)
+
+	for cluster in chrclusters:
+		if cluster is not chrclusters[0]: 
+			print('... wait for ' + str(submitgap) + 's, then submit the next job ...')
+			time.sleep(submitgap)
+
+		submit_a_cluster(cluster_dir, cluster, str(memory), str(kstart), str(kmax))
+
+	print('chr' + chr + ' finished submitting all the cluster jobs')
+	return chrclusters
+
+def trace_chromosomes_status(chrlist, split_cluster, init_mem=2, checkgap=checkgap, rerunlimts=3):
 	"""
 	Note: type(init_mem) is 'int'
-	tempdir, fnstart, filetype, starttime take global varables
+	tempdir, fnstart, filetype, starttime take global variables
 	"""
 	sumdf = pd.DataFrame(columns=['chr', 'success', 'repeats', 'run_time', 'cpu_time', 'max_mem', 'ave_mem'], index=range(len(chrlist)))
+	
 	sumdf['chr'] = chrlist
 	sumdf['repeats'] = [0] * len(chrlist)
 	
+	if split_cluster: allclusters = []
+
 	while not all(sumdf['success'] == True):
 		# check all unfinished jobs
 		for i,row in sumdf.loc[sumdf['success'] != True].iterrows():
 			chr = row['chr']
+			job_chr = fnstart + '-chr' + chr + ('_spcl_' if split_cluster else '_') + starttime
 
 			# just wait for 1 min, in case the stdout/stderr file has not been completed
 			time.sleep(60)
-
-			sumdf.at[i, 'success'], repeat, increase_mem = check_a_chromosome_success(chr=chr)
+			sumdf.at[i, 'success'], repeat, increase_mem = check_a_job_success(job_chr)
 
 			# when one finished successfully, record relevant parameters
 			if sumdf.loc[i, 'success'] is True:
-				jobname = fnstart + '-chr' + chr + '_' + starttime
-				outtext = read_job_sum_file(path=tempdir, whichjob=jobname, sumtype='out')
+				outtext = read_job_sum_file(path=tempdir, jobname=job_chr, sumtype='out')
 				
 				sumdf.ix[i, 'run_time':'ave_mem'] = [outtext[-11].split()[-2], outtext[-19].split()[-2], outtext[-18].split()[-2] if 'MB' in outtext[-18] else 'N/A', outtext[-17].split()[-2] if 'MB' in outtext[-17] else 'N/A']
 
-				print('chr' + chr + ' finished! good good')
+				if split_cluster:
+					#track if the first step splitting cluster finishes or not. once done, postgap for each cluster
+					print('chr' + chr + ' completed creating cluster files, and start to run POSTGAP for clusters')
+					
+					chrclusters = continue_chromosome_clusters(chr)
+					allclusters += chrclusters
+				else:
+					print('chr' + chr + ' finished! good good')
 
 				# once succeeds, remove the chromosomes GWAS summary statistics file to save space
 				chrfile = fnstart + '-chr' + chr + '.' + filetype
@@ -194,12 +358,13 @@ def trace_chromosomes_status(chrlist, init_mem=2, checkgap=checkgap, rerunlimts=
 				reruntimes = sumdf.loc[i, 'repeats']
 				
 				if reruntimes <= rerunlimts:
-					track_error(chr=chr)
+					print('chr' + chr + ' gave: ' + track_a_job_error(job_chr))
+
 					print('chr' + chr + '\'s re-run round ' + str(reruntimes) + ' starts')
-					submit_a_chromosome(chr=chr, memory=str(int(init_mem) * (1 + (reruntimes if increase_mem else 0))), kstart=str(kstart), kmax=str(kmax))
+					submit_a_chromosome(chr, str(int(init_mem) * (1 + (reruntimes if increase_mem else 0))), str(kstart), str(kmax), split_cluster)
 
 		if all(sumdf['success'] == True):
-			print('congratulations!!! all the jobs finished successfully!')
+			print('congratulations!!! all the chr' + ('_spcl' if split_cluster else '') + ' jobs finished successfully!')
 			break
 		elif any(sumdf['success'].isnull()):
 			print('/'.join(('chr' + n) for n in sumdf.loc[sumdf['success'].isnull()]['chr']) + ' quitted with an unknown situation!')
@@ -212,130 +377,132 @@ def trace_chromosomes_status(chrlist, init_mem=2, checkgap=checkgap, rerunlimts=
 			print('/'.join(('chr' + n) for n in sumdf.loc[sumdf['success'] != True, 'chr']) + ' unfinished, check every ' + str(checkgap) + 's')
 		time.sleep(checkgap)
 	
+	return (sumdf, allclusters) if split_cluster else sumdf
+
+def trace_clusters_status(clusterlist, init_mem=2, checkgap=checkgap, rerunlimts=3):
+	"""
+	Note: type(init_mem) is 'int'
+	tempdir, fnstart, filetype, starttime take global variables
+	"""
+	sumdf = pd.DataFrame(columns=['cluster', 'success', 'repeats', 'run_time', 'cpu_time', 'max_mem', 'ave_mem'], index=range(len(chrlist)))	
+	sumdf['cluster'] = clusterlist
+	sumdf['repeats'] = [0] * len(clusterlist)
+	
+	while not all(sumdf['success'] == True):
+		# check all unfinished jobs
+		for i,row in sumdf.loc[sumdf['success'] != True].iterrows():
+			cluster = row['cluster'] #'GWAS_Cluster_21:44931821-45100521'
+			job_cluster = fnstart + '-' + cluster + '_' + starttime
+
+			chr = cluster.split(':')[0].split('_')[-1]
+			cluster_dir = tempdir + fnstart + '-chr' + chr + '_clusters/'
+
+			# just wait for 1 min, in case the stdout/stderr file has not been completed
+			time.sleep(60)
+			sumdf.at[i, 'success'], repeat, increase_mem = check_a_job_success(job_cluster)
+
+			# when one finished successfully, record relevant parameters
+			if sumdf.loc[i, 'success'] is True:
+				outtext = read_job_sum_file(path=tempdir, jobname=job_cluster, sumtype='out')
+				
+				sumdf.ix[i, 'run_time':'ave_mem'] = [outtext[-11].split()[-2], outtext[-19].split()[-2], outtext[-18].split()[-2] if 'MB' in outtext[-18] else 'N/A', outtext[-17].split()[-2] if 'MB' in outtext[-17] else 'N/A']
+
+				print(cluster + ' finished! good good')
+
+			if repeat:
+				sumdf.at[i, 'repeats'] += 1
+				reruntimes = sumdf.loc[i, 'repeats']
+				
+				if reruntimes <= rerunlimts:
+					print(cluster + ' gave: ' + track_a_job_error(job_cluster))
+
+					print(cluster + '\'s re-run round ' + str(reruntimes) + ' starts')
+					submit_a_cluster(cluster_dir, cluster, str(int(init_mem) * (1 + (reruntimes if increase_mem else 0))), str(kstart), str(kmax))
+
+		if all(sumdf['success'] == True):
+			print('congratulations!!! all the cluster jobs finished successfully!')
+			break
+		elif any(sumdf['success'].isnull()):
+			print('/'.join(c for c in sumdf.loc[sumdf['success'].isnull()]['cluster']) + ' quitted with an unknown situation!')
+			sys.exit('unknown situation occurs, please debug')
+		elif any((sumdf['success'] == False) & (sumdf['repeats'] > rerunlimts)):
+			print('/'.join(c for c in sumdf.loc[(sumdf['success'] == False) & (sumdf['repeats'] > rerunlimts), 'cluster']) + ' has already re-ran for ' + str(rerunlimts) + ' times, some consistent error occurs!')
+			sys.exit('consistent error occurs, please debug')
+
+		if int(starttime[-4:]) - checkgap / 3 * 5 < int(time.strftime("%M%S", time.localtime())) < int(starttime[-4:]) + checkgap / 3 * 5:
+			print('/'.join(c for c in sumdf.loc[sumdf['success'] != True, 'cluster']) + ' unfinished, check every ' + str(checkgap) + 's')
+		time.sleep(checkgap)
+	
 	return sumdf
 
-def merge_results(chrlist):
+def merge_results(objectlist, split_cluster):
 	"""
-	filedir, tempdir, fnstart, starttime take global varables
+	filedir, tempdir, fnstart, starttime take global variables
 	"""
 	resfile = filedir + fnstart + '_results_' + starttime + '.txt'
 
 	# results file could have only column names
-	for n in chrlist:
-		chrres = tempdir + fnstart + '-chr' + n + '_res.txt'
+	for n in objectlist:
+		eachres = tempdir + fnstart + '-' + (n if split_cluster else ('chr' + n)) + '_res.txt'
 
-		if n == chrlist[0]:
-			os.system('cat ' + chrres + ' > ' + resfile)
+		if n == objectlist[0]:
+			os.system('cat ' + eachres + ' > ' + resfile)
 		else:
-			os.system('tail -n+2 ' + chrres + ' >> ' + resfile)
+			os.system('tail -n+2 ' + eachres + ' >> ' + resfile)
 
-def merge_output2(chrlist):
+def merge_output2(objectlist, split_cluster):
 	"""
-	filedir, tempdir, fnstart, starttime take global varables
+	filedir, tempdir, fnstart, starttime take global variables
 	"""
 	op2file = filedir + fnstart + '_output2_' + starttime + '.txt'
 
 	# output2 file could be an empty file, and has no header
 	os.system('echo -e Gene_ID$"\t"Cluster_description$"\t"SNP_ID$"\t"CLPP_at_that_SNP$"\t"Tissue$"\t"CLPP_over_the_whole_cluster > ' + op2file)
 	
-	for n in chrlist:
-		chrop2 = tempdir + fnstart + '-chr' + n + '_op2.txt'
+	for n in objectlist:
+		eachop2 = tempdir + fnstart + '-' + (n if split_cluster else ('chr' + n)) + '_op2.txt'
 
-		os.system('cat ' + chrop2 + ' >> ' + op2file)
+		os.system('cat ' + eachop2 + ' >> ' + op2file)
+		# add a new line character, as op2 file does not include
 		os.system('tail -c1 < ' + op2file + ' | read -r _ || echo ''>> ' + op2file)
 
-#0. preparations
-# get basic info about the GWAS summary statistics
-filename = sumstats.split('/')[-1]
-filedir = sumstats.replace(filename, '') if len(sumstats.split('/')) > 1 else './'
-filetype = filename.split('.')[-1] if len(filename.split('.')) > 1 else '' #eg:tsv
-fnstart = filename.replace('.' + filetype, '') #eg:WojcikGL
-print(filename + ' is in the ' + ('current directory' if filedir == './' else ('directory ' + filedir)) + '\nstart pre-checking for ' + fnstart)
+#1. get basic info about the GWAS summary statistics, and copy the GWAS file into the temp directory
+filedir, filename, fnstart, filetype, tempdir = get_basic_info(sumstats)
 
-# create a temporary folder for all the intermediate files that generated during the analysis
-tempdir = filedir + fnstart + '_' + starttime + '/'
-os.makedirs(tempdir)
-
-#1. check the filetype of the GWAS summary statistics
-#a. if it is an excel file, convert it into a tsv file
-if filetype in ['xls', 'xlsx', 'xlsm', 'xlsb']:
-	pd.read_excel(sumstats).to_csv(tempdir + fnstart + '.tsv', header=True, index=False, sep='\t')
-	print(filename + ' is an excel file, convert it into a tab-separated file, which is saved in dir ' + tempdir)
-	# update filetype and filename
-	filetype = 'tsv'
-	filename = fnstart + '.' + filetype
-elif filetype == 'out':
-	#b. if it is ".out", change it to ".tsv". Note: conflict with the ".out" file from job summary
-	os.rename(sumstats, filedir + fnstart + '.tsv')
-	print('change filename from ' + filename + ' in ' + filedir + ' to ' + fnstart + '.tsv')
-	# update filetype and filename
-	filetype = 'tsv'
-	filename = fnstart + '.' + filetype
-
-	shutil.copyfile(filedir + filename, tempdir + filename)
-else:
-	if filetype == '':
-		filetype = 'tsv'
-		filename = fnstart + '.' + filetype
-
-	shutil.copyfile(sumstats, tempdir + filename)
-
-# save the first line into to a variable for the following checking step
-checkline = get_checkline(filepath=tempdir + filename)
-
-#2. check if the delimiter is tab
-if len(checkline.split('\t')) > 1:
-	print('delimiter checking passed')
-else:
-	print(filename + ' is not separated by tab')
-
-	seplist=[' ', ',', ';', ':', '|']
-	t = 0
-	for s in seplist:
-		if len(checkline.split(s)) > 1:
-			print(filename + ' is separated by ' + ('space' if s == ' ' else s) + ', and change the delimiter to tab!')
-
-			# replace delimiter with tab, and save into a new file
-			os.rename(tempdir + filename, tempdir + fnstart + '_backup.' + filetype)
-			os.system('cat ' + tempdir + fnstart + '_backup.' + filetype + ' | tr "' + s + '" "\t" > ' + tempdir + filename)
-			os.remove(tempdir + fnstart + '_backup.' + filetype)
-
-			# update the checkline
-			checkline = get_checkline(filepath=tempdir + filename)
-
-			break
-		else:
-			t += 1
-	if t == len(seplist):
-		print('unknown delimiter, please change the delimiter to tab')
-		sys.exit('error with delimiter')
-
+#2. check if the delimiter is tab, and convert if the delimiter is one of the common ones
+check_delimiter(file=tempdir + filename)
 # now the separator is tab for sure
+
 #3. check three very important colnames: variant_id, beta, p-value
-if all([impnames in checkline.split() for impnames in ['variant_id', 'beta', 'p-value']]):
-	print('colnames checking passed')
-else:
-	print('please make sure all the following information is included in your data, and please specify them with assigned column names:\nrsid -> "variant_id"\nbeta -> "beta"\np -> "p-value"')
-	sys.exit('error with column names')
+check_three_colnames(file=tempdir + filename)
 
 #4. split GWAS summary file by chromosomes and run postgap.py on each
-chrlist = [str(n) for n in range(1, 23)]
-chrlist.append('O')
-
-start_a_GWAS_sum_stats(chrlist=chrlist, submitgap=submitgap, memory=str(memory), kstart=str(kstart), kmax=str(kmax))
+chrlist = define_chrlist()
+print('Note: split by clusters is ' + ('ON' if split_cluster else 'OFF'))
+start_a_GWAS_sum_stats(tempdir + filename, chrlist, split_cluster, submitgap, str(memory), str(kstart), str(kmax))
 
 #5. keep tracing until all the jobs completed successfully, and make a record of running/CPU time and max/average memory
-time.sleep(300)
+time.sleep(600)
 print('start checking whether all the jobs completed successfully ...')
 
-sumdf = trace_chromosomes_status(chrlist=chrlist, init_mem=memory, checkgap=checkgap, rerunlimts=rerunlimts)
-sumdf.to_csv(filedir + fnstart + '_jobsum_' + starttime + '.txt', header=True, index=False, sep='\t', na_rep='N/A')
+if split_cluster:
+	sum_chr, allclusters = trace_chromosomes_status(chrlist, split_cluster, memory, checkgap, rerunlimts)
+	# when reach here, it means all the chr jobs are done, and all the cluster jobs are submitted
+	
+	sum_cluster = trace_clusters_status(allclusters, memory, checkgap, rerunlimts)
+
+	sumdf = pd.concat([sum_chr, sum_cluster], ignore_index=True)
+	sumdf.to_csv(filedir + fnstart + '_spcl_jobsum_' + starttime + '.txt', header=True, index=False, sep='\t', na_rep='N/A')
+else:
+	sum_chr = trace_chromosomes_status(chrlist, split_cluster, memory, checkgap, rerunlimts)
+	sum_chr.to_csv(filedir + fnstart + '_jobsum_' + starttime + '.txt', header=True, index=False, sep='\t', na_rep='N/A')
 
 #6. combine all the results into one file
 print('wrap all the results together, and clean up')
 
-merge_results(chrlist=chrlist)
-merge_output2(chrlist=chrlist)
+objectlist = allclusters if split_cluster else chrlist
+merge_results(objectlist, split_cluster)
+merge_output2(objectlist, split_cluster)
 
 # remove all the intermediate files
 shutil.rmtree(tempdir)
