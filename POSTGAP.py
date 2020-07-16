@@ -121,11 +121,6 @@ def main():
 	if options.Reg is not None:
 		postgap.Globals.Reg_adaptors = options.Reg
 
-<<<<<<< HEAD
-	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0 or len(str(postgap.Globals.GWAS_SUMMARY_STATS_FILE)) > 0:
-		logging.info("Starting diseases_to_genes")
-		res = postgap.Integration.diseases_to_genes(options.diseases, expanded_efo_iris, options.population, options.tissues)
-=======
 	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0 or postgap.Globals.GWAS_SUMMARY_STATS_FILE is not None or postgap.Globals.CLUSTER_FILE is not None:
 		if postgap.Globals.CLUSTER_FILE is not None:
 			logging.info("use cluster file, so skip previous steps and jump to cluster_to_genes (in gwas_snps_to_genes)")
@@ -134,7 +129,6 @@ def main():
 			logging.info("Starting diseases_to_genes")
 			res = postgap.Integration.diseases_to_genes(options.diseases, expanded_efo_iris, options.population, options.tissues)
 
->>>>>>> split by clusters to speed up the analysis
 		if options.bayesian and options.output2 is not None:
 			output2 = open(options.output2, "w")
 			output2.write(pretty_gene_output(res))
@@ -289,7 +283,6 @@ commandline_description = """
 
 
 def get_options():
-<<<<<<< HEAD
 	"""
 
 		Reads commandline parameters
@@ -402,7 +395,7 @@ def get_options():
 	if postgap.Globals.GWAS_SUMMARY_STATS_FILE is None:
 		assert options.rsID is None or (
 			options.efos is None and options.diseases is None)
-		assert options.rsID is not None or options.efos is not None or options.diseases is not None or options.coords is not None
+		assert options.rsID is not None or options.efos is not None or options.diseases is not None or options.coords is not None or options.cluster_file is not None
 
 	assert os.path.isdir(postgap.Globals.DATABASES_DIR), "--database_dir parameter " + \
 		options.databases + " does not point to an existing directory!"
