@@ -188,6 +188,7 @@ def gwas_snps_to_genes(gwas_snps, population, tissue_weights):
 				cluster = postgap.FinemapIntegration.finemap_gwas_cluster(cluster, population)
 			except:
 				logging.info("\tcluster %s failed finemapping" % (cluster_fn))
+				sys.exit(0) # should quit here??? Reference Integration.py - L242-246
 
 		res = cluster_to_genes(cluster, tissue_weights, population)
 
@@ -198,34 +199,17 @@ def gwas_snps_to_genes(gwas_snps, population, tissue_weights):
 		if postgap.Globals.CLUSTER_DIR is not None:
 			# create pickle files in directory cluster_dir
 			for cluster in clusters:
-				try:
-					if len(cluster.ld_snps) != len(cluster.gwas_snps) and postgap.Globals.GWAS_SUMMARY_STATS_FILE is not None:
-						ld_snp_hash = dict((ld_snp.rsID, ld_snp) for index, ld_snp in enumerate(cluster.ld_snps))
-						proper_gwas_cluster = postgap.GWAS.GWAS_File().create_gwas_cluster_with_pvalues_from_file(gwas_cluster=cluster, gwas_data_file=postgap.Globals.GWAS_SUMMARY_STATS_FILE)
-						ld_snp_results = dict((ld_snp.snp, (ld_snp.pvalue, ld_snp.beta)) for index, ld_snp in enumerate(proper_gwas_cluster.ld_snps))
-						found_ld_snps = [ld_snp_hash[rsID] for rsID in ld_snp_results]
-						ld_snp_ids, ld_matrix = postgap.LD.get_pairwise_ld(found_ld_snps, population)
-						ld_snps = [ld_snp_hash[rsID] for rsID in ld_snp_ids]
-					else:
-						## Compute ld_matrix
-						ld_snp_ids, ld_matrix = postgap.LD.get_pairwise_ld(cluster.ld_snps, population)
+				# create unique sample label for each (raw) cluser
+				chrom = cluster.ld_snps[0].chrom
+				start = min(ld_snp.pos for ld_snp in cluster.ld_snps)
+				end = max(ld_snp.pos for ld_snp in cluster.ld_snps)
 
-						## Update list of LD SNPs
-						ld_snp_hash = dict((ld_snp.rsID, ld_snp) for index, ld_snp in enumerate(cluster.ld_snps))
-						ld_snps = [ld_snp_hash[rsID] for rsID in ld_snp_ids]
-				except:
-					continue
-			
-				## Define experiment label (serves for debugging logs)
-				chrom = ld_snps[0].chrom
-				start = min(ld_snp.pos for ld_snp in ld_snps)
-				end = max(ld_snp.pos for ld_snp in ld_snps)
-
+				# create pickle files in directory cluster_dir		
 				cluster_fn = 'GWAS_Cluster_%s:%i-%i' % (chrom, start, end)
 				outfile = open(postgap.Globals.CLUSTER_DIR + cluster_fn, 'wb')
 				pickle.dump(cluster, outfile)
 				outfile.close()
-			logging.info("save cluster info into a file")
+			logging.info("save cluster info into a file and quit")
 			sys.exit(0)
 
 		# Perform GWAS finemapping of the clusters
@@ -240,7 +224,8 @@ def gwas_snps_to_genes(gwas_snps, population, tissue_weights):
 					continue
 				
 			if not finemap_clusters:
-				finemap_clusters = clusters
+				logging.info("all the clusters failed finemapping")
+				sys.exit(0) # should quit here??? or 'finemap_clusters = clusters'
 		
 			for cluster in finemap_clusters:
 				for gwas_snp in cluster.gwas_snps:
