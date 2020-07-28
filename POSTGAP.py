@@ -494,11 +494,11 @@ def pretty_cluster_association(association, population):
 
 def genecluster_association_table(association, population):
 	"""
-
-			Returns association stats in roughly the same format as STOPGAP for a cluster of SNPs
-			Arg1: GeneCluster_Association
-			Arg2: string, population name
-			Returntype: [[ string or float ]]
+		# TODO: (re)implement marginal posterior per SNP
+		Returns association stats in roughly the same format as STOPGAP for a cluster of SNPs
+		Arg1: GeneCluster_Association
+		Arg2: string, population name
+		Returntype: [[ string or float ]]
 
 	"""
 	results = []
@@ -507,11 +507,7 @@ def genecluster_association_table(association, population):
 		for snp1 in association.cluster.ld_snps:
 			for snp2 in association.cluster.ld_snps:
 				if snp1.rsID not in r2_cache or snp2.rsID not in r2_cache[snp1.rsID]:
-					try:
-						ld_snp_ids, r_matrix = postgap.LD.get_pairwise_ld(
-							association.cluster.ld_snps, population)
-					except postgap.LD.UnitLDMatrixerror:
-						break
+					ld_snp_ids, r_matrix = postgap.LD.get_pairwise_ld(association.cluster.ld_snps, population)
 					r2_sets.add(snp_set)
 					r_index = dict((snp, index)
 								   for index, snp in enumerate(ld_snp_ids))
@@ -639,12 +635,12 @@ def genecluster_association_table(association, population):
 				clpp = []
 				if postgap.Globals.PERFORM_BAYESIAN:
 					for tissue in postgap.Globals.ALL_TISSUES:
-						# if tissue in association.collocation_posterior:
-						#	 clpp.append(sum(association.collocation_posterior[tissue][config]
-						#					 for config in association.collocation_posterior[tissue] if gene_snp_association.snp.rsID in config))
-						# else:
-						#	 clpp.append(0)
-						clpp.append(0)
+						if tissue in association.collocation_posterior:
+							# TODO: (re)implement marginal posterior per SNP
+							#clpp.append(sum(association.collocation_posterior[tissue][config] for config in association.collocation_posterior[tissue] if gene_snp_association.snp.rsID in config))
+							clpp.append(0)
+						else:
+							clpp.append(0)
 
 				r2_distance = read_pairwise_ld(
 					gene_snp_association.snp, gwas_snp.snp)
