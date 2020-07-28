@@ -178,13 +178,10 @@ def compute_ld_matrix(cluster, population):
 	ld_snps = [ld_snp_hash[rsID] for rsID in ld_snp_ids]
 
 	# Aggregate z_scores into a single vector
-	z_scores = []
-	betas = []
-	for i in cluster.ld_snps:
-		z_scores.append(0)
-		betas.append(0)
-	gwas_snp_hash = dict((gwas_snp.snp.rsID, gwas_snp)
-						 for gwas_snp in cluster.gwas_snps)
+	z_scores = [0] * len(ld_snps)
+	betas = [0] * len(ld_snps)
+
+	gwas_snp_hash = dict((gwas_snp.snp.rsID, gwas_snp) for gwas_snp in cluster.gwas_snps)
 	for index, ld_snp in enumerate(ld_snps):
 		z_scores[index] = gwas_snp_hash[ld_snp.rsID].z_score
 		betas[index] = gwas_snp_hash[ld_snp.rsID].beta
