@@ -526,6 +526,7 @@ class TwoDConfigurationSample(TwoDConfigurationSample_prototype):
 			self.sample_2_label,
 			float(posterior))
 
+@profile
 def finemap(z_scores, beta_scores, cov_matrix, n, labels, sample_label, kstart=1, kmax=5, corr_thresh=0.9, max_iter=100000, output="configuration", prior="independence_robust", v_scale=0.0025, g="BRIC", eigen_thresh=0.1, verbose=False):
 	# Test inputs
 	assert len(z_scores) == cov_matrix.shape[0], 'Covariance matrix has %i rows, %i expcted' % (cov_matrix.shape[0], len(z_scores))
