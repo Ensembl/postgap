@@ -44,8 +44,8 @@ import postgap.REST
 from postgap.DataModel import *
 from postgap.Utils import *
 
-from guppy import hpy
-h = hpy()
+#from guppy import hpy
+#h = hpy()
 
 
 r2_cache = collections.defaultdict(dict)
@@ -56,6 +56,7 @@ known_chroms = map(str, range(1,23)) + ['X','Y']
 postgap.Globals.ALL_TISSUES = postgap.Integration.get_all_tissues()
 #postgap.Globals.GWAS_SUMMARY_STATS_FILE = 'CAD_UKBIOBANK-chr22.tsv'
 postgap.Globals.CLUSTER_FILE = '/homes/yalan/yalan/NNRtest/CAD_UKBIOBANK_200728124133/CAD_UKBIOBANK-chr9_clusters/GWAS_Cluster_9:17458027-17458027'
+#postgap.Globals.CLUSTER_FILE = '/homes/yalan/yalan/NNRtest/CAD_UKBIOBANK_200728124133/CAD_UKBIOBANK-chr1_clusters/GWAS_Cluster_1:150443738-150823241'
 postgap.Globals.GTEx_path = '/nfs/production/panda/ensembl/funcgen/eqtl/GTEx.V6.88_38.cis.eqtls.h5'
 postgap.Globals.SQLite_connection = '/nfs/production/panda/ensembl/funcgen/eqtl/GTEx.V6.88_38.cis.eqtls.h5.sqlite3'
 postgap.Globals.SPECIES = 'Human'
@@ -84,6 +85,7 @@ rsID = None
 
 
 # FinemapIntegration.py
+@profile
 def finemap_gwas_cluster(cluster, population):
 	if len(cluster.ld_snps) == len(cluster.gwas_snps):
 		ld_snps, ld_matrix, z_scores, betas = compute_ld_matrix(cluster, population)
@@ -100,10 +102,10 @@ def finemap_gwas_cluster(cluster, population):
 	sample_sizes = map(lambda gwas_snp: max(gwas_association.sample_size for gwas_association in gwas_snp.evidence), cluster.gwas_snps)
 	sample_size = sum(sample_sizes) / len(sample_sizes)
 	ld_snp_ids = [ld_snp.rsID for ld_snp in ld_snps]
-	print('\nin finemap_gwas_cluster, will finemap:')
-	print h.heap()
+	#print('\nin finemap_gwas_cluster, will finemap:')
+	#print h.heap()
 	## Compute posteriors
-	configuration_posteriors = postgap.Finemap.finemap(
+	configuration_posteriors = finemap(
 		z_scores	 = numpy.array(z_scores),
 		beta_scores	= numpy.array(betas),
 		cov_matrix	 = ld_matrix,
@@ -113,8 +115,8 @@ def finemap_gwas_cluster(cluster, population):
 		kstart		 = postgap.Globals.KSTART,
 		kmax		 = postgap.Globals.KMAX
 	)
-	print('\nin finemap_gwas_cluster, after finemap:')
-	print h.heap()
+	#print('\nin finemap_gwas_cluster, after finemap:')
+	#print h.heap()
 	assert len(ld_snps) ==	ld_matrix.shape[0]
 	assert len(ld_snps) ==	ld_matrix.shape[1]
 	return GWAS_Cluster(cluster.gwas_snps, ld_snps, ld_matrix, z_scores, configuration_posteriors) 
@@ -254,7 +256,7 @@ def compute_gene_tissue_joint_posterior(cluster, tissue, gene, eQTL_snp_hash):
 	end = max(ld_snp.pos for ld_snp in cluster.ld_snps)
 	sample_label = 'eQTL_Cluster_%s:%i-%i_%s' % (chrom, start, end, gene)
 	## Compute posteriors
-	eQTL_configuration_posteriors = postgap.Finemap.finemap(
+	eQTL_configuration_posteriors = finemap(
 		z_scores	 = numpy.array(z_scores),
 		beta_scores	= numpy.array(betas),
 		cov_matrix	 = cluster.ld_matrix,
@@ -526,7 +528,6 @@ class TwoDConfigurationSample(TwoDConfigurationSample_prototype):
 			self.sample_2_label,
 			float(posterior))
 
-@profile
 def finemap(z_scores, beta_scores, cov_matrix, n, labels, sample_label, kstart=1, kmax=5, corr_thresh=0.9, max_iter=100000, output="configuration", prior="independence_robust", v_scale=0.0025, g="BRIC", eigen_thresh=0.1, verbose=False):
 	# Test inputs
 	assert len(z_scores) == cov_matrix.shape[0], 'Covariance matrix has %i rows, %i expcted' % (cov_matrix.shape[0], len(z_scores))
@@ -535,8 +536,8 @@ def finemap(z_scores, beta_scores, cov_matrix, n, labels, sample_label, kstart=1
 	assert not numpy.any(numpy.isnan(z_scores)), 'Missing values detected in z-scores'
 	assert not numpy.any(numpy.isnan(cov_matrix)), 'Missing values detected in covariance matrix'
 	cor_scores = beta_scores * numpy.sqrt(2*0.5*(0.5))
-	print('\nin finemap_gwas_cluster -> finemap, will initialise compare_neighborhood:')
-	print h.heap()
+	#print('\nin finemap_gwas_cluster -> finemap, will initialise compare_neighborhood:')
+	#print h.heap()
 	# Initialise
 	score_cache = dict()
 	neighbourhood_cache = dict()
@@ -564,10 +565,10 @@ def finemap(z_scores, beta_scores, cov_matrix, n, labels, sample_label, kstart=1
 			return res_out.marginals(len(z_scores))
 		else:
 			assert False, "%s unkown" % {output}
-	print('\nin finemap_gwas_cluster -> finemap, will SSS:')
-	print h.heap()
 	# shotgun stochastic search
 	if kstart < kmax:
+		#print('\nin finemap_gwas_cluster -> finemap, will SSS:')
+		#print h.heap()
 		p = results.normalise_posteriors().posterior
 		current_config = configurations[numpy.random.choice(len(p), size=1, p=p)[0]]
 		count = 1
@@ -589,8 +590,8 @@ def finemap(z_scores, beta_scores, cov_matrix, n, labels, sample_label, kstart=1
 			# Keep count of sampled configs
 			count += 1
 		res_out = merge_samples(result_list, labels, sample_label).normalise_posteriors()
-		print('\nin finemap_gwas_cluster -> finemap, after SSS:')
-		print h.heap()
+		#print('\nin finemap_gwas_cluster -> finemap, after SSS:')
+		#print h.heap()
 		if output == "configuration":
 			return res_out
 		elif output == "marginal":
@@ -791,6 +792,7 @@ def merge_samples(samples, labels, sample_label):
 			labels = labels,
 			sample_label = sample_label
 		)
+
 def check_eigenvals(cor,Sigma,eigen_thresh=0.1):
 	assert cor.shape[1] == Sigma.shape[1], 'Covariance matrix has %i rows, %i expected' % (Sigma.shape[1], cor.shape[1])
 	dim=cor.shape[1]
@@ -803,6 +805,7 @@ def check_eigenvals(cor,Sigma,eigen_thresh=0.1):
 
 
 # Integration.py
+@profile
 def cluster_to_genes(cluster, tissues, population):
 	if postgap.Globals.PERFORM_BAYESIAN:
 		assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
@@ -836,6 +839,7 @@ def cluster_to_genes(cluster, tissues, population):
 	# Pick the association with the highest score
 	return sorted(res, key=lambda X: X.score)
 
+@profile
 def ld_snps_to_genes(ld_snps, tissues):
 	cisreg = cisregulatory_evidence(ld_snps, tissues) # Hash of hashes SNP => Gene => Cisregulatory_Evidence
 	reg = regulatory_evidence(cisreg.keys(), tissues) # Hash: SNP => [ Regulatory_evidence ]
@@ -1128,8 +1132,8 @@ def read_pairwise_ld(snp1, snp2):
 
 
 
-print('\n\n\nafter loading all the dependencies:')
-print h.heap()
+#print('\n\n\nafter loading all the dependencies:')
+#print h.heap()
 
 logging.info("use cluster file, so skip previous steps and jump to cluster_to_genes (in gwas_snps_to_genes)")
 
@@ -1139,27 +1143,29 @@ cluster_fn = postgap.Globals.CLUSTER_FILE
 infile = open(cluster_fn, 'rb')
 cluster = pickle.load(infile)
 infile.close()
-print('\n\n\nafter loading cluster file in:')
-print h.heap()
+#print('\n\n\nafter loading cluster file in:')
+#print h.heap()
 
 # Perform GWAS finemapping of the clusters
 logging.info("\tperform GWAS finemapping for cluster %s" % (cluster_fn))
 
 cluster = finemap_gwas_cluster(cluster, population)
-print('\n\n\nafter GWAS finemapping:')
-print h.heap()
+#print('\n\n\nafter GWAS finemapping:')
+#print h.heap()
 
 res = cluster_to_genes(cluster, tissue_weights, population)
 res = sorted(res, key=lambda X: X.score)
-print('\n\n\nafter colocalisation:')
-print h.heap()
+#print('\n\n\nafter colocalisation:')
+#print h.heap()
 
 logging.info("\tFound %i genes associated to cluster %s" % (len(res), cluster_fn))
 
 pretty_gene_output(res)
-print('\n\n\nafter organising the table in output2:')
-print h.heap()
+#print('\n\n\nafter organising the table in output2:')
+#print h.heap()
 
 pretty_output(res, population)
-print('\n\n\nafter organising the table in results:')
-print h.heap()
+#print('\n\n\nafter organising the table in results:')
+#print h.heap()
+
+#mprof run --python python memtest.py
