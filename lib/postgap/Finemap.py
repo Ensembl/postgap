@@ -459,7 +459,6 @@ def finemap_v1(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambd
 		current_config = configurations[numpy.random.choice(len(p), size=1, p=p)[
 			0]]
 		count = 1
-		result_list = [results]
 		while count < max_iter:
 			# Generate new configs
 			new_configs = create_neighborhood(current_config, len(
@@ -482,8 +481,8 @@ def finemap_v1(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambd
 											  v_scale=v_scale,
 											  g=g)
 
-			# Add new entries into the results list
-			result_list.append(results_nh)
+			# Add new entries into the results object
+			results = merge_samples([results, results_nh], labels, sample_label)
 
 			# Choose seed for next round among new configs
 			prob = results_nh.normalise_posteriors().posterior
