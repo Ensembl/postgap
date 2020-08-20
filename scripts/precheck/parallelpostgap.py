@@ -245,6 +245,7 @@ def check_job_success(jobname):
 				print(jobname + ': memory limit exceeded, will increase memory to re-run')
 		else: # something weird occurs, which should never happen
 			repeat = True
+			#success = float('NaN') #any(sumdf['success'].isnull())
 			print('something should never happen happened to ' + jobname + '! that line was "' + outtext[-23].rstrip() + '" when checking')
 	
 	os.remove(tempdir + 'jobstatus.txt')
@@ -278,11 +279,13 @@ def submit_a_cluster(cluster_dir, cluster, memory=str(2), kstart=str(1), kmax=st
 	"""
 	submit a job to run POSTGAP for a cluster
 	Note: type(memory/kstart/kmax) is 'str'
-	database_dir, tempdir, chrfile, fnstart, starttime take global variables
+	database_dir, tempdir, fnstart, filetype, starttime take global variables
 	"""
 	clustername = fnstart + '-' + cluster
 	clusterfile = cluster_dir + cluster
 	job_cluster = fnstart + '-' + cluster + '_' + starttime
+	
+	chrfile = fnstart + cluster_dir.split('-')[-1].replace('_clusters', '') + '.' + filetype
 
 	# res & op2 may exist when re-run jobs
 	if os.path.exists(tempdir + clustername + '_res.txt'): os.remove(tempdir + clustername + '_res.txt')
@@ -485,7 +488,6 @@ print('Note: split by clusters is ' + ('ON' if split_cluster else 'OFF'))
 start_a_GWAS_sum_stats(tempdir + filename, chrlist, split_cluster, submitgap, str(memory), str(kstart), str(kmax))
 
 #5. keep tracing until all the jobs completed successfully, and make a record of running/CPU time and max/average memory
-time.sleep(300)
 print('start checking whether all the jobs completed successfully ...')
 
 if split_cluster:
