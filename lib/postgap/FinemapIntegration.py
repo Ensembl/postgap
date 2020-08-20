@@ -286,7 +286,6 @@ def impute_z_scores(cluster, population):
 	assert len(ld_snps) == ld_matrix.shape[1]
 	return ld_snps, ld_matrix, z_scores, betas
 
-
 def finemap_gwas_cluster(cluster):
 	'''
 
@@ -354,19 +353,13 @@ def finemap_gwas_cluster(cluster):
 	return GWAS_Cluster_with_lambdas(cluster.gwas_snps, cluster.ld_snps, cluster.ld_matrix, cluster.z_scores, cluster.betas, cluster.mafs, cluster.annotations, configuration_posteriors, cluster.lambdas)
 
 
-def compute_joint_posterior(cluster, associations):
+def compute_joint_posterior(cluster, gene_tissue_snp_eQTL_hash):
 	"""
 			Compute collocation posterior of gene expression and GWAS phenotype at the specified cluster and tissue
 			Arg1: GWAS_Cluser
 			Arg4: [GeneSNP_Association]
 			Returntype: Hash of hashes: Gene => Tissue => (rsID|CLUSTER) => Float
 	"""
-	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(
-		cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
-	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(
-		cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
-	gene_tissue_snp_eQTL_hash = organise_eQTL_data(associations)
-
 	return dict((gene, compute_gene_joint_posterior(cluster, gene, gene_tissue_snp_eQTL_hash[gene], cluster.gwas_configuration_posteriors, cluster.mafs, cluster.annotations)) for gene in gene_tissue_snp_eQTL_hash)
 
 
@@ -528,19 +521,13 @@ def compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotati
 		isGWAS=False
 	)
 
-def organise_eQTL_data(associations):
-	"""
-			Organise unsorted eQTL data into easily read hash of hashes:
-			Arg1: [GeneSNP_Association] 
-			Returntype: Hash of hashes: Gene => Tissue => SNP => Float
-	"""
-	res = collections.defaultdict(lambda: collections.defaultdict(
-		lambda: collections.defaultdict(float)))
-	for association in associations:
-		for evidence in association.cisregulatory_evidence:
-			if evidence.source == 'GTEx':
-				res[association.gene][evidence.tissue][association.snp.rsID] = (
-					evidence.z_score, evidence.beta)
+	## Joint posterior
+	sum_posteriors, config_sample = eQTL_configuration_posteriors.joint_posterior(cluster.gwas_configuration_posteriors)
+
+	# Organise information into a hash 
+	res = dict((config, config_sample.posterior[config_sample.configurations[config]]) for config in config_sample.configurations)
+	res['_CLUSTER'] = sum_posteriors
+
 	return res
 
 

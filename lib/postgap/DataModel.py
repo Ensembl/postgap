@@ -125,4 +125,4 @@ Cisregulatory_Evidence = collections.namedtuple(
 )
 Regulatory_Evidence = collections.namedtuple('Regulatory_Evidence', ['snp','score','source','study','tissue','info'])
 GeneSNP_Association = collections.namedtuple('GeneSNP_Association', ['gene', 'snp', 'score', 'rank', 'intermediary_scores', 'cisregulatory_evidence', 'regulatory_evidence'])
-GeneCluster_Association = collections.namedtuple('GeneCluster_Association', ['gene', 'cluster', 'score', 'collocation_posterior', 'evidence','r2'])
+GeneCluster_Association = collections.namedtuple('GeneCluster_Association', ['gene', 'cluster', 'score', 'collocation_posterior', 'evidence', 'eQTL_hash', 'r2'])
