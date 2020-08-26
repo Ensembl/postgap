@@ -158,12 +158,10 @@ def submit_a_chromosome(chr, memory=str(2), kstart=str(1), kmax=str(5), split_cl
 	# res & op2 may exist when re-run jobs
 	if os.path.exists(tempdir + chrname + '_res.txt'): os.remove(tempdir + chrname + '_res.txt')
 	if os.path.exists(tempdir + chrname + '_op2.txt'): os.remove(tempdir + chrname + '_op2.txt')
-	if os.path.exists(tempdir + chrname + ('_spcl' if split_cluster else '') + '.profile'): os.remove(tempdir + chrname + ('_spcl' if split_cluster else '') + '.profile')
 	# it cannot overwrite .err & .out
 	if os.path.exists(tempdir + job_chr + '.err'): os.remove(tempdir + job_chr + '.err')
 	if os.path.exists(tempdir + job_chr + '.out'): os.remove(tempdir + job_chr + '.out')
 
-	profile_part = " -m cProfile -o " + tempdir + chrname + ("_spcl" if split_cluster else "") + ".profile"
 	eqtl_db_part = " --hdf5 /nfs/production/panda/ensembl/funcgen/eqtl/GTEx.V6.88_38.cis.eqtls.h5 --sqlite /nfs/production/panda/ensembl/funcgen/eqtl/GTEx.V6.88_38.cis.eqtls.h5.sqlite3"
 		
 	if split_cluster:
@@ -176,7 +174,7 @@ def submit_a_chromosome(chr, memory=str(2), kstart=str(1), kmax=str(5), split_cl
 	else:
 		outfile_part = " --output " + tempdir + chrname + "_res.txt --output2 " + tempdir + chrname + "_op2.txt"
 
-	POSTGAP_setting = "'python" + profile_part + " postgap/POSTGAP.py --database_dir " + database_dir + " --summary_stats " + tempdir + chrfile + eqtl_db_part + " --bayesian --kstart " + kstart + " --kmax " + kmax + outfile_part + " -g'"
+	POSTGAP_setting = "'python postgap/POSTGAP.py --database_dir " + database_dir + " --summary_stats " + tempdir + chrfile + eqtl_db_part + " --bayesian --kstart " + kstart + " --kmax " + kmax + outfile_part + " -g'"
 	
 	memory = str(memory)
 	os.system("gsub -m " + memory + " -n " + job_chr + " -d " + tempdir + " -q production-rh74 " + POSTGAP_setting + " -r")
@@ -245,7 +243,6 @@ def check_job_success(jobname):
 				print(jobname + ': memory limit exceeded, will increase memory to re-run')
 		else: # something weird occurs, which should never happen
 			repeat = True
-			#success = float('NaN') #any(sumdf['success'].isnull())
 			print('something should never happen happened to ' + jobname + '! that line was "' + outtext[-23].rstrip() + '" when checking')
 	
 	os.remove(tempdir + 'jobstatus.txt')
@@ -290,16 +287,14 @@ def submit_a_cluster(cluster_dir, cluster, memory=str(2), kstart=str(1), kmax=st
 	# res & op2 may exist when re-run jobs
 	if os.path.exists(tempdir + clustername + '_res.txt'): os.remove(tempdir + clustername + '_res.txt')
 	if os.path.exists(tempdir + clustername + '_op2.txt'): os.remove(tempdir + clustername + '_op2.txt')
-	if os.path.exists(tempdir + clustername + '.profile'): os.remove(tempdir + clustername + '.profile')
 	# it cannot overwrite .err & .out
 	if os.path.exists(tempdir + job_cluster + '.err'): os.remove(tempdir + job_cluster + '.err')
 	if os.path.exists(tempdir + job_cluster + '.out'): os.remove(tempdir + job_cluster + '.out')
 
-	profile_part = " -m cProfile -o " + tempdir + clustername + ".profile"
 	eqtl_db_part = " --hdf5 /nfs/production/panda/ensembl/funcgen/eqtl/GTEx.V6.88_38.cis.eqtls.h5 --sqlite /nfs/production/panda/ensembl/funcgen/eqtl/GTEx.V6.88_38.cis.eqtls.h5.sqlite3"
 	outfile_part = " --output " + tempdir + clustername + "_res.txt --output2 " + tempdir + clustername + "_op2.txt"
 
-	POSTGAP_setting = "'python" + profile_part + " postgap/POSTGAP.py --database_dir " + database_dir + " --cluster_file " + clusterfile + " --summary_stats " + tempdir + chrfile + eqtl_db_part + " --bayesian --kstart " + kstart + " --kmax " + kmax + outfile_part + " -g'"
+	POSTGAP_setting = "'python postgap/POSTGAP.py --database_dir " + database_dir + " --cluster_file " + clusterfile + " --summary_stats " + tempdir + chrfile + eqtl_db_part + " --bayesian --kstart " + kstart + " --kmax " + kmax + outfile_part + " -g'"
 	
 	memory = str(memory)
 	os.system("gsub -m " + memory + " -n " + job_cluster + " -d " + tempdir + " -q production-rh74 " + POSTGAP_setting + " -r")
@@ -497,7 +492,6 @@ if split_cluster:
 	sum_cluster = trace_clusters_status(allclusters, memory, checkgap, rerunlimts)
 
 	sumdf = pd.concat([sum_chr, sum_cluster], ignore_index=True)
-	# TODO: change colnames - 'chr' -> 'chr/cluster'
 	sumdf.to_csv(filedir + fnstart + '_spcl_jobsum_' + starttime + '.txt', header=True, index=False, sep='\t', na_rep='N/A')
 else:
 	sum_chr = trace_chromosomes_status(chrlist, split_cluster, memory, checkgap, rerunlimts)
