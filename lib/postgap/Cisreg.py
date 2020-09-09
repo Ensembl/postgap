@@ -100,7 +100,6 @@ class GTEx(Cisreg_source):
 
 		return res
 
-
 	def _snp_rest(self, snp):
 		"""
 
@@ -110,82 +109,20 @@ class GTEx(Cisreg_source):
 			Returntype: [ Cisregulatory_Evidence ]
 
 		"""
-		cisreg_with_pvalues = self._snp_pvalues(snp)
-		
-		if cisreg_with_pvalues is None:
+		full_cisreg=self._snp_values(snp)
+		if full_cisreg is None:
+			logging.warning("Got exception in _snp_rest")
+			logging.warning("The exception is full_cisreg is None")
 			return []
 
-
-		if not postgap.Globals.PERFORM_BAYESIAN:
-			return cisreg_with_pvalues
-
-
-		if len(cisreg_with_pvalues) == 0:
-			# Empty list
-			return cisreg_with_pvalues
-		
-		cisreg_betas = self._snp_betas(snp)
-		
-		# Where there are pvalues, there must be betas
-		if cisreg_betas is None:
+		if len(full_cisreg) == 0:
 			logging.warning("Got exception in _snp_rest")
-			logging.warning("The exception is cisreg_betas is None")
-			logging.warning("Returning 'None' and pretending this didn't happen.")
-			return None
-			#raise Exception
-		
-		if len(cisreg_betas) == 0:
-			logging.warning("Got exception in _snp_rest")
-			logging.warning("The exception is the length of cisreg_betas is 0")
-			logging.warning("Returning 'None' and pretending this didn't happen.")
-			return None
-			#raise Exception
-		
-		# Match them up:
-		
-		combined_cisreg_evidence_list = []
-		
-		for cisreg_with_pvalue in cisreg_with_pvalues:
-			try:
-				matching_cisreg_betas = filter(lambda X: X.gene.id == cisreg_with_pvalue.gene.id and X.tissue == cisreg_with_pvalue.tissue, cisreg_betas)
+			logging.warning("The exception is the length of full_cisreg is 0")
+			return[]
 
-			except Exception as e:
-				logging.warning("Got exception matching_cisreg_betas in _snp_rest")
-				logging.warning("The exception is %s" % (e))
-				continue
-			
-			if len(matching_cisreg_betas) != 1:
-				logging.warning("Got exception in _snp_rest")
-				logging.warning("The exception is matching_cisreg_betas != 1; (matching_cisreg_betas = %i)" % len(matching_cisreg_betas))
-				continue
-				#raise Exception
-			
-			cisreg_with_beta = matching_cisreg_betas[0]
+		return full_cisreg
 
-			if postgap.Globals.PERFORM_BAYESIAN:
-				z_score = postgap.FinemapIntegration.z_score_from_pvalue(cisreg_with_pvalue.pvalue,cisreg_with_beta.beta),
-			else:
-				z_score = None
-
-			assert cisreg_with_beta.beta is not None
-
-			combined_cisreg_evidence = Cisregulatory_Evidence(
-				snp    = cisreg_with_pvalue.snp,
-				gene   = cisreg_with_pvalue.gene,
-				tissue = cisreg_with_pvalue.tissue,
-				score  = 1 - cisreg_with_pvalue.pvalue,
-				source = cisreg_with_pvalue.source,
-				study  = 'GTEx',
-				info   = None,
-				z_score = z_score, 
-				pvalue = cisreg_with_pvalue.pvalue,
-				beta   = cisreg_with_beta.beta
-			)
-			combined_cisreg_evidence_list.append(combined_cisreg_evidence)
-		
-		return combined_cisreg_evidence_list
-
-	def _snp_betas(self, snp):
+	def _snp_values(self, snp):
 		"""
 
 			Returns all genes associated to a snp in GTEx
@@ -195,89 +132,55 @@ class GTEx(Cisreg_source):
 
 		"""
 		try:
-			server = "http://rest.ensembl.org"
-			ext = "/eqtl/variant_name/%s/%s?content-type=application/json;statistic=beta" % ('homo_sapiens', snp.rsID);
+			# eQTL catalog API
+			start = 0
+			study = "GTEx_V8"
+			server = "http://www.ebi.ac.uk"
+			ext = "/eqtl/api/associations/?study=%s&variant_id=%s&size=%s&start=%s&paginate=False" % \
+				  (study, snp.rsID, postgap.Globals.EQTL_QUERY_SIZE, start)
+			
 
-			eQTLs = postgap.REST.get(server, ext)
-		
+			eQTLs=[]
+			while True:
+				gwc_eqtls = postgap.REST.get(server, ext)
+				associations = gwc_eqtls['_embedded']['associations']
+				for i in associations:
+					single_record = associations[i]
+					p_value = float(single_record['pvalue'])
+					beta_value = float(single_record['beta'])
+					eQTL={}
+					eQTL['gene'] = single_record['gene_id']
+					eQTL['beta'] = beta_value
+					eQTL['tissue'] = single_record['qtl_group']
+					eQTL['pvalue'] = p_value
+					eQTL['z_score'] = postgap.FinemapIntegration.z_score_from_pvalue(p_value,beta_value)
+					eQTLs.append(eQTL)
 
-			'''
-				Example return object:
-				[
-					{
-						minus_log10_p_value: 1.47569690641653,
-						value: 0.0334428355738418,
-						gene: "ENSG00000162627"
-					},
-				]
-			'''
+				link = gwc_eqtls['_links']
+				if 'next' not in link.keys():
+					break
+				else:
+					start = start + int(postgap.Globals.EQTL_QUERY_SIZE)
+					ext = "/eqtl/api/associations/?study=%s&variant_id=%s&size=%s&start=%s&paginate=False" % (study, snp.rsID, postgap.Globals.EQTL_QUERY_SIZE, start)
 
 			return [
 				Cisregulatory_Evidence(
-					snp = snp,
-					gene = postgap.Ensembl_lookup.get_ensembl_gene(eQTL['gene']),
-					tissue = eQTL['tissue'],
-					score = 1,
-					source = self.display_name,
-					study = None,
-					info = None,
-					z_score = None,
-					pvalue = None,
-					beta = float(eQTL['value'])
+					snp=snp,
+					gene=postgap.Ensembl_lookup.get_ensembl_gene(eQTL['gene']),
+					tissue=eQTL['tissue'],
+					score=1 - float(eQTL['pvalue']),
+					source=self.display_name,
+					study='GTEx',
+					info=None,
+					z_score=eQTL['z_score'],
+					pvalue=float(eQTL['pvalue']),
+					beta=float(eQTL['beta'])
 				)
 				for eQTL in eQTLs
 			]
 
 		except Exception as e:
-			logging.warning("Got exception when quering _snp_betas")
-			logging.warning("The exception is %s" % (e))
-			logging.warning("Returning 'None' and pretending this didn't happen.")
-			return None
-
-	def _snp_pvalues(self, snp):
-		"""
-
-			Returns all genes associated to a snp in GTEx
-			Args:
-			* SNP
-			Returntype: [ Cisregulatory_Evidence ]
-
-		"""
-		try:
-			server = "http://rest.ensembl.org"
-			ext = "/eqtl/variant_name/%s/%s?content-type=application/json;statistic=p-value" % (
-				'homo_sapiens', snp.rsID);
-
-			eQTLs = postgap.REST.get(server, ext)
-
-			'''
-			    Example return object:
-			    [
-				{
-				    minus_log10_p_value: 1.47569690641653,
-				    value: 0.0334428355738418,
-				    gene: "ENSG00000162627"
-				},
-			    ]
-			'''
-			return [
-				Cisregulatory_Evidence(
-					snp = snp,
-					gene = postgap.Ensembl_lookup.get_ensembl_gene(eQTL['gene']),
-					tissue = eQTL['tissue'],
-					score = 1 - float(eQTL['value']),
-					source = self.display_name,
-					study = None,
-					info = None,
-					pvalue = float(eQTL['value']),
-					beta = None,
-					z_score = None
-				)
-				for eQTL in eQTLs
-			]
-
-		except Exception, e:
-			logging.warning("Got exception when quering _snp_pvalues")
+			logging.warning("Got exception when quering _snp_values")
 			logging.warning("The exception is %s" % (e))
 			logging.warning("Returning 'None' and pretending this didn't happen.")
 			return None

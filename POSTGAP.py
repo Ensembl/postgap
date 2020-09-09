@@ -317,6 +317,7 @@ def get_options():
     parser.add_argument('--hdf5',help='Location of eQTL HDF5 file')
     parser.add_argument('--sqlite',help='Location of eQTL sqlite file')
     parser.add_argument('--output2', help='gene-cluster association output file')
+    parser.add_argument('--eqtl_response_size', help='Number of items returned in one call to EQTL, default is 200, max is 1000')
     if len(sys.argv) == 1:
 	    print commandline_description
 	    sys.exit(0)
@@ -338,7 +339,10 @@ def get_options():
     
     if options.diseases is not None:
         postgap.Globals.work_directory = options.work_dir + "/" + "_".join(options.diseases)
-    
+   
+    if options.eqtl_response_size is not None:
+        postgap.Globals.EQTL_QUERY_SIZE = options.eqtl_response_size
+ 
     postgap.Globals.finemap_gwas_clusters_directory = postgap.Globals.work_directory + "/gwas_clusters"
     postgap.Globals.finemap_eqtl_clusters_directory = postgap.Globals.work_directory + "/eqtl_clusters"
 
