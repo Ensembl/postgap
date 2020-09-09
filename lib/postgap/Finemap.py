@@ -482,7 +482,7 @@ def finemap_v1(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambd
 											  g=g)
 
 			# Add new entries into the results object
-			results = merge_samples([results, results_nh], labels, sample_label)
+			results = merge_samples(results, results_nh, labels, sample_label)
 
 			# Choose seed for next round among new configs
 			prob = results_nh.normalise_posteriors().posterior
@@ -879,7 +879,6 @@ def calc_logBF(z, cov, v, n):
 		numpy.matrix(numpy.linalg.pinv(((n * v).I + cov), 0.0001)) * z.T
 	return numpy.array(numpy.log(coeff) + exponent)[0][0]
 
-
 def calc_robust_logBF(z, cor, cov, v, n, eigen_thresh):
 	'''
 			Compute Bayes Factors with assumption of independent variances, takes care of issues with negative definit correlation matrices
@@ -918,7 +917,6 @@ def calc_robust_logBF(z, cor, cov, v, n, eigen_thresh):
 
 	return log_BF
 
-
 def calc_loggBF(z, cov, n, g="BRIC"):
 	'''
 			Compute Bayes Factors with gprior method
@@ -943,7 +941,6 @@ def calc_loggBF(z, cov, n, g="BRIC"):
 	coeff = (1 + gp)**(-m / 2)
 	exponent = 0.5 * numpy.divide(gp, (gp + 1)) * z * pinv * z.T
 	return numpy.array((math.log(coeff) + exponent))[0][0]
-
 
 def calc_logbinom(subset_size, k, m):
 	'''
@@ -976,38 +973,24 @@ def calc_logbinom(subset_size, k, m):
 		return(out)
 
 
-def merge_samples(samples, labels, sample_label):
+def merge_samples(results, results_nh, labels, sample_label):
 	'''
-			Return merged OneDConfigurationSample
-			Arg1: [ OneDConfigurationSample ]
-			Returntype: OneDConfigurationSample
+		Return merged OneDConfigurationSample
+		Arg1: [ OneDConfigurationSample ]
+		Arg2: [ OneDConfigurationSample ]
+		Returntype: OneDConfigurationSample
 	'''
-	configurations_old = dict(
-		(configuration, (sample, sample.configurations[configuration])) for sample in samples for configuration in sample.configurations)
-	configurations = dict((configuration, index) for index,
-						  configuration in enumerate(configurations_old.keys()))
-
-	posterior = numpy.zeros(len(configurations))
-	configuration_size = numpy.zeros(len(configurations))
-	log_BF = numpy.zeros(len(configurations))
-	log_prior = numpy.zeros(len(configurations))
-
-	for configuration in configurations:
-		sample, old_index = configurations_old[configuration]
-		new_index = configurations[configuration]
-		posterior[new_index] = sample.posterior[old_index]
-		configuration_size[new_index] = sample.configuration_size[old_index]
-		log_BF[new_index] = sample.log_BF[old_index]
-		log_prior[new_index] = sample.log_prior[old_index]
-
+	new_cfs = set(key for key in results_nh.configurations if key not in results.configurations)
+	results.configurations.update(dict((cf, len(results.configurations) + i) for i,cf in enumerate(new_cfs)))
+	to_add = [results_nh.configurations[cf] for cf in new_cfs]
 	return OneDConfigurationSample(
-		configurations=configurations,
-		posterior=posterior,
-		log_BF=log_BF,
-		configuration_size=configuration_size,
-		log_prior=log_prior,
-		labels=samples[0].labels,
-		sample_label=samples[0].sample_label
+		configurations = results.configurations,
+		posterior = numpy.append(results.posterior, results_nh.posterior[to_add]),
+		log_BF = numpy.append(results.log_BF, results_nh.log_BF[to_add]),
+		configuration_size = numpy.append(results.configuration_size, results_nh.configuration_size[to_add]),
+		log_prior = numpy.append(results.log_prior, results_nh.log_prior[to_add]),
+		labels = labels,
+		sample_label = sample_label
 	)
 
 
