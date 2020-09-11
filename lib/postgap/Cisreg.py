@@ -111,13 +111,11 @@ class GTEx(Cisreg_source):
 		"""
 		full_cisreg=self._snp_values(snp)
 		if full_cisreg is None:
-			logging.warning("Got exception in _snp_rest")
-			logging.warning("The exception is full_cisreg is None")
+			logging.warning("Got exception in _snp_rest: full_cisreg is None")
 			return []
 
 		if len(full_cisreg) == 0:
-			logging.warning("Got exception in _snp_rest")
-			logging.warning("The exception is the length of full_cisreg is 0")
+			logging.warning("Got exception in _snp_rest: length of full_cisreg is 0")
 			return[]
 
 		return full_cisreg
@@ -137,8 +135,7 @@ class GTEx(Cisreg_source):
 			study = "GTEx_V8"
 			server = "http://www.ebi.ac.uk"
 			ext = "/eqtl/api/associations/?study=%s&variant_id=%s&size=%s&start=%s&paginate=False" % \
-				  (study, snp.rsID, postgap.Globals.EQTL_QUERY_SIZE, start)
-			
+				  (study, snp.rsID, str(postgap.Globals.EQTL_QUERY_SIZE), start)
 
 			eQTLs=[]
 			while True:
@@ -148,20 +145,20 @@ class GTEx(Cisreg_source):
 					single_record = associations[i]
 					p_value = float(single_record['pvalue'])
 					beta_value = float(single_record['beta'])
-					eQTL={}
-					eQTL['gene'] = single_record['gene_id']
-					eQTL['beta'] = beta_value
-					eQTL['tissue'] = single_record['qtl_group']
-					eQTL['pvalue'] = p_value
-					eQTL['z_score'] = postgap.FinemapIntegration.z_score_from_pvalue(p_value,beta_value)
-					eQTLs.append(eQTL)
+					eQTLs.append({
+						"gene": single_record['gene_id'],
+						"beta": beta_value,
+						"tissue": single_record['qtl_group'],
+						"pvalue": p_value,
+						"z_score": postgap.FinemapIntegration.z_score_from_pvalue(p_value, beta_value)
+					})
 
 				link = gwc_eqtls['_links']
 				if 'next' not in link.keys():
 					break
 				else:
-					start = start + int(postgap.Globals.EQTL_QUERY_SIZE)
-					ext = "/eqtl/api/associations/?study=%s&variant_id=%s&size=%s&start=%s&paginate=False" % (study, snp.rsID, postgap.Globals.EQTL_QUERY_SIZE, start)
+					start = start + postgap.Globals.EQTL_QUERY_SIZE
+					ext = "/eqtl/api/associations/?study=%s&variant_id=%s&size=%s&start=%s&paginate=False" % (study, snp.rsID, str(postgap.Globals.EQTL_QUERY_SIZE), start)
 
 			return [
 				Cisregulatory_Evidence(
@@ -180,9 +177,7 @@ class GTEx(Cisreg_source):
 			]
 
 		except Exception as e:
-			logging.warning("Got exception when quering _snp_values")
-			logging.warning("The exception is %s" % (e))
-			logging.warning("Returning 'None' and pretending this didn't happen.")
+			logging.warning("Got exception when quering _snp_values: %s" % (e))
 			return None
 
 	def _snp_hdf5(self, snp):
