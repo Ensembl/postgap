@@ -317,6 +317,8 @@ def get_options():
     parser.add_argument('--hdf5',help='Location of eQTL HDF5 file')
     parser.add_argument('--sqlite',help='Location of eQTL sqlite file')
     parser.add_argument('--output2', help='gene-cluster association output file')
+    parser.add_argument('--eqtl_response_size', type=range_limited_eqtl_size, default=200,
+						help='Number of items returned in one call to EQTL, (min = 20, max = 1000, default = 200')
     if len(sys.argv) == 1:
 	    print commandline_description
 	    sys.exit(0)
@@ -332,13 +334,14 @@ def get_options():
 
     postgap.Globals.GWAS_SUMMARY_STATS_FILE = options.summary_stats
     postgap.Globals.PERFORM_BAYESIAN = options.bayesian
+    postgap.Globals.EQTL_QUERY_SIZE = options.eqtl_response_size
     
     if options.efos is not None:
         postgap.Globals.work_directory = options.work_dir + "/" + "_".join(options.efos)
     
     if options.diseases is not None:
         postgap.Globals.work_directory = options.work_dir + "/" + "_".join(options.diseases)
-    
+   
     postgap.Globals.finemap_gwas_clusters_directory = postgap.Globals.work_directory + "/gwas_clusters"
     postgap.Globals.finemap_eqtl_clusters_directory = postgap.Globals.work_directory + "/eqtl_clusters"
 
@@ -389,6 +392,15 @@ def pretty_gene_output(associations):
                 str_associations +='\t'.join(line) + '\n'
 
     return str_associations
+
+def range_limited_eqtl_size(val):
+    try:
+        s = int(val)
+    except ValueError:
+        raise argparse.ArgumentTypeError("eqtl_response_size parameter must be an integer")
+    if s < 20 or s > 1000:
+        raise argparse.ArgumentTypeError("eqtl_response_size parameter must be >= 20 and <= 1000")
+    return s
 
 def pretty_snp_output(associations):
 	"""
