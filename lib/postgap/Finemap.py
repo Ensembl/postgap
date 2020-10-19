@@ -15,6 +15,8 @@ import postgap.Globals
 import cPickle as pickle
 
 from postgap.DataModel import *
+import scipy.special
+import logging
 
 OneDConfigurationSample_prototype = collections.namedtuple(
 	'OneDConfigurationSample',
@@ -455,6 +457,9 @@ def finemap_v1(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambd
 
 	# shotgun stochastic search
 	if kstart < kmax:
+		# Count the amount of all the possible configurations
+		n_all_pos_config = sum(scipy.special.comb(len(z_scores), r, exact=True) for r in range(kstart, kmax+1))
+		
 		p = results.normalise_posteriors().posterior
 		current_config = configurations[numpy.random.choice(len(p), size=1, p=p)[
 			0]]
@@ -483,6 +488,11 @@ def finemap_v1(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambd
 
 			# Add new entries into the results object
 			results = merge_samples(results, results_nh, labels, sample_label)
+
+			# if all the possible configurations have been searched, stop iterations
+			if len(results.configurations) == n_all_pos_config:
+				logging.info('the amount of possible configurations is ' + str(n_all_pos_config) + '. All have been searched within ' + str(count) + ' iterations')
+				break
 
 			# Choose seed for next round among new configs
 			prob = results_nh.normalise_posteriors().posterior
@@ -790,6 +800,7 @@ def compare_neighborhood(configs, z_scores,  cor_scores, cov_matrix, kmax, n, sc
 			Arg g: string, g-parameter of the g-prior, recommended g="BRIC" g=max(n,#SNPs**2), other options g="BIC" where g=n (Bayes Information Criterion), or  g="RIC" where g=#SNPs**2 (Risk Inflation Criterion) see Mixtures of g Priors for Bayesian Variable Selection Liang et al 2008
 	'''
 	nh_size = len(configs)
+<<<<<<< HEAD
 	configuration_size = numpy.array(
 		[len(configuration) for configuration in configs])
 
@@ -803,6 +814,11 @@ def compare_neighborhood(configs, z_scores,  cor_scores, cov_matrix, kmax, n, sc
 			numpy.exp(calc_logbinom(configuration_size, kmax, len(z_scores))), axis=0))
 
 	log_BF = numpy.zeros(nh_size)
+=======
+	configuration_size = numpy.array([len(configuration) for configuration in configs])
+	log_prior = calc_logbinom(configuration_size, kmax, len(z_scores))
+	log_BF = numpy.zeros(len(configs))
+>>>>>>> further optimisations to make finemapping more efficient
 	i = 0
 
 	for configuration in configs:
@@ -814,12 +830,16 @@ def compare_neighborhood(configs, z_scores,  cor_scores, cov_matrix, kmax, n, sc
 		z_tuple = numpy.take(z_scores, configuration)
 		cor_tuple = numpy.take(cor_scores, configuration)
 		cov_tuple = cov_matrix[numpy.ix_(configuration, configuration)]
+<<<<<<< HEAD
 		# if numpy.max(numpy.tril(cov_tuple, k=-1)) > corr_thresh:
 		#	 i = i+1
 		#	 continue
 		# if numpy.min(numpy.tril(cov_tuple, k=-1)) < -corr_thresh:
 		#	 i = i+1
 		#	 continue
+=======
+
+>>>>>>> further optimisations to make finemapping more efficient
 		if numpy.max(numpy.absolute(numpy.tril(cov_tuple, k=-1))) > corr_thresh:
 			score_cache[tuple(configuration)] = 0
 			i = i+1
@@ -957,6 +977,7 @@ def calc_logbinom(subset_size, k, m):
 		return subset_size*numpy.log(p) + (m - subset_size)*numpy.log(1-p)
 	else:
 		p = float(1) / m
+<<<<<<< HEAD
 		# p_binom = p**subset_size * (1 - p)**(m - subset_size)
 		# p_k = numpy.zeros(k - 1)
 		logsum = 1*numpy.log(p) + (m - 1)*numpy.log(1-p)
@@ -972,6 +993,9 @@ def calc_logbinom(subset_size, k, m):
 			   (m - subset_size)*numpy.log(1-p)) - logsum
 		return(out)
 
+=======
+		return numpy.log((p**subset_size * (1 - p)**(m - subset_size)) / sum(p**i * (1 - p)**(m - i) for i in range(1, k)))
+>>>>>>> further optimisations to make finemapping more efficient
 
 def merge_samples(results, results_nh, labels, sample_label):
 	'''
