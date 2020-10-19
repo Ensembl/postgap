@@ -100,16 +100,13 @@ def get(server, ext, data=None):
 		* String (server name)
 		* String (extension string)
 		Return type: JSON object
-
 	"""
 	maximum_retries = 10
-
 	
 	for retries in range(maximum_retries):
-		
 		logging.debug("REST JSON Query: %s%s" % (server, ext))
 		start_time = time.time()
-
+		
 		try:
 			if data is None:
 				headers = { "Content-Type" : "application/json" }
@@ -117,7 +114,7 @@ def get(server, ext, data=None):
 			else:
 				headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
 				r = post_request_with_timeout(server.encode('ascii', 'xmlcharrefreplace')+ext.encode('ascii', 'xmlcharrefreplace'), headers = headers, data = json.dumps(data), timeout=200)
-                except requests.exceptions.ReadTimeout:
+		except requests.exceptions.ReadTimeout:
 			continue
 		except requests.exceptions.ConnectionError:
 			# A timeout can creep up as a connection error, so catching this as well.
@@ -129,14 +126,11 @@ def get(server, ext, data=None):
 			# stressed.
 			logging.warning("Got a requests.exceptions.ChunkedEncodingError when querying %s%s" % (server, ext) )
 			continue
-
-
+		
 		if not r.ok:
-			
 			logging.warning("Something went wrong code: %s" % (r.status_code))
 
 			http_response_code = None
-			
 			try:
 				http_response_code = httplib.responses[r.status_code]
 			except KeyError:
@@ -148,21 +142,20 @@ def get(server, ext, data=None):
 				#error_message = "Unknown status code %s" % (r.status_code)
 				#logging.critical(error_message)
 				#raise RuntimeError(error_message)
-			
+
 			logging.warning("Failed to get proper response to query %s%s" % (server, ext) )
 			logging.warning("With headers:" + repr(headers))
+
 			if data is not None:
 				logging.warning("With data:" + repr(data))
-			
+
 			response_as_string = None
-			
 			try:
 				response_as_string = json.dumps(r.json())
 			except ValueError:
 				response_as_string = "<Error when stringifying>" + repr(r) + "</Error when stringifying>"
-			
 			logging.warning("Error code: %s (%s) %s" % (http_response_code, r.status_code, response_as_string ) )
-
+			
 			#if retries == 5:
 			#	logging.critical("Giving up.")
 			#	r.raise_for_status()
@@ -180,24 +173,27 @@ def get(server, ext, data=None):
 
 			elif r.status_code == 500:
 				logging.warning("Got error 500 'Internal server error'. Will try again in %s seconds." % 60)
-				time.sleep(60) # Sleep while server restarts 
+				time.sleep(60) # Sleep while server restarts
 
-                        elif r.status_code == 503:
-                                logging.warning("Got error 503 'Service Unavailable'. Will try again in %s seconds." % 180)
-                                time.sleep(180) # Sleep while server restarts
+			elif r.status_code == 503:
+				logging.warning("Got error 503 'Service Unavailable'. Will try again in %s seconds." % 180)
+				time.sleep(180) # Sleep while server restarts
 
 			elif r.status_code == requests.codes.forbidden:
 				logging.warning("Got 'forbidden' error: Will try again in %s seconds." % 600)
 				time.sleep(600) # Sleep 10 minutes while server calms down
+
 			elif r.status_code == 104 \
 				or r.status_code == requests.codes.gateway_timeout \
 				or r.status_code == requests.codes.request_timeout:
-
+				
 				logging.warning("Got 'timeout error': Will try again in %s seconds." % 60)
 				time.sleep(60) # Sleep 1 minute while server cools down
+
 			elif r.status_code == 400:
 				# Check for errors that aren't actually errors
 				url = server + ext
+				
 				if "/eqtl/" in url:
 					logging.warning("Error is expected behaviour by the eqtl server and will be passed on.")
 					raise EQTL400error(r)
@@ -205,26 +201,30 @@ def get(server, ext, data=None):
 				if "/lookup/symbol" in url or '/lookup/id' in url:
 					logging.warning("Error is expected behaviour by the Ensembl gene lookup and will be passed on.")
 					raise GENE400error(r)
-				
+
 				if "/variation/" in url:
-					
 					response = r.json()
-					
+
 					# Happens like this:
 					#
 					# Failed to get proper response to query http://grch37.rest.ensembl.org/variation/homo_sapiens/rs24449894?content-type=application/json
 					# With headers:{'Content-Type': 'application/json'}
 					# Error code: Bad Request (400) {"error": "rs24449894 not found for homo_sapiens"}
-					#
+
 					if " not found for" in response["error"]:
 						logging.warning("Error is expected behaviour by the variation endpoint and will be passed on.")
 						raise Variation400error(r)
 
 				if "/vep/" in url:
-					response = r.json()
-					if "No variant found with ID" in response["error"] or "No mappings found for variant" in response["error"]:
-						logging.warning("Error is expected behaviour by the vep endpoint and will be passed on.")
-						raise Variation400error(r)
+					try:
+						response = r.json()
+
+						if "No variant found with ID" in response["error"] or "No mappings found for variant" in response["error"]:
+							logging.warning("Error is expected behaviour by the vep endpoint and will be passed on.")
+							raise Variation400error(r)
+					except ValueError:
+						#requests.exceptions.HTTPError: 400 Client Error: Bad Request for url: http://grch37.rest.ensembl.org/vep/Human/id
+						pass
 
 				# requests.exceptions.HTTPError: 400 Client Error: Bad Request for url: http://grch37.rest.ensembl.org/overlap/region/Human/5:117435127-119583975?feature=gene;content-type=application/json
 				if retries < 5:
@@ -243,7 +243,7 @@ def get(server, ext, data=None):
 		try:
 			return r.json()
 		except:
-			error_message = "Failed to get proper response to query %s%s" % (server, ext) 
+			error_message = "Failed to get proper response to query %s%s" % (server, ext)
 			logging.critical(error_message)
 			raise requests.HTTPError(error_message)
 
