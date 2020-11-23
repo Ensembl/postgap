@@ -328,7 +328,8 @@ def cluster_gwas_snps(gwas_snps, population):
 
 	# Merge precluster that share one or more GWAS_Cluster.ld_snps.
 	#
-	raw_clusters = merge_preclusters_ld(merge_preclusters_distance(filtered_preclusters))
+	processed_preclusters = remove_overlaps(merge_preclusters_ld(filtered_preclusters))
+	raw_clusters = remove_singleSNP_clusters(processed_preclusters)
 	for cluster in raw_clusters:
 		for gwas_snp in cluster.gwas_snps:
 			assert gwas_snp.snp.rsID in [ld_snp.rsID for ld_snp in cluster.ld_snps]
@@ -363,37 +364,6 @@ def get_gwas_snp_locations(gwas_snps):
 		if mapped_snp.rsID in original_gwas_snp
 	]
 
-
-def merge_preclusters_distance(preclusters):
-	"""
-
-			Bundle together preclusters that are within 100Kb
-			* [ Cluster ]
-			Returntype: [ Cluster ]
-
-	"""
-	input = list(preclusters)
-	output = []
-
-	for new_precluster in input:
-		merged = False
-		for cluster in output:
-			distance = distance_between_preclusters(cluster, new_precluster)
-			if distance is not None and distance < 1e5:
-				output.remove(cluster)
-				output.append(merge_clusters(cluster, new_precluster))
-				merged = True
-				break
-		if not merged:
-			output.append(new_precluster)
-
-	for cluster in output:
-		for gwas_snp in cluster.gwas_snps:
-			assert gwas_snp.snp.rsID in [
-				ld_snp.rsID for ld_snp in cluster.ld_snps]
-	return output
-
-
 def distance_between_preclusters(A, B):
 	min_distance = None
 	for SNPA in A.gwas_snps:
@@ -405,73 +375,99 @@ def distance_between_preclusters(A, B):
 
 def merge_preclusters_ld(preclusters):
 	"""
-
-			Bundle together preclusters that share one LD snp
-			* [ Cluster ]
-			Returntype: [ Cluster ]
-
+		Bundle together preclusters that satisfy the two criteria at the same time:
+		* 1. gwas_snp of clusterA is within ld_snps of clusterB (in LD)
+		* 2. (p-value of gwas_snp of clusterB * 10-3) <= p-value of gwas_snp of clusterA (<= p-value of gwas_snp of clusterB)
+		Args:
+		* [ Cluster ]
+		Returntype: [ Cluster ]
 	"""
-	clusters = list(preclusters)
-
-	for cluster in clusters:
-		chrom = cluster.gwas_snps[0].snp.chrom
-		start = min(gwas_snp.snp.pos for gwas_snp in cluster.gwas_snps)
-		end = max(gwas_snp.snp.pos for gwas_snp in cluster.gwas_snps)
-
-	# A dictionary that maps from snp to merged clusters
-	snp_owner = dict()
-	for cluster in preclusters:
-		for ld_snp in cluster.ld_snps:
-			# If this SNP has been seen in a different cluster
-			if ld_snp in snp_owner and snp_owner[ld_snp] is not cluster:
-				# Set other_cluster to that different cluster
-				other_cluster = snp_owner[ld_snp]
-
-				merged_cluster = merge_clusters(cluster, other_cluster)
-
-				#	Remove the two previous clusters and replace them with
-				#	the merged cluster
-				clusters.remove(cluster)
-				clusters.remove(other_cluster)
-				clusters.append(merged_cluster)
-
-				#	Set the new cluster as the owner of these SNPs.
-				for snp in merged_cluster.ld_snps:
-					snp_owner[snp] = merged_cluster
-				for snp in cluster.ld_snps:
-					snp_owner[snp] = merged_cluster
-
-				# Skip the rest of this cluster.
-				break
-			else:
-				snp_owner[ld_snp] = cluster
-
-	for cluster in clusters:
-		chrom = cluster.gwas_snps[0].snp.chrom
-		start = min(gwas_snp.snp.pos for gwas_snp in cluster.gwas_snps)
-		end = max(gwas_snp.snp.pos for gwas_snp in cluster.gwas_snps)
-
-	logging.info("\tFound %i clusters from the GWAS peaks" % (len(clusters)))
-
+	# sort preclusters by the order of p-value of GWAS SNPs, from lowest to highest
+	preclusters.sort(key=lambda cluster: cluster.gwas_snps[0].pvalue)
+	
+	# create a vaiable for the status of each precluster whether it has been grouped with any other
+	group_status = [False] * len(preclusters)
+	
+	merged_clusters = []
+	
+	# clusterA - take its gwas_snp for checking
+	for i,clusterA in enumerate(preclusters[ :-1]):
+		# generate temp_cluster
+		if group_status[i]:
+			where_is_A = [n for n,cluster in enumerate(merged_clusters) if clusterA.gwas_snps[0].snp.rsID in [gwas_snp.snp.rsID for gwas_snp in cluster.gwas_snps]]
+			assert len(where_is_A), 'clusterA should be in one place only in merged_clusters'
+			
+			temp_cluster = merged_clusters.pop(where_is_A[0])
+		else:
+			temp_cluster = None
+		
+		# get the index of what to be merged with clusterA
+		what_to_merge = []
+		
+		# clusterB - take its ld_snps and p-value of gwas_snp for comparison
+		for k,clusterB in enumerate(preclusters[i + 1: ]):
+			k = k + i + 1
+			
+			# two have the posibility to be merged only when they are from the same chromosome
+			if clusterB.ld_snps[0].chrom == clusterA.ld_snps[0].chrom:
+				# first, check p-value
+				if clusterB.gwas_snps[0].pvalue * 1e-3 <= clusterA.gwas_snps[0].pvalue:
+					# secondly, check ld_snps
+					if clusterA.gwas_snps[0].snp.rsID in [ld_snp.rsID for ld_snp in clusterB.ld_snps]:
+						# thirdly, check whether in temp_cluster
+						if temp_cluster is None:
+							what_to_merge += [k]
+						else:
+							if clusterB.gwas_snps[0].snp.rsID not in [gwas_snp.snp.rsID for gwas_snp in temp_cluster.gwas_snps]:
+								what_to_merge += [k]
+				# no more following clusters will meet the criterion, so break out of clusterB's for-loop
+				else:
+					break
+		
+		# if nothing to merge, put temp_cluster back
+		if len(what_to_merge) == 0:
+			if temp_cluster is not None:
+				merged_clusters.append(temp_cluster)
+		# if something to merge, do merge_clusters
+		else:
+			clusters_to_merge = []
+			
+			# for any has been merged with clusters other than clusterA, get that merged one and merge it with clusterA
+			if any(group_status[m] for m in what_to_merge):
+				for n in set(n for m in what_to_merge if group_status[m] for n,cluster in enumerate(merged_clusters) if preclusters[m].gwas_snps[0].snp.rsID in [gwas_snp.snp.rsID for gwas_snp in cluster.gwas_snps]):
+					clusters_to_merge.append(merged_clusters.pop(n))
+			
+			# for any has not been merged with others, get it to merge with clusterA
+			for m in what_to_merge:
+				if not group_status[m]:
+					clusters_to_merge.append(preclusters[m])
+			
+			temp_cluster = merge_clusters([clusterA if temp_cluster is None else temp_cluster] + clusters_to_merge)
+			merged_clusters.append(temp_cluster)
+			
+			# update the status of these clusters after merging
+			for m in [i] + what_to_merge:
+				group_status[m] = True
+	
+	# add those ungrouped clusters into merged_clusters
+	clusters = merged_clusters + [preclusters[n] for n,s in enumerate(group_status) if not s]
+	
 	return clusters
 
-
-def merge_clusters(cluster, other_cluster):
+def merge_clusters(cluster_list):
 	"""
-			Merges two clusters into a single one:
-			Arg1: Cluster
-			Arg2: Cluster
-			Returntype: Cluster
+		Merges a list of clusters into a single one:
+		Args:
+		* [ Cluster ], eg: [clusterA] + [clusterB]
+		Returntype: Cluster
 	"""
-	# Merge data from current cluster into previous cluster
-	merged_gwas_snps = other_cluster.gwas_snps + cluster.gwas_snps
-
-	#   Create a unique set of ld snps from the current cluster
-	#   and the other cluster.
-	merged_ld_snps = dict((ld_snp.rsID, ld_snp)
-						  for ld_snp in cluster.ld_snps + other_cluster.ld_snps).values()
-
-	#   Create a new Cluster
+	# Create a unique set of gwas_snps from elements in cluster_list
+	merged_gwas_snps = dict((gwas_snp.snp.rsID, gwas_snp) for cluster in cluster_list for gwas_snp in cluster.gwas_snps).values()
+	
+	# Create a unique set of ld_snps from elements in cluster_list
+	merged_ld_snps = dict((ld_snp.rsID, ld_snp) for cluster in cluster_list for ld_snp in cluster.ld_snps).values()
+	
+	# Create a new Cluster
 	return GWAS_Cluster(
 		gwas_snps=merged_gwas_snps,
 		ld_snps=merged_ld_snps,
@@ -482,6 +478,81 @@ def merge_clusters(cluster, other_cluster):
 		annotations=None,
 		gwas_configuration_posteriors=None
 	)
+
+def remove_overlaps(preclusters):
+	"""
+		Remove preclusters that are less significant p-value in the two clusters who:
+		* 1. share any SNPs
+		* 2. have full or partial overlaps
+		Args:
+		* [ Cluster ]
+		Returntype: [ Cluster ]
+	"""
+	# create a variable for the status of each cluster whether it would be kept
+	keep_status = [True] * len(preclusters)
+	
+	# there could be some complicated situations that two clusters have the same minimum p-value, and that would call for further operations
+	# so first create a variable to record those clusters
+	complist = []
+	
+	for i,clusterA in enumerate(preclusters):
+		for k,clusterB in enumerate(preclusters[i + 1: ]):
+			k = k + i + 1
+			
+			# if clusterB is on the same chromosome as clusterA, check for overlapping
+			if clusterB.ld_snps[0].chrom == clusterA.ld_snps[0].chrom:
+				# get a list of all the SNPs in clusterA and a list for clusterB
+				snplistA = [gwas_snp.snp.rsID for gwas_snp in clusterA.gwas_snps] + [ld_snp.rsID for ld_snp in clusterA.ld_snps]
+				snplistB = [gwas_snp.snp.rsID for gwas_snp in clusterB.gwas_snps] + [ld_snp.rsID for ld_snp in clusterB.ld_snps]
+				
+				# if they share any SNP (in LD with each other) or share any overlaps on the coordinates
+				if any(snp in snplistA for snp in snplistB) or not (max(ld_snp.pos for ld_snp in clusterB.ld_snps) < min(ld_snp.pos for ld_snp in clusterA.ld_snps)  or min(ld_snp.pos for ld_snp in clusterB.ld_snps) > max(ld_snp.pos for ld_snp in clusterA.ld_snps)):
+					# keep the cluster with more significant p-value
+					if min(gwas_snp.pvalue for gwas_snp in clusterA.gwas_snps) < min(gwas_snp.pvalue for gwas_snp in clusterB.gwas_snps):
+						keep_status[k] = False
+					elif min(gwas_snp.pvalue for gwas_snp in clusterA.gwas_snps) > min(gwas_snp.pvalue for gwas_snp in clusterB.gwas_snps):
+						keep_status[i] = False
+					else:
+						if keep_status[i] and keep_status[k]:
+							complist.append((i, k))
+	
+	# do something about those complicated clusters, if there are any
+	#	1. if they share a SNP and have the same minimum p-value, they should be merged.
+	#	2. if they do not share a SNP, but overlap, we leave them as they are.
+	merged_clusters = []
+
+	if len(complist) > 0 and any(keep_status[c] for t in complist for c in t):
+		for t in complist:
+			# if both clusters have NOT been rejected by any clusters
+			if keep_status[t[0]] and keep_status[t[1]]:
+				assert min(gwas_snp.pvalue for gwas_snp in clusterA.gwas_snps) == min(gwas_snp.pvalue for gwas_snp in clusterB.gwas_snps), 'this is a bug!'
+				
+				clusterA =  preclusters[t[0]]
+				clusterB =  preclusters[t[1]]
+				snplistA = [gwas_snp.snp.rsID for gwas_snp in clusterA.gwas_snps] + [ld_snp.rsID for ld_snp in clusterA.ld_snps]
+				snplistB = [gwas_snp.snp.rsID for gwas_snp in clusterB.gwas_snps] + [ld_snp.rsID for ld_snp in clusterB.ld_snps]
+				
+				# merge two clusters if they any share SNP(s) and have the same min(p-value)
+				if any(snp in snplistA for snp in snplistB):
+					merged_clusters.append(merge_clusters([clusterA, clusterB]))
+	
+					keep_status[t[0]] = False
+					keep_status[t[1]] = False
+	
+	# clear out removed clusters, and append merged clusters
+	clusters = [cluster for s, cluster in zip(keep_status, preclusters) if s] + merged_clusters
+	
+	return clusters
+
+def remove_singleSNP_clusters(preclusters):
+	"""
+		Remove preclusters that have only one single SNP in them
+		* [ Cluster ]
+		Returntype: [ Cluster ]
+	"""
+	clusters = [cluster for cluster in preclusters if len([ld_snp.rsID for ld_snp in cluster.ld_snps]) > 1]
+	
+	return clusters
 
 def cluster_to_genes(cluster, tissues, population):
 	"""
