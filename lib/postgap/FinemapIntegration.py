@@ -154,11 +154,10 @@ def extract_snp_annotations(cluster, associations):
 			#		annotation_hash[comb][evidence.snp.rsID] = SCORE
 			else:
 				annotation_hash[evidence.source][evidence.snp.rsID] = evidence.score
-	# Annotation naming automatically ===
+	# Annotation naming automatically 
 	postgap.Globals.source_lst = sorted(annotation_hash.keys())
-	# ====
+	# 
 	return numpy.array([[annotation_hash[annotation][snp.rsID] for snp in cluster.ld_snps] for annotation in postgap.Globals.source_lst])
-
 
 def compute_ld_matrix(cluster, population):
 	'''
