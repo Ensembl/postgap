@@ -325,11 +325,13 @@ def cluster_gwas_snps(gwas_snps, population):
 	# Remove preclusters having a SNP in a blacklisted region
 	#
 	filtered_preclusters = postgap.RegionFilter.region_filter(preclusters)
-
-	# Merge precluster that share one or more GWAS_Cluster.ld_snps.
-	#
+	for precluster in filtered_preclusters:
+		for gwas_snp in precluster.gwas_snps:
+			assert gwas_snp.snp.rsID in [ld_snp.rsID for ld_snp in precluster.ld_snps]
+	
+	# merge clusters using the new strategy and remove clusters having less than 10 ld_snps as they are less informative
 	processed_preclusters = remove_overlaps(merge_preclusters_ld(filtered_preclusters))
-	raw_clusters = remove_singleSNP_clusters(processed_preclusters)
+	raw_clusters = remove_tiny_clusters(processed_preclusters)
 	for cluster in raw_clusters:
 		for gwas_snp in cluster.gwas_snps:
 			assert gwas_snp.snp.rsID in [ld_snp.rsID for ld_snp in cluster.ld_snps]
