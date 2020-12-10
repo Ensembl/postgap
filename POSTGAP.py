@@ -497,9 +497,9 @@ def genecluster_association_table(association, population):
 		Arg1: GeneCluster_Association
 		Arg2: string, population name
 		Returntype: [[ string or float ]]
-
 	"""
 	results = []
+	
 	snp_set = frozenset(association.cluster.ld_snps)
 	if snp_set not in r2_sets:
 		for snp1 in association.cluster.ld_snps:
@@ -514,14 +514,14 @@ def genecluster_association_table(association, population):
 							r2_cache[SNPA][SNPB] = r_matrix.item(
 								(r_index[SNPA], r_index[SNPB]))**2
 					break
-
-	GRCh38_gene = postgap.Ensembl_lookup.get_ensembl_gene(
-		association.gene.id, postgap.Ensembl_lookup.GRCH38_ENSEMBL_REST_SERVER)
+	
+	GRCh38_gene = postgap.Ensembl_lookup.get_ensembl_gene(association.gene.id, postgap.Ensembl_lookup.GRCH38_ENSEMBL_REST_SERVER)
+	
 	if GRCh38_gene is None:
 		logging.info("%s not mapped onto GRCh38 - skipping" %
 					 association.gene.id)
 		return []
-
+	
 	if GRCh38_gene.chrom not in known_chroms:
 		logging.info(
 			"%s not on the principal GRCh38 assembly - skipping" % GRCh38_gene.chrom)
@@ -532,27 +532,27 @@ def genecluster_association_table(association, population):
 
 	for snp in GRCh38_snps:
 		GRCh38_snp_locations[snp.rsID] = snp
-
+	
 	cluster_id = hash(json.dumps(association.cluster.gwas_snps))
-
+	
 	for gwas_snp in association.cluster.gwas_snps:
 		for gwas_association in gwas_snp.evidence:
 			pmid = clean_pmid(gwas_association.publication)
 			if pmid is None:
 				logging.info("PMID missing - skipping variant")
 				continue
-
+			
 			for gene_snp_association in association.evidence:
 				if gene_snp_association.snp.rsID not in GRCh38_snp_locations:
 					logging.info("%s not on GRCh38 - skipping" %
 								 gene_snp_association.snp.rsID)
 					continue
-
+				
 				if gene_snp_association.snp.chrom not in known_chroms or GRCh38_snp_locations[gene_snp_association.snp.rsID].chrom not in known_chroms:
 					logging.info("%s not on main GRCh37 (%s) & GRCh38 assembly (%s) - skipping" % (gene_snp_association.snp.rsID,
 																								   gene_snp_association.snp.chrom, GRCh38_snp_locations[gene_snp_association.snp.rsID].chrom))
 					continue
-
+				
 				afr = 'N/A'
 				amr = 'N/A'
 				eas = 'N/A'
@@ -572,14 +572,16 @@ def genecluster_association_table(association, population):
 				for evidence in gene_snp_association.cisregulatory_evidence:
 					if evidence.source == "VEP":
 						vep_terms += evidence.info['consequence_terms']
+				
 				if len(vep_terms) > 0:
 					vep_terms = ",".join(list(set(vep_terms)))
 				else:
 					vep_terms = "N/A"
-
+				
 				for evidence in gene_snp_association.regulatory_evidence:
 					if evidence.source == "VEP_reg":
 						MAFs = evidence.info['MAFs']
+						
 						if MAFs is not None:
 							if 'afr' in MAFs:
 								afr = MAFs['afr']
@@ -609,27 +611,26 @@ def genecluster_association_table(association, population):
 								gnomad_fin = MAFs['gnomad_fin']
 							if 'gnomad_eas' in MAFs:
 								gnomad_eas = MAFs['gnomad_eas']
-
 							break
-
+				
 				if 'VEP_mean' in gene_snp_association.intermediary_scores:
 					vep_mean = gene_snp_association.intermediary_scores['VEP_mean']
 				else:
 					vep_mean = 0
-
+				
 				if 'VEP_sum' in gene_snp_association.intermediary_scores:
 					vep_sum = gene_snp_association.intermediary_scores['VEP_sum']
 				else:
 					vep_sum = 0
-
+				
+				# extract GTEx eQTL p-value from eQTL_hash
 				tissue_eQTL_scores = []
 				for tissue_name in postgap.Globals.ALL_TISSUES:
-					if tissue_name in gene_snp_association.intermediary_scores:
-						tissue_eQTL_scores.append(
-							gene_snp_association.intermediary_scores[tissue_name])
+					if tissue_name in association.eQTL_hash[association.gene]:
+						tissue_eQTL_scores.append(association.eQTL_hash[association.gene][tissue_name][gene_snp_association.snp.rsID][1])
 					else:
 						tissue_eQTL_scores.append(0)
-
+				
 				clpp = []
 				if postgap.Globals.PERFORM_BAYESIAN:
 					for tissue in postgap.Globals.ALL_TISSUES:
@@ -639,15 +640,13 @@ def genecluster_association_table(association, population):
 							clpp.append(0)
 						else:
 							clpp.append(0)
-
-				r2_distance = read_pairwise_ld(
-					gene_snp_association.snp, gwas_snp.snp)
-
+				
+				r2_distance = read_pairwise_ld(gene_snp_association.snp, gwas_snp.snp)
 				if r2_distance < 0.7:
 					logging.info("%s LD from GWAS SNP < 0.7 - skipping" %
 								 gene_snp_association.snp.rsID)
 					continue
-
+				
 				row = [
 					gene_snp_association.snp.rsID,
 					gene_snp_association.snp.chrom,
@@ -697,16 +696,15 @@ def genecluster_association_table(association, population):
 					vep_sum,
 					vep_mean
 				]
-
+				
 				row += tissue_eQTL_scores
-				row += [gene_snp_association.intermediary_scores[functional_source.display_name]
-						for functional_source in postgap.Cisreg.sources + postgap.Reg.sources]
-
+				row += [gene_snp_association.intermediary_scores[functional_source.display_name] for functional_source in postgap.Cisreg.sources + postgap.Reg.sources]
+				
 				if postgap.Globals.PERFORM_BAYESIAN:
 					row += clpp
-
+				
 				results.append(row)
-
+	
 	return results
 
 
