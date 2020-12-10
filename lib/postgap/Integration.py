@@ -743,8 +743,9 @@ def organise_eQTL_data(cisreg):
 	for snp in cisreg:
 		for gene in cisreg[snp]:
 			for evidence in cisreg[snp][gene]:
+				# save GTEx eQTL data - z-score, p-value and beta
 				if evidence.source == 'GTEx':
-					res[gene][evidence.tissue][snp.rsID] = (evidence.z_score, evidence.beta)
+					res[gene][evidence.tissue][snp.rsID] = (evidence.z_score, evidence.pvalue, evidence.beta)
 	return res
 
 def filter_eQTL_GTEx(cisreg):
