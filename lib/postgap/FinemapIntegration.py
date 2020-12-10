@@ -88,22 +88,38 @@ def prepare_cluster_for_finemap(cluster, associations, population, tissue_weight
 			cluster, population)
 
 	else:
-		ld_snps, ld_matrix, z_scores, betas = impute_z_scores(
-			cluster, population)
-
-	cluster_f = GWAS_Cluster(cluster.gwas_snps, ld_snps,
-							 ld_matrix, z_scores, betas, None, None, None)
-
-	# mafs = extract_snp_mafs(cluster_f, associations, populations)
-	mafs = extract_snp_mafs(cluster_f, associations, population.lower())
-	mafs = mafs.astype(float)
-	annotations = (extract_snp_annotations(
-		cluster_f, associations) > 0.).astype('float')
-	# annotations = extract_snp_annotations(cluster_f, associations)
-
-	assert len(ld_snps) == ld_matrix.shape[0]
-	assert len(ld_snps) == ld_matrix.shape[1]
-	return GWAS_Cluster(cluster.gwas_snps, ld_snps, ld_matrix, z_scores, betas, mafs, annotations, None)
+		ld_snps, ld_matrix, z_scores, betas = impute_z_scores(cluster, population)
+	
+	## Define experiment label (serves for debugging logs)
+	chrom = ld_snps[0].chrom
+	start = min(ld_snp.pos for ld_snp in ld_snps)
+	end = max(ld_snp.pos for ld_snp in ld_snps)
+	sample_label = 'GWAS_Cluster_%s:%i-%i' % (chrom, start, end)
+	
+	# if ld_snps has less than 10 element, it is less informative
+	assert len(ld_snps) >= 10, sample_label + ' has less than 10 ld_snps in the cluster'
+	
+	## Define sample size: mean of max for each SNP
+	sample_sizes = map(lambda gwas_snp: max(gwas_association.sample_size for gwas_association in gwas_snp.evidence), cluster.gwas_snps)
+	sample_size = sum(sample_sizes) / len(sample_sizes)
+	
+	ld_snp_ids = [ld_snp.rsID for ld_snp in ld_snps]
+	
+	## Compute posteriors
+	configuration_posteriors = postgap.Finemap.finemap(
+		z_scores     = numpy.array(z_scores),
+		beta_scores  = numpy.array(betas),
+		cov_matrix   = ld_matrix,
+		n            = sample_size,
+		labels       = ld_snp_ids,
+		sample_label = sample_label,
+		kstart       = postgap.Globals.KSTART,
+		kmax         = postgap.Globals.KMAX
+	)
+	
+	assert len(ld_snps) ==  ld_matrix.shape[0]
+	assert len(ld_snps) ==  ld_matrix.shape[1]
+	return GWAS_Cluster(cluster.gwas_snps, ld_snps, ld_matrix, z_scores, configuration_posteriors) 
 
 def extract_snp_mafs(cluster, associations, populations):
 	"""
@@ -309,7 +325,7 @@ def finemap_gwas_cluster(cluster):
 		gwas_association.sample_size for gwas_association in gwas_snp.evidence), cluster.gwas_snps)
 	sample_size = sum(sample_sizes) / len(sample_sizes)
 
-	# Extract GWAS_lambdas(F.A effect size) ===
+	# Extract GWAS_lambdas(F.A effect size) 
 	# with open('GWAS_lambdas_'+os.path.basename(postgap.Globals.GWAS_SUMMARY_STATS_FILE), 'a') as fw1:
 	#	 for idx, L in enumerate(cluster.lambdas):
 	#		 fw1.write(
@@ -318,7 +334,7 @@ def finemap_gwas_cluster(cluster):
 		for idx, L in enumerate(cluster.lambdas):
 			fw1.write(
 				'\t'.join(map(str, [sample_label, postgap.Globals.source_lst[idx], L]))+'\n')
-	# ======
+	# 
 	# Compute posterior
 	if postgap.Globals.TYPE == 'binom' or postgap.Globals.TYPE == 'ML':
 		configuration_posteriors = postgap.Finemap.finemap_v1(
@@ -488,7 +504,7 @@ def compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotati
 	end = max(ld_snp.pos for ld_snp in cluster.ld_snps)
 	sample_label = 'eQTL_Cluster_%s:%i-%i_%s' % (chrom, start, end, gene)
 
-	# Learn F.A parameters in eQTL ====
+	# Learn F.A parameters in eQTL 
 	cluster_label = 'Cluster_%s:%i-%i' % (chrom, start, end)
 	lambdas = postgap.Finemap.mk_eqtl_lambdas(cluster, numpy.array(z_scores))
 	# with open('eQTL_lambdas_'+postgap.Globals.GWAS_SUMMARY_STATS_FILE, 'a') as fw2:
