@@ -544,13 +544,13 @@ def remove_overlaps(preclusters):
 	
 	return clusters
 
-def remove_singleSNP_clusters(preclusters):
+def remove_tiny_clusters(preclusters):
 	"""
-		Remove preclusters that have only one single SNP in them
+		Remove preclusters that have less than 10 SNPs in them
 		* [ Cluster ]
 		Returntype: [ Cluster ]
 	"""
-	clusters = [cluster for cluster in preclusters if len([ld_snp.rsID for ld_snp in cluster.ld_snps]) > 1]
+	clusters = [cluster for cluster in preclusters if len([ld_snp.rsID for ld_snp in cluster.ld_snps]) >= 10]
 	
 	return clusters
 
