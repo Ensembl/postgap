@@ -297,7 +297,9 @@ def get_pairwise_ld(ld_snps, population):
 		#return dict((snp, 1) for snp in ld_snps)
 		#pp = pprint.PrettyPrinter(indent=4)
 		#pp.pprint(r2_array)
-		raise UnitLDMatrixerror("LD matrix is identity matrix!")
+		#raise UnitLDMatrixerror("LD matrix is identity matrix!")
+	        print('ld_SNPs:', ld_snps, 'population:', population, 'SNP_ids:', SNP_ids, 'r2_array', r2_array)
+        	assert False
 
 	### Clean up
 	os.remove(rsID_file_name)
