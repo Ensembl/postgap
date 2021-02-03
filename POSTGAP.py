@@ -626,7 +626,7 @@ def genecluster_association_table(association, population):
 				# extract GTEx eQTL p-value from eQTL_hash
 				tissue_eQTL_scores = []
 				for tissue_name in postgap.Globals.ALL_TISSUES:
-					if tissue_name in association.eQTL_hash[association.gene]:
+					if (tissue_name in association.eQTL_hash[association.gene].keys()) & (gene_snp_association.snp.rsID in association.eQTL_hash[association.gene][tissue_name].keys()):
 						tissue_eQTL_scores.append(association.eQTL_hash[association.gene][tissue_name][gene_snp_association.snp.rsID][1])
 					else:
 						tissue_eQTL_scores.append(0)
