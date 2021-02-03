@@ -491,7 +491,7 @@ def finemap_v1(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambd
 
 			# if all the possible configurations have been searched, stop iterations
 			if len(results.configurations) == n_all_pos_config:
-				logging.info('the amount of possible configurations is ' + str(n_all_pos_config) + '. All have been searched within ' + str(count) + ' iterations')
+				logging.info(str(n_all_pos_config) + 'possible configurations have been searched within ' + str(count) + ' iterations')
 				break
 
 			# Choose seed for next round among new configs
@@ -507,6 +507,10 @@ def finemap_v1(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambd
 
 			# Keep count of sampled configs
 			count += 1
+		
+		# it happens that not all the possible configurations have been searched, when reaching max_iter
+		if count == max_iter and len(results.configurations) < n_all_pos_config:
+			logging.info('not all configurations have been visited within ' + str(max_iter) + 'iterations')
 
 		res_out = merge_samples(result_list).normalise_posteriors()
 		# write GWAS lambdas 
