@@ -28,4 +28,3 @@ def get_info_from_stdout(cluster, starttime):
 
 sumdf = pd.concat([pd.DataFrame([get_info_from_stdout(cluster, starttime)]) for cluster_folder in glob.glob('CAD_UKBIOBANK-chr*_clusters') for cluster in os.listdir(cluster_folder)], ignore_index=True)
 sumdf.columns = ['cluster', 'run_time', 'cpu_time', 'max_mem', 'ave_mem']#, 'failed_fm', 'n_genes'
-sumdf.to_csv('CAD_UKBIOBANK_ks1_km2_spcl_jobsum_' + starttime + '.txt', header=True, index=False, sep='\t', na_rep='N/A')

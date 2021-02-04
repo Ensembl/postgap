@@ -30,7 +30,7 @@ snp_gene_pairs = df_res[['ld_snp_rsID', 'gene_id']].drop_duplicates()
 
 # refine output2: remove SNP - gene pairs that in output2 but not in results
 df_plot = df_op2.loc[[any((snp_gene_pairs['ld_snp_rsID'] == row['rsID']) & (snp_gene_pairs['gene_id'] == row['gene_id'])) for index, row in df_op2.iterrows()]]
-df_plot.to_csv('CAD_UKBIOBANK_df_plots_' + starttime + '.tsv', sep='\t', header=True, index=False)
+df_plot.to_csv('CAD_UKBIOBANK_df_plot_' + starttime + '.tsv', sep='\t', header=True, index=False)
 
 # run under the directory yalan/NNRtest/
 #gsub -m 50 -n df_plot -d . -q production-rh74 'python process_outputs.py --starttime 210130231014' -r

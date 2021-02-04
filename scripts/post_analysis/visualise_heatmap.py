@@ -34,9 +34,9 @@ def create_heatmap(cluster, cluster_data, gene_list):
 
 
 
-# load in df_plots and results files
+# load in results and df_plots files
 df_res = pd.read_csv('CAD_UKBIOBANK_results_ks1_km2_spcl_' + starttime + '.txt', delimiter='\t', header=0, low_memory=False)
-df_plot = pd.read_csv('CAD_UKBIOBANK_df_plots_' + starttime + '.tsv', delimiter='\t', header=0, low_memory=False)
+df_plot = pd.read_csv('CAD_UKBIOBANK_df_plot_' + starttime + '.tsv', delimiter='\t', header=0, low_memory=False)
 
 # get gene_id - gene_symbol pairs in results, and add to df_plot
 gene_symbol_pairs = df_res[['gene_id', 'gene_symbol']].drop_duplicates()
