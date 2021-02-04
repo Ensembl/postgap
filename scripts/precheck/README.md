@@ -1,8 +1,11 @@
 # Analysing your own GWAS summary statistics with parallelisation
 
 ## What are here
+
 **parallelpostgap_dependency.py** has all the dependencies that are needed to run our pipeline in parallel.
+
 **parallelpostgap_chrpart.py** is the script to separate the GWAS summary statistics into chromosome files and perform the analysis at the same time.
+
 **parallelpostgap_clusterpart.py** is the script to perform the analysis for clusters at the same time if split by clusters.
 
 ## Pre-checking
