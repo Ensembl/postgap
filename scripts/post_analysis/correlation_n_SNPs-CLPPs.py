@@ -2,8 +2,7 @@
 '''
 Spyder Editor
 
-This is a script file to generate heatmaps, to visualise genes associated with one cluster in tissues.
-a plot for each cluster. axes are genes and tissues, and the color represents cluster_CLPP.
+This is a script file to make a plot and fit a trend line, showing the size of clusters vs the maximum cluster CLPPs.
 '''
 
 
