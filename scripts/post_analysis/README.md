@@ -10,7 +10,7 @@ It will generate __heatmaps__ to visualise genes associated with one cluster in 
 It will generate gene-tissue specific __3-panel Manhattan plots__. Inputs are _results_ and _df_plot_.
 
 ## correlation_n_SNPs-CLPPs.py
-It will make a plot and fit a trend line, showing __the correlation between the size of clusters and the maximum cluster CLPPs__. Input is _output2_,
+It will make a plot and fit a trend line, showing __the correlation between the size of clusters and the maximum cluster CLPPs__. Input is _output2_.
 
 ## count_SNPs.py
 It will count __the number of GWAS SNPs and LD SNPs__ in clusters. Input is the pickle files of clusters created by our pipeline.
