@@ -12,14 +12,6 @@ It will generate gene-tissue specific __3-panel Manhattan plots__. Inputs are _r
 ## correlation_n_SNPs-CLPPs.py
 It will make a plot and fit a trend line, showing __the correlation between the size of clusters and the maximum cluster CLPPs__. Input is _output2_.
 
-## count_SNPs.py
-It will count __the number of GWAS SNPs and LD SNPs__ in clusters. Input is the pickle files of clusters created by our pipeline.
-
 ## visualise_histogram.py
 It will make __histograms__ to show the runtime, CPU time and maximum RAM usage of cluster jobs separately. Input is the _clusum_ file generated when all the cluster jobs are finished.
 
-## print_runtime.py
-It will quickly count the __runtime__ of finished cluster jobs or print the status of unfinished jobs. Inputs are the stdout files of cluster jobs.
-
-## summarise_clusterjobs_info.py
-It will collect the __runtime__, __CPU time__, __maximum memory__ and __average memory__ of cluster jobs from stdout file. Inputs are the stdout files of cluster jobs. Optional to know whether a cluster has performed finemapping successfully and how many genes associated with a cluster.
