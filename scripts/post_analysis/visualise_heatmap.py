@@ -9,14 +9,20 @@ This is a script file to generate heatmaps, to visualise genes associated with o
 
 
 
-import os
+import argparse
 import pandas as pd
 import seaborn as sns; sns.set()
 import matplotlib.pyplot as plt
 
-starttime = '201130093846'
+# get command line arguments
+parser = argparse.ArgumentParser(description='to read command line arguments')
+parser.add_argument('--starttime', type=str, default='210208123530', help='the time when the analysis was carried out')
 
-os.chdir('C:/Users/yalan/Documents/POSTGAP/forNovonordisk/test_' + starttime + '/')
+args = parser.parse_args()
+starttime = args.starttime
+
+# change to the folder where results and df_plots are saved
+tempdir = 'yalan/NNRtest/'
 
 def create_heatmap(cluster, cluster_data, gene_list):
 	cluster_heatmap = cluster_data.pivot(index='gene_id', columns='tissue', values='CLPP_cluster')
@@ -29,14 +35,14 @@ def create_heatmap(cluster, cluster_data, gene_list):
 	plt.ylabel('Genes', fontsize=15)
 	ax.set_yticklabels(ax.get_yticklabels(), rotation=30)
 	fig = ax.get_figure()
-	fig.savefig('heatmaps/' + cluster.replace(':', '_') + '_heatmap.png', dpi=200, transparent=False, bbox_inches='tight')
+	fig.savefig(tempdir + 'CAD_UKBIOBANK_heatmaps_' + starttime + '/' + cluster + '_heatmap.png', dpi=200, transparent=False, bbox_inches='tight')
 	plt.close()
 
 
 
 # load in results and df_plots files
-df_res = pd.read_csv('CAD_UKBIOBANK_results_ks1_km2_spcl_' + starttime + '.txt', delimiter='\t', header=0, low_memory=False)
-df_plot = pd.read_csv('CAD_UKBIOBANK_df_plot_' + starttime + '.tsv', delimiter='\t', header=0, low_memory=False)
+df_res = pd.read_csv(tempdir + 'CAD_UKBIOBANK_results_ks1_km2_spcl_' + starttime + '.txt', delimiter='\t', header=0, low_memory=False)
+df_plot = pd.read_csv(tempdir + 'CAD_UKBIOBANK_df_plot_' + starttime + '.tsv', delimiter='\t', header=0, low_memory=False)
 
 # get gene_id - gene_symbol pairs in results, and add to df_plot
 gene_symbol_pairs = df_res[['gene_id', 'gene_symbol']].drop_duplicates()

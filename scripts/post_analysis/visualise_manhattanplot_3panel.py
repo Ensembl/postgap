@@ -9,15 +9,21 @@ This is a script file to generate gene-tissue specific 3-panel Manhattan plots.
 
 
 
-import os
+import argparse
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-starttime = '201130093846'
-path_to_chr_files = 'C:/Users/yalan/Documents/POSTGAP/forNovonordisk/CAD_UKBIOBANK_chr/' #GWAS summary statistics of chromosomes
+# get command line arguments
+parser = argparse.ArgumentParser(description='to read command line arguments')
+parser.add_argument('--starttime', type=str, default='210208123530', help='the time when the analysis was carried out')
 
-os.chdir('C:/Users/yalan/Documents/POSTGAP/forNovonordisk/test_' + starttime + '/')
+args = parser.parse_args()
+starttime = args.starttime
+
+# change to the folder where results and df_plots are saved
+tempdir = 'yalan/NNRtest/'
+path_to_chr_files = tempdir + 'CAD_UKBIOBANK_' + starttime + '/' #GWAS summary statistics of chromosomes
 
 def create_manhattan(suminfo, data, gene_list):
 	gene = suminfo['gene_id']
@@ -36,14 +42,14 @@ def create_manhattan(suminfo, data, gene_list):
 	as3.set_ylabel('CLPP_SNP', fontsize=8)
 	plt.xlabel('chr ' + chr)
 	fig.set_size_inches(8, 8)
-	fig.savefig('ManhattanPlots/' + gene_list[gene] + '-' + tissue + '_MP.png', dpi=600, transparent=False, bbox_inches='tight')
+	fig.savefig(tempdir + 'CAD_UKBIOBANK_ManhattanPlots_' + starttime + '/' + gene_list[gene] + '-' + tissue + '_MP.png', dpi=600, transparent=False, bbox_inches='tight')
 	plt.close()
 
 
 
 # load in results and df_plots files
-df_res = pd.read_csv('CAD_UKBIOBANK_results_ks1_km2_spcl_' + starttime + '.txt', delimiter='\t', header=0, low_memory=False)
-df_plot = pd.read_csv('CAD_UKBIOBANK_df_plot_' + starttime + '.tsv', delimiter='\t', header=0, low_memory=False)
+df_res = pd.read_csv(tempdir + 'CAD_UKBIOBANK_results_ks1_km2_spcl_' + starttime + '.txt', delimiter='\t', header=0, low_memory=False)
+df_plot = pd.read_csv(tempdir + 'CAD_UKBIOBANK_df_plot_' + starttime + '.tsv', delimiter='\t', header=0, low_memory=False)
 
 # get gene_id - gene_symbol pairs in results, and add to df_plot
 gene_symbol_pairs = df_res[['gene_id', 'gene_symbol']].drop_duplicates()
