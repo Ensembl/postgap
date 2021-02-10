@@ -7,11 +7,12 @@ This is a script file to process the outputs of an analysis to create the datafr
 
 
 
+import argparse
 import pandas as pd
 
 # get command line arguments
 parser = argparse.ArgumentParser(description='to read command line arguments')
-parser.add_argument('--starttime', type=str, default='210130231014', help='the time when the analysis was carried out')
+parser.add_argument('--starttime', type=str, default='210208123530', help='the time when the analysis was carried out')
 
 args = parser.parse_args()
 starttime = args.starttime
