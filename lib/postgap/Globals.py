@@ -27,26 +27,28 @@ limitations under the License.
 	<http://www.ensembl.org/Help/Contact>.
 
 """
-from postgap.DataModel import Region
 
+from postgap.DataModel import Region
 TYPE = None
 OUTPUT = None
 DATABASES_DIR = None
 SPECIES = None
+kmax_gwas = 1.
+kmax_eqtl = 1.
 
 BLACKLISTED_REGIONS = [
-	Region(chrom = '6', start=28477797, end=33448354), # MHC
-	Region(chrom = '17', start=44165260, end=44784489) # Dan Wright's inversion
+    Region(chrom='6', start=28477797, end=33448354),  # MHC
+    Region(chrom='17', start=44165260, end=44784489)  # Dan Wright's inversion
 ]
 
 EVIDENCE_WEIGHTS = {
-	'Regulome': 1,
-	'VEP': 1,
-	'GTEx': 1,
-	'Fantom5': 1,
-	'DHS': 1,
-	'PCHiC': 1,
-	'Nearest': 1
+    'Regulome': 1,
+    'VEP': 1,
+    'GTEx': 1,
+    'Fantom5': 1,
+    'DHS': 1,
+    'PCHiC': 1,
+    'Nearest': 1
 }
 
 GWAS_adaptors = None
@@ -57,6 +59,7 @@ GTEx_path = None
 SQLite_connection = None
 work_directory = "notset"
 finemap_gwas_clusters_directory = None
+finemap_eqtl_clusters_directory = None
 
 GWAS_PVALUE_CUTOFF = 1e-4
 
@@ -64,6 +67,6 @@ GWAS_SUMMARY_STATS_FILE = None
 
 PERFORM_BAYESIAN = False
 
-ALL_TISSUES=[]
+ALL_TISSUES = []
 
-source_list=[]
+source_list = []

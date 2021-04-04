@@ -27,61 +27,65 @@ limitations under the License.
 	<http://www.ensembl.org/Help/Contact>.
 
 """
+
+
+
+
 import re
 import requests
 import json
 import sys
 import logging
 from pprint import pformat
-
 import postgap.REST
 import postgap.Globals
 from postgap.DataModel import *
 from postgap.Utils import *
 from postgap.GWAS_Lead_Snp_Orientation import *
-
 class GWAS_source(object):
-	def run(self, diseases, iris):
-		"""
+    def run(self, diseases, iris):
+        """
 
-			Returns all GWAS SNPs associated to a disease in this source
-			Args:
-			* [ string ] (trait descriptions)
-			* [ string ] (trait Ontology IRIs)
-			Returntype: [ GWAS_Association ]
+                Returns all GWAS SNPs associated to a disease in this source
+                Args:
+                * [ string ] (trait descriptions)
+                * [ string ] (trait Ontology IRIs)
+                Returntype: [ GWAS_Association ]
 
-		"""
-		assert False, "This stub should be defined"
+        """
+        assert False, "This stub should be defined"
+
 
 class GWASCatalog(GWAS_source):
-	display_name = 'GWAS Catalog'
+    display_name = 'GWAS Catalog'
 
-	def run(self, diseases, iris):
-		"""
-			Returns all GWAS SNPs associated to a disease in GWAS Catalog
-			Args:
-			* [ string ] (trait descriptions)
-			* [ string ] (trait Ontology IRIs)
-			Returntype: [ GWAS_Association ]
-		"""
+    def run(self, diseases, iris):
+        """
+                Returns all GWAS SNPs associated to a disease in GWAS Catalog
+                Args:
+                * [ string ] (trait descriptions)
+                * [ string ] (trait Ontology IRIs)
+                Returntype: [ GWAS_Association ]
+        """
 
-		if iris is not None and len(iris) > 0:
-			res = concatenate(self.query(query) for query in iris)
-		else:
-			res = concatenate(self.query(query) for query in diseases)
+        if iris is not None and len(iris) > 0:
+            res = concatenate(self.query(query) for query in iris)
+        else:
+            res = concatenate(self.query(query) for query in diseases)
 
-		logging.debug("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GWAS Catalog" % (len(res), ", ".join(diseases), ", ".join(iris)))
+        logging.debug("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GWAS Catalog" % (
+            len(res), ", ".join(diseases), ", ".join(iris)))
 
-		return res
+        return res
 
-	def query(self, efo):
-		logging.info("Querying GWAS catalog for " + efo);
-		server = 'http://www.ebi.ac.uk'
-		url = '/gwas/rest/api/efoTraits/search/findByEfoUri?uri=%s' % (efo)
+    def query(self, efo):
+        logging.info("Querying GWAS catalog for " + efo)
+        server = 'http://www.ebi.ac.uk'
+        url = '/gwas/rest/api/efoTraits/search/findByEfoUri?uri=%s' % (efo)
 
-		hash = postgap.REST.get(server, url)
+        hash = postgap.REST.get(server, url)
 
-		'''
+        '''
 			hash looks like this:
 			
 			{
@@ -121,28 +125,29 @@ class GWASCatalog(GWAS_source):
 			}
 		'''
 
-		list_of_GWAS_Associations = []
+        list_of_GWAS_Associations = []
 
-		efoTraits = hash["_embedded"]["efoTraits"]
-		
-		for efoTraitHash in efoTraits:
-			efoTraitLinks = efoTraitHash["_links"]
-			efoTraitName  = efoTraitHash["trait"]
+        efoTraits = hash["_embedded"]["efoTraits"]
 
-			logging.info("Querying Gwas rest server for SNPs associated with " + efoTraitName)
+        for efoTraitHash in efoTraits:
+            efoTraitLinks = efoTraitHash["_links"]
+            efoTraitName = efoTraitHash["trait"]
 
-			association_rest_response = efoTraitLinks["associations"]
-			association_url = association_rest_response["href"]
-			try:
-				# e.g.: http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/efoTraits/71/associations
-				#
-				association_response = postgap.REST.get(association_url, "")
-			except:
-				continue
-			
-			associations = association_response["_embedded"]["associations"]
-			
-			'''
+            logging.info(
+                "Querying Gwas rest server for SNPs associated with " + efoTraitName)
+
+            association_rest_response = efoTraitLinks["associations"]
+            association_url = association_rest_response["href"]
+            try:
+                # e.g.: http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/efoTraits/71/associations
+                #
+                association_response = postgap.REST.get(association_url, "")
+            except:
+                continue
+
+            associations = association_response["_embedded"]["associations"]
+
+            '''
 				associations has this structure:
 				
 				[
@@ -192,15 +197,16 @@ class GWASCatalog(GWAS_source):
 				...
 				]
 			'''
-			logging.info("Received " + str(len(associations)) + " associations with SNPs.")
-			logging.info("Fetching SNPs and pvalues.")
+            logging.info("Received " + str(len(associations)) +
+                         " associations with SNPs.")
+            logging.info("Fetching SNPs and pvalues.")
 
-			for current_association in associations:
-				# e.g. snp_url can be: http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/associations/16513018/snps
-				#
-				snp_url = current_association["_links"]["snps"]["href"]
-				snp_response = postgap.REST.get(snp_url, "")
-				"""
+            for current_association in associations:
+                # e.g. snp_url can be: http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/associations/16513018/snps
+                #
+                snp_url = current_association["_links"]["snps"]["href"]
+                snp_response = postgap.REST.get(snp_url, "")
+                """
 				Example response:
 				{
 					_embedded: {
@@ -217,15 +223,15 @@ class GWASCatalog(GWAS_source):
 					_links: {}
 				}
 				"""
-				singleNucleotidePolymorphisms = snp_response["_embedded"]["singleNucleotidePolymorphisms"]
+                singleNucleotidePolymorphisms = snp_response["_embedded"]["singleNucleotidePolymorphisms"]
 
-				if (len(singleNucleotidePolymorphisms) == 0):
-					# sys.exit("Got no snp for a pvalue!")
-					continue
+                if (len(singleNucleotidePolymorphisms) == 0):
+                    # sys.exit("Got no snp for a pvalue!")
+                    continue
 
-				study_url = current_association["_links"]["study"]["href"]
-				study_response = postgap.REST.get(study_url, "")
-				"""
+                study_url = current_association["_links"]["study"]["href"]
+                study_response = postgap.REST.get(study_url, "")
+                """
 				Example response:
 				{
 					author: "Barber MJ",
@@ -249,12 +255,12 @@ class GWASCatalog(GWAS_source):
 					_links: {}
 				}
 				"""
-				study_id = study_response['accessionId']
-				pubmedId = study_response["publicationInfo"]["pubmedId"]
+                study_id = study_response['accessionId']
+                pubmedId = study_response["publicationInfo"]["pubmedId"]
 
-				diseaseTrait = study_response["diseaseTrait"]["trait"]
-				ancestries = study_response["ancestries"]
-				"""
+                diseaseTrait = study_response["diseaseTrait"]["trait"]
+                ancestries = study_response["ancestries"]
+                """
 				Example response:
 				{
 					_embedded: {
@@ -272,715 +278,761 @@ class GWASCatalog(GWAS_source):
 						_links: {}
 				}
 				"""
-				sample_size = sum(int(ancestry['numberOfIndividuals']) for ancestry in ancestries if ancestry['numberOfIndividuals'] is not None)
+                sample_size = sum(int(ancestry['numberOfIndividuals'])
+                                  for ancestry in ancestries if ancestry['numberOfIndividuals'] is not None)
 
-				for current_snp in singleNucleotidePolymorphisms:
-					is_dbSNP_accession = "rs" in current_snp["rsId"]
-					
-					if not(is_dbSNP_accession):
-						logging.warning("Did not get a valid dbSNP accession: (" + current_snp["rsId"] + ") from " + snp_url)
-						continue
-					
-					if current_snp["rsId"] == '6':
-						continue
-					if current_snp["rsId"][-1] == u'\xa0':
-						current_snp["rsId"] = current_snp["rsId"].strip()
+                for current_snp in singleNucleotidePolymorphisms:
+                    is_dbSNP_accession = "rs" in current_snp["rsId"]
 
-					logging.debug("    received association with snp rsId: " + '{:12}'.format(current_snp["rsId"]) + " with a pvalue of " + str(current_association["pvalue"]))
-					
-					associations_href = current_snp["_links"]["associations"]["href"]
-					associations = postgap.REST.get(associations_href, ext="")
+                    if not(is_dbSNP_accession):
+                        logging.warning(
+                            "Did not get a valid dbSNP accession: (" + current_snp["rsId"] + ") from " + snp_url)
+                        continue
 
-					riskAlleles = []
-					loci = current_association["loci"]
-					for locus in loci:
-						strongestRiskAlleles = locus["strongestRiskAlleles"]
-						riskAlleles.append(strongestRiskAlleles)
+                    if current_snp["rsId"] == '6':
+                        continue
+                    if current_snp["rsId"][-1] == u'\xa0':
+                        current_snp["rsId"] = current_snp["rsId"].strip()
 
-					for riskAllele in riskAlleles:
-						try:
-						
-							if gwas_risk_alleles_present_in_reference(riskAllele):
-								risk_alleles_present_in_reference = True
-								logging.info("Risk allele is present in reference");
-							else:
-								risk_alleles_present_in_reference = False
-								logging.info("Risk allele is not present in reference");
-						
-						except none_of_the_risk_alleles_is_a_substitution_exception as e:
-							logging.warning(str(e))
-							logging.warning("Skipping this snp.")
-							continue
-						
-						except variant_mapping_is_ambiguous_exception:
-							logging.warning("The variant mapping is ambiguous.")
-							logging.warning("Skipping this snp.")
-							continue
-						
-						except some_alleles_present_in_reference_others_not_exception as e:
-							logging.warning(str(e));
-							logging.warning("Skipping this snp.")
-							continue
-						
-						except no_dbsnp_accession_for_snp_exception as e:
-							logging.warning(str(e))
-							logging.warning("Skipping this snp.")
-							continue
+                    logging.debug("    received association with snp rsId: " + '{:12}'.format(
+                        current_snp["rsId"]) + " with a pvalue of " + str(current_association["pvalue"]))
 
-						except base_in_allele_missing_exception as e:
-							logging.warning(str(e));
-							logging.warning("Skipping this snp.")
-							continue
+                    associations_href = current_snp["_links"]["associations"]["href"]
+                    associations = postgap.REST.get(associations_href, ext="")
 
-						except cant_determine_base_at_snp_in_reference_exception as e:
-							logging.warning(str(e));
-							logging.warning("Skipping this snp.")
-							continue
-						
-						except gwas_data_integrity_exception as e:
-							logging.warning(str(e));
-							logging.warning("Skipping this snp.")
-							continue
+                    riskAlleles = []
+                    loci = current_association["loci"]
+                    for locus in loci:
+                        strongestRiskAlleles = locus["strongestRiskAlleles"]
+                        riskAlleles.append(strongestRiskAlleles)
 
-						ci_start_value = None
-						ci_end_value = None
+                    for riskAllele in riskAlleles:
+                        try:
 
-						if not current_association["range"] == None:
-							ci_values = re.findall('\d+\.\d+', current_association["range"])
+                            if gwas_risk_alleles_present_in_reference(riskAllele):
+                                risk_alleles_present_in_reference = True
+                                logging.info(
+                                    "Risk allele is present in reference")
+                            else:
+                                risk_alleles_present_in_reference = False
+                                logging.info(
+                                    "Risk allele is not present in reference")
 
-							if ci_values:
-								try:
-									ci_start_value = ci_values[0]
-									ci_end_value = ci_values[1]
-								except:
-									pass
+                        except none_of_the_risk_alleles_is_a_substitution_exception as e:
+                            logging.warning(str(e))
+                            logging.warning("Skipping this snp.")
+                            continue
 
+                        except variant_mapping_is_ambiguous_exception:
+                            logging.warning(
+                                "The variant mapping is ambiguous.")
+                            logging.warning("Skipping this snp.")
+                            continue
 
-						list_of_GWAS_Associations.append(
-							GWAS_Association(
-								disease = Disease(
-									name = efoTraitName,
-									efo  = efo
-								),
-								reported_trait = diseaseTrait,
-								snp     = current_snp["rsId"],
-								pvalue  = current_association["pvalue"],
-								pvalue_description = current_association["pvalueDescription"],
-								source  = 'GWAS Catalog',
-								publication = 'PMID' + pubmedId,
-								study   = study_id,
-								sample_size = sample_size,
-								
-								# For fetching additional information like risk allele later, if needed.
-								# E.g.: http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/singleNucleotidePolymorphisms/9765
-								rest_hash = current_snp,
-								risk_alleles_present_in_reference = risk_alleles_present_in_reference,
-								
-								odds_ratio                 = current_association["orPerCopyNum"],
-								odds_ratio_ci_start        = ci_start_value,
-								odds_ratio_ci_end 		   = ci_end_value,
-								beta_coefficient           = current_association["betaNum"],
-								beta_coefficient_unit      = current_association["betaUnit"],
-								beta_coefficient_direction = current_association["betaDirection"]
-							)
-						)
+                        except some_alleles_present_in_reference_others_not_exception as e:
+                            logging.warning(str(e))
+                            logging.warning("Skipping this snp.")
+                            continue
 
-		if len(list_of_GWAS_Associations) > 0:
-			logging.info("Fetched " +  str(len(list_of_GWAS_Associations)) + " SNPs and pvalues.")
-		if len(list_of_GWAS_Associations) == 0:
-			logging.info("Found no associated SNPs and pvalues.")
-	
-		return list_of_GWAS_Associations
+                        except no_dbsnp_accession_for_snp_exception as e:
+                            logging.warning(str(e))
+                            logging.warning("Skipping this snp.")
+                            continue
+
+                        except base_in_allele_missing_exception as e:
+                            logging.warning(str(e))
+                            logging.warning("Skipping this snp.")
+                            continue
+
+                        except cant_determine_base_at_snp_in_reference_exception as e:
+                            logging.warning(str(e))
+                            logging.warning("Skipping this snp.")
+                            continue
+
+                        except gwas_data_integrity_exception as e:
+                            logging.warning(str(e))
+                            logging.warning("Skipping this snp.")
+                            continue
+
+                        ci_start_value = None
+                        ci_end_value = None
+
+                        if not current_association["range"] == None:
+                            ci_values = re.findall(
+                                '\d+\.\d+', current_association["range"])
+
+                            if ci_values:
+                                try:
+                                    ci_start_value = ci_values[0]
+                                    ci_end_value = ci_values[1]
+                                except:
+                                    pass
+
+                        list_of_GWAS_Associations.append(
+                            GWAS_Association(
+                                disease=Disease(
+                                    name=efoTraitName,
+                                    efo=efo
+                                ),
+                                reported_trait=diseaseTrait,
+                                snp=current_snp["rsId"],
+                                pvalue=current_association["pvalue"],
+                                pvalue_description=current_association["pvalueDescription"],
+                                source='GWAS Catalog',
+                                publication='PMID' + pubmedId,
+                                study=study_id,
+                                sample_size=sample_size,
+
+                                # For fetching additional information like risk allele later, if needed.
+                                # E.g.: http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/singleNucleotidePolymorphisms/9765
+                                rest_hash=current_snp,
+                                risk_alleles_present_in_reference=risk_alleles_present_in_reference,
+
+                                odds_ratio=current_association["orPerCopyNum"],
+                                odds_ratio_ci_start=ci_start_value,
+                                odds_ratio_ci_end=ci_end_value,
+                                beta_coefficient=current_association["betaNum"],
+                                beta_coefficient_unit=current_association["betaUnit"],
+                                beta_coefficient_direction=current_association["betaDirection"]
+                            )
+                        )
+
+        if len(list_of_GWAS_Associations) > 0:
+            logging.info(
+                "Fetched " + str(len(list_of_GWAS_Associations)) + " SNPs and pvalues.")
+        if len(list_of_GWAS_Associations) == 0:
+            logging.info("Found no associated SNPs and pvalues.")
+
+        return list_of_GWAS_Associations
+
 
 class Neale_UKB(GWAS_source):
-	display_name = "Neale_UKB"
-	def run(self, diseases, iris):
-		"""
+    display_name = "Neale_UKB"
 
-			Returns all GWAS SNPs associated to a disease in Neale_UKB
-			Args:
-			* [ string ] (trait descriptions)
-			* [ string ] (trait Ontology IRIs)
-			Returntype: [ GWAS_Association ]
+    def run(self, diseases, iris):
+        """
 
-		"""
-		logger = logging.getLogger(__name__)
-		
-		# This database does not have EFOs so give up early if unneeded
-		if diseases == None or len(diseases) == 0:
-			return []
+                Returns all GWAS SNPs associated to a disease in Neale_UKB
+                Args:
+                * [ string ] (trait descriptions)
+                * [ string ] (trait Ontology IRIs)
+                Returntype: [ GWAS_Association ]
 
-		file = open(postgap.Globals.DATABASES_DIR+"/Neale_UKB.txt")
-		res = [ self.get_association(line, diseases, iris) for line in file ]
-		res = filter(lambda X: X is not None, res)
+        """
+        logger = logging.getLogger(__name__)
 
-		logger.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in Neale_UKB" % (len(res), ", ".join(diseases), ", ".join(iris)))
+        # This database does not have EFOs so give up early if unneeded
+        if diseases == None or len(diseases) == 0:
+            return []
 
-		return res
+        file = open(postgap.Globals.DATABASES_DIR+"/Neale_UKB.txt")
+        res = [self.get_association(line, diseases, iris) for line in file]
+        res = filter(lambda X: X is not None, res)
 
-	def get_association(self, line, diseases, iris):
-		'''
-			Neale_UKB file format:
-		'''
-		try:
-			snp, disease, reported_trait, p_value, sample_size, source, study, odds_ratio, beta_coefficient, beta_coefficient_direction = line.strip().split('\t')
-		except:
-			return None
+        logger.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in Neale_UKB" % (
+            len(res), ", ".join(diseases), ", ".join(iris)))
 
+        return res
 
+    def get_association(self, line, diseases, iris):
+        '''
+                Neale_UKB file format:
+        '''
+        try:
+            snp, disease, reported_trait, p_value, sample_size, source, study, odds_ratio, beta_coefficient, beta_coefficient_direction = line.strip().split('\t')
+        except:
+            return None
 
-
-		if reported_trait in diseases:
-			return GWAS_Association(
-				pvalue = float(p_value),
-				pvalue_description = None,
-				snp = snp,
-				disease = None,
-				reported_trait = reported_trait + " " + disease,
-				source = 'UK Biobank',
-				publication = source,
-				study = None,
-				sample_size = sample_size,
-				odds_ratio = None,
-				beta_coefficient = beta_coefficient,
-				beta_coefficient_unit = None,
-				beta_coefficient_direction = beta_coefficient_direction
-			)
-		else:
-			return None
+        if reported_trait in diseases:
+            return GWAS_Association(
+                pvalue=float(p_value),
+                pvalue_description=None,
+                snp=snp,
+                disease=None,
+                reported_trait=reported_trait + " " + disease,
+                source='UK Biobank',
+                publication=source,
+                study=None,
+                sample_size=sample_size,
+                odds_ratio=None,
+                beta_coefficient=beta_coefficient,
+                beta_coefficient_unit=None,
+                beta_coefficient_direction=beta_coefficient_direction
+            )
+        else:
+            return None
 
 
 class GRASP(GWAS_source):
-	display_name = "GRASP"
-	def run(self, diseases, iris):
-		"""
+    display_name = "GRASP"
 
-			Returns all GWAS SNPs associated to a disease in GRASP
-			Args:
-			* [ string ] (trait descriptions)
-			* [ string ] (trait Ontology IRIs)
-			Returntype: [ GWAS_Association ]
+    def run(self, diseases, iris):
+        """
 
-		"""
-		file = open(postgap.Globals.DATABASES_DIR+"/GRASP.txt")
-		res = [ self.get_association(line, diseases, iris) for line in file ]
-		res = filter(lambda X: X is not None, res)
+                Returns all GWAS SNPs associated to a disease in GRASP
+                Args:
+                * [ string ] (trait descriptions)
+                * [ string ] (trait Ontology IRIs)
+                Returntype: [ GWAS_Association ]
 
-		logging.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GRASP" % (len(res), ", ".join(diseases), ", ".join(iris)))
+        """
+        file = open(postgap.Globals.DATABASES_DIR+"/GRASP.txt")
+        res = [self.get_association(line, diseases, iris) for line in file]
+        res = filter(lambda X: X is not None, res)
 
-		return res
+        logging.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GRASP" % (
+            len(res), ", ".join(diseases), ", ".join(iris)))
 
-	def get_association(self, line, diseases, iris):
-		'''
+        return res
 
-			GRASP file format:
-			1. NHLBIkey
-			2. HUPfield
-			3. LastCurationDate
-			4. CreationDate
-			5. SNPid(dbSNP134)
-			6. chr(hg19)
-			7. pos(hg19)
-			8. PMID
-			9. SNPid(in paper)
-			10. LocationWithinPaper
-			11. Pvalue
-			12. Phenotype
-			13. PaperPhenotypeDescription
-			14. PaperPhenotypeCategories
-			15. DatePub
-			16. InNHGRIcat(as of 3/31/12)
-			17. Journal
-			18. Title
-			19. IncludesMale/Female Only Analyses
-			20. Exclusively Male/Female
-			21. Initial Sample Description
-			22. Replication Sample Description
-			23. Platform [SNPs passing QC]
-			24. GWASancestryDescription
-			25. TotalSamples(discovery+replication)
-			26. TotalDiscoverySamples
-			27. European Discovery
-			28. African Discovery
-			29. East Asian Discovery
-			30. Indian/South Asian Discovery
-			31. Hispanic Discovery
-			32. Native Discovery
-			33. Micronesian Discovery
-			34. Arab/ME Discovery
-			35. Mixed Discovery
-			36. Unspecified Discovery
-			37. Filipino Discovery
-			38. Indonesian Discovery
-			39. Total replication samples
-			40. European Replication
-			41. African Replication
-			42. East Asian Replication
-			43. Indian/South Asian Replication
-			44. Hispanic Replication
-			45. Native Replication
-			46. Micronesian Replication
-			47. Arab/ME Replication
-			48. Mixed Replication
-			49. Unspecified Replication
-			50. Filipino Replication
-			51. Indonesian Replication
-			52. InGene
-			53. NearestGene
-			54. InLincRNA
-			55. InMiRNA
-			56. InMiRNABS
-			57. dbSNPfxn
-			58. dbSNPMAF
-			59. dbSNPalleles/het/se
-			60. dbSNPvalidation
-			XX61. dbSNPClinStatus
-			XX62. ORegAnno
-			XX63. ConservPredTFBS
-			XX64. HumanEnhancer
-			XX65. RNAedit
-			XX66. PolyPhen2
-			XX67. SIFT
-			XX68. LS-SNP
-			XX69. UniProt
-			XX70. EqtlMethMetabStudy
-			71. EFO string
+    def get_association(self, line, diseases, iris):
+        '''
 
-		'''
-		items = line.rstrip().split('\t')
-		for iri in items[70].split(','):
-			if iri in iris:
-				try:
-					return GWAS_Association(
-						pvalue = float(items[10]),
-						pvalue_description = None,
-						snp = "rs" + items[4],
-						disease = Disease(name = postgap.EFO.term(iri), efo = iri),
-						reported_trait = items[12].decode('latin1'),
-						source = self.display_name,
-						publication = items[7],
-						study = None,
-						sample_size = int(items[24]),
-						odds_ratio = None,
-						odds_ratio_ci_start = None,
-						odds_ratio_ci_end = None,
-						beta_coefficient = None,
-						beta_coefficient_unit = None,
-						beta_coefficient_direction = None,
-						rest_hash = None,
-						risk_alleles_present_in_reference = None
-					)
-				except:
-					return None
+                GRASP file format:
+                1. NHLBIkey
+                2. HUPfield
+                3. LastCurationDate
+                4. CreationDate
+                5. SNPid(dbSNP134)
+                6. chr(hg19)
+                7. pos(hg19)
+                8. PMID
+                9. SNPid(in paper)
+                10. LocationWithinPaper
+                11. Pvalue
+                12. Phenotype
+                13. PaperPhenotypeDescription
+                14. PaperPhenotypeCategories
+                15. DatePub
+                16. InNHGRIcat(as of 3/31/12)
+                17. Journal
+                18. Title
+                19. IncludesMale/Female Only Analyses
+                20. Exclusively Male/Female
+                21. Initial Sample Description
+                22. Replication Sample Description
+                23. Platform [SNPs passing QC]
+                24. GWASancestryDescription
+                25. TotalSamples(discovery+replication)
+                26. TotalDiscoverySamples
+                27. European Discovery
+                28. African Discovery
+                29. East Asian Discovery
+                30. Indian/South Asian Discovery
+                31. Hispanic Discovery
+                32. Native Discovery
+                33. Micronesian Discovery
+                34. Arab/ME Discovery
+                35. Mixed Discovery
+                36. Unspecified Discovery
+                37. Filipino Discovery
+                38. Indonesian Discovery
+                39. Total replication samples
+                40. European Replication
+                41. African Replication
+                42. East Asian Replication
+                43. Indian/South Asian Replication
+                44. Hispanic Replication
+                45. Native Replication
+                46. Micronesian Replication
+                47. Arab/ME Replication
+                48. Mixed Replication
+                49. Unspecified Replication
+                50. Filipino Replication
+                51. Indonesian Replication
+                52. InGene
+                53. NearestGene
+                54. InLincRNA
+                55. InMiRNA
+                56. InMiRNABS
+                57. dbSNPfxn
+                58. dbSNPMAF
+                59. dbSNPalleles/het/se
+                60. dbSNPvalidation
+                XX61. dbSNPClinStatus
+                XX62. ORegAnno
+                XX63. ConservPredTFBS
+                XX64. HumanEnhancer
+                XX65. RNAedit
+                XX66. PolyPhen2
+                XX67. SIFT
+                XX68. LS-SNP
+                XX69. UniProt
+                XX70. EqtlMethMetabStudy
+                71. EFO string
 
-		if items[12] in diseases:
-			iri = items[70].split(',')[0]
-			try:
-				return GWAS_Association(
-					pvalue = float(items[10]),
-					pvalue_description = None,
-					snp = "rs" + items[4],
-					disease = Disease(name = postgap.EFO.term(iri), efo = iri),
-					reported_trait = items[12].decode('latin1'),
-					source = self.display_name,
-					publication = items[7],
-					study = None,
-					sample_size = int(items[24]),
-					odds_ratio = None,
-					odds_ratio_ci_start=None,
-					odds_ratio_ci_end=None,
-					beta_coefficient = None,
-					beta_coefficient_unit = None,
-					beta_coefficient_direction = None,
-					rest_hash = None,
-					risk_alleles_present_in_reference = None
-				)
-			except:
-				return None
+        '''
+        items = line.rstrip().split('\t')
+        for iri in items[70].split(','):
+            if iri in iris:
+                try:
+                    return GWAS_Association(
+                        pvalue=float(items[10]),
+                        pvalue_description=None,
+                        snp="rs" + items[4],
+                        disease=Disease(name=postgap.EFO.term(iri), efo=iri),
+                        reported_trait=items[12].decode('latin1'),
+                        source=self.display_name,
+                        publication=items[7],
+                        study=None,
+                        sample_size=int(items[24]),
+                        odds_ratio=None,
+                        odds_ratio_ci_start=None,
+                        odds_ratio_ci_end=None,
+                        beta_coefficient=None,
+                        beta_coefficient_unit=None,
+                        beta_coefficient_direction=None,
+                        rest_hash=None,
+                        risk_alleles_present_in_reference=None
+                    )
+                except:
+                    return None
 
-		if items[12] in diseases:
-			iri = items[70].split(',')[0]
-			return GWAS_Association(
-				pvalue = float(items[10]),
-				snp = "rs" + items[4],
-				disease = Disease(name = postgap.EFO.term(iri), efo = iri),
-				reported_trait = items[12].decode('latin1'),
-				source = self.display_name,
-				study = items[7],
-				sample_size = int(items[24]),
-				odds_ratio = None,
-				odds_ratio_ci_start=None,
-				odds_ratio_ci_end=None,
-				beta_coefficient = None,
-				beta_coefficient_unit = None,
-				beta_coefficient_direction = None,
-				rest_hash = None,
-				risk_alleles_present_in_reference = None
-			)
+        if items[12] in diseases:
+            iri = items[70].split(',')[0]
+            try:
+                return GWAS_Association(
+                    pvalue=float(items[10]),
+                    pvalue_description=None,
+                    snp="rs" + items[4],
+                    disease=Disease(name=postgap.EFO.term(iri), efo=iri),
+                    reported_trait=items[12].decode('latin1'),
+                    source=self.display_name,
+                    publication=items[7],
+                    study=None,
+                    sample_size=int(items[24]),
+                    odds_ratio=None,
+                    odds_ratio_ci_start=None,
+                    odds_ratio_ci_end=None,
+                    beta_coefficient=None,
+                    beta_coefficient_unit=None,
+                    beta_coefficient_direction=None,
+                    rest_hash=None,
+                    risk_alleles_present_in_reference=None
+                )
+            except:
+                return None
 
-		return None
+        if items[12] in diseases:
+            iri = items[70].split(',')[0]
+            return GWAS_Association(
+                pvalue=float(items[10]),
+                snp="rs" + items[4],
+                disease=Disease(name=postgap.EFO.term(iri), efo=iri),
+                reported_trait=items[12].decode('latin1'),
+                source=self.display_name,
+                study=items[7],
+                sample_size=int(items[24]),
+                odds_ratio=None,
+                odds_ratio_ci_start=None,
+                odds_ratio_ci_end=None,
+                beta_coefficient=None,
+                beta_coefficient_unit=None,
+                beta_coefficient_direction=None,
+                rest_hash=None,
+                risk_alleles_present_in_reference=None
+            )
+
+        return None
+
 
 class Phewas_Catalog(GWAS_source):
-	display_name = "Phewas Catalog"
-	
-	def run(self, diseases, iris):
-		"""
+    display_name = "Phewas Catalog"
 
-			Returns all GWAS SNPs associated to a disease in PhewasCatalog
-			Args:
-			* [ string ] (trait descriptions)
-			* [ string ] (trait Ontology IRIs)
-			Returntype: [ GWAS_Association ]
+    def run(self, diseases, iris):
+        """
 
-		"""
-		file = open(postgap.Globals.DATABASES_DIR+"/Phewas_Catalog.txt")
-		res = [ self.get_association(line, diseases, iris) for line in file ]
-		res = filter(lambda X: X is not None, res)
+                Returns all GWAS SNPs associated to a disease in PhewasCatalog
+                Args:
+                * [ string ] (trait descriptions)
+                * [ string ] (trait Ontology IRIs)
+                Returntype: [ GWAS_Association ]
 
-		logging.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in Phewas Catalog" % (len(res), ", ".join(diseases), ", ".join(iris)))
+        """
+        file = open(postgap.Globals.DATABASES_DIR+"/Phewas_Catalog.txt")
+        res = [self.get_association(line, diseases, iris) for line in file]
+        res = filter(lambda X: X is not None, res)
 
-		return res
+        logging.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in Phewas Catalog" % (
+            len(res), ", ".join(diseases), ", ".join(iris)))
 
-	def get_association(self, line, diseases, iris):
-		'''
+        return res
 
-			Phewas Catalog format:
-			1. chromosome
-			2. snp
-			3. phewas phenotype
-			4. cases
-			5. p-value
-			6. odds-ratio
-			7. gene_name
-			8. phewas code
-			9. gwas-associations
-			10. [Inserte] EFO identifier (or N/A)
+    def get_association(self, line, diseases, iris):
+        '''
 
-		'''
-		items = line.rstrip().split('\t')
-		for iri in items[9].split(','):
-			if iri in iris:
-				return GWAS_Association (
-					pvalue = float(items[4]),
-					pvalue_description = None,
-					snp = items[1],
-					disease = Disease(name = postgap.EFO.term(iri), efo = iri), 
-					reported_trait = items[2],
-					source = self.display_name,
-					publication = "PMID24270849",
-					study = None,
-					sample_size = int(items[3]),
-					odds_ratio = float(items[5]),
-					odds_ratio_ci_start=None,
-					odds_ratio_ci_end=None,
-					beta_coefficient = None,
-					beta_coefficient_unit = None,
-					beta_coefficient_direction = None,
-					rest_hash = None,
-					risk_alleles_present_in_reference = None
-				)
+                Phewas Catalog format:
+                1. chromosome
+                2. snp
+                3. phewas phenotype
+                4. cases
+                5. p-value
+                6. odds-ratio
+                7. gene_name
+                8. phewas code
+                9. gwas-associations
+                10. [Inserte] EFO identifier (or N/A)
 
-		if items[2] in diseases: 
-			iri = items[9].split(',')[0]
-			return GWAS_Association (
-				pvalue = float(items[4]),
-				pvalue_description = None,
-				snp = items[1],
-				disease = Disease(name = postgap.EFO.term(iri), efo = iri), 
-				reported_trait = items[2],
-				source = self.display_name,
-				publication = "PMID24270849",
-				study = None,
-				sample_size = int(items[3]),
-				odds_ratio = float(items[5]),
-				odds_ratio_ci_start=None,
-				odds_ratio_ci_end=None,
-				beta_coefficient = None,
-				beta_coefficient_unit = None,
-				beta_coefficient_direction = None,
-				rest_hash = None,
-				risk_alleles_present_in_reference = None
-			)
+        '''
+        items = line.rstrip().split('\t')
+        for iri in items[9].split(','):
+            if iri in iris:
+                return GWAS_Association(
+                    pvalue=float(items[4]),
+                    pvalue_description=None,
+                    snp=items[1],
+                    disease=Disease(name=postgap.EFO.term(iri), efo=iri),
+                    reported_trait=items[2],
+                    source=self.display_name,
+                    publication="PMID24270849",
+                    study=None,
+                    sample_size=int(items[3]),
+                    odds_ratio=float(items[5]),
+                    odds_ratio_ci_start=None,
+                    odds_ratio_ci_end=None,
+                    beta_coefficient=None,
+                    beta_coefficient_unit=None,
+                    beta_coefficient_direction=None,
+                    rest_hash=None,
+                    risk_alleles_present_in_reference=None
+                )
 
-		return None
+        if items[2] in diseases:
+            iri = items[9].split(',')[0]
+            return GWAS_Association(
+                pvalue=float(items[4]),
+                pvalue_description=None,
+                snp=items[1],
+                disease=Disease(name=postgap.EFO.term(iri), efo=iri),
+                reported_trait=items[2],
+                source=self.display_name,
+                publication="PMID24270849",
+                study=None,
+                sample_size=int(items[3]),
+                odds_ratio=float(items[5]),
+                odds_ratio_ci_start=None,
+                odds_ratio_ci_end=None,
+                beta_coefficient=None,
+                beta_coefficient_unit=None,
+                beta_coefficient_direction=None,
+                rest_hash=None,
+                risk_alleles_present_in_reference=None
+            )
+
+        return None
+
 
 class GWAS_File(GWAS_source):
-	display_name = "GWAS File"
-	
-	def create_gwas_association_collector(self):
-		
-		class gwas_association_collector:
-			
-			def __init__(self):
-				self.found_list = []
-			
-			def add_to_found_list(self, gwas_association):
-				self.found_list.append(gwas_association)
-			
-			def get_found_list(self):
-				return self.found_list
-		
-		return gwas_association_collector()
+    display_name = "GWAS File"
 
-	
-	def run(self, diseases, iris):
-		"""
+    def create_gwas_association_collector(self):
 
-			Returns all GWAS SNPs associated to a disease in known gwas files
-			Args:
-			* [ string ] (trait descriptions)
-			* [ string ] (trait Ontology IRIs)
-			Returntype: [ GWAS_Association ]
+        class gwas_association_collector:
 
-		"""
-		
-		gwas_data_file = postgap.Globals.GWAS_SUMMARY_STATS_FILE
-			
-		if gwas_data_file is None:
-			return None
-		
-		logging.info( "gwas_data_file = " + gwas_data_file )
-		
-		pvalue_filtered_gwas_associations = self.create_gwas_association_collector()
-		
-		pvalue_filter = self.create_pvalue_filter(pvalue_threshold = postgap.Globals.GWAS_PVALUE_CUTOFF)
-		
-		self.parse_gwas_data_file(
-			gwas_data_file                    = gwas_data_file,
-			want_this_gwas_association_filter = pvalue_filter,
-			callback                          = pvalue_filtered_gwas_associations.add_to_found_list,
-			max_lines_to_return_threshold     = None,
-		)
-		
-		logging.info( "Found " + str(len(pvalue_filtered_gwas_associations.get_found_list())) + " gwas associations with a pvalue of " + str(postgap.Globals.GWAS_PVALUE_CUTOFF) + " or less.")
-		
-		return pvalue_filtered_gwas_associations.get_found_list()
-	
-	def create_gwas_clusters_with_pvalues_from_file(self, gwas_clusters, gwas_data_file):
-		
-		proper_gwas_cluster = []
-		
-		cluster_number = 0
-		for gwas_cluster in gwas_clusters:
-			cluster_number += 1
-			gwas_cluster_with_values_from_file = self.create_gwas_cluster_with_pvalues_from_file(gwas_cluster, gwas_data_file)
-			proper_gwas_cluster.append(gwas_cluster_with_values_from_file)
-		
-		return proper_gwas_cluster
+            def __init__(self):
+                self.found_list = []
 
-	def create_gwas_cluster_with_pvalues_from_file(self, gwas_cluster, gwas_data_file):
+            def add_to_found_list(self, gwas_association):
+                self.found_list.append(gwas_association)
 
-		ld_gwas_associations = self.create_gwas_association_collector()
-		
-		self.parse_gwas_data_file(
-			gwas_data_file                    = gwas_data_file, 
-			want_this_gwas_association_filter = self.create_snp_filter(gwas_cluster.ld_snps),
-			callback                          = ld_gwas_associations.add_to_found_list,
-			max_lines_to_return_threshold     = len(gwas_cluster.ld_snps)
-		)
-		logging.info( "ld_gwas_associations.found_list: " + pformat(ld_gwas_associations.get_found_list()) )
-		
-		ld_snps_converted_to_gwas_snps = []
-		ld_snps_that_could_not_be_converted_to_gwas_snps = []
-		
-		for ld_snp in gwas_cluster.ld_snps:
-			
-			gwas_associations_for_ld_snp = filter(lambda x : ld_snp.rsID == x.snp.rsID, ld_gwas_associations.get_found_list())
-			
-			# If one could be found, add that.
-			if len(gwas_associations_for_ld_snp) == 1:
-				
-				logging.info("Found " + ld_snp.rsID + " in the file! All good.")
-				gwas_association = gwas_associations_for_ld_snp[0] 
-				assert type(gwas_association) is GWAS_Association, "gwas_association is GWAS_Association."
-			
-				gwas_snp = GWAS_SNP(
-					snp      = gwas_association.snp,
-					pvalue   = gwas_association.pvalue,
-					z_score  = None,
-					evidence = [ gwas_association ],
-					beta     = gwas_association.beta_coefficient
-				)
-				ld_snps_converted_to_gwas_snps.append(gwas_snp)
-			
-			# If more than one assocation was found: error.	
-			if len(gwas_associations_for_ld_snp) > 1:
-				logging.info("Found more than one matching assocation for " + ld_snp.rsID + " in the file. Bad!")
-				sys.exit(1)
-			
-			# If the snp wasn't found, add it as a regular snp.
-			if len(gwas_associations_for_ld_snp) == 0:
-				logging.info("Found no matching assocation for " + ld_snp.rsID + " in the file. Including it as regular snp.")
-				ld_snps_that_could_not_be_converted_to_gwas_snps.append(ld_snp)
-				
-		proper_gwas_cluster = GWAS_Cluster(
-			gwas_snps          = gwas_cluster.gwas_snps,
-			ld_snps            = ld_snps_converted_to_gwas_snps + ld_snps_that_could_not_be_converted_to_gwas_snps,
-			finemap_posteriors = None,
-		)
-		return proper_gwas_cluster
-	
-	def create_snp_filter(self, snps):
-		
-		rsIDs_to_look_for = []
-		
-		for snp in snps:
-			rsIDs_to_look_for.append(snp.rsID)
-		
-		logging.info( "Searching for snps: " + pformat(rsIDs_to_look_for) )
-		
-		def snp_name_filter(gwas_association):
-			
-			rsID  = gwas_association.snp.rsID
-			found = rsID in rsIDs_to_look_for
-			
-			return found
-		
-		return snp_name_filter
+            def get_found_list(self):
+                return self.found_list
 
-	def create_pvalue_filter(self, pvalue_threshold):
-		return lambda pvalue: float(pvalue) < pvalue_threshold
-	
-	def parse_gwas_data_file(
-			self, 
-			gwas_data_file, 
-			callback, 
-			want_this_gwas_association_filter,
-			max_lines_to_return_threshold = None,
-		):
-		
+        return gwas_association_collector()
 
-		file = open(gwas_data_file)
-		column_labels = file.readline().strip().split('\t')
+    def run(self, diseases, iris):
+        """
 
-		number_of_lines_returned = 0
-		for line in file:
-			items = line.rstrip().split('\t')
-			
-			parsed = dict()
-			for column_index, column_label in enumerate(column_labels):
-				parsed[column_label] = items[column_index]
-			
-			if not want_this_gwas_association_filter(parsed["p-value"]):
-				continue
+                Returns all GWAS SNPs associated to a disease in known gwas files
+                Args:
+                * [ string ] (trait descriptions)
+                * [ string ] (trait Ontology IRIs)
+                Returntype: [ GWAS_Association ]
 
-			try:
-				# TODO insert study info (from command line? config file?)
-				gwas_association = GWAS_Association(
-					pvalue                            = float(parsed["p-value"]),
-					pvalue_description		  = 'Manual',
-					snp                               = parsed["variant_id"],
-					disease                           = Disease(name = 'Manual', efo = 'EFO_Manual'),
-					reported_trait                    = "Manual",
-					source                            = "Manual",
-					publication			  = "PMID000",
-					study                             = "Manual",
-					sample_size                       = 1000,
-					odds_ratio                        = None,
-					odds_ratio_ci_start		  = None,
-					odds_ratio_ci_end		  = None,
-					beta_coefficient                  = float(parsed["beta"]),
-					beta_coefficient_unit             = "Manual",
-					beta_coefficient_direction        = "Manual",
-					rest_hash                         = None,
-					risk_alleles_present_in_reference = None,
-				)
-			except ValueError:
-				continue
+        """
 
-			callback(gwas_association)
-			
-			number_of_lines_returned += 1
-			if max_lines_to_return_threshold is not None and number_of_lines_returned>=max_lines_to_return_threshold:
-				break
+        gwas_data_file = postgap.Globals.GWAS_SUMMARY_STATS_FILE
+
+        if gwas_data_file is None:
+            return None
+
+        logging.info("gwas_data_file = " + gwas_data_file)
+
+        pvalue_filtered_gwas_associations = self.create_gwas_association_collector()
+
+        pvalue_filter = self.create_pvalue_filter(
+            pvalue_threshold=postgap.Globals.GWAS_PVALUE_CUTOFF)
+
+        self.parse_gwas_data_file(
+            gwas_data_file=gwas_data_file,
+            want_this_gwas_association_filter=pvalue_filter,
+            callback=pvalue_filtered_gwas_associations.add_to_found_list,
+            max_lines_to_return_threshold=None
+        )
+
+        logging.info("Found " + str(len(pvalue_filtered_gwas_associations.get_found_list())) +
+                     " gwas associations with a pvalue of " + str(postgap.Globals.GWAS_PVALUE_CUTOFF) + " or less.")
+
+        return pvalue_filtered_gwas_associations.get_found_list()
+
+    def create_gwas_clusters_with_pvalues_from_file(self, gwas_clusters, gwas_data_file):
+
+        proper_gwas_cluster = []
+
+        cluster_number = 0
+        for gwas_cluster in gwas_clusters:
+            cluster_number += 1
+            gwas_cluster_with_values_from_file = self.create_gwas_cluster_with_pvalues_from_file(
+                gwas_cluster, gwas_data_file)
+            proper_gwas_cluster.append(gwas_cluster_with_values_from_file)
+
+        return proper_gwas_cluster
+
+    def create_gwas_cluster_with_pvalues_from_file(self, gwas_cluster, gwas_data_file):
+
+        ld_gwas_associations = self.create_gwas_association_collector()
+
+        self.parse_gwas_data_file(
+            gwas_data_file=gwas_data_file,
+            want_this_gwas_association_filter=self.create_snp_filter(
+                gwas_cluster.ld_snps),
+            callback=ld_gwas_associations.add_to_found_list,
+            max_lines_to_return_threshold=len(gwas_cluster.ld_snps)
+        )
+        logging.info("ld_gwas_associations.found_list: " +
+                     pformat(ld_gwas_associations.get_found_list()))
+
+        ld_snps_converted_to_gwas_snps = []
+        ld_snps_that_could_not_be_converted_to_gwas_snps = []
+
+        for ld_snp in gwas_cluster.ld_snps:
+
+            gwas_associations_for_ld_snp = filter(
+                lambda x: ld_snp.rsID == x.snp.rsID, ld_gwas_associations.get_found_list())
+
+            # If one could be found, add that.
+            if len(gwas_associations_for_ld_snp) == 1:
+
+                logging.info("Found " + ld_snp.rsID +
+                             " in the file! All good.")
+                gwas_association = gwas_associations_for_ld_snp[0]
+                assert type(
+                    gwas_association) is GWAS_Association, "gwas_association is GWAS_Association."
+
+                gwas_snp = GWAS_SNP(
+                    snp=gwas_association.snp,
+                    pvalue=gwas_association.pvalue,
+                    z_score=None,
+                    evidence=[gwas_association],
+                    beta=gwas_association.beta_coefficient
+                )
+                ld_snps_converted_to_gwas_snps.append(gwas_snp)
+
+            # If more than one assocation was found: error.
+            if len(gwas_associations_for_ld_snp) > 1:
+                logging.info("Found more than one matching assocation for " +
+                             ld_snp.rsID + " in the file. Bad!")
+                sys.exit(1)
+
+            # If the snp wasn't found, add it as a regular snp.
+            if len(gwas_associations_for_ld_snp) == 0:
+                logging.info("Found no matching assocation for " +
+                             ld_snp.rsID + " in the file. Including it as regular snp.")
+                ld_snps_that_could_not_be_converted_to_gwas_snps.append(ld_snp)
+
+        proper_gwas_cluster = GWAS_Cluster(
+            gwas_snps=gwas_cluster.gwas_snps,
+            ld_snps=ld_snps_converted_to_gwas_snps +
+            ld_snps_that_could_not_be_converted_to_gwas_snps,
+            finemap_posteriors=None,
+        )
+        return proper_gwas_cluster
+
+    def create_snp_filter(self, snps):
+
+        rsIDs_to_look_for = []
+
+        for snp in snps:
+            rsIDs_to_look_for.append(snp.rsID)
+
+        logging.info("Searching for snps: " + pformat(rsIDs_to_look_for))
+
+        def snp_name_filter(gwas_association):
+
+            rsID = gwas_association.snp.rsID
+            found = rsID in rsIDs_to_look_for
+
+            return found
+
+        return snp_name_filter
+
+    def create_pvalue_filter(self, pvalue_threshold):
+
+        def filter_for_pvalues_smaller_than(pvalue):
+            if float(pvalue) < pvalue_threshold:
+                return True
+            return False
+
+        return filter_for_pvalues_smaller_than
+
+    def parse_gwas_data_file(
+        self,
+        gwas_data_file,
+        callback,
+        want_this_gwas_association_filter,
+        max_lines_to_return_threshold=None,
+        column_labels=[
+            "Chromosome",
+            "Position",
+            "MarkerName",
+            "Effect_allele",
+            "Non_Effect_allele",
+            "Beta",
+            "SE",
+            "Pvalue"
+            # "z_score",
+            # "MAF"
+        ]
+    ):
+
+        file = open(gwas_data_file)
+
+        number_of_lines_returned = 0
+        for line in file:
+            # Skip the line with headers
+            if line.startswith("Chromosome"):
+                continue
+
+            items = line.rstrip().split('\t')
+
+            parsed = dict()
+            for column_index in range(len(column_labels)):
+
+                column_label = column_labels[column_index]
+                parsed[column_label] = items[column_index]
+
+            if not want_this_gwas_association_filter(parsed["Pvalue"]):
+                continue
+
+            try:
+                # TODO insert study info (from command line? config file?)
+                gwas_association = GWAS_Association(
+                    pvalue=float(parsed["Pvalue"]),
+                    pvalue_description='Manual',
+                    snp=parsed["MarkerName"],
+                    disease=Disease(name='Manual', efo='EFO_Manual'),
+                    reported_trait="Manual",
+                    source="Manual",
+                    publication="PMID000",
+                    study="Manual",
+                    sample_size=1000,
+                    odds_ratio=None,
+                    odds_ratio_ci_start=None,
+                    odds_ratio_ci_end=None,
+                    beta_coefficient=float(parsed["Beta"]),
+                    beta_coefficient_unit="Manual",
+                    beta_coefficient_direction="Manual",
+                    rest_hash=None,
+                    risk_alleles_present_in_reference=None,
+                )
+            except ValueError:
+                continue
+
+            callback(gwas_association)
+
+            number_of_lines_returned += 1
+            if max_lines_to_return_threshold is not None and number_of_lines_returned >= max_lines_to_return_threshold:
+                break
+
 
 class GWAS_DB(GWAS_source):
-	display_name = "GWAS DB"
-	
-	def run(self, diseases, iris):
-		"""
+    display_name = "GWAS DB"
 
-			Returns all GWAS SNPs associated to a disease in GWAS_DB
-			Args:
-			* [ string ] (trait descriptions)
-			* [ string ] (trait Ontology IRIs)
-			Returntype: [ GWAS_Association ]
+    def run(self, diseases, iris):
+        """
 
-		"""
-		file = open(postgap.Globals.DATABASES_DIR+"/GWAS_DB.txt")
-	
-		res = [ self.get_association(line, diseases, iris) for line in file ]
-		res = filter(lambda X: X is not None, res)
+                Returns all GWAS SNPs associated to a disease in GWAS_DB
+                Args:
+                * [ string ] (trait descriptions)
+                * [ string ] (trait Ontology IRIs)
+                Returntype: [ GWAS_Association ]
 
-		logging.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GWAS DB" % (len(res), ", ".join(diseases), ", ".join(iris)))
+        """
+        file = open(postgap.Globals.DATABASES_DIR+"/GWAS_DB.txt")
 
-		return res
+        res = [self.get_association(line, diseases, iris) for line in file]
+        res = filter(lambda X: X is not None, res)
 
-	def get_association(self, line, diseases, iris):
-		'''
+        logging.info("\tFound %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in GWAS DB" % (
+            len(res), ", ".join(diseases), ", ".join(iris)))
 
-			GWAS DB data
-			1. CHR
-			2. POS
-			3. SNPID
-			4. P_VALUE
-			5. PUBMED ID
-			6. MESH_TERM
-			7. EFO_ID
+        return res
 
-		'''
-		items = line.rstrip().split('\t')
-		for iri in items[6].split(','):
-			if iri in iris:
-				return GWAS_Association(
-					pvalue = float(items[3]),
-					pvalue_description = None,
-					snp = items[2],
-					disease = Disease(name = postgap.EFO.term(iri), efo = iri),
-					reported_trait = items[5].decode('latin1'),
-					source = self.display_name,
-					publication = items[4],
-					study = None,
-					sample_size = "N/A",
-					odds_ratio = None,
-					odds_ratio_ci_start=None,
-					odds_ratio_ci_end=None,
-					beta_coefficient = None,
-					beta_coefficient_unit = None,
-					beta_coefficient_direction = None,
-					rest_hash = None,
-					risk_alleles_present_in_reference = None
-				)
+    def get_association(self, line, diseases, iris):
+        '''
 
-		if items[5] in diseases:
-			iri = items[6].split(',')[0]
-			return GWAS_Association(
-				pvalue = float(items[3]),
-				pvalue_description = None,
-				snp = items[2],
-				disease = Disease(name = postgap.EFO.term(iri), efo = iri),
-				reported_trait = items[5].decode('latin1'),
-				source = self.display_name,
-				publication = items[4],
-				study = None,
-				sample_size = "N/A",
-				odds_ratio = None,
-				odds_ratio_ci_start=None,
-				odds_ratio_ci_end=None,
-				beta_coefficient = None,
-				beta_coefficient_unit = None,
-				beta_coefficient_direction = None,
-				rest_hash = None,
-				risk_alleles_present_in_reference = None
-			)
+                GWAS DB data
+                1. CHR
+                2. POS
+                3. SNPID
+                4. P_VALUE
+                5. PUBMED ID
+                6. MESH_TERM
+                7. EFO_ID
 
-		return None
+        '''
+        items = line.rstrip().split('\t')
+        for iri in items[6].split(','):
+            if iri in iris:
+                return GWAS_Association(
+                    pvalue=float(items[3]),
+                    pvalue_description=None,
+                    snp=items[2],
+                    disease=Disease(name=postgap.EFO.term(iri), efo=iri),
+                    reported_trait=items[5].decode('latin1'),
+                    source=self.display_name,
+                    publication=items[4],
+                    study=None,
+                    sample_size="N/A",
+                    odds_ratio=None,
+                    odds_ratio_ci_start=None,
+                    odds_ratio_ci_end=None,
+                    beta_coefficient=None,
+                    beta_coefficient_unit=None,
+                    beta_coefficient_direction=None,
+                    rest_hash=None,
+                    risk_alleles_present_in_reference=None
+                )
+
+        if items[5] in diseases:
+            iri = items[6].split(',')[0]
+            return GWAS_Association(
+                pvalue=float(items[3]),
+                pvalue_description=None,
+                snp=items[2],
+                disease=Disease(name=postgap.EFO.term(iri), efo=iri),
+                reported_trait=items[5].decode('latin1'),
+                source=self.display_name,
+                publication=items[4],
+                study=None,
+                sample_size="N/A",
+                odds_ratio=None,
+                odds_ratio_ci_start=None,
+                odds_ratio_ci_end=None,
+                beta_coefficient=None,
+                beta_coefficient_unit=None,
+                beta_coefficient_direction=None,
+                rest_hash=None,
+                risk_alleles_present_in_reference=None
+            )
+
+        return None
 
 
 def get_filtered_subclasses(subclasses_filter):
 
-	subclasses_filter = [sc.replace('_', ' ') for sc in subclasses_filter]
-	return [subclass for subclass in sources if subclass.display_name in subclasses_filter]
+    subclasses_filter = [sc.replace('_', ' ') for sc in subclasses_filter]
+    return [subclass for subclass in sources if subclass.display_name in subclasses_filter]
 
 
 sources = GWAS_source.__subclasses__()
