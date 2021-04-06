@@ -54,753 +54,753 @@ phenotype_cache = ()
 
 
 def diseases_to_genes(diseases, efos, population, tissues):
-    """
+	"""
 
-            Associates genes from a list of diseases
-            Args:
-            * [ string ] (trait descriptions - free strings)
-            * [ string ] (trait EFO identifiers)
-            * string (population name)
-            * [ string ] (tissue names)
-            Returntype: [ GeneCluster_Association ]
+			Associates genes from a list of diseases
+			Args:
+			* [ string ] (trait descriptions - free strings)
+			* [ string ] (trait EFO identifiers)
+			* string (population name)
+			* [ string ] (tissue names)
+			Returntype: [ GeneCluster_Association ]
 
-    """
-    return gwas_snps_to_genes(diseases_to_gwas_snps(diseases, efos), population, tissues)
+	"""
+	return gwas_snps_to_genes(diseases_to_gwas_snps(diseases, efos), population, tissues)
 
 
 def diseases_to_gwas_snps(diseases, efos):
-    """
+	"""
 
-            Associates gwas_snps from a list of diseases
-            Args:
-            * [ string ] (trait descriptions - free strings )
-            * [ string ] (trait EFO identifiers)
-            Returntype: [ GWAS_SNP ]
+			Associates gwas_snps from a list of diseases
+			Args:
+			* [ string ] (trait descriptions - free strings )
+			* [ string ] (trait EFO identifiers)
+			Returntype: [ GWAS_SNP ]
 
-    """
-    res = filter(lambda X: X.pvalue < postgap.Globals.GWAS_PVALUE_CUTOFF,
-                 scan_disease_databases(diseases, efos))
+	"""
+	res = filter(lambda X: X.pvalue < postgap.Globals.GWAS_PVALUE_CUTOFF,
+				 scan_disease_databases(diseases, efos))
 
-    logging.info("Found %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) after p-value filter (%f)" %
-                 (len(res), ", ".join(diseases), ", ".join(efos), postgap.Globals.GWAS_PVALUE_CUTOFF))
+	logging.info("Found %i GWAS SNPs associated to diseases (%s) or EFO IDs (%s) after p-value filter (%f)" %
+				 (len(res), ", ".join(diseases), ", ".join(efos), postgap.Globals.GWAS_PVALUE_CUTOFF))
 
-    return res
+	return res
 
 
 def scan_disease_databases(diseases, efos):
-    """
+	"""
 
-            Associates gwas_snps from a list of diseases
-            Args:
-            * [ string ] (trait descriptions)
-            * [ string ] (trait EFO identifiers)
-            Returntype: [ GWAS_SNP ]
+			Associates gwas_snps from a list of diseases
+			Args:
+			* [ string ] (trait descriptions)
+			* [ string ] (trait EFO identifiers)
+			Returntype: [ GWAS_SNP ]
 
-    """
-    if postgap.Globals.GWAS_SUMMARY_STATS_FILE is not None:
-        gwas_associations = postgap.GWAS.GWAS_File().run(diseases, efos)
-    elif postgap.Globals.GWAS_adaptors == None:
-        logging.info("Searching for GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (
-            ", ".join(diseases), ", ".join(efos)))
-        gwas_associations = concatenate(source().run(
-            diseases, efos) for source in postgap.GWAS.sources)
-    else:
-        logging.info("Searching for GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in (%s)" % (
-            ", ".join(diseases), ", ".join(efos), ", ".join(postgap.Globals.GWAS_adaptors)))
-        gwas_associations = concatenate(source().run(
-            diseases, efos) for source in postgap.GWAS.get_filtered_subclasses(postgap.Globals.GWAS_adaptors))
+	"""
+	if postgap.Globals.GWAS_SUMMARY_STATS_FILE is not None:
+		gwas_associations = postgap.GWAS.GWAS_File().run(diseases, efos)
+	elif postgap.Globals.GWAS_adaptors == None:
+		logging.info("Searching for GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (
+			", ".join(diseases), ", ".join(efos)))
+		gwas_associations = concatenate(source().run(
+			diseases, efos) for source in postgap.GWAS.sources)
+	else:
+		logging.info("Searching for GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in (%s)" % (
+			", ".join(diseases), ", ".join(efos), ", ".join(postgap.Globals.GWAS_adaptors)))
+		gwas_associations = concatenate(source().run(
+			diseases, efos) for source in postgap.GWAS.get_filtered_subclasses(postgap.Globals.GWAS_adaptors))
 
-    logging.info("Done searching for GWAS SNPs. Found %s gwas associations." % len(
-        gwas_associations))
+	logging.info("Done searching for GWAS SNPs. Found %s gwas associations." % len(
+		gwas_associations))
 
-    associations_by_snp = dict()
-    for gwas_association in gwas_associations:
-        # Sanity filter to avoid breaking downstream code
-        # Looking at you GWAS DB, "p-value = 0", pshaw!
-        if gwas_association.pvalue <= 0:
-            continue
-        if gwas_association.sample_size <= 0:
-            continue
+	associations_by_snp = dict()
+	for gwas_association in gwas_associations:
+		# Sanity filter to avoid breaking downstream code
+		# Looking at you GWAS DB, "p-value = 0", pshaw!
+		if gwas_association.pvalue <= 0:
+			continue
+		if gwas_association.sample_size <= 0:
+			continue
 
-        if postgap.Globals.PERFORM_BAYESIAN:
-            if gwas_association.odds_ratio is not None:
-                z_score = postgap.FinemapIntegration.z_score_from_pvalue(
-                    gwas_association.pvalue, float(gwas_association.odds_ratio) - 1)
-                beta = math.log(gwas_association.odds_ratio)
-            elif gwas_association.beta_coefficient is not None:
-                z_score = postgap.FinemapIntegration.z_score_from_pvalue(
-                    gwas_association.pvalue, gwas_association.beta_coefficient)
-                beta = gwas_association.beta_coefficient
-            else:
-                continue
-        else:
-            z_score = None
-            beta = None
+		if postgap.Globals.PERFORM_BAYESIAN:
+			if gwas_association.odds_ratio is not None:
+				z_score = postgap.FinemapIntegration.z_score_from_pvalue(
+					gwas_association.pvalue, float(gwas_association.odds_ratio) - 1)
+				beta = math.log(gwas_association.odds_ratio)
+			elif gwas_association.beta_coefficient is not None:
+				z_score = postgap.FinemapIntegration.z_score_from_pvalue(
+					gwas_association.pvalue, gwas_association.beta_coefficient)
+				beta = gwas_association.beta_coefficient
+			else:
+				continue
+		else:
+			z_score = None
+			beta = None
 
-        if gwas_association.snp not in associations_by_snp or associations_by_snp[gwas_association.snp].pvalue < gwas_association.pvalue:
-            associations_by_snp[gwas_association.snp] = GWAS_SNP(
-                snp=SNP(rsID=gwas_association.snp, chrom=None,
-                        pos=None, approximated_zscore=None),
-                pvalue=gwas_association.pvalue,
-                evidence=[gwas_association],
-                z_score=z_score,
-                beta=beta
-            )
+		if gwas_association.snp not in associations_by_snp or associations_by_snp[gwas_association.snp].pvalue < gwas_association.pvalue:
+			associations_by_snp[gwas_association.snp] = GWAS_SNP(
+				snp=SNP(rsID=gwas_association.snp, chrom=None,
+						pos=None, approximated_zscore=None),
+				pvalue=gwas_association.pvalue,
+				evidence=[gwas_association],
+				z_score=z_score,
+				beta=beta
+			)
 
-    gwas_snps = associations_by_snp.values()
+	gwas_snps = associations_by_snp.values()
 
-    if postgap.Globals.GWAS_adaptors == None:
-        logging.info("Found %i unique GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (
-            len(gwas_snps), ", ".join(diseases), ", ".join(efos)))
-    else:
-        logging.info("Found %i unique GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in (%s)" % (
-            len(gwas_snps), ", ".join(diseases), ", ".join(efos), ", ".join(postgap.Globals.GWAS_adaptors)))
+	if postgap.Globals.GWAS_adaptors == None:
+		logging.info("Found %i unique GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (
+			len(gwas_snps), ", ".join(diseases), ", ".join(efos)))
+	else:
+		logging.info("Found %i unique GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in (%s)" % (
+			len(gwas_snps), ", ".join(diseases), ", ".join(efos), ", ".join(postgap.Globals.GWAS_adaptors)))
 
-    return gwas_snps
+	return gwas_snps
 
 def gwas_snps_to_genes(gwas_snps, population, tissue_weights):
-    """
+	"""
 
-            Associates Genes to gwas_snps of interest
-            Args:
-            * [ GWAS_Association ]
-            * string (population name)
-            * { tissue_name: scalar (weight) }
-            Returntype: [ GeneCluster_Association ]
+			Associates Genes to gwas_snps of interest
+			Args:
+			* [ GWAS_Association ]
+			* string (population name)
+			* { tissue_name: scalar (weight) }
+			Returntype: [ GeneCluster_Association ]
 
-    """
-    # Must set the tissue settings before separating out the gwas_snps
-    # TODO: tissue_weights may be deprecated once ML weighting is implemented
-    if tissue_weights is None:
-        tissue_weights = gwas_snps_to_tissue_weights(gwas_snps)
+	"""
+	# Must set the tissue settings before separating out the gwas_snps
+	# TODO: tissue_weights may be deprecated once ML weighting is implemented
+	if tissue_weights is None:
+		tissue_weights = gwas_snps_to_tissue_weights(gwas_snps)
 
-    return clusters_to_genes(cluster_gwas_snps(gwas_snps, population), population, tissue_weights)
+	return clusters_to_genes(cluster_gwas_snps(gwas_snps, population), population, tissue_weights)
 
 
 def clusters_to_genes(clusters, population, tissue_weights):
-    """
+	"""
 
-            Associates genes to a set of clusters 
-            Args:
-            * [ Cluster ]
-            * string (population name)
-            * {tissue_name: scalar (weight) }
-            Returntype: [ string ]
+			Associates genes to a set of clusters 
+			Args:
+			* [ Cluster ]
+			* string (population name)
+			* {tissue_name: scalar (weight) }
+			Returntype: [ string ]
 
-    """
-    # Collect regulatory and cis-regulatory evidence across clusters
-    cluster_associations = [(cluster, ld_snps_to_genes(
-        cluster.ld_snps, tissue_weights)) for cluster in clusters]
-    with open('cluster_association.pkl', 'w') as f:
-        pickle.dump(cluster_associations, f)
-    # with open('cluster_association.pkl') as f:
-    #        cluster_associations= pickle.load(f)
-    # If required, perform genome-wide GWAS finemapping
+	"""
+	# Collect regulatory and cis-regulatory evidence across clusters
+	cluster_associations = [(cluster, ld_snps_to_genes(
+		cluster.ld_snps, tissue_weights)) for cluster in clusters]
+	with open('cluster_association.pkl', 'w') as f:
+		pickle.dump(cluster_associations, f)
+	# with open('cluster_association.pkl') as f:
+	#		cluster_associations= pickle.load(f)
+	# If required, perform genome-wide GWAS finemapping
 
-    # Extract the GWAS and eQTL F.A parameters (lambdas)
-    # TODO: Remove magic filepaths
-    # with open('GWAS_lambdas_'+os.path.basename(postgap.Globals.GWAS_SUMMARY_STATS_FILE), 'w') as fw1:
-    #     fw1.write('cluster\tsource\tlambdas\n')
-    # with open('eQTL_lambdas_'+os.path.basename(postgap.Globals.GWAS_SUMMARY_STATS_FILE), 'w') as fw2:
-    #     fw2.write('cluster\ttissue\tgene\tlambdas\n')
-    with open(postgap.Globals.OUTPUT+'_GWAS_lambdas.txt', 'w') as fw1:
-        fw1.write('source\tlambdas\n')
-    with open(postgap.Globals.OUTPUT+'_eQTL_lambdas.txt', 'w') as fw2:
-        fw2.write('cluster\ttissue\tgene\tlambdas\n')
-    # ===
+	# Extract the GWAS and eQTL F.A parameters (lambdas)
+	# TODO: Remove magic filepaths
+	# with open('GWAS_lambdas_'+os.path.basename(postgap.Globals.GWAS_SUMMARY_STATS_FILE), 'w') as fw1:
+	#	 fw1.write('cluster\tsource\tlambdas\n')
+	# with open('eQTL_lambdas_'+os.path.basename(postgap.Globals.GWAS_SUMMARY_STATS_FILE), 'w') as fw2:
+	#	 fw2.write('cluster\ttissue\tgene\tlambdas\n')
+	with open(postgap.Globals.OUTPUT+'_GWAS_lambdas.txt', 'w') as fw1:
+		fw1.write('source\tlambdas\n')
+	with open(postgap.Globals.OUTPUT+'_eQTL_lambdas.txt', 'w') as fw2:
+		fw2.write('cluster\ttissue\tgene\tlambdas\n')
+	# ===
 
-    if postgap.Globals.PERFORM_BAYESIAN:
-        cluster_associations = postgap.FinemapIntegration.compute_gwas_posteriors(
-            cluster_associations, population)
-    # print cluster_associations[0][0].ld_matrix
+	if postgap.Globals.PERFORM_BAYESIAN:
+		cluster_associations = postgap.FinemapIntegration.compute_gwas_posteriors(
+			cluster_associations, population)
+	# print cluster_associations[0][0].ld_matrix
 
-    # Perform cluster by cluster finemapping
-    res = concatenate(cluster_to_genes(cluster, associations, tissue_weights, population)
-                      for cluster, associations in cluster_associations)
+	# Perform cluster by cluster finemapping
+	res = concatenate(cluster_to_genes(cluster, associations, tissue_weights, population)
+					  for cluster, associations in cluster_associations)
 
-    logging.info("\tFound %i genes associated to all clusters" % (len(res)))
+	logging.info("\tFound %i genes associated to all clusters" % (len(res)))
 
-    if len(res) == 0:
-        return []
-    else:
-        return sorted(res, key=lambda X: X.score)
+	if len(res) == 0:
+		return []
+	else:
+		return sorted(res, key=lambda X: X.score)
 
 
 def gwas_snps_to_tissue_weights(gwas_snps):
-    """
+	"""
 
-            Associates list of tissues to list of gwas_snps
-            Args:
-            * [ GWAS_SNP ]
-            Returntype: [ string ]
+			Associates list of tissues to list of gwas_snps
+			Args:
+			* [ GWAS_SNP ]
+			Returntype: [ string ]
 
-    """
-    return ['Whole_Blood']  # See FORGE??
+	"""
+	return ['Whole_Blood']  # See FORGE??
 
 
 def cluster_gwas_snps(gwas_snps, population):
-    """
+	"""
 
-            Bundle together gwas_snps within LD threshold
-            * [ GWAS_SNP ]
-            * String (population name)
-            Returntype: [ GWAS_Cluster ]
+			Bundle together gwas_snps within LD threshold
+			* [ GWAS_SNP ]
+			* String (population name)
+			Returntype: [ GWAS_Cluster ]
 
-    """
-    gwas_snp_locations = get_gwas_snp_locations(gwas_snps)
+	"""
+	gwas_snp_locations = get_gwas_snp_locations(gwas_snps)
 
-    logging.info("Found %i locations from %i GWAS SNPs" %
-                 (len(gwas_snp_locations), len(gwas_snps)))
+	logging.info("Found %i locations from %i GWAS SNPs" %
+				 (len(gwas_snp_locations), len(gwas_snps)))
 
-    # For every gwas snp location, create the preclusters by simple LD expansion of independent SNPs.
-    #
-    preclusters = filter(lambda X: X is not None, [gwas_snp_to_precluster(
-        gwas_snp_location, population) for gwas_snp_location in gwas_snp_locations])
+	# For every gwas snp location, create the preclusters by simple LD expansion of independent SNPs.
+	#
+	preclusters = filter(lambda X: X is not None, [gwas_snp_to_precluster(
+		gwas_snp_location, population) for gwas_snp_location in gwas_snp_locations])
 
-    # Remove preclusters having a SNP in a blacklisted region
-    #
-    filtered_preclusters = postgap.RegionFilter.region_filter(preclusters)
+	# Remove preclusters having a SNP in a blacklisted region
+	#
+	filtered_preclusters = postgap.RegionFilter.region_filter(preclusters)
 
-    # Merge precluster that share one or more GWAS_Cluster.ld_snps.
-    #
-    clusters = merge_preclusters_ld(
-        merge_preclusters_distance(filtered_preclusters))
+	# Merge precluster that share one or more GWAS_Cluster.ld_snps.
+	#
+	clusters = merge_preclusters_ld(
+		merge_preclusters_distance(filtered_preclusters))
 
-    logging.info("Found %i clusters from %i GWAS SNP locations" %
-                 (len(clusters), len(gwas_snp_locations)))
+	logging.info("Found %i clusters from %i GWAS SNP locations" %
+				 (len(clusters), len(gwas_snp_locations)))
 
-    return clusters
+	return clusters
 
 
 def gwas_snp_to_precluster(gwas_snp, population):
-    """
+	"""
 
-        Extract neighbourhood of GWAS snp
-        Args:
-        * [ GWAS_SNP ]
-        * string (population name)
-        Returntype: GWAS_Cluster
+		Extract neighbourhood of GWAS snp
+		Args:
+		* [ GWAS_SNP ]
+		* string (population name)
+		Returntype: GWAS_Cluster
 
-    """
-    mapped_ld_snps = postgap.LD.calculate_window(
-        gwas_snp.snp, population=population)
-    logging.info("Found %i SNPs in the vicinity of %s" %
-                 (len(mapped_ld_snps), gwas_snp.snp.rsID))
-    return GWAS_Cluster(
-        gwas_snps=[gwas_snp],
-        ld_snps=mapped_ld_snps,
-        ld_matrix=None,
-        z_scores=None,
-        betas=None,
-        mafs=None,
-        annotations=None,
-        gwas_configuration_posteriors=None
-    )
+	"""
+	mapped_ld_snps = postgap.LD.calculate_window(
+		gwas_snp.snp, population=population)
+	logging.info("Found %i SNPs in the vicinity of %s" %
+				 (len(mapped_ld_snps), gwas_snp.snp.rsID))
+	return GWAS_Cluster(
+		gwas_snps=[gwas_snp],
+		ld_snps=mapped_ld_snps,
+		ld_matrix=None,
+		z_scores=None,
+		betas=None,
+		mafs=None,
+		annotations=None,
+		gwas_configuration_posteriors=None
+	)
 
 
 def get_gwas_snp_locations(gwas_snps):
-    """
+	"""
 
-            Extract locations of GWAS SNP:
-            Args
-            * GWAS_SNP
-            Returntype: [ GWAS_SNP ]
+			Extract locations of GWAS SNP:
+			Args
+			* GWAS_SNP
+			Returntype: [ GWAS_SNP ]
 
-    """
-    original_gwas_snp = dict((gwas_snp.snp.rsID, gwas_snp)
-                             for gwas_snp in gwas_snps)
-    mapped_snps = postgap.Ensembl_lookup.get_snp_locations(
-        original_gwas_snp.keys())
+	"""
+	original_gwas_snp = dict((gwas_snp.snp.rsID, gwas_snp)
+							 for gwas_snp in gwas_snps)
+	mapped_snps = postgap.Ensembl_lookup.get_snp_locations(
+		original_gwas_snp.keys())
 
-    return [
-        GWAS_SNP(
-            snp=mapped_snp,
-            pvalue=original_gwas_snp[mapped_snp.rsID].pvalue,
-            evidence=original_gwas_snp[mapped_snp.rsID].evidence,
-            z_score=original_gwas_snp[mapped_snp.rsID].z_score,
-            beta=original_gwas_snp[mapped_snp.rsID].beta
-        )
-        for mapped_snp in mapped_snps
-        if mapped_snp.rsID in original_gwas_snp
-    ]
+	return [
+		GWAS_SNP(
+			snp=mapped_snp,
+			pvalue=original_gwas_snp[mapped_snp.rsID].pvalue,
+			evidence=original_gwas_snp[mapped_snp.rsID].evidence,
+			z_score=original_gwas_snp[mapped_snp.rsID].z_score,
+			beta=original_gwas_snp[mapped_snp.rsID].beta
+		)
+		for mapped_snp in mapped_snps
+		if mapped_snp.rsID in original_gwas_snp
+	]
 
 
 def merge_preclusters_distance(preclusters):
-    """
+	"""
 
-            Bundle together preclusters that are within 100Kb
-            * [ Cluster ]
-            Returntype: [ Cluster ]
+			Bundle together preclusters that are within 100Kb
+			* [ Cluster ]
+			Returntype: [ Cluster ]
 
-    """
-    input = list(preclusters)
-    output = []
+	"""
+	input = list(preclusters)
+	output = []
 
-    for new_precluster in input:
-        merged = False
-        for cluster in output:
-            distance = distance_between_preclusters(cluster, new_precluster)
-            if distance is not None and distance < 1e5:
-                output.remove(cluster)
-                output.append(merge_clusters(cluster, new_precluster))
-                merged = True
-                break
-        if not merged:
-            output.append(new_precluster)
+	for new_precluster in input:
+		merged = False
+		for cluster in output:
+			distance = distance_between_preclusters(cluster, new_precluster)
+			if distance is not None and distance < 1e5:
+				output.remove(cluster)
+				output.append(merge_clusters(cluster, new_precluster))
+				merged = True
+				break
+		if not merged:
+			output.append(new_precluster)
 
-    for cluster in output:
-        for gwas_snp in cluster.gwas_snps:
-            assert gwas_snp.snp.rsID in [
-                ld_snp.rsID for ld_snp in cluster.ld_snps]
-    return output
+	for cluster in output:
+		for gwas_snp in cluster.gwas_snps:
+			assert gwas_snp.snp.rsID in [
+				ld_snp.rsID for ld_snp in cluster.ld_snps]
+	return output
 
 
 def distance_between_preclusters(A, B):
-    min_distance = None
-    for SNPA in A.gwas_snps:
-        for SNPB in B.gwas_snps:
-            if SNPA.snp.chrom == SNPB.snp.chrom and (min_distance is None or min_distance > abs(SNPA.snp.pos - SNPB.snp.pos)):
-                min_distance = abs(SNPA.snp.pos - SNPB.snp.pos)
-    return min_distance
+	min_distance = None
+	for SNPA in A.gwas_snps:
+		for SNPB in B.gwas_snps:
+			if SNPA.snp.chrom == SNPB.snp.chrom and (min_distance is None or min_distance > abs(SNPA.snp.pos - SNPB.snp.pos)):
+				min_distance = abs(SNPA.snp.pos - SNPB.snp.pos)
+	return min_distance
 
 
 def merge_preclusters_ld(preclusters):
-    """
+	"""
 
-            Bundle together preclusters that share one LD snp
-            * [ Cluster ]
-            Returntype: [ Cluster ]
+			Bundle together preclusters that share one LD snp
+			* [ Cluster ]
+			Returntype: [ Cluster ]
 
-    """
-    clusters = list(preclusters)
+	"""
+	clusters = list(preclusters)
 
-    for cluster in clusters:
-        chrom = cluster.gwas_snps[0].snp.chrom
-        start = min(gwas_snp.snp.pos for gwas_snp in cluster.gwas_snps)
-        end = max(gwas_snp.snp.pos for gwas_snp in cluster.gwas_snps)
+	for cluster in clusters:
+		chrom = cluster.gwas_snps[0].snp.chrom
+		start = min(gwas_snp.snp.pos for gwas_snp in cluster.gwas_snps)
+		end = max(gwas_snp.snp.pos for gwas_snp in cluster.gwas_snps)
 
-    # A dictionary that maps from snp to merged clusters
-    snp_owner = dict()
-    for cluster in preclusters:
-        for ld_snp in cluster.ld_snps:
-            # If this SNP has been seen in a different cluster
-            if ld_snp in snp_owner and snp_owner[ld_snp] is not cluster:
-                # Set other_cluster to that different cluster
-                other_cluster = snp_owner[ld_snp]
+	# A dictionary that maps from snp to merged clusters
+	snp_owner = dict()
+	for cluster in preclusters:
+		for ld_snp in cluster.ld_snps:
+			# If this SNP has been seen in a different cluster
+			if ld_snp in snp_owner and snp_owner[ld_snp] is not cluster:
+				# Set other_cluster to that different cluster
+				other_cluster = snp_owner[ld_snp]
 
-                merged_cluster = merge_clusters(cluster, other_cluster)
+				merged_cluster = merge_clusters(cluster, other_cluster)
 
-                #    Remove the two previous clusters and replace them with
-                #    the merged cluster
-                clusters.remove(cluster)
-                clusters.remove(other_cluster)
-                clusters.append(merged_cluster)
+				#	Remove the two previous clusters and replace them with
+				#	the merged cluster
+				clusters.remove(cluster)
+				clusters.remove(other_cluster)
+				clusters.append(merged_cluster)
 
-                #    Set the new cluster as the owner of these SNPs.
-                for snp in merged_cluster.ld_snps:
-                    snp_owner[snp] = merged_cluster
-                for snp in cluster.ld_snps:
-                    snp_owner[snp] = merged_cluster
+				#	Set the new cluster as the owner of these SNPs.
+				for snp in merged_cluster.ld_snps:
+					snp_owner[snp] = merged_cluster
+				for snp in cluster.ld_snps:
+					snp_owner[snp] = merged_cluster
 
-                # Skip the rest of this cluster.
-                break
-            else:
-                snp_owner[ld_snp] = cluster
+				# Skip the rest of this cluster.
+				break
+			else:
+				snp_owner[ld_snp] = cluster
 
-    for cluster in clusters:
-        chrom = cluster.gwas_snps[0].snp.chrom
-        start = min(gwas_snp.snp.pos for gwas_snp in cluster.gwas_snps)
-        end = max(gwas_snp.snp.pos for gwas_snp in cluster.gwas_snps)
+	for cluster in clusters:
+		chrom = cluster.gwas_snps[0].snp.chrom
+		start = min(gwas_snp.snp.pos for gwas_snp in cluster.gwas_snps)
+		end = max(gwas_snp.snp.pos for gwas_snp in cluster.gwas_snps)
 
-    logging.info("\tFound %i clusters from the GWAS peaks" % (len(clusters)))
+	logging.info("\tFound %i clusters from the GWAS peaks" % (len(clusters)))
 
-    return clusters
+	return clusters
 
 
 def merge_clusters(cluster, other_cluster):
-    """
-            Merges two clusters into a single one:
-            Arg1: Cluster
-            Arg2: Cluster
-            Returntype: Cluster
-    """
-    # Merge data from current cluster into previous cluster
-    merged_gwas_snps = other_cluster.gwas_snps + cluster.gwas_snps
+	"""
+			Merges two clusters into a single one:
+			Arg1: Cluster
+			Arg2: Cluster
+			Returntype: Cluster
+	"""
+	# Merge data from current cluster into previous cluster
+	merged_gwas_snps = other_cluster.gwas_snps + cluster.gwas_snps
 
-    #   Create a unique set of ld snps from the current cluster
-    #   and the other cluster.
-    merged_ld_snps = dict((ld_snp.rsID, ld_snp)
-                          for ld_snp in cluster.ld_snps + other_cluster.ld_snps).values()
+	#   Create a unique set of ld snps from the current cluster
+	#   and the other cluster.
+	merged_ld_snps = dict((ld_snp.rsID, ld_snp)
+						  for ld_snp in cluster.ld_snps + other_cluster.ld_snps).values()
 
-    #   Create a new Cluster
-    return GWAS_Cluster(
-        gwas_snps=merged_gwas_snps,
-        ld_snps=merged_ld_snps,
-        ld_matrix=None,
-        z_scores=None,
-        betas=None,
-        mafs=None,
-        annotations=None,
-        gwas_configuration_posteriors=None
-    )
+	#   Create a new Cluster
+	return GWAS_Cluster(
+		gwas_snps=merged_gwas_snps,
+		ld_snps=merged_ld_snps,
+		ld_matrix=None,
+		z_scores=None,
+		betas=None,
+		mafs=None,
+		annotations=None,
+		gwas_configuration_posteriors=None
+	)
 
 
 def cluster_to_genes(cluster, associations, tissues, population):
-    """
+	"""
 
-        Associated Genes to a cluster of gwas_snps
-        Args:
-        * Cluster 
-        * [ GeneSNP_Associations ] 
-        * { tissue_name: scalar (weights) }
-        * string (population name)
-        Returntype: [ GeneCluster_Association ]
+		Associated Genes to a cluster of gwas_snps
+		Args:
+		* Cluster 
+		* [ GeneSNP_Associations ] 
+		* { tissue_name: scalar (weights) }
+		* string (population name)
+		Returntype: [ GeneCluster_Association ]
 
-    """
-    if postgap.Globals.PERFORM_BAYESIAN:
-        assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(
-            cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
-        assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(
-            cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
-        gene_tissue_posteriors = postgap.FinemapIntegration.compute_joint_posterior(
-            cluster, associations)
+	"""
+	if postgap.Globals.PERFORM_BAYESIAN:
+		assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(
+			cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
+		assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(
+			cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
+		gene_tissue_posteriors = postgap.FinemapIntegration.compute_joint_posterior(
+			cluster, associations)
 
-        res = [
-            GeneCluster_Association(
-                gene=gene,
-                score=None,
-                collocation_posterior=gene_tissue_posteriors[gene],
-                cluster=cluster,
-                # This is a [ GeneSNP_Association ]
-                evidence=filter(lambda X: X.gene == gene, associations),
-                r2=None
-            )
-            for gene in gene_tissue_posteriors
-        ]
+		res = [
+			GeneCluster_Association(
+				gene=gene,
+				score=None,
+				collocation_posterior=gene_tissue_posteriors[gene],
+				cluster=cluster,
+				# This is a [ GeneSNP_Association ]
+				evidence=filter(lambda X: X.gene == gene, associations),
+				r2=None
+			)
+			for gene in gene_tissue_posteriors
+		]
 
-        logging.info("\tFound %i genes associated" % (len(res)))
+		logging.info("\tFound %i genes associated" % (len(res)))
 
-    else:
-        # Compute LD from top SNP
-        top_gwas_hit = sorted(cluster.gwas_snps, key=lambda X: X.pvalue)[-1]
-        ld = postgap.LD.get_lds_from_top_gwas(
-            top_gwas_hit.snp, cluster.ld_snps, population=population)
+	else:
+		# Compute LD from top SNP
+		top_gwas_hit = sorted(cluster.gwas_snps, key=lambda X: X.pvalue)[-1]
+		ld = postgap.LD.get_lds_from_top_gwas(
+			top_gwas_hit.snp, cluster.ld_snps, population=population)
 
-        # Compute gene score
-        gene_scores = dict(
-            ((association.gene, association.snp),
-             (association, association.score * ld[association.snp]))
-            for association in associations
-        )
+		# Compute gene score
+		gene_scores = dict(
+			((association.gene, association.snp),
+			 (association, association.score * ld[association.snp]))
+			for association in associations
+		)
 
-        if len(gene_scores) == 0:
-            return []
+		if len(gene_scores) == 0:
+			return []
 
-        # OMIM exception
-        max_score = max(X[1] for X in gene_scores.values())
-        for gene, snp in gene_scores:
-            if len(gene_to_phenotypes(gene)):
-                gene_scores[(gene, snp)][1] = max_score
+		# OMIM exception
+		max_score = max(X[1] for X in gene_scores.values())
+		for gene, snp in gene_scores:
+			if len(gene_to_phenotypes(gene)):
+				gene_scores[(gene, snp)][1] = max_score
 
-        # PICS score precomputed and normalised
-        pics = PICS(ld, top_gwas_hit.pvalue)
+		# PICS score precomputed and normalised
+		pics = PICS(ld, top_gwas_hit.pvalue)
 
-        # Compute posterior
-        res = [
-            GeneCluster_Association(
-                gene=gene,
-                score=total_score(pics[snp], gene_scores[(gene, snp)][1]),
-                collocation_posterior=None,
-                cluster=cluster,
-                # This is a [ GeneSNP_Association ]
-                evidence=gene_scores[(gene, snp)][:1],
-                r2=ld[snp]
-            )
-            for (gene, snp) in gene_scores
-            if snp in pics
-        ]
+		# Compute posterior
+		res = [
+			GeneCluster_Association(
+				gene=gene,
+				score=total_score(pics[snp], gene_scores[(gene, snp)][1]),
+				collocation_posterior=None,
+				cluster=cluster,
+				# This is a [ GeneSNP_Association ]
+				evidence=gene_scores[(gene, snp)][:1],
+				r2=ld[snp]
+			)
+			for (gene, snp) in gene_scores
+			if snp in pics
+		]
 
-        logging.info("\tFound %i genes associated around GWAS SNP %s" %
-                     (len(res), top_gwas_hit.snp.rsID))
+		logging.info("\tFound %i genes associated around GWAS SNP %s" %
+					 (len(res), top_gwas_hit.snp.rsID))
 
-    # Pick the association with the highest score
-    return sorted(res, key=lambda X: X.score)
+	# Pick the association with the highest score
+	return sorted(res, key=lambda X: X.score)
 
 
 def PICS(ld, pvalue):
-    minus_log_pvalue = - math.log(pvalue) / math.log(10)
-    SD = dict()
-    Mean = dict()
-    prob = dict()
-    sum = 0
+	minus_log_pvalue = - math.log(pvalue) / math.log(10)
+	SD = dict()
+	Mean = dict()
+	prob = dict()
+	sum = 0
 
-    for snp in ld.keys():
-        if snp in ld:
-            SD[snp] = math.sqrt(1 - math.sqrt(ld[snp]) ** 6.4) * \
-                math.sqrt(minus_log_pvalue) / 2
-            Mean[snp] = ld[snp] * minus_log_pvalue
-        else:
-            # Defaults for remote SNPs
-            SD[snp] = 0
-            Mean[snp] = 1 + minus_log_pvalue
+	for snp in ld.keys():
+		if snp in ld:
+			SD[snp] = math.sqrt(1 - math.sqrt(ld[snp]) ** 6.4) * \
+				math.sqrt(minus_log_pvalue) / 2
+			Mean[snp] = ld[snp] * minus_log_pvalue
+		else:
+			# Defaults for remote SNPs
+			SD[snp] = 0
+			Mean[snp] = 1 + minus_log_pvalue
 
-        # Calculate the probability of each SNP
-        if SD[snp]:
-            prob[snp] = 1 - pnorm(minus_log_pvalue, Mean[snp], SD[snp])
-        else:
-            prob[snp] = 1
+		# Calculate the probability of each SNP
+		if SD[snp]:
+			prob[snp] = 1 - pnorm(minus_log_pvalue, Mean[snp], SD[snp])
+		else:
+			prob[snp] = 1
 
-        # Normalisation sum
-        sum += prob[snp]
+		# Normalisation sum
+		sum += prob[snp]
 
-    # Normalize the probabilies so that their sum is 1.
-    return dict((snp, prob[snp] / sum) for snp in prob.keys())
+	# Normalize the probabilies so that their sum is 1.
+	return dict((snp, prob[snp] / sum) for snp in prob.keys())
 
 
 def pnorm(x, mu, sd):
-    """
+	"""
 
-            Normal distribution PDF
-            Args:
-            * scalar: variable
-            * scalar: mean
-            * scalar: standard deviation
-            Return type: scalar (probability density)
+			Normal distribution PDF
+			Args:
+			* scalar: variable
+			* scalar: mean
+			* scalar: standard deviation
+			Return type: scalar (probability density)
 
-    """
-    return math.exp(- ((x - mu) / sd) ** 2 / 2) / (sd * 2.5)
+	"""
+	return math.exp(- ((x - mu) / sd) ** 2 / 2) / (sd * 2.5)
 
 
 def total_score(pics, gene_score):
-    """
+	"""
 
-            Computes a weird mean function from ld_snp PICs score and Gene/SNP association score
-            Args:
-            * PICS: scalar
-            * gene_score: scalar
-            Returntype: scalar
+			Computes a weird mean function from ld_snp PICs score and Gene/SNP association score
+			Args:
+			* PICS: scalar
+			* gene_score: scalar
+			Returntype: scalar
 
-    """
-    if pics is None:
-        return None
-    A = pics * (pics ** (1/3))
-    B = gene_score * (gene_score ** (1/3))
-    return ((A + B) / 2) ** 3
+	"""
+	if pics is None:
+		return None
+	A = pics * (pics ** (1/3))
+	B = gene_score * (gene_score ** (1/3))
+	return ((A + B) / 2) ** 3
 
 
 def rsIDs_to_genes(snp, tissues):
-    """
+	"""
 
-            Associates genes to single SNP
-            Args:
-            * SNP
-            * [ string ] (tissues)
-            Returntype: [ GeneSNP_Association ]
+			Associates genes to single SNP
+			Args:
+			* SNP
+			* [ string ] (tissues)
+			Returntype: [ GeneSNP_Association ]
 
-    """
-    if tissues is None:
-        tissues = ["Whole_Blood"]
-    return ld_snps_to_genes(postgap.Ensembl_lookup.get_snp_locations([snp]), tissues)
+	"""
+	if tissues is None:
+		tissues = ["Whole_Blood"]
+	return ld_snps_to_genes(postgap.Ensembl_lookup.get_snp_locations([snp]), tissues)
 
 
 def ld_snps_to_genes(ld_snps, tissues):
-    """
+	"""
 
-            Associates genes to LD linked SNPs
-            Args:
-            * [ SNP ]
-            * [ string ] (tissues)
-            * Dict SNP => float
-            Returntype: [ GeneSNP_Association ]
+			Associates genes to LD linked SNPs
+			Args:
+			* [ SNP ]
+			* [ string ] (tissues)
+			* Dict SNP => float
+			Returntype: [ GeneSNP_Association ]
 
-    """
-    # Search for SNP-Gene pairs:
-    # Hash of hashes SNP => Gene => Cisregulatory_Evidence
-    cisreg = cisregulatory_evidence(ld_snps, tissues)
+	"""
+	# Search for SNP-Gene pairs:
+	# Hash of hashes SNP => Gene => Cisregulatory_Evidence
+	cisreg = cisregulatory_evidence(ld_snps, tissues)
 
-    # Extract SNP specific info:
-    # Hash: SNP => [ Regulatory_evidence ]
-    reg = regulatory_evidence(cisreg.keys(), tissues)
+	# Extract SNP specific info:
+	# Hash: SNP => [ Regulatory_evidence ]
+	reg = regulatory_evidence(cisreg.keys(), tissues)
 
-    return concatenate((create_SNP_GeneSNP_Associations(snp, reg[snp], cisreg[snp]) for snp in cisreg))
+	return concatenate((create_SNP_GeneSNP_Associations(snp, reg[snp], cisreg[snp]) for snp in cisreg))
 
 
 def create_SNP_GeneSNP_Associations(snp, reg, cisreg):
-    """
+	"""
 
-            Associates gene to LD linked SNP
-            Args:
-            * SNP
-            * [ Regulatory_Evidence ]
-            * [ Cisregulatory_Evidence ]
-            Returntype: [GeneSNP_Association]
+			Associates gene to LD linked SNP
+			Args:
+			* SNP
+			* [ Regulatory_Evidence ]
+			* [ Cisregulatory_Evidence ]
+			Returntype: [GeneSNP_Association]
 
-    """
-    intermediary_scores, gene_scores = compute_v2g_scores(reg, cisreg)
-    rank = dict((score, index) for index, score in enumerate(
-        sorted(gene_scores.values(), reverse=True)))
+	"""
+	intermediary_scores, gene_scores = compute_v2g_scores(reg, cisreg)
+	rank = dict((score, index) for index, score in enumerate(
+		sorted(gene_scores.values(), reverse=True)))
 
-    return [GeneSNP_Association(
-        gene=gene,
-        snp=snp,
-        cisregulatory_evidence=cisreg[gene],
-        regulatory_evidence=reg,
-        intermediary_scores=intermediary_scores[gene],
-        score=gene_scores[gene],
-        rank=rank[gene_scores[gene]] + 1)
-        for gene in cisreg]
+	return [GeneSNP_Association(
+		gene=gene,
+		snp=snp,
+		cisregulatory_evidence=cisreg[gene],
+		regulatory_evidence=reg,
+		intermediary_scores=intermediary_scores[gene],
+		score=gene_scores[gene],
+		rank=rank[gene_scores[gene]] + 1)
+		for gene in cisreg]
 
 
 def compute_v2g_scores(reg, cisreg):
-    """
+	"""
 
-            Goes through evidence and scores associations to a SNP
-            Args:
-            * [ Regulatory_Evidence ]
-            * [ Cisregulatory_Evidence ] 
-            Returntype: dict(Gene: dict(string: float)), dict(Gene: float)
+			Goes through evidence and scores associations to a SNP
+			Args:
+			* [ Regulatory_Evidence ]
+			* [ Cisregulatory_Evidence ] 
+			Returntype: dict(Gene: dict(string: float)), dict(Gene: float)
 
-    """
+	"""
 
-    intermediary_scores = dict()
-    gene_scores = dict()
-    for gene in cisreg:
-        intermediary_scores[gene] = collections.defaultdict(int)
-        seen = set()
-        for evidence in cisreg[gene] + reg:
-            if evidence.source not in seen or float(evidence.score) > intermediary_scores[gene][evidence.source]:
-                intermediary_scores[gene][evidence.source] = float(
-                    evidence.score)
-                seen.add(evidence.source)
+	intermediary_scores = dict()
+	gene_scores = dict()
+	for gene in cisreg:
+		intermediary_scores[gene] = collections.defaultdict(int)
+		seen = set()
+		for evidence in cisreg[gene] + reg:
+			if evidence.source not in seen or float(evidence.score) > intermediary_scores[gene][evidence.source]:
+				intermediary_scores[gene][evidence.source] = float(
+					evidence.score)
+				seen.add(evidence.source)
 
-            # VEP stats
-            if evidence.source == 'VEP':
-                intermediary_scores[gene]['VEP_count'] += 1
-                intermediary_scores[gene]['VEP_sum'] += float(evidence.score)
+			# VEP stats
+			if evidence.source == 'VEP':
+				intermediary_scores[gene]['VEP_count'] += 1
+				intermediary_scores[gene]['VEP_sum'] += float(evidence.score)
 
-            if evidence.source == 'GTEx':
-                intermediary_scores[gene][evidence.tissue] = float(
-                    evidence.score)
+			if evidence.source == 'GTEx':
+				intermediary_scores[gene][evidence.tissue] = float(
+					evidence.score)
 
-            # Ad hoc bounds defined here:
-        # PCHiC
-        intermediary_scores[gene]['PCHiC'] = min(
-            intermediary_scores[gene]['PCHiC'], 1)
+			# Ad hoc bounds defined here:
+		# PCHiC
+		intermediary_scores[gene]['PCHiC'] = min(
+			intermediary_scores[gene]['PCHiC'], 1)
 
-        # VEP
-        if 'VEP' in intermediary_scores[gene]:
-            intermediary_scores[gene]['VEP_mean'] = intermediary_scores[gene]['VEP_sum'] / \
-                intermediary_scores[gene]['VEP_count']
+		# VEP
+		if 'VEP' in intermediary_scores[gene]:
+			intermediary_scores[gene]['VEP_mean'] = intermediary_scores[gene]['VEP_sum'] / \
+				intermediary_scores[gene]['VEP_count']
 
-        # Weighted sum
-        gene_scores[gene] = sum(intermediary_scores[gene][source] * postgap.Globals.EVIDENCE_WEIGHTS[source]
-                                for source in intermediary_scores[gene] if source in postgap.Globals.EVIDENCE_WEIGHTS)
+		# Weighted sum
+		gene_scores[gene] = sum(intermediary_scores[gene][source] * postgap.Globals.EVIDENCE_WEIGHTS[source]
+								for source in intermediary_scores[gene] if source in postgap.Globals.EVIDENCE_WEIGHTS)
 
-    return intermediary_scores, gene_scores
+	return intermediary_scores, gene_scores
 
 
 def cisregulatory_evidence(ld_snps, tissues):
-    """
+	"""
 
-            Associates genes to LD linked SNP
-            Args:
-            * [ SNP ]
-            * [ string ] (tissues)
-            Returntype: Hash of hashes SNP => Gene => Cisregulatory_Evidence
+			Associates genes to LD linked SNP
+			Args:
+			* [ SNP ]
+			* [ string ] (tissues)
+			Returntype: Hash of hashes SNP => Gene => Cisregulatory_Evidence
 
-    """
-    if postgap.Globals.Cisreg_adaptors == None:
-        logging.info(
-            "Searching for cis-regulatory data on %i SNPs in all databases" % (len(ld_snps)))
-        evidence = concatenate(source().run(ld_snps, tissues)
-                               for source in postgap.Cisreg.sources)
-    else:
-        logging.info("Searching for cis-regulatory data on %i SNPs in (%s)" %
-                     (len(ld_snps), ", ".join(postgap.Globals.Cisreg_adaptors)))
-        evidence = concatenate(source().run(ld_snps, tissues)
-                               for source in postgap.Cisreg.get_filtered_subclasses(postgap.Globals.Cisreg_adaptors))
+	"""
+	if postgap.Globals.Cisreg_adaptors == None:
+		logging.info(
+			"Searching for cis-regulatory data on %i SNPs in all databases" % (len(ld_snps)))
+		evidence = concatenate(source().run(ld_snps, tissues)
+							   for source in postgap.Cisreg.sources)
+	else:
+		logging.info("Searching for cis-regulatory data on %i SNPs in (%s)" %
+					 (len(ld_snps), ", ".join(postgap.Globals.Cisreg_adaptors)))
+		evidence = concatenate(source().run(ld_snps, tissues)
+							   for source in postgap.Cisreg.get_filtered_subclasses(postgap.Globals.Cisreg_adaptors))
 
-    flaten_evidence = []
-    for evi in evidence:
-        if type(evi) == list:
-            for e in evi:
-                flaten_evidence.append(e)
-        else:
-            flaten_evidence.append(evi)
+	flaten_evidence = []
+	for evi in evidence:
+		if type(evi) == list:
+			for e in evi:
+				flaten_evidence.append(e)
+		else:
+			flaten_evidence.append(evi)
 
-    filtered_evidence = filter(
-        lambda association: association is not None and association.gene is not None and association.gene.biotype == "protein_coding", flaten_evidence)
+	filtered_evidence = filter(
+		lambda association: association is not None and association.gene is not None and association.gene.biotype == "protein_coding", flaten_evidence)
 
-    # Group by snp, then gene:
-    res = collections.defaultdict(lambda: collections.defaultdict(list))
-    for association in filtered_evidence:
-        assert type(
-            association) is postgap.DataModel.Cisregulatory_Evidence, "association is Cisregulatory_Evidence"
-        res[association.snp][association.gene].append(association)
+	# Group by snp, then gene:
+	res = collections.defaultdict(lambda: collections.defaultdict(list))
+	for association in filtered_evidence:
+		assert type(
+			association) is postgap.DataModel.Cisregulatory_Evidence, "association is Cisregulatory_Evidence"
+		res[association.snp][association.gene].append(association)
 
-    if postgap.Globals.Cisreg_adaptors == None:
-        logging.debug(
-            ("Found %i cis-regulatory interactions in all databases" % (len(res))))
-    else:
-        logging.debug(("Found %i cis-regulatory interactions in (%s)" %
-                       (len(res), ", ".join(postgap.Globals.Cisreg_adaptors))))
-    return res
+	if postgap.Globals.Cisreg_adaptors == None:
+		logging.debug(
+			("Found %i cis-regulatory interactions in all databases" % (len(res))))
+	else:
+		logging.debug(("Found %i cis-regulatory interactions in (%s)" %
+					   (len(res), ", ".join(postgap.Globals.Cisreg_adaptors))))
+	return res
 
 
 def regulatory_evidence(snps, tissues):
-    """
+	"""
 
-            Extract regulatory evidence linked to SNPs and stores them in a hash
-            * [ SNP ]
-            * [ string ]
-            Returntype: Hash: SNP => [ Regulatory_evidence ]
+			Extract regulatory evidence linked to SNPs and stores them in a hash
+			* [ SNP ]
+			* [ string ]
+			Returntype: Hash: SNP => [ Regulatory_evidence ]
 
-    """
-    if postgap.Globals.Reg_adaptors == None:
-        logging.info(
-            "Searching for regulatory data on %i SNPs in all databases" % (len(snps)))
-        res = concatenate(source().run(snps, tissues)
-                          for source in postgap.Reg.sources)
-        logging.info("Found %i regulatory SNPs among %i in all databases" % (
-            len(res), len(snps)))
-    else:
-        logging.info("Searching for regulatory data on %i SNPs in (%s)" %
-                     (len(snps), ", ".join(postgap.Globals.Reg_adaptors)))
-        res = concatenate(source().run(snps, tissues)
-                          for source in postgap.Reg.get_filtered_subclasses(postgap.Globals.Reg_adaptors))
-        logging.info("Found %i regulatory SNPs among %i in (%s)" % (
-            len(res), len(snps), ", ".join(postgap.Globals.Reg_adaptors)))
+	"""
+	if postgap.Globals.Reg_adaptors == None:
+		logging.info(
+			"Searching for regulatory data on %i SNPs in all databases" % (len(snps)))
+		res = concatenate(source().run(snps, tissues)
+						  for source in postgap.Reg.sources)
+		logging.info("Found %i regulatory SNPs among %i in all databases" % (
+			len(res), len(snps)))
+	else:
+		logging.info("Searching for regulatory data on %i SNPs in (%s)" %
+					 (len(snps), ", ".join(postgap.Globals.Reg_adaptors)))
+		res = concatenate(source().run(snps, tissues)
+						  for source in postgap.Reg.get_filtered_subclasses(postgap.Globals.Reg_adaptors))
+		logging.info("Found %i regulatory SNPs among %i in (%s)" % (
+			len(res), len(snps), ", ".join(postgap.Globals.Reg_adaptors)))
 
-    # Group by SNP
-    hash = collections.defaultdict(list)
-    for hit in res:
-        hash[hit.snp].append(hit)
+	# Group by SNP
+	hash = collections.defaultdict(list)
+	for hit in res:
+		hash[hit.snp].append(hit)
 
-    return hash
+	return hash
 
 
 def gene_to_phenotypes(gene):
-    """
+	"""
 
-            Look up phenotype annotations for gene
-            Args:
-            * ENSG stable ID
-            Return type: [ OMIM Phenotype ]
+			Look up phenotype annotations for gene
+			Args:
+			* ENSG stable ID
+			Return type: [ OMIM Phenotype ]
 
-    """
-    return []  # TODO and remove stopper
-    if gene not in phenotype_cache:
-        phenotype_cache[gene['stable_id']
-                        ] = postgap.Ensembl_lookup.get_gene_phenotypes(gene)
+	"""
+	return []  # TODO and remove stopper
+	if gene not in phenotype_cache:
+		phenotype_cache[gene['stable_id']
+						] = postgap.Ensembl_lookup.get_gene_phenotypes(gene)
 
-    return phenotype_cache[gene['stable_id']]
+	return phenotype_cache[gene['stable_id']]
 
 
 def get_all_tissues():
-    server = 'http://rest.ensembl.org'
-    ext = '/eqtl/tissue/homo_sapiens?content-type=application/json'
-    try:
-        return postgap.REST.get(server, ext)
+	server = 'http://rest.ensembl.org'
+	ext = '/eqtl/tissue/homo_sapiens?content-type=application/json'
+	try:
+		return postgap.REST.get(server, ext)
 
-    except:
-        return None
+	except:
+		return None
