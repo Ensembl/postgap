@@ -478,7 +478,8 @@ def merge_clusters(cluster_list):
 		betas=None,
 		mafs=None,
 		annotations=None,
-		gwas_configuration_posteriors=None
+		gwas_configuration_posteriors=None,
+		lambdas = None
 	)
 
 def remove_overlaps(preclusters):

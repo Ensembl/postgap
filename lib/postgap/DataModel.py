@@ -88,24 +88,9 @@ GWAS_Cluster = collections.namedtuple(
 		'betas',
 		'mafs',
 		'annotations',
-		'gwas_configuration_posteriors'
+		'gwas_configuration_posteriors',
+		'lambdas'
 	]
-)
-
-
-GWAS_Cluster_with_lambdas = collections.namedtuple(
-        'GWAS_Cluster_with_lambdas',
-        [
-                'gwas_snps',
-                'ld_snps',
-                'ld_matrix',
-                'z_scores',
-                'betas',
-                'mafs',
-                'annotations',
-                'gwas_configuration_posteriors',
-                'lambdas'
-        ]
 )
 
 Cisregulatory_Evidence = collections.namedtuple(

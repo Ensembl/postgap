@@ -90,42 +90,22 @@ def prepare_cluster_for_finemap(cluster, associations, population, tissue_weight
 	else:
 		ld_snps, ld_matrix, z_scores, betas = impute_z_scores(cluster, population)
 	
-	## Define experiment label (serves for debugging logs)
-	chrom = ld_snps[0].chrom
-	start = min(ld_snp.pos for ld_snp in ld_snps)
-	end = max(ld_snp.pos for ld_snp in ld_snps)
-	sample_label = 'GWAS_Cluster_%s:%i-%i' % (chrom, start, end)
-	
 	# if ld_snps has less than 10 element, it is less informative
-	assert len(ld_snps) >= 10, sample_label + ' has less than 10 ld_snps in the cluster'
+	# TOTO: TODO assert len(ld_snps) >= 10, sample_label + ' has less than 10 ld_snps in the cluster'
 	
-	## Define sample size: mean of max for each SNP
-	sample_sizes = map(lambda gwas_snp: max(gwas_association.sample_size for gwas_association in gwas_snp.evidence), cluster.gwas_snps)
-	sample_size = sum(sample_sizes) / len(sample_sizes)
-	
-	ld_snp_ids = [ld_snp.rsID for ld_snp in ld_snps]
-	
-	## Compute posteriors
-	configuration_posteriors = postgap.Finemap.finemap(
-		z_scores     = numpy.array(z_scores),
-		beta_scores  = numpy.array(betas),
-		cov_matrix   = ld_matrix,
-		n            = sample_size,
-		labels       = ld_snp_ids,
-		sample_label = sample_label,
-		kstart       = postgap.Globals.KSTART,
-		kmax         = postgap.Globals.KMAX
-	)
-	
-	assert len(ld_snps) ==  ld_matrix.shape[0]
-	assert len(ld_snps) ==  ld_matrix.shape[1]
-	return GWAS_Cluster(cluster.gwas_snps, ld_snps, ld_matrix, z_scores, configuration_posteriors) 
+	mafs = extract_snp_mafs(ld_snps, associations, population.lower())
+	annotations = (extract_snp_annotations(ld_snps, associations) > 0.).astype('float')
 
-def extract_snp_mafs(cluster, associations, populations):
+	assert len(ld_snps) == ld_matrix.shape[0]
+	assert len(ld_snps) == ld_matrix.shape[1]
+	return GWAS_Cluster(cluster.gwas_snps, ld_snps, ld_matrix, z_scores, betas, mafs, annotations, None)
+	
+def extract_snp_mafs(ld_snps, associations, populations):
 	"""
-			Produce vector of mafs for the SNPs in a cluster
-			Arg1: [GeneSNP_Association]
-			Arg2: String
+			Produce vector of mafs for the SNPs provided
+			Arg1: [SNP]
+			Arg2: [GeneSNP_Association]
+			Arg3: String
 			Returntype: Numpy vector
 	"""
 	maf_hash = collections.defaultdict(int)
@@ -135,45 +115,27 @@ def extract_snp_mafs(cluster, associations, populations):
 				if evidence.info['MAFs'] is not None:
 					if evidence.source == 'VEP_reg' and populations in evidence.info['MAFs']:
 						maf_hash[association.snp.rsID] = evidence.info['MAFs'][populations]
-	return numpy.array([maf_hash[snp.rsID] for snp in cluster.ld_snps])
+
+	return numpy.array([float(maf_hash[snp.rsID]) for snp in ld_snps])
 
 
-def extract_snp_annotations(cluster, associations):
+def extract_snp_annotations(ld_snps, associations):
 	"""
-			Produce array of annotation for the SNPs in a cluster
-			Arg1: [GeneSNP_Association]
+			Produce array of annotation for the SNPs provided 
+			Arg1: [SNP]
+			Arg2: [GeneSNP_Association]
 			Returntype: Numpy 2D array
 	"""
-	annotation_hash = collections.defaultdict(
-		lambda: collections.defaultdict(float))
-	# for association in associations:
-	#	for evidence in association.cisregulatory_evidence:
-	#		annotation_hash[evidence.source][evidence.snp.rsID] = evidence.score
+	annotation_hash = collections.defaultdict(lambda: collections.defaultdict(float))
 
-	# sig_comb_lst = ['Adipose_Visceral_Omentum_RPGRIP1L',
-	#				'Muscle_Skeletal_FTO',
-	#				'Pancreas_IRX3',
-	#				'Pituitary_AKTIP',
-	#				'Thyroid_RPGRIP1L']
 	for association in associations:
 		for evidence in association.cisregulatory_evidence + association.regulatory_evidence:
 			if evidence.source in ['GTEx']:
 				continue
-			# if evidence.source =='GTEx':
-			#	comb = evidence.tissue+'_'+evidence.gene.name
-			#	if comb in sig_comb_lst:
-			#		pVal  = 1. - evidence.score
-			#		if pVal < 1e-03 :
-			#			SCORE =1.
-			#		else:
-			#			SCORE =0.
-			#		annotation_hash[comb][evidence.snp.rsID] = SCORE
 			else:
 				annotation_hash[evidence.source][evidence.snp.rsID] = evidence.score
-	# Annotation naming automatically 
-	postgap.Globals.source_lst = sorted(annotation_hash.keys())
-	# 
-	return numpy.array([[annotation_hash[annotation][snp.rsID] for snp in cluster.ld_snps] for annotation in postgap.Globals.source_lst])
+
+	return numpy.array([[annotation_hash[annotation][snp.rsID] for snp in ld_snps] for annotation in sorted(annotation_hash.keys())])
 
 def compute_ld_matrix(cluster, population):
 	'''
@@ -184,12 +146,10 @@ def compute_ld_matrix(cluster, population):
 			Returntype: [SNP], numpy.matrix (square LD matrix), numpy.matrix (Z-score vector)
 	'''
 	# Compute ld_matrix
-	ld_snp_ids, ld_matrix = postgap.LD.get_pairwise_ld(
-		cluster.ld_snps, population)
+	ld_snp_ids, ld_matrix = postgap.LD.get_pairwise_ld(cluster.ld_snps, population)
 
 	# Update list of LD SNPs
-	ld_snp_hash = dict((ld_snp.rsID, ld_snp)
-					   for index, ld_snp in enumerate(cluster.ld_snps))
+	ld_snp_hash = dict((ld_snp.rsID, ld_snp) for index, ld_snp in enumerate(cluster.ld_snps))
 	ld_snps = [ld_snp_hash[rsID] for rsID in ld_snp_ids]
 
 	# Aggregate z_scores into a single vector
@@ -231,8 +191,7 @@ def extract_z_scores_from_file(cluster, population):
 
 	# Update list of LD SNPs
 	ld_snps = [ld_snp_hash[rsID] for rsID in ld_snp_ids]
-	z_scores = [z_score_from_pvalue(
-		ld_snp_results[rsID][0], ld_snp_results[rsID][1]) for rsID in ld_snp_ids]
+	z_scores = [z_score_from_pvalue(ld_snp_results[rsID][0], ld_snp_results[rsID][1]) for rsID in ld_snp_ids]
 	betas = [ld_snp_results[rsID][1] for rsID in ld_snp_ids]
 
 	assert len(ld_snps) == ld_matrix.shape[0]
@@ -247,23 +206,17 @@ def impute_z_scores(cluster, population):
 			Returntype: [SNP], numpy.matrix (square LD matrix), numpy.matrix (Z-score vector)
 	'''
 	# Compute ld_matrix
-	ld_snp_ids, ld_matrix = postgap.LD.get_pairwise_ld(
-		cluster.ld_snps, population)
+	ld_snp_ids, ld_matrix = postgap.LD.get_pairwise_ld(cluster.ld_snps, population)
 
 	# Update list of LD SNPs
-	ld_snp_hash = dict((ld_snp.rsID, ld_snp)
-					   for index, ld_snp in enumerate(cluster.ld_snps))
+	ld_snp_hash = dict((ld_snp.rsID, ld_snp) for index, ld_snp in enumerate(cluster.ld_snps))
 	ld_snps = [ld_snp_hash[rsID] for rsID in ld_snp_ids]
 
 	# Determine which SNPs are missing values
-	gwas_snp_hash = dict((gwas_snp.snp.rsID, gwas_snp)
-						 for gwas_snp in cluster.gwas_snps)
-	missing_indices = numpy.array([index for index, ld_snp in enumerate(
-		ld_snps) if ld_snp.rsID not in gwas_snp_hash]).astype(int)
-	known_z_scores = numpy.array(
-		[gwas_snp_hash[ld_snp.rsID].z_score for ld_snp in ld_snps if ld_snp.rsID in gwas_snp_hash])
-	known_betas = numpy.array(
-		[gwas_snp_hash[ld_snp.rsID].beta for ld_snp in ld_snps if ld_snp.rsID in gwas_snp_hash])
+	gwas_snp_hash = dict((gwas_snp.snp.rsID, gwas_snp) for gwas_snp in cluster.gwas_snps)
+	missing_indices = numpy.array([index for index, ld_snp in enumerate(ld_snps) if ld_snp.rsID not in gwas_snp_hash]).astype(int)
+	known_z_scores = numpy.array([gwas_snp_hash[ld_snp.rsID].z_score for ld_snp in ld_snps if ld_snp.rsID in gwas_snp_hash])
+	known_betas = numpy.array([gwas_snp_hash[ld_snp.rsID].beta for ld_snp in ld_snps if ld_snp.rsID in gwas_snp_hash])
 
 	# Generate LD matrix of known values
 	ld_matrix_known = numpy.delete(ld_matrix, missing_indices, axis=1)
@@ -275,13 +228,10 @@ def impute_z_scores(cluster, population):
 
 	# Imputation
 	shrink_lambda = 0.1  # shrinkage factor, magic number
-	ld_matrix_known_shrink = shrink_lambda * numpy.diag(numpy.ones(
-		ld_matrix_known.shape[0])) + (1-shrink_lambda) * ld_matrix_known
+	ld_matrix_known_shrink = shrink_lambda * numpy.diag(numpy.ones(ld_matrix_known.shape[0])) + (1-shrink_lambda) * ld_matrix_known
 	ld_matrix_k2m_shrink = (1-shrink_lambda) * ld_matrix_k2m
-	z_shrink_imputed = numpy.dot(numpy.dot(ld_matrix_k2m_shrink, numpy.linalg.pinv(
-		ld_matrix_known_shrink, 0.0001)), known_z_scores)
-	beta_shrink_imputed = numpy.dot(numpy.dot(ld_matrix_k2m_shrink, numpy.linalg.pinv(
-		ld_matrix_known_shrink, 0.0001)), known_betas)
+	z_shrink_imputed = numpy.dot(numpy.dot(ld_matrix_k2m_shrink, numpy.linalg.pinv(ld_matrix_known_shrink, 0.0001)), known_z_scores)
+	beta_shrink_imputed = numpy.dot(numpy.dot(ld_matrix_k2m_shrink, numpy.linalg.pinv(ld_matrix_known_shrink, 0.0001)), known_betas)
 
 	# Aggregate z_scores into a single vector
 	z_scores = []
@@ -306,11 +256,10 @@ def finemap_gwas_cluster(cluster):
 
 			Enriches GWAS clusters with z-scores and GWAS posteriors
 			Arg1: GWAS_Cluster
-			Arg2: mafs (Numpy vector)
-			Arg3: annotations (2D Numpy array)
 			Returntype: GWAS_Cluster
 
 	'''
+	logging.info("Finemap GWAS Cluster")
 	# Define experiment label (serves for debugging logs)
 	chrom = cluster.ld_snps[0].chrom
 	start = min(ld_snp.pos for ld_snp in cluster.ld_snps)
@@ -325,16 +274,6 @@ def finemap_gwas_cluster(cluster):
 		gwas_association.sample_size for gwas_association in gwas_snp.evidence), cluster.gwas_snps)
 	sample_size = sum(sample_sizes) / len(sample_sizes)
 
-	# Extract GWAS_lambdas(F.A effect size) 
-	# with open('GWAS_lambdas_'+os.path.basename(postgap.Globals.GWAS_SUMMARY_STATS_FILE), 'a') as fw1:
-	#	 for idx, L in enumerate(cluster.lambdas):
-	#		 fw1.write(
-	#			 '\t'.join(map(str, [sample_label, postgap.Globals.source_lst[idx], L]))+'\n')
-	with open(postgap.Globals.OUTPUT+'_GWAS_lambdas.txt', 'a') as fw1:
-		for idx, L in enumerate(cluster.lambdas):
-			fw1.write(
-				'\t'.join(map(str, [sample_label, postgap.Globals.source_lst[idx], L]))+'\n')
-	# 
 	# Compute posterior
 	if postgap.Globals.TYPE == 'binom' or postgap.Globals.TYPE == 'ML':
 		configuration_posteriors = postgap.Finemap.finemap_v1(
@@ -364,8 +303,7 @@ def finemap_gwas_cluster(cluster):
 			kmax=postgap.Globals.kmax_gwas,
 			isGWAS=True
 		)
-	print postgap.Globals.TYPE
-	return GWAS_Cluster_with_lambdas(cluster.gwas_snps, cluster.ld_snps, cluster.ld_matrix, cluster.z_scores, cluster.betas, cluster.mafs, cluster.annotations, configuration_posteriors, cluster.lambdas)
+	return GWAS_Cluster(cluster.gwas_snps, cluster.ld_snps, cluster.ld_matrix, cluster.z_scores, cluster.betas, cluster.mafs, cluster.annotations, configuration_posteriors, cluster.lambdas)
 
 
 def compute_joint_posterior(cluster, gene_tissue_snp_eQTL_hash):
@@ -389,10 +327,9 @@ def compute_gene_joint_posterior(cluster, gene, tissue_snp_eQTL_hash, gwas_confi
 			Arg6: Numpy 2D Array
 			Returntype: Hash of hashes: Tissue => Float
 	"""
-	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(
-		cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
-	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(
-		cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
+	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
+	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
+
 	return dict((tissue, compute_gene_tissue_joint_posterior(cluster, gene, tissue, tissue_snp_eQTL_hash[tissue], gwas_configuration_posteriors, mafs, annotations)) for tissue in tissue_snp_eQTL_hash)
 
 
@@ -404,21 +341,14 @@ def compute_gene_tissue_joint_posterior(cluster, gene, tissue, eQTL_snp_hash, gw
 			Arg3: Gene
 			Arg4: Hash string (rsID) => (Float (z-score), Float (beta))
 			Arg5: Hash of hashes: configuration => posterior
-			Returntype: Float
+			Returntype: Numpy Array (GWAS PIP values), Numpy Array (Coloc evidence)
 	"""
 	# eQTL posteriors
-	eQTL_configuration_posteriors = compute_eqtl_posteriors(
-		cluster, tissue, gene, eQTL_snp_hash, mafs, annotations)
+	eQTL_configuration_posteriors = compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotations)
+
 	# Joint posterior
-	joint_out = eQTL_configuration_posteriors.joint_posterior(
-		gwas_configuration_posteriors)
-	# pickle.dump(joint_out[1], open(postgap.Globals.OUTPUT+'_'+str(tissue)+'_' +
-	#								str(gene.name)+'_snp_posterior.pkl', "w"))  # DEBUG remove hard coded path
-	pickle.dump(joint_out[0], open(postgap.Globals.OUTPUT+'_'+str(tissue) +
-								   '_'+str(gene.name)+'_snp_clpp.pkl', "w"))  # DEBUG remove hard coded path
-	pickle.dump(joint_out[1], open(postgap.Globals.OUTPUT +
-								   '_'+str(tissue)+'_'+str(gene.name)+'_eqtl_PIP.pkl', "w"))
-	# return joint_out[0]
+	joint_out = eQTL_configuration_posteriors.joint_posterior(gwas_configuration_posteriors)
+
 	return joint_out[2], joint_out[3]
 
 
@@ -433,37 +363,25 @@ def compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotati
 			Arg6: Numpy 2D Array
 			Returntype: Float
 	"""
-	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(
-		cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
-	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(
-		cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
+	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
+	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
 	# Determine which SNPs are missing values
-	missing_indices = numpy.array([index for index, ld_snp in enumerate(
-		cluster.ld_snps) if ld_snp.rsID not in eQTL_snp_hash]).astype(int)
-	known_z_scores = numpy.array([eQTL_snp_hash[ld_snp.rsID][0]
-								  for ld_snp in cluster.ld_snps if ld_snp.rsID in eQTL_snp_hash])
-
-	known_betas = numpy.array([eQTL_snp_hash[ld_snp.rsID][1]
-							   for ld_snp in cluster.ld_snps if ld_snp.rsID in eQTL_snp_hash])
+	missing_indices = numpy.array([index for index, ld_snp in enumerate(cluster.ld_snps) if ld_snp.rsID not in eQTL_snp_hash]).astype(int)
+	known_z_scores = numpy.array([eQTL_snp_hash[ld_snp.rsID][0] for ld_snp in cluster.ld_snps if ld_snp.rsID in eQTL_snp_hash])
+	known_betas = numpy.array([eQTL_snp_hash[ld_snp.rsID][1] for ld_snp in cluster.ld_snps if ld_snp.rsID in eQTL_snp_hash])
 
 	assert all(beta is not None for beta in known_betas)
 
 	assert len(known_z_scores) > 0
-	assert len(missing_indices) != len(
-		cluster.ld_snps), (missing_indices, known_z_scores)
-	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(
-		cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
-	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(
-		cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
+	assert len(missing_indices) != len(cluster.ld_snps), (missing_indices, known_z_scores)
+	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
+	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
 
 	if len(missing_indices) > 0:
 		# Generate LD matrix of known values
-		ld_matrix_known = numpy.delete(
-			cluster.ld_matrix, missing_indices, axis=1)
-		ld_matrix_known = numpy.delete(
-			ld_matrix_known, missing_indices, axis=0)
-		assert ld_matrix_known.size > 0, (missing_indices,
-										  cluster.ld_matrix, ld_matrix_known)
+		ld_matrix_known = numpy.delete(cluster.ld_matrix, missing_indices, axis=1)
+		ld_matrix_known = numpy.delete(ld_matrix_known, missing_indices, axis=0)
+		assert ld_matrix_known.size > 0, (missing_indices, cluster.ld_matrix, ld_matrix_known)
 
 		# Generate LD matrix of known SNPs to missing SNPs
 		ld_matrix_k2m = cluster.ld_matrix[missing_indices, :]
@@ -471,15 +389,11 @@ def compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotati
 
 		# Imputation
 		shrink_lambda = 0.1  # shrinkage factor, magic number
-		ld_matrix_known_shrink = shrink_lambda * numpy.diag(numpy.ones(
-			ld_matrix_known.shape[0])) + (1-shrink_lambda) * ld_matrix_known
-		assert ld_matrix_known_shrink.size > 0, (
-			missing_indices, ld_matrix, ld_matrix_known)
+		ld_matrix_known_shrink = shrink_lambda * numpy.diag(numpy.ones(ld_matrix_known.shape[0])) + (1-shrink_lambda) * ld_matrix_known
+		assert ld_matrix_known_shrink.size > 0, (missing_indices, ld_matrix, ld_matrix_known)
 		ld_matrix_k2m_shrink = (1-shrink_lambda) * ld_matrix_k2m
-		z_shrink_imputed = numpy.dot(numpy.dot(ld_matrix_k2m_shrink, numpy.linalg.pinv(
-			ld_matrix_known_shrink, 0.0001)), known_z_scores)
-		beta_shrink_imputed = numpy.dot(numpy.dot(ld_matrix_k2m_shrink, numpy.linalg.pinv(
-			ld_matrix_known_shrink, 0.0001)), known_betas)
+		z_shrink_imputed = numpy.dot(numpy.dot(ld_matrix_k2m_shrink, numpy.linalg.pinv(ld_matrix_known_shrink, 0.0001)), known_z_scores)
+		beta_shrink_imputed = numpy.dot(numpy.dot(ld_matrix_k2m_shrink, numpy.linalg.pinv(ld_matrix_known_shrink, 0.0001)), known_betas)
 
 		# Aggregate z_scores into a single vector
 		z_scores = []
@@ -505,22 +419,10 @@ def compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotati
 	sample_label = 'eQTL_Cluster_%s:%i-%i_%s' % (chrom, start, end, gene)
 
 	# Learn F.A parameters in eQTL 
-	cluster_label = 'Cluster_%s:%i-%i' % (chrom, start, end)
-	lambdas = postgap.Finemap.mk_eqtl_lambdas(cluster, numpy.array(z_scores))
-	# with open('eQTL_lambdas_'+postgap.Globals.GWAS_SUMMARY_STATS_FILE, 'a') as fw2:
-	#	 for idx, L in enumerate(lambdas):
-	#		 fw2.write('\t'.join(map(str, [
-	#				   cluster_label, tissue, gene.name, postgap.Globals.source_lst[idx], L]))+'\n')
-	with open(postgap.Globals.OUTPUT+'_eQTL_lambdas.txt', 'a') as fw2:
-		for idx, L in enumerate(lambdas):
-			if idx < len(postgap.Globals.source_lst):
-				fw2.write('\t'.join(map(str, [
-						  cluster_label, tissue, gene.name, postgap.Globals.source_lst[idx], L]))+'\n')
-			else:
-				fw2.write(
-					'\t'.join(map(str, [cluster_label, tissue, gene.name, idx, L]))+'\n')
+	lambdas = postgap.Finemap.compute_eqtl_lambdas(cluster, numpy.array(z_scores))
 
 	# Compute posterior
+	logging.debug("Finemap eQTL Cluster")
 	return postgap.Finemap.finemap_v1(
 		z_scores=numpy.array(z_scores),
 		beta_scores=numpy.array(betas),
@@ -528,7 +430,7 @@ def compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotati
 		n=500,  # TODO extract eQTL sample sizes
 		labels=[ld_snp.rsID for ld_snp in cluster.ld_snps],
 		sample_label=sample_label,
-		lambdas=lambdas,  # cluster.lambdas, # Update the lambdas with eQTL data
+		lambdas=lambdas,
 		mafs=mafs,
 		annotations=annotations,
  		kstart       = postgap.Globals.KSTART,

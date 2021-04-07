@@ -830,7 +830,8 @@ class GWAS_File(GWAS_source):
 			betas = None,
 			mafs = None,
 			annotations = None,
-			gwas_configuration_posteriors = None
+			gwas_configuration_posteriors = None,
+			lambdas = None
 		)
 		return proper_gwas_cluster
 	
