@@ -71,8 +71,6 @@ ALL_TISSUES = []
 
 EQTL_QUERY_SIZE = None 
 
-source_list = []
-
 KSTART = None
 KMAX = None
 
