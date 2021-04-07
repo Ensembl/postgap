@@ -827,6 +827,9 @@ class GWAS_File(GWAS_source):
 			ld_snps = ld_snps_converted_to_gwas_snps,
 			ld_matrix = None,
 			z_scores = None,
+			betas = None,
+			mafs = None,
+			annotations = None,
 			gwas_configuration_posteriors = None
 		)
 		return proper_gwas_cluster
@@ -850,6 +853,7 @@ class GWAS_File(GWAS_source):
 		):
 
 		file = open(gwas_data_file)
+		column_labels = file.readline().strip().split('\t')
 
 		number_of_lines_returned = 0
 		for line in file:
@@ -874,9 +878,9 @@ class GWAS_File(GWAS_source):
 			try:
 				# TODO insert study info (from command line? config file?)
 				gwas_association = GWAS_Association(
-					pvalue=float(parsed["Pvalue"]),
+					pvalue=float(parsed["p-value"]),
 					pvalue_description='Manual',
-					snp=parsed["MarkerName"],
+					snp=parsed["variant_id"],
 					disease=Disease(name='Manual', efo='EFO_Manual'),
 					reported_trait="Manual",
 					source="Manual",
@@ -886,7 +890,7 @@ class GWAS_File(GWAS_source):
 					odds_ratio=None,
 					odds_ratio_ci_start=None,
 					odds_ratio_ci_end=None,
-					beta_coefficient=float(parsed["Beta"]),
+					beta_coefficient=float(parsed["beta"]),
 					beta_coefficient_unit="Manual",
 					beta_coefficient_direction="Manual",
 					rest_hash=None,
