@@ -341,9 +341,8 @@ def get_options():
 	parser.add_argument('--kmax_eqtl', default=None, type=int)
 	parser.add_argument('--eqtl_response_size', type=range_limited_eqtl_size, default=200,
 	help='Number of items returned in one call to EQTL, (min = 20, max = 1000, default = 200')
-	parser.add_argument('--output2', help='gene-cluster association output file')
 	parser.add_argument('--kstart', type=int, default=1, help='how many causal variants to start with in the full exploration of sets')
-	parser.add_argument('--kmax', type=int, default=5, help='maximum number of causal variants')
+	parser.add_argument('--kmax', type=int, default=2, help='maximum number of causal variants')
 	parser.add_argument('--cluster_dir', type=str, default=None, help='directory where to save intermediate cluster files')
 	parser.add_argument('--cluster_file', type=str, default=None, help='location of the intermediate file containing information of a cluster')
 
