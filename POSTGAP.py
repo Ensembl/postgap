@@ -370,10 +370,17 @@ def get_options():
 	if options.TYPE is not None:
 		postgap.Globals.TYPE = options.TYPE
 
-	if options.output is not None:
-		postgap.Globals.OUTPUT = options.output
-		if not os.path.exists(os.path.dirname(postgap.Globals.OUTPUT)):
-			os.makedirs(os.path.dirname(postgap.Globals.OUTPUT))
+	if options.output is None and options.cluster_file is not None:
+		options.output = options.cluster_file + ".data.txt"
+
+	if options.output is not None and not os.path.exists(os.path.dirname(options.output)):
+		os.makedirs(os.path.dirname(options.output))
+
+	if options.output2 is None and options.cluster_file is not None:
+		options.output2 = options.cluster_file + ".clpp.txt"
+
+	if options.output2 is not None and not os.path.exists(os.path.dirname(options.output2)):
+		os.makedirs(os.path.dirname(options.output2))
 
 	if options.efos is not None:
 		postgap.Globals.work_directory = options.work_dir + \
