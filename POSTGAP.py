@@ -124,10 +124,10 @@ def main():
 	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0 or postgap.Globals.GWAS_SUMMARY_STATS_FILE is not None or postgap.Globals.CLUSTER_FILE is not None:
 		if postgap.Globals.CLUSTER_FILE is not None:
 			logging.info("use cluster file, so skip previous steps and jump to cluster_to_genes (in gwas_snps_to_genes)")
-			res = postgap.Integration.gwas_snps_to_genes(None, options.population, options.tissues)
+			res = postgap.Integration.gwas_snps_to_genes(None, options.population)
 		else:
 			logging.info("Starting diseases_to_genes")
-			res = postgap.Integration.diseases_to_genes(options.diseases, expanded_efo_iris, options.population, options.tissues)
+			res = postgap.Integration.diseases_to_genes(options.diseases, expanded_efo_iris, options.population)
 
 		if options.bayesian and options.output2 is not None:
 			output2 = open(options.output2, "w")
@@ -136,13 +136,11 @@ def main():
  
 		logging.info("Done with diseases_to_genes")
 	elif options.rsID is not None:
-		res = postgap.Integration.rsIDs_to_genes(options.rsID, options.tissues)
+		res = postgap.Integration.rsIDs_to_genes(options.rsID)
 	elif options.coords is not None:
 		snp = postgap.DataModel.SNP(
 			rsID=options.coords[0], chrom=options.coords[1], pos=int(options.coords[2]))
-		if options.tissues is None:
-			options.tissues = ["Whole_Blood"]
-		res = postgap.Integration.ld_snps_to_genes([snp], options.tissues)
+		res = postgap.Integration.ld_snps_to_genes([snp])
 
 	if options.output is None:
 		output = sys.stdout
@@ -309,7 +307,6 @@ def get_options():
 						help='SNP position in format rsID chrom_name position')
 	parser.add_argument(
 		'--population', choices=(['AFR', 'AMR', 'EAS', 'EUR', 'SAS']), default='EUR')
-	parser.add_argument('--tissues', nargs='*', help='EXPERIMENTAL')
 	parser.add_argument('--output', help='Name of output file')
 	parser.add_argument('--species', nargs='*',
 						default='Human', help='Name of species')

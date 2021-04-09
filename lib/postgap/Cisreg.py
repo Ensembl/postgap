@@ -55,19 +55,18 @@ VEP_impact_to_score = {
 }
 
 class Cisreg_source(object):
-	def run(self, snps, tissues):
+	def run(self, snps):
 		assert False, "This stub should be defined"
 
 class GTEx(Cisreg_source):
 	display_name = "GTEx"
 
-	def run(self, snps, tissues):
+	def run(self, snps):
 		"""
 
 			Returns all genes associated to a set of SNPs in GTEx
 			Args:
 			* [ SNP ]
-			* [ string ] (tissues)
 			Returntype: [ Cisregulatory_Evidence ]
 
 		"""
@@ -270,13 +269,12 @@ class VEP(Cisreg_source):
 	display_name = "VEP"
 
 	
-	def run(self, snps, tissues):
+	def run(self, snps):
 		"""
 
 			Returns all genes associated to a set of SNPs in VEP
 			Args:
 			* [ SNP ]
-			* [ string ] (tissues)
 			Returntype: [ Regulatory_Evidence ]
 
 		"""
@@ -418,13 +416,12 @@ class Fantom5(Cisreg_source):
 	display_name = "Fantom5"
 
 	
-	def run(self, snps, tissues):
+	def run(self, snps):
 		"""
 
 			Returns all genes associated to a set of SNPs in Fantom5
 			Args:
 			* [ SNP ]
-			* [ string ] (tissues)
 			Returntype: [ Regulatory_Evidence ]
 
 		"""
@@ -482,13 +479,12 @@ class DHS(Cisreg_source):
 	display_name = "DHS"
 
 	
-	def run (self, snps, tissues):
+	def run (self, snps):
 		"""
 
 			Returns all genes associated to a set of SNPs in DHS
 			Args:
 			* [ SNP ]
-			* [ string ] (tissues)
 			Returntype: [ Regulatory_Evidence ]
 
 		"""
@@ -585,13 +581,12 @@ class PCHIC(Cisreg_source):
 	display_name = "PCHiC"
 
 	
-	def run(self, snps, tissues):
+	def run(self, snps):
 		"""
 
 			Returns all genes associated to a set of SNPs in PCHIC
 			Args:
 			* [ SNP ]
-			* [ string ] (tissues)
 			Returntype: [ Regulatory_Evidence ]
 
 		"""
@@ -654,7 +649,7 @@ class PCHIC(Cisreg_source):
 class nearest_gene(Cisreg_source):
 	display_name = 'Nearest'
 	
-	def run (self, snps, tissues):
+	def run (self, snps):
 		"""
 
 			Return nearest gene to SNP

@@ -39,13 +39,12 @@ import tempfile
 from postgap.REST import Variation400error
 
 class Reg_source(object):
-	def run(self, ld_snps, tissues):
+	def run(self, ld_snps):
 		"""
 
 			Extract score at sns of interest
 			Args:
 			* [ SNP ]
-			* [ string ]
 			Returntype: [ Regulatory_Evidence ]
 
 		"""
@@ -53,13 +52,12 @@ class Reg_source(object):
 
 class Regulome(Reg_source):
 	display_name = "Regulome"
-	def run(self, ld_snps, tissues):
+	def run(self, ld_snps):
 		"""
 
 			Extract Regulome score at sns of interest
 			Args:
 			* [ SNP ]
-			* [ string ]
 			Returntype: [ Regulatory_Evidence ]
 
 		"""
@@ -106,13 +104,12 @@ class Regulome(Reg_source):
 
 class VEP_reg(Reg_source):
 	display_name = 'VEP_reg'
-	def run(self, snps, tissues):
+	def run(self, snps):
 		"""
 
 			Returns all genes associated to a set of SNPs in VEP
 			Args:
 			* [ SNP ]
-			* [ string ] (tissues)
 			Returntype: [ Regulatory_Evidence ]
 
 		"""
@@ -256,13 +253,12 @@ class VEP_reg(Reg_source):
 
 class GERP(Reg_source):
 	display_name = 'GERP'
-	def run(self, ld_snps, tissues):
+	def run(self, ld_snps):
 		"""
 
 			Extract GERP score at snps of interest
 			Args:
 			* [ SNP ]
-			* [ string ]
 			Returntype: [ Regulatory_Evidence ]
 
 		"""

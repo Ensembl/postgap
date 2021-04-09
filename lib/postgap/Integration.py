@@ -53,7 +53,7 @@ import sys
 phenotype_cache = ()
 
 
-def diseases_to_genes(diseases, efos, population, tissues):
+def diseases_to_genes(diseases, efos, population):
 	"""
 
 			Associates genes from a list of diseases
@@ -61,11 +61,10 @@ def diseases_to_genes(diseases, efos, population, tissues):
 			* [ string ] (trait descriptions - free strings)
 			* [ string ] (trait EFO identifiers)
 			* string (population name)
-			* [ string ] (tissue names)
 			Returntype: [ GeneCluster_Association ]
 
 	"""
-	return gwas_snps_to_genes(diseases_to_gwas_snps(diseases, efos), population, tissues)
+	return gwas_snps_to_genes(diseases_to_gwas_snps(diseases, efos), population)
 
 
 def diseases_to_gwas_snps(diseases, efos):
@@ -158,22 +157,16 @@ def scan_disease_databases(diseases, efos):
 
 	return gwas_snps
 
-def gwas_snps_to_genes(gwas_snps, population, tissue_weights):
+def gwas_snps_to_genes(gwas_snps, population):
 	"""
 
 			Associates Genes to gwas_snps of interest
 			Args:
 			* [ GWAS_Association ]
 			* string (population name)
-			* { tissue_name: scalar (weight) }
 			Returntype: [ GeneCluster_Association ]
 
 	"""
-	# Must set the tissue settings before separating out the gwas_snps
-	# TODO: tissue_weights may be deprecated once ML weighting is implemented
-	if tissue_weights is None:
-		tissue_weights = gwas_snps_to_tissue_weights(gwas_snps)
-
 	if gwas_snps is None and postgap.Globals.CLUSTER_FILE is not None:
 		cluster_fn = postgap.Globals.CLUSTER_FILE
 		infile = open(cluster_fn, 'rb')
@@ -557,12 +550,11 @@ def remove_tiny_clusters(preclusters):
 	
 	return clusters
 
-def cluster_to_genes(cluster, tissues, population):
+def cluster_to_genes(cluster, population):
 	"""
 		Associated Genes to a cluster of gwas_snps
 		Args:
 		* [ Cluster ]
-		* { tissue_name: scalar (weights) }
 		* string (population name)
 		Returntype: [ GeneCluster_Association ]
 	"""
@@ -594,7 +586,7 @@ def cluster_to_genes(cluster, tissues, population):
 		ld = postgap.LD.get_lds_from_top_gwas(top_gwas_hit.snp, cluster.ld_snps, population=population)
 
 		# Obtain interaction data from LD snps
-		associations, eQTL_hash = ld_snps_to_genes([snp for snp in cluster.ld_snps if snp in ld], tissues)
+		associations, eQTL_hash = ld_snps_to_genes([snp for snp in cluster.ld_snps if snp in ld])
 		
 		# Compute gene score
 		gene_scores = dict(
@@ -694,34 +686,29 @@ def total_score(pics, gene_score):
 	return ((A + B) / 2) ** 3
 
 
-def rsIDs_to_genes(snp, tissues):
+def rsIDs_to_genes(snp):
 	"""
 
 			Associates genes to single SNP
 			Args:
 			* SNP
-			* [ string ] (tissues)
 			Returntype: [ GeneSNP_Association ]
 
 	"""
-	if tissues is None:
-		tissues = ["Whole_Blood"]
-	return ld_snps_to_genes(postgap.Ensembl_lookup.get_snp_locations([snp]), tissues)
+	return ld_snps_to_genes(postgap.Ensembl_lookup.get_snp_locations([snp]))
 
 
-def ld_snps_to_genes(ld_snps, tissues):
+def ld_snps_to_genes(ld_snps):
 	"""
 		Associates genes to LD linked SNPs
 		Args:
 		* [ SNP ]
-		* [ string ] (tissues)
-		* Dict SNP => float
 		Returntype:
 		* [ GeneCluster_Association ]
 		* Hash of hashes: Gene => Tissue => SNP => Float
 	"""
 	# Search for SNP-Gene pairs:
-	cisreg = cisregulatory_evidence(ld_snps, tissues) # Hash of hashes: SNP => Gene => Cisregulatory_Evidence
+	cisreg = cisregulatory_evidence(ld_snps) # Hash of hashes: SNP => Gene => Cisregulatory_Evidence
 
 	# Organise eQTL data into an easily read hash of hashes
 	gene_tissue_snp_eQTL_hash = organise_eQTL_data(cisreg)
@@ -730,7 +717,7 @@ def ld_snps_to_genes(ld_snps, tissues):
 	cisreg = filter_eQTL_GTEx(cisreg)
 
 	# Extract SNP specific info:
-	reg = regulatory_evidence(cisreg.keys(), tissues) # Hash: SNP => [ Regulatory_evidence ]
+	reg = regulatory_evidence(cisreg.keys()) # Hash: SNP => [ Regulatory_evidence ]
 		
 	associations = concatenate((create_SNP_GeneSNP_Associations(snp, reg[snp], cisreg[snp]) for snp in cisreg))
 	
@@ -835,26 +822,23 @@ def compute_v2g_scores(reg, cisreg):
 	return intermediary_scores, gene_scores
 
 
-def cisregulatory_evidence(ld_snps, tissues):
+def cisregulatory_evidence(ld_snps):
 	"""
 
 			Associates genes to LD linked SNP
 			Args:
 			* [ SNP ]
-			* [ string ] (tissues)
 			Returntype: Hash of hashes SNP => Gene => Cisregulatory_Evidence
 
 	"""
 	if postgap.Globals.Cisreg_adaptors == None:
 		logging.info(
 			"Searching for cis-regulatory data on %i SNPs in all databases" % (len(ld_snps)))
-		evidence = concatenate(source().run(ld_snps, tissues)
-							   for source in postgap.Cisreg.sources)
+		evidence = concatenate(source().run(ld_snps) for source in postgap.Cisreg.sources)
 	else:
 		logging.info("Searching for cis-regulatory data on %i SNPs in (%s)" %
 					 (len(ld_snps), ", ".join(postgap.Globals.Cisreg_adaptors)))
-		evidence = concatenate(source().run(ld_snps, tissues)
-							   for source in postgap.Cisreg.get_filtered_subclasses(postgap.Globals.Cisreg_adaptors))
+		evidence = concatenate(source().run(ld_snps) for source in postgap.Cisreg.get_filtered_subclasses(postgap.Globals.Cisreg_adaptors))
 
 	flaten_evidence = []
 	for evi in evidence:
@@ -883,7 +867,7 @@ def cisregulatory_evidence(ld_snps, tissues):
 	return res
 
 
-def regulatory_evidence(snps, tissues):
+def regulatory_evidence(snps):
 	"""
 
 			Extract regulatory evidence linked to SNPs and stores them in a hash
@@ -895,14 +879,14 @@ def regulatory_evidence(snps, tissues):
 	if postgap.Globals.Reg_adaptors == None:
 		logging.info(
 			"Searching for regulatory data on %i SNPs in all databases" % (len(snps)))
-		res = concatenate(source().run(snps, tissues)
+		res = concatenate(source().run(snps)
 						  for source in postgap.Reg.sources)
 		logging.info("Found %i regulatory SNPs among %i in all databases" % (
 			len(res), len(snps)))
 	else:
 		logging.info("Searching for regulatory data on %i SNPs in (%s)" %
 					 (len(snps), ", ".join(postgap.Globals.Reg_adaptors)))
-		res = concatenate(source().run(snps, tissues)
+		res = concatenate(source().run(snps)
 						  for source in postgap.Reg.get_filtered_subclasses(postgap.Globals.Reg_adaptors))
 		logging.info("Found %i regulatory SNPs among %i in (%s)" % (
 			len(res), len(snps), ", ".join(postgap.Globals.Reg_adaptors)))
