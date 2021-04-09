@@ -145,7 +145,7 @@ def main():
 	if options.output is None:
 		output = sys.stdout
 	else:
-		output = open(options.output+'.txt', "w")
+		output = open(options.output, "w")
 
 	if options.json_output:
 		formatted_results = json.dumps(objectToDict(res))
@@ -284,12 +284,7 @@ def get_options():
 	"""
 
 		Reads commandline parameters
-		Returntype:
-			{
-				diseases: [ string ],
-				populations: [ string ],
-				tissues: [ string ],
-			}
+		Returntype: Hash
 
 	"""
 	parser = argparse.ArgumentParser(
@@ -318,11 +313,11 @@ def get_options():
 						action='store_true', help='JSON output')
 	parser.add_argument('--child_terms', action='store_true',
 						help='Search for children terms of selected phenotype ontology term(s)')
-	parser.add_argument('--GWAS', default=None, nargs='*',
+	parser.add_argument('--GWAS', nargs='*',
 						choices=(GWAS_options), help='GWAS databases to query')
-	parser.add_argument('--Cisreg', default=None, nargs='*',
+	parser.add_argument('--Cisreg', nargs='*',
 						choices=(CisReg_options), help='Cisregulatory databases to query')
-	parser.add_argument('--Reg', default=None, nargs='*',
+	parser.add_argument('--Reg', nargs='*',
 						choices=(Reg_options), help='Regulatory databases to query')
 	parser.add_argument('--bayesian', action='store_true', help='EXPERIMENTAL')
 	parser.add_argument('--work_dir', default='postgap_temp_work_dir',
@@ -334,14 +329,14 @@ def get_options():
 	parser.add_argument('--sqlite', help='Location of eQTL sqlite file')
 	parser.add_argument(
 		'--output2', help='gene-cluster association output file')
-	parser.add_argument('--kmax_gwas', default=None, type=int)
-	parser.add_argument('--kmax_eqtl', default=None, type=int)
+	parser.add_argument('--kmax_gwas', type=int)
+	parser.add_argument('--kmax_eqtl', type=int)
 	parser.add_argument('--eqtl_response_size', type=range_limited_eqtl_size, default=200,
 	help='Number of items returned in one call to EQTL, (min = 20, max = 1000, default = 200')
 	parser.add_argument('--kstart', type=int, default=1, help='how many causal variants to start with in the full exploration of sets')
-	parser.add_argument('--kmax', type=int, default=2, help='maximum number of causal variants')
-	parser.add_argument('--cluster_dir', type=str, default=None, help='directory where to save intermediate cluster files')
-	parser.add_argument('--cluster_file', type=str, default=None, help='location of the intermediate file containing information of a cluster')
+	parser.add_argument('--kmax', type=int, default=1, help='maximum number of causal variants')
+	parser.add_argument('--cluster_dir', help='directory where to save intermediate cluster files')
+	parser.add_argument('--cluster_file', help='location of the intermediate file containing information of a cluster')
 
 	options = parser.parse_args()
 
@@ -425,8 +420,12 @@ def range_limited_eqtl_size(val):
 	return s
 
 def pretty_gene_output(associations):
-	text = ['\t'.join(str(t) for t in [gene_association.gene.id, gene_association.cluster.gwas_configuration_posteriors.sample_label, snp_id, dict_posterior[(i,)], tissue, dict_posterior['_CLUSTER']]) for gene_association in associations for tissue, dict_posterior in gene_association.collocation_posterior.items() for i,snp_id in enumerate(gene_association.cluster.gwas_configuration_posteriors.labels)]
-	return '\n'.join(text)
+	rows = [[gene_association.gene.id, gene_association.cluster.gwas_configuration_posteriors.sample_label, snp_id, dict_posterior[(i,)], tissue, dict_posterior['_CLUSTER']] 
+			for gene_association in associations 
+			for tissue, dict_posterior in gene_association.collocation_posterior.items() 
+			for i,snp_id in enumerate(gene_association.cluster.gwas_configuration_posteriors.labels)
+		]
+	return '\n'.join('\t'.join(str(elem) for elem in row) for row in rows)
 
 def pretty_snp_output(associations):
 	"""

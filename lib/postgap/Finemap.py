@@ -1,22 +1,42 @@
-# functions for one-dimensional and two-dimensional fine-mapping
-# shotgun stochastic search
-# 11 april 2017
+#! /usr/bin/env python
+
+"""
+
+Copyright [1999-2018] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License")
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+		 http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+"""
+
+"""
+
+	Please email comments or questions to the public Ensembl
+	developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+	Questions may also be sent to the Ensembl help desk at
+	<http://www.ensembl.org/Help/Contact>.
+
+"""
 
 import scipy
 import numpy
 import math
 import itertools as it
-import operator
-import random
 import collections
-from scipy import optimize
-import postgap.Globals
-
-import cPickle as pickle
-
-from postgap.DataModel import *
-import scipy.special
 import logging
+
+import postgap.Globals
+from postgap.DataModel import *
 
 OneDConfigurationSample_prototype = collections.namedtuple(
 	'OneDConfigurationSample',
@@ -34,7 +54,6 @@ OneDConfigurationSample_prototype = collections.namedtuple(
 
 class TranslationIndexException(Exception):
 	pass
-
 
 class OneDConfigurationSample(OneDConfigurationSample_prototype):
 	'''
@@ -54,10 +73,8 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 		'''
 		self.posterior[self.posterior > 700.] = 700.
 		max_logpp_unscaled = numpy.max(self.posterior)
-		assert not numpy.isinf(numpy.exp(max_logpp_unscaled)
-							   ), 'max BF going to infinity'
-		sum_calib = numpy.sum(
-			numpy.exp(self.posterior-max_logpp_unscaled)) * numpy.exp(max_logpp_unscaled)
+		assert not numpy.isinf(numpy.exp(max_logpp_unscaled)), 'max BF going to infinity'
+		sum_calib = numpy.sum(numpy.exp(self.posterior-max_logpp_unscaled)) * numpy.exp(max_logpp_unscaled)
 		assert not numpy.isinf(sum_calib), 'calibration going to infinity'
 		return OneDConfigurationSample(
 			configurations=self.configurations,
@@ -96,50 +113,6 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 			sample_label=self.sample_label
 		)
 
-	def multiple_marginals(self, singleton_count, kmax):
-		'''
-				INPUT----
-				OneDConfigurationSample self
-				Integer kmax
-				Integer singleton_count
-				OUTPUT------
-				Dictionary key range[1, kmax] value OneDConfigurationSample
-		'''
-		iter_dict = {}
-		for nc in range(1, (kmax+1)):
-			# print(nc)
-			config_iter = [config for config_size in range(
-				nc, nc+1) for config in it.combinations(range(singleton_count), config_size)]
-			len_config_iter = len(config_iter)
-			configurations = dict((config_iter[i], i)
-								  for i in range(len_config_iter))
-			configuration_size = numpy.ones(len_config_iter)*nc
-			marginal_iter = numpy.zeros(len_config_iter)
-			count = 0
-			input_keys = self.configurations.keys()
-			while count < len(self.configurations):
-				configuration = input_keys[count]
-				# print(configuration)
-				if (len(configuration) < nc):
-					count += 1
-				else:
-					index_tupel = [
-						config for config in it.combinations(configuration, nc)]
-					for index in index_tupel:
-						marginal_iter[configurations[index]
-									  ] += self.posterior[self.configurations[configuration]]
-					count += 1
-
-			iter_out = OneDConfigurationSample(
-				configurations=configurations,
-				posterior=marginal_iter,
-				log_BF=None,
-				configuration_size=configuration_size,
-				log_prior=None,
-			)
-			iter_dict[nc] = iter_out
-		return(iter_dict)
-
 	def create_translation_index(self, from_labels, to_labels):
 		translate = dict()
 
@@ -153,8 +126,7 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 
 	def translate_configurations(self, translation_index, configurations):
 		return dict(
-			(self.translate_configuration(translation_index,
-										  configuration), configurations[configuration])
+			(self.translate_configuration(translation_index, configuration), configurations[configuration])
 			for configuration in configurations
 		)
 
@@ -166,7 +138,7 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 				Main function for fine-mapping of two traits
 				Arg1: OneDConfigurationSample
 				Arg2: OneDConfigurationSample
-				Returntype: (float (the overall evidence for shared causal variation at a locus), TwoDConfigurationSample)
+				Returntype: coloc_evidence, TwoDConfigurationSample
 		'''
 
 		sample1_labels = self.labels
@@ -196,49 +168,10 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 		posterior1 = numpy.take(self.posterior, ids1)
 		posterior2 = numpy.take(sample2.posterior, ids2)
 		configuration_size = numpy.take(self.configuration_size, ids1)
-
-		posterior1_class = OneDConfigurationSample(
-			configurations=configurations,
-			posterior=posterior1,
-			log_BF=None,
-			configuration_size=configuration_size,
-			log_prior=None,
-			labels=sample1_labels,
-			sample_label='eqtl_PIP'
-		)
-		posterior2_class = OneDConfigurationSample(
-			configurations=configurations,
-			posterior=posterior2,
-			log_BF=None,
-			configuration_size=configuration_size,
-			log_prior=None,
-			labels=sample1_labels,
-			sample_label='gwas_PIP'
-		)
 		posterior = posterior1 * posterior2
-		#posterior_snp = posterior.normalise_posteriors().marginals(len(sample1_labels)).posterior
-		posterior_class = OneDConfigurationSample(
-			configurations=configurations,
-			posterior=posterior,
-			log_BF=None,
-			configuration_size=configuration_size,
-			log_prior=None,
-			labels=sample1_labels,
-			sample_label='CLPP'
-		)
-		# clpp_values = posterior_class.normalise_posteriors(
-		# ).marginals(len(sample1_labels)).posterior
-		eqtl_PIP_values = posterior1_class.marginals(
-			len(sample1_labels)).posterior
-		gwas_PIP_values = posterior2_class.marginals(
-			len(sample2_labels)).posterior
-		snp_clpp_values = posterior_class.marginals(
-			len(sample1_labels)).posterior
-		# pickle.dump(snp_posterior, open(postgap.Globals.OUTPUT+'_'+tissue+'_'+gene+'_snp_posterior.pkl', "w")) # DEBUG remove hard coded path
 		coloc_evidence = numpy.sum(posterior)
 
-		# return coloc_evidence, clpp_values, TwoDConfigurationSample(
-		return snp_clpp_values, eqtl_PIP_values, gwas_PIP_values, coloc_evidence, TwoDConfigurationSample(
+		return coloc_evidence, TwoDConfigurationSample(
 			configurations=configurations,
 			posterior=posterior,
 			configuration_size=configuration_size,
@@ -263,8 +196,7 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 			num_show_at_top = total_configurations
 			num_show_at_end = 0
 
-		summary_lines = ["A total of %i configurations have been investigated in %s:" % (
-			total_configurations, self.sample_label)]
+		summary_lines = ["A total of %i configurations have been investigated in %s:" % (total_configurations, self.sample_label)]
 
 		sorted_configurations = sorted(
 			self.configurations,
@@ -272,24 +204,20 @@ class OneDConfigurationSample(OneDConfigurationSample_prototype):
 			reverse=True
 		)
 
-		for configuration in sorted_configurations[:num_show_at_top]:
-			summary_lines.append(
-				indentation + self.configuration_string(configuration))
+		summary_lines += [indentation + self.configuration_string(configuration) for configuration in sorted_configurations[:num_show_at_top]]
 
 		if num_show_at_end > 0:
 			summary_lines.append(indentation + "...")
 
-		for configuration in sorted_configurations[-num_show_at_end:]:
-			summary_lines.append(
-				indentation + self.configuration_string(configuration))
+		summary_lines += [indentation + self.configuration_string(configuration) for configuration in sorted_configurations[-num_show_at_end:]]
 
 		return "\n".join(summary_lines)
 
 	def configuration_string(self, configuration):
-		index_of_configuration = configurations[configuration]
+		index_of_configuration = self.configurations[configuration]
 		posterior = self.posterior[index_of_configuration]
 		prior = math.exp(self.log_prior[index_of_configuration])
-		BF = math.exp(log_BF[index_of_configuration])
+		BF = math.exp(self.log_BF[index_of_configuration])
 		snps = ', '.join([self.labels[position] for position in configuration])
 		return "- The snp configuration ({}) has a prior probability of {:1.0%}. The posterior probability is {:.2e}. The Bayes factor is: {:.2e}".format(
 			snps, prior, posterior, BF
@@ -337,8 +265,7 @@ class TwoDConfigurationSample(TwoDConfigurationSample_prototype):
 			num_show_at_top = total_configurations
 			num_show_at_end = 0
 
-		summary_lines = ["A total of %i configurations have been investigated in %s and %s:" % (
-			total_configurations, self.sample_1_label, self.sample_2_label)]
+		summary_lines = ["A total of %i configurations have been investigated in %s and %s:" % (total_configurations, self.sample_1_label, self.sample_2_label)]
 
 		sorted_configurations = sorted(
 			self.configurations,
@@ -346,39 +273,30 @@ class TwoDConfigurationSample(TwoDConfigurationSample_prototype):
 			reverse=True
 		)
 
-		for configuration in sorted_configurations[:num_show_at_top]:
-			summary_lines.append(
-				indentation + self.configuration_string(configuration))
+		summary_lines += [indentation + self.configuration_string(configuration) for configuration in sorted_configurations[:num_show_at_top]]
 
 		if num_show_at_end > 0:
 			summary_lines.append(indentation + "...")
 
-		for configuration in sorted_configurations[-num_show_at_end:]:
-			summary_lines.append(
-				indentation + self.configuration_string(configuration))
+		summary_lines += [indentation + self.configuration_string(configuration) for configuration in sorted_configurations[-num_show_at_end:]]
 
-		summary_lines.append(
-			"The coloc evidence is: {:2e}".format(self.coloc_evidence))
+		summary_lines.append("The coloc evidence is: {:2e}".format(self.coloc_evidence))
 
 		return '\n'.join(summary_lines)
 
 	def configuration_string(self, configuration):
-		snp_labels = ", ".join([self.labels[position]
-								for position in configuration])
+		snp_labels = ", ".join([self.labels[position] for position in configuration])
 		index = self.configurations[configuration]
-		posterior = self.posterior[index]
-		posterior1 = self.posterior1[index]
-		posterior2 = self.posterior2[index]
 		return "The snp configuration ({}) had posterior probabilities of {:.2e} in {} and {:.2e} in {}. The joint posterior probability is {:.2e}.".format(
 			snp_labels,
-			float(posterior1),
+			float(self.posterior1[index]),
 			self.sample_1_label,
-			float(posterior2),
+			float(self.posterior2[index]),
 			self.sample_2_label,
-			float(posterior))
+			float(self.posterior[index]))
 
 
-def finemap_v1(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambdas, mafs, annotations, kstart=1, kmax=1, corr_thresh=0.9, max_iter=100, output="configuration", prior="independence_robust", v_scale=0.0025, g="BRIC", eigen_thresh=0.1, verbose=False, isGWAS=False):
+def finemap_v1(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambdas, mafs, annotations, kstart=1, kmax=1, corr_thresh=0.9, max_iter=100, prior="independence_robust", v_scale=0.0025, g="BRIC", eigen_thresh=0.1, verbose=False, isGWAS=False):
 	'''
 			Main function for fine-mapping using stochastic search for one trait #
 			Arg1: z_scores: numpy.array
@@ -394,25 +312,20 @@ def finemap_v1(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambd
 			Arg kmax: int, maximum number of causal variants
 			Arg corr_thresh: int, excluding configurations with correlation > corr_thresh
 			Arg max_iter: int, iterations of stochastic search
-			Arg output: int, "configuration" or "marginal"
 			Arg prior= string ("independence", "independence_robust" or "gprior") independence_robust does filter out configurations with possible mis-matches between the correlation matrix and effect size direction
 			Arg v_scale = float, prior variance of the independence prior, recommended 0.05 **2 (following FINEMAP, Benner et al 2016)
 			Arg g: string, g-parameter of the g-prior, recommended g="BRIC" g=max(n,#SNPs**2), other options g="BIC" where g=n (Bayes Information Criterion), or  g="RIC" where g=#SNPs**2 (Risk Inflation Criterion) see Mixtures of g Priors for Bayesian Variable Selection Liang et al 2008
 			Arg verbose = False: boolean, print the progress of the stochastic search
 			Returntype: OneDConfigurationSample
 	'''
+	logging.debug("Finemap v1")
 	
 	# Test inputs
-	assert len(z_scores) == cov_matrix.shape[0], 'Covariance matrix has %i rows, %i expected' % (
-		cov_matrix.shape[0], len(z_scores))
-	assert len(z_scores) == cov_matrix.shape[1], 'Covariance matrix has %i columns, %i expected' % (
-		cov_matrix.shape[0], len(z_scores))
-	assert not kstart > kmax, 'Incorrect number of causal variants specified, kmax (%i) must be greater than kstart (%s)' % (
-		kmax, kstart)
-	assert not numpy.any(numpy.isnan(z_scores)
-						 ), 'Missing values detected in z-scores'
-	assert not numpy.any(numpy.isnan(cov_matrix)
-						 ), 'Missing values detected in covariance matrix'
+	assert len(z_scores) == cov_matrix.shape[0], 'Covariance matrix has %i rows, %i expected' % (cov_matrix.shape[0], len(z_scores))
+	assert len(z_scores) == cov_matrix.shape[1], 'Covariance matrix has %i columns, %i expected' % (cov_matrix.shape[0], len(z_scores))
+	assert not kstart > kmax, 'Incorrect number of causal variants specified, kmax (%i) must be greater than kstart (%s)' % (kmax, kstart)
+	assert not numpy.any(numpy.isnan(z_scores)), 'Missing values detected in z-scores'
+	assert not numpy.any(numpy.isnan(cov_matrix)), 'Missing values detected in covariance matrix'
 
 	# compute the correlation from the aligned beta
 	# note this is an approximation with maf = 0.5
@@ -425,8 +338,7 @@ def finemap_v1(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambd
 	# Initialise
 	score_cache = dict()
 	neighbourhood_cache = dict()
-	configurations = [config for config_size in range(
-		1, kstart + 1) for config in it.combinations(range(len(z_scores)), config_size)]
+	configurations = [config for config_size in range(1, kstart + 1) for config in it.combinations(range(len(z_scores)), config_size)]
 	results = compare_neighborhood(
 		configs=configurations,
 		z_scores=z_scores,
@@ -444,17 +356,6 @@ def finemap_v1(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambd
 		g=g,
 	)
 
-	# Simple search
-	if kstart == kmax:
-		res_out = results.normalise_posteriors()
-
-		if output == "configuration":
-			return res_out
-		elif output == "marginal":
-			return res_out.marginals(len(z_scores))
-		else:
-			assert False, "%s unkown" % {output}
-
 	# shotgun stochastic search
 	if kstart < kmax:
 		# Count the amount of all the possible configurations
@@ -471,63 +372,44 @@ def finemap_v1(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambd
 
 			# Evaluate probabilities of these configs
 			results_nh = compare_neighborhood(configs=new_configs,
-											  z_scores=z_scores,
-											  cor_scores=cor_scores,
-											  cov_matrix=cov_matrix,
-											  kmax=kmax,
-											  n=n,
-											  score_cache=score_cache,
-											  labels=labels,
-											  sample_label=sample_label,
-											  annotations=annotations,
-											  lambdas=lambdas,
-											  prior=prior,
-											  corr_thresh=corr_thresh,
-											  v_scale=v_scale,
-											  g=g)
+							  z_scores=z_scores,
+							  cor_scores=cor_scores,
+							  cov_matrix=cov_matrix,
+							  kmax=kmax,
+							  n=n,
+							  score_cache=score_cache,
+							  labels=labels,
+							  sample_label=sample_label,
+							  annotations=annotations,
+							  lambdas=lambdas,
+							  prior=prior,
+							  corr_thresh=corr_thresh,
+							  v_scale=v_scale,
+							  g=g)
 
 			# Add new entries into the results object
 			results = merge_samples(results, results_nh, labels, sample_label)
 
 			# if all the possible configurations have been searched, stop iterations
 			if len(results.configurations) == n_all_pos_config:
-				logging.info(str(n_all_pos_config) + 'possible configurations have been searched within ' + str(count) + ' iterations')
+				logging.info(str(n_all_pos_config) + ' possible configurations have been searched within ' + str(count) + ' iterations; breaking.')
 				break
 
 			# Choose seed for next round among new configs
 			prob = results_nh.normalise_posteriors().posterior
-			current_config = new_configs[numpy.random.choice(
-				len(new_configs), size=1, p=prob)[0]]
+			current_config = new_configs[numpy.random.choice(len(new_configs), size=1, p=prob)[0]]
 
 			# Chatter to stdout
-			if verbose == True:
-				print(str(numpy.round(float(count) / max_iter * 100)) +
-					  '% of the search done')
-				print(current_config)
+			logging.debug(str(numpy.round(float(count) / max_iter * 100)) + '% of the search done')
+			logging.debug(current_config)
 
 			# Keep count of sampled configs
 			count += 1
-		
-		# it happens that not all the possible configurations have been searched, when reaching max_iter
-		if count == max_iter and len(results.configurations) < n_all_pos_config:
-			logging.info('not all configurations have been visited within ' + str(max_iter) + 'iterations')
 
-		res_out = merge_samples(result_list).normalise_posteriors()
-		# write GWAS lambdas 
-		if isGWAS == True:
-			with open(postgap.Globals.OUTPUT+'_GWAS_lambdas.txt', 'a') as fw1:
-				for idx, L in enumerate(lambdas):
-					fw1.write(
-						'\t'.join(map(str, [postgap.Globals.source_lst[idx], L]))+'\n')
-		if output == "configuration":
-			return res_out
-		elif output == "marginal":
-			return res_out.marginals(len(z_scores))
-		else:
-			assert False, "%s unkown" % {output}
+	return results.normalise_posteriors()
 
 
-def finemap_v2(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambdas, mafs, annotations, kstart=1, kmax=1, corr_thresh=0.9, max_iter=100, output="configuration", prior="independence_robust", v_scale=0.0025, g="BRIC", eigen_thresh=0.1, verbose=False, isGWAS=False):
+def finemap_v2(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambdas, mafs, annotations, kstart=1, kmax=1, corr_thresh=0.9, max_iter=100, prior="independence_robust", v_scale=0.0025, g="BRIC", eigen_thresh=0.1, verbose=False, isGWAS=False):
 	'''
 			Main function for fine-mapping using stochastic search for one trait #
 			Arg1: z_scores: numpy.array
@@ -543,25 +425,20 @@ def finemap_v2(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambd
 			Arg kmax: int, maximum number of causal variants
 			Arg corr_thresh: int, excluding configurations with correlation > corr_thresh
 			Arg max_iter: int, iterations of stochastic search
-			Arg output: int, "configuration" or "marginal"
 			Arg prior= string ("independence", "independence_robust" or "gprior") independence_robust does filter out configurations with possible mis-matches between the correlation matrix and effect size direction
 			Arg v_scale = float, prior variance of the independence prior, recommended 0.05 **2 (following FINEMAP, Benner et al 2016)
 			Arg g: string, g-parameter of the g-prior, recommended g="BRIC" g=max(n,#SNPs**2), other options g="BIC" where g=n (Bayes Information Criterion), or  g="RIC" where g=#SNPs**2 (Risk Inflation Criterion) see Mixtures of g Priors for Bayesian Variable Selection Liang et al 2008
 			Arg verbose = False: boolean, print the progress of the stochastic search
 			Returntype: OneDConfigurationSample
 	'''
+	logging.debug("Finemap v2")
 
 	# Test inputs
-	assert len(z_scores) == cov_matrix.shape[0], 'Covariance matrix has %i rows, %i expcted' % (
-		cov_matrix.shape[0], len(z_scores))
-	assert len(z_scores) == cov_matrix.shape[1], 'Covariance matrix has %i columns, %i expcted' % (
-		cov_matrix.shape[0], len(z_scores))
-	assert not kstart > kmax, 'Incorrect number of causal variants specified, kmax (%i) must be greater than kstart (%s)' % (
-		kmax, kstart)
-	assert not numpy.any(numpy.isnan(z_scores)
-						 ), 'Missing values detected in z-scores'
-	assert not numpy.any(numpy.isnan(cov_matrix)
-						 ), 'Missing values detected in covariance matrix'
+	assert len(z_scores) == cov_matrix.shape[0], 'Covariance matrix has %i rows, %i expected' % (cov_matrix.shape[0], len(z_scores))
+	assert len(z_scores) == cov_matrix.shape[1], 'Covariance matrix has %i columns, %i expected' % (cov_matrix.shape[0], len(z_scores))
+	assert not kstart > kmax, 'Incorrect number of causal variants specified, kmax (%i) must be greater than kstart (%s)' % (kmax, kstart)
+	assert not numpy.any(numpy.isnan(z_scores)), 'Missing values detected in z-scores'
+	assert not numpy.any(numpy.isnan(cov_matrix)), 'Missing values detected in covariance matrix'
 
 	# compute the correlation from the aligned beta
 	# note this is an approximation with maf = 0.5
@@ -574,8 +451,7 @@ def finemap_v2(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambd
 	# Initialise
 	score_cache = dict()
 	neighbourhood_cache = dict()
-	configurations = [config for config_size in range(
-		1, kstart + 1) for config in it.combinations(range(len(z_scores)), config_size)]
+	configurations = [config for config_size in range(1, kstart + 1) for config in it.combinations(range(len(z_scores)), config_size)]
 	results = compare_neighborhood(
 		configs=configurations,
 		z_scores=z_scores,
@@ -593,47 +469,36 @@ def finemap_v2(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambd
 		g=g
 	)
 
-	# Simple search
-	if kstart == kmax:
-		res_out = results.normalise_posteriors()
-
-		if output == "configuration":
-			return res_out
-		elif output == "marginal":
-			return res_out.marginals(len(z_scores))
-		else:
-			assert False, "%s unkown" % {output}
-
 	# shotgun stochastic search
 	if kstart < kmax:
+		# Count the amount of all the possible configurations
+		n_all_pos_config = sum(scipy.special.comb(len(z_scores), r, exact=True) for r in range(kstart, kmax+1))
+
 		p = results.normalise_posteriors().posterior
-		current_config = configurations[numpy.random.choice(len(p), size=1, p=p)[
-			0]]
+		current_config = configurations[numpy.random.choice(len(p), size=1, p=p)[0]]
 		count = 1
-		result_list = [results]
 		while count < max_iter:
 			# Generate new configs
-			new_configs = create_neighborhood(current_config, len(
-				z_scores), kstart, kmax, neighbourhood_cache)
+			new_configs = create_neighborhood(current_config, len(z_scores), kstart, kmax, neighbourhood_cache)
 
 			# EM Algorithm
 			# E-step
 			# compute PIPs within the list
-			results_temp = compare_neighborhood(configs=merge_samples(result_list).configurations,
-												z_scores=z_scores,
-												cor_scores=cor_scores,
-												cov_matrix=cov_matrix,
-												kmax=kmax,
-												n=n,
-												score_cache=score_cache,
-												labels=labels,
-												sample_label=sample_label,
-												annotations=annotations,
-												lambdas=lambdas,
-												prior=prior,
-												corr_thresh=corr_thresh,
-												v_scale=v_scale,
-												g=g)
+			results_temp = compare_neighborhood(configs=results.configurations,
+									z_scores=z_scores,
+									cor_scores=cor_scores,
+									cov_matrix=cov_matrix,
+									kmax=kmax,
+									n=n,
+									score_cache=score_cache,
+									labels=labels,
+									sample_label=sample_label,
+									annotations=annotations,
+									lambdas=lambdas,
+									prior=prior,
+									corr_thresh=corr_thresh,
+									v_scale=v_scale,
+									g=g)
 			PIPs = results_temp.normalise_posteriors().marginals(len(z_scores)).posterior
 
 			# Q cost function
@@ -648,10 +513,6 @@ def finemap_v2(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambd
 					annot = annotations[:, i]
 					logistic_const = (1 + numpy.exp(-sum(annot * lambdas)))
 					logistic_param = (1 + numpy.exp(-sum(annot * lambdas_)))
-					# Q = Q + (
-					#	 PIPs[i]/(1-PIPs[i]) * (1 - 1/logistic_const)
-					#	 + 1/logistic_const
-					# ) * numpy.log(1 - 1/logistic_param)
 					Q = Q + ((
 						PIPs[i]/(1.-PIPs[i]) * 1./logistic_const ) 
 						* numpy.log(1./logistic_param) 
@@ -662,7 +523,7 @@ def finemap_v2(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambd
 			# M-step
 			# Estimate parameters by maximising Q cost function
 			bounds_list = [(-30, 30) for i in range(len(lambdas))]
-			result_Q = optimize.minimize(
+			result_Q = scipy.optimize.minimize(
 				# Q_function, lambdas, method='L-BFGS-B')
 				Q_function, lambdas, method='L-BFGS-B', bounds=bounds_list)
 			if result_Q.success:
@@ -671,51 +532,41 @@ def finemap_v2(z_scores, beta_scores, cov_matrix, n, labels, sample_label, lambd
 
 			# Evaluate probabilities of these configs
 			results_nh = compare_neighborhood(configs=new_configs,
-											  z_scores=z_scores,
-											  cor_scores=cor_scores,
-											  cov_matrix=cov_matrix,
-											  kmax=kmax,
-											  n=n,
-											  score_cache=score_cache,
-											  labels=labels,
-											  sample_label=sample_label,
-											  annotations=annotations,
-											  lambdas=lambdas,
-											  prior=prior,
-											  corr_thresh=corr_thresh,
-											  v_scale=v_scale,
-											  g=g)
+								  z_scores=z_scores,
+								  cor_scores=cor_scores,
+								  cov_matrix=cov_matrix,
+								  kmax=kmax,
+								  n=n,
+								  score_cache=score_cache,
+								  labels=labels,
+								  sample_label=sample_label,
+								  annotations=annotations,
+								  lambdas=lambdas,
+								  prior=prior,
+								  corr_thresh=corr_thresh,
+								  v_scale=v_scale,
+								  g=g)
 
-			# Add new entries into the results list
-			result_list.append(results_nh)
+			# Add new entries into the results object
+			results = merge_samples(results, results_nh, labels, sample_label)
+
+			# if all the possible configurations have been searched, stop iterations
+			if len(results.configurations) == n_all_pos_config:
+				logging.info(str(n_all_pos_config) + ' possible configurations have been searched within ' + str(count) + ' iterations; breaking.')
+				break
 
 			# Choose seed for next round among new configs
 			prob = results_nh.normalise_posteriors().posterior
-			current_config = new_configs[numpy.random.choice(
-				len(new_configs), size=1, p=prob)[0]]
+			current_config = new_configs[numpy.random.choice(len(new_configs), size=1, p=prob)[0]]
 
 			# Chatter to stdout
-			if verbose == True:
-				print(str(numpy.round(float(count) / max_iter * 100)) +
-					  '% of the search done')
-				print(current_config)
+			logging.debug(str(numpy.round(float(count) / max_iter * 100)) +'% of the search done')
+			logging.debug(current_config)
 
 			# Keep count of sampled configs
 			count += 1
 
-		res_out = merge_samples(result_list).normalise_posteriors()
-		if isGWAS == True:
-			with open(postgap.Globals.OUTPUT+'_GWAS_lambdas.txt', 'a') as fw1:
-				for idx, L in enumerate(lambdas):
-					fw1.write(
-						'\t'.join(map(str, [postgap.Globals.source_lst[idx], L]))+'\n')
-		if output == "configuration":
-			return res_out
-		elif output == "marginal":
-			return res_out.marginals(len(z_scores))
-		else:
-			assert False, "%s unkown" % {output}
-
+	return results.normalise_posteriors()
 
 def create_neighborhood(current_config, m, kstart, kmax, neighbourhood_cache):
 	'''
@@ -804,25 +655,16 @@ def compare_neighborhood(configs, z_scores,  cor_scores, cov_matrix, kmax, n, sc
 			Arg g: string, g-parameter of the g-prior, recommended g="BRIC" g=max(n,#SNPs**2), other options g="BIC" where g=n (Bayes Information Criterion), or  g="RIC" where g=#SNPs**2 (Risk Inflation Criterion) see Mixtures of g Priors for Bayesian Variable Selection Liang et al 2008
 	'''
 	nh_size = len(configs)
-<<<<<<< HEAD
-	configuration_size = numpy.array(
-		[len(configuration) for configuration in configs])
+	configuration_size = numpy.array([len(configuration) for configuration in configs])
 
 	# binomial prior without functional annotations
 	if postgap.Globals.TYPE == 'binom':
 		log_prior = calc_logbinom(configuration_size, kmax, len(z_scores))
 	else:
-		# logistic prior with functional annotations
-		# log_prior = calc_config_loglogis_prior(annotations, lambdas, configs)
-		log_prior = calc_config_loglogis_prior(annotations, lambdas, configs, numpy.mean(
+		log_prior = calc_config_loglogis_priors(annotations, lambdas, configs, numpy.mean(
 			numpy.exp(calc_logbinom(configuration_size, kmax, len(z_scores))), axis=0))
 
 	log_BF = numpy.zeros(nh_size)
-=======
-	configuration_size = numpy.array([len(configuration) for configuration in configs])
-	log_prior = calc_logbinom(configuration_size, kmax, len(z_scores))
-	log_BF = numpy.zeros(len(configs))
->>>>>>> further optimisations to make finemapping more efficient
 	i = 0
 
 	for configuration in configs:
@@ -834,16 +676,6 @@ def compare_neighborhood(configs, z_scores,  cor_scores, cov_matrix, kmax, n, sc
 		z_tuple = numpy.take(z_scores, configuration)
 		cor_tuple = numpy.take(cor_scores, configuration)
 		cov_tuple = cov_matrix[numpy.ix_(configuration, configuration)]
-<<<<<<< HEAD
-		# if numpy.max(numpy.tril(cov_tuple, k=-1)) > corr_thresh:
-		#	 i = i+1
-		#	 continue
-		# if numpy.min(numpy.tril(cov_tuple, k=-1)) < -corr_thresh:
-		#	 i = i+1
-		#	 continue
-=======
-
->>>>>>> further optimisations to make finemapping more efficient
 		if numpy.max(numpy.absolute(numpy.tril(cov_tuple, k=-1))) > corr_thresh:
 			score_cache[tuple(configuration)] = 0
 			i = i+1
@@ -864,8 +696,7 @@ def compare_neighborhood(configs, z_scores,  cor_scores, cov_matrix, kmax, n, sc
 		i = i+1
 
 	return OneDConfigurationSample(
-		configurations=dict((tuple(config), index)
-							for index, config in enumerate(configs)),
+		configurations=dict((tuple(config), index) for index, config in enumerate(configs)),
 		posterior=(log_BF + log_prior),
 		log_BF=log_BF,
 		configuration_size=configuration_size,
@@ -888,19 +719,15 @@ def calc_logBF(z, cov, v, n):
 	v = numpy.matrix(v)
 	m = z.shape[1]
 	try:
-		coeff = 1. / math.sqrt(numpy.linalg.det((numpy.matrix(numpy.eye(m)
-															  ) + n * numpy.matrix(v) * numpy.matrix(cov))))
+		coeff = 1. / math.sqrt(numpy.linalg.det((numpy.matrix(numpy.eye(m)) + n * numpy.matrix(v) * numpy.matrix(cov))))
 	except ValueError:
-		print cov
 		eigen_vec = numpy.linalg.eig(numpy.matrix(cov))[0]
 		Q = numpy.linalg.eig(numpy.matrix(cov))[1]
 		eigen_pos = eigen_vec
 		eigen_pos[eigen_vec < 0] = 0
 		cov = Q*numpy.diag(eigen_pos)*Q.transpose()
-		coeff = 1. / math.sqrt(numpy.linalg.det((numpy.matrix(numpy.eye(m)
-															  ) + n * numpy.matrix(v) * numpy.matrix(cov))))
-	exponent = 0.5 * z * \
-		numpy.matrix(numpy.linalg.pinv(((n * v).I + cov), 0.0001)) * z.T
+		coeff = 1. / math.sqrt(numpy.linalg.det((numpy.matrix(numpy.eye(m)) + n * numpy.matrix(v) * numpy.matrix(cov))))
+	exponent = 0.5 * z * numpy.matrix(numpy.linalg.pinv(((n * v).I + cov), 0.0001)) * z.T
 	return numpy.array(numpy.log(coeff) + exponent)[0][0]
 
 def calc_robust_logBF(z, cor, cov, v, n, eigen_thresh):
@@ -918,28 +745,22 @@ def calc_robust_logBF(z, cor, cov, v, n, eigen_thresh):
 	v = numpy.matrix(v)
 	m = z.shape[1]
 	try:
-		coeff = 1. / math.sqrt(numpy.linalg.det((numpy.matrix(numpy.eye(m)
-															  ) + n * numpy.matrix(v) * numpy.matrix(cov))))
+		coeff = 1. / math.sqrt(numpy.linalg.det((numpy.matrix(numpy.eye(m)) + n * numpy.matrix(v) * numpy.matrix(cov))))
 	except ValueError:
-		print cov
 		eigen_vec = numpy.linalg.eig(numpy.matrix(cov))[0]
 		Q = numpy.linalg.eig(numpy.matrix(cov))[1]
 		eigen_pos = eigen_vec
 		eigen_pos[eigen_vec < 0] = 0
 		cov = Q*numpy.diag(eigen_pos)*Q.transpose()
-		coeff = 1. / math.sqrt(numpy.linalg.det((numpy.matrix(numpy.eye(m)
-															  ) + n * numpy.matrix(v) * numpy.matrix(cov))))
+		coeff = 1. / math.sqrt(numpy.linalg.det((numpy.matrix(numpy.eye(m)) + n * numpy.matrix(v) * numpy.matrix(cov))))
 	exponent = 0.5 * z * \
 		numpy.matrix(numpy.linalg.pinv(((n * v).I + cov), 0.0001)) * z.T
 	log_BF = numpy.array(numpy.log(coeff) + exponent)[0][0]
 
-	if(m > 1):
-		if(check_eigenvals(cor, cov, eigen_thresh) == False):
-			log_BF = 0.
+	if(m > 1 and check_eigenvals(cor, cov, eigen_thresh) == False):
+		return 0.
 	else:
-		log_BF = log_BF
-
-	return log_BF
+		return log_BF
 
 def calc_loggBF(z, cov, n, g="BRIC"):
 	'''
@@ -975,31 +796,16 @@ def calc_logbinom(subset_size, k, m):
 			Arg3: int, number of SNPs (len(z))
 			Returntype: float
 	'''
+	p = float(1) / m
+
 	if k == 1:
-		# return numpy.zeros(m)
-		p = float(1) / m
 		return subset_size*numpy.log(p) + (m - subset_size)*numpy.log(1-p)
 	else:
-		p = float(1) / m
-<<<<<<< HEAD
-		# p_binom = p**subset_size * (1 - p)**(m - subset_size)
-		# p_k = numpy.zeros(k - 1)
 		logsum = 1*numpy.log(p) + (m - 1)*numpy.log(1-p)
-		# for i in range(1, k):
 		for i in range(2, k+1):
-			logsum = sumlog(logsum, (i*numpy.log(p)+(m-1)*numpy.log(1-p)))
+		    logsum = sumlog(logsum, (i*numpy.log(p)+(m-1)*numpy.log(1-p)))
 
-		# p_k[i - 1] = p**i * (1 - p)**(m - i)
-		# p_rescale = numpy.sum(p_k)
-		# p_out = p_binom / p_rescale
-		# return numpy.log(p_out)
-		out = (subset_size*numpy.log(p) +
-			   (m - subset_size)*numpy.log(1-p)) - logsum
-		return(out)
-
-=======
-		return numpy.log((p**subset_size * (1 - p)**(m - subset_size)) / sum(p**i * (1 - p)**(m - i) for i in range(1, k)))
->>>>>>> further optimisations to make finemapping more efficient
+		return (subset_size*numpy.log(p) + (m - subset_size)*numpy.log(1-p)) - logsum
 
 def merge_samples(results, results_nh, labels, sample_label):
 	'''
@@ -1072,11 +878,9 @@ def calc_approx_v_cc(maf, sampN_case, sampN_control):
 		interior = 2*maf*(1-maf) + 2*maf*maf
 		tmp2 = interior * interior
 		denom = sampN_case * sampN_control * (tmp1 - tmp2)
-		approx_v_cc = num / denom
+		return num / denom
 	else:
-		approx_v_cc = .0001
-	return approx_v_cc
-
+		return .0001
 
 def calc_logBF_ind(v, w, z_score):
 	'''
@@ -1087,9 +891,7 @@ def calc_logBF_ind(v, w, z_score):
 		Returntype: float, log Bayes factor in the case of single prior, w
 	'''
 	r = w / (v + w)
-	# logBF_ind = numpy.log(numpy.sqrt(1.0 - r)) + (z_score * z_score * r / 2.0)
-	logBF_ind = -numpy.log(numpy.sqrt(1.0 - r)) - (z_score * z_score * r / 2.0)
-	return logBF_ind
+	return -numpy.log(numpy.sqrt(1.0 - r)) - (z_score * z_score * r / 2.0)
 
 
 def sumlog(logx, logy):
@@ -1113,23 +915,7 @@ def calc_logBF_ML(v, W, z_score):
 	logBF_SNP = calc_logBF_ind(v, W[0], z_score)
 	for i in range(1, len(W)):
 	   logBF_SNP = sumlog(logBF_SNP, calc_logBF_ind(v, W[i], z_score))
-	logBF_SNP = logBF_SNP - numpy.log(len(W))
-	return logBF_SNP
-
-# def calc_logBF(v, W, z_score):
-#	 '''
-#		 compute averaged prior
-#		 Arg1: float, approximate v prior at SNP
-#		 Arg2: numpy.array (1D), prior variances
-#		 Arg3: float, z_score at SNP
-#		 Returntype: float, averaged snp log Bayes factor over W vector
-#	 '''
-#	 logBF_SNP = calc_logBF_ind(v, W[0], z_score)
-
-#	 for i in range(1, len(W)):
-#		 logBF_SNP = sumlog(logBF_SNP, calc_logBF_ind(v, W[i], z_score))
-#	 logBF_SNP = logBF_SNP - numpy.log(len(W))
-#	 return logBF_SNP
+	return logBF_SNP - numpy.log(len(W))
 
 def calc_logBF(z, cov, v, n):
 	'''
@@ -1144,24 +930,19 @@ def calc_logBF(z, cov, v, n):
 	v = numpy.matrix(v)
 	m = z.shape[1]
 	try:
-		coeff = 1. / math.sqrt(numpy.linalg.det((numpy.matrix(numpy.eye(m)
-															  ) + n * numpy.matrix(v) * numpy.matrix(cov))))
+		coeff = 1. / math.sqrt(numpy.linalg.det((numpy.matrix(numpy.eye(m)) + n * numpy.matrix(v) * numpy.matrix(cov))))
 	except ValueError:
-		print cov
 		eigen_vec = numpy.linalg.eig(numpy.matrix(cov))[0]
 		Q = numpy.linalg.eig(numpy.matrix(cov))[1]
 		eigen_pos = eigen_vec
 		eigen_pos[eigen_vec < 0] = 0
 		cov = Q*numpy.diag(eigen_pos)*Q.transpose()
-		coeff = 1. / math.sqrt(numpy.linalg.det((numpy.matrix(numpy.eye(m)
-															  ) + n * numpy.matrix(v) * numpy.matrix(cov))))
-	exponent = 0.5 * z * \
-		numpy.matrix(numpy.linalg.pinv(((n * v).I + cov), 0.0001)) * z.T
+		coeff = 1. / math.sqrt(numpy.linalg.det((numpy.matrix(numpy.eye(m)) + n * numpy.matrix(v) * numpy.matrix(cov))))
+	exponent = 0.5 * z * numpy.matrix(numpy.linalg.pinv(((n * v).I + cov), 0.0001)) * z.T
 	return numpy.array(numpy.log(coeff) + exponent)[0][0]
 
 
 def set_prior(pi, annot, lambdas):
-# def set_prior(pi=0.001, annot, lambdas):
 	'''
 		compute logistic prior at SNP
 		we assume intecept is based on probability of pi which can be predefined by user
@@ -1171,14 +952,10 @@ def set_prior(pi, annot, lambdas):
 		Arg3: numpy.array (1D), annotation effect sizes
 		Returntype: float, logistic prior probability at SNP
 	'''
+	assert pi > 0 and pi < 1
 	annot = annot.transpose()
-	logitprior = numpy.log(pi) - numpy.log(1 - pi)
-	logitprior = logitprior + sum(annot * lambdas)
-#	 for i in range(len(annot)):
-#		 if annot[i]:
-#			 logitprior = logitprior + lambdas[i]
-	prior = 1.0 / (1.0 + numpy.exp(-logitprior))
-	return prior
+	logitprior = numpy.log(pi) - numpy.log(1 - pi) + sum(annot * lambdas)
+	return 1.0 / (1.0 + numpy.exp(-logitprior))
 
 def set_prior_prob(pi, annot, lambdas):
 	'''
@@ -1191,32 +968,31 @@ def set_prior_prob(pi, annot, lambdas):
 		Returntype: float, logistic prior probability at SNP
 	'''
 	annot = annot.transpose()
-	logitprior = numpy.log(pi) - numpy.log(1 - pi)
-	logitprior = logitprior + sum(annot * lambdas)
-#	 for i in range(len(annot)):
-#		 if annot[i]:
-#			 logitprior = logitprior + lambdas[i]
-	prior = 1.0 / (1.0 + numpy.exp(-logitprior))
-	return prior
+	logitprior = numpy.log(pi) - numpy.log(1 - pi) + sum(annot * lambdas)
+	return 1.0 / (1.0 + numpy.exp(-logitprior))
 
-# The function for leanring F.A parameters in eQTL
-def mk_eqtl_lambdas(p_cluster, z_scores, W=[0.01, 0.1, 0.5], pi=0.01):
-	# initial_lambdas = [0.000001] * p_cluster.annotations.shape[0]
-	initial_lambdas = [0.0] * p_cluster.annotations.shape[0]
+def compute_eqtl_lambdas(cluster, z_scores, W=[0.01, 0.1, 0.5], pi=0.01):
+	'''
+		The function for leanring F.A parameters in eQTL
+		Arg1 GWAS_Cluster
+		Arg2: Numpy Array
+		Arg3: [float]
+		Arg4: float
+		Returntype: numpy.array
+	'''
+	initial_lambdas = [0.0] * cluster.annotations.shape[0]
 	out = calc_logbinom(
-		p_cluster.ld_matrix.shape[0], postgap.Globals.kmax_eqtl, len(p_cluster.z_scores))
+		cluster.ld_matrix.shape[0], postgap.Globals.kmax_eqtl, len(cluster.z_scores))
 	pi = numpy.exp(out)
-	MAFs = map(float, p_cluster.mafs)
+	MAFs = map(float, cluster.mafs)
 	if postgap.Globals.TYPE == 'binom' or postgap.Globals.TYPE == 'EM':
-		lambdas = initial_lambdas
+		return initial_lambdas
 	else:
-		sample_size = p_cluster.gwas_snps[0].evidence[0].sample_size
+		sample_size = cluster.gwas_snps[0].evidence[0].sample_size
 		approx_v = [calc_approx_v(maf, sample_size) for maf in MAFs]
-		# logBFs = [calc_logBF(approx_v[i], W, z_scores[i])
-		#		   for i in range(len(z_scores))]
 		logBFs = [calc_logBF_ML(approx_v[i], W, z_scores[i])
 				 for i in range(len(z_scores))]
-		mat_annot = p_cluster.annotations.T
+		mat_annot = cluster.annotations.T
 
 		def f_llk(lambdas_):
 			priors = [set_prior(pi, annot, lambdas_) for annot in mat_annot]
@@ -1229,47 +1005,38 @@ def mk_eqtl_lambdas(p_cluster, z_scores, W=[0.01, 0.1, 0.5], pi=0.01):
 				lsum = lsum + \
 					sumlog(logBFs[i] + numpy.log(priors[i]),
 						   numpy.log(1 - priors[i]))
-			# return -lsum
 			return 1/lsum
-		# result = optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B')
-		bounds_list = [(-30, 30) for i in range(p_cluster.annotations.shape[0])]
-		result = optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B', bounds=bounds_list)
+		bounds_list = [(-30, 30) for i in range(cluster.annotations.shape[0])]
+		result = scipy.optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B', bounds=bounds_list)
 		if result.success:
-			lambdas = 1 / (1 + numpy.exp(-result.x))
+			return 1 / (1 + numpy.exp(-result.x))
 		else:
-			lambdas = initial_lambdas
-	return lambdas
+			return initial_lambdas
 
-
-def mk_modified_clusters(p_cluster, W=[0.01, 0.1, 0.5]):
+def compute_gwas_lambdas(cluster, W=[0.01, 0.1, 0.5]):
 	'''
 		compute MLE(Maximum Likelihood Estimate) of annotation effect size
 		build clusters with this MLE
 		Arg1: GWAS_Cluster
-		Returntype: GWAS_Cluster_with_lambdas
-		Arg W: variance of prior which will be averaged over [0.01, 0.1, 0.5]
-		Arg pi: predefined parameter for setting intercept in logistic prior
+		Arg2: variance of prior which will be averaged over [0.01, 0.1, 0.5]
+		Returntype: GWAS_Cluster
 		'''
 	pi = numpy.exp(calc_logbinom(
-		p_cluster.ld_matrix.shape[0], postgap.Globals.kmax_gwas, len(p_cluster.z_scores)))
-	# initial_lambdas = [0.000001] * p_cluster.annotations.shape[0]
-	initial_lambdas = [0.0] * p_cluster.annotations.shape[0]
-	z_scores = p_cluster.z_scores
-	MAFs = map(float, p_cluster.mafs)
+		cluster.ld_matrix.shape[0], postgap.Globals.kmax_gwas, len(cluster.z_scores)))
+	initial_lambdas = [0.0] * cluster.annotations.shape[0]
+	MAFs = map(float, cluster.mafs)
 	if postgap.Globals.TYPE == 'binom' or postgap.Globals.TYPE == 'EM':
 		lambdas = initial_lambdas
 	else:
-		sample_size = p_cluster.gwas_snps[0].evidence[0].sample_size
+		sample_size = cluster.gwas_snps[0].evidence[0].sample_size
 		# To DO: Setting option for quantative and qualitative trait (Default for GWAS is qualitative and for eQTL is quantitative)
 		approx_v = [calc_approx_v(maf, sample_size) for maf in MAFs]
 		# To DO: sampN_case / sampN_control setting
-		#approx_v   = [calc_approx_v_cc(maf, sampN_case= 11846, sampN_control=440418)  for maf in MAFs]
 
-		# logBFs = [calc_logBF(approx_v[i], W, z_scores[i])
-		#		   for i in range(len(z_scores))]
-		logBFs = [calc_logBF_ML(approx_v[i], W, z_scores[i])
-				  for i in range(len(z_scores))]
-		mat_annot = p_cluster.annotations.T
+		logBFs = [calc_logBF_ML(approx_v[i], W, cluster.z_scores[i])
+				  for i in range(len(cluster.z_scores))]
+		mat_annot = cluster.annotations.T
+		assert len(mat_annot) == len(logBFs), "Matrices of discrepant sizes: annotations.T = %i; logBFs = %i, cluster.annotations.shape = %s, ld.matrix = %s" % (len(cluster.annotations.T), len(logBFs), cluster.annotations.shape, cluster.ld_matrix.shape)
 		min_val = 1.2683388472255632e-301
 		max_val = 0.9999999999999999
 
@@ -1284,58 +1051,62 @@ def mk_modified_clusters(p_cluster, W=[0.01, 0.1, 0.5]):
 				lsum = lsum + \
 					sumlog(logBFs[i] + numpy.log(priors[i]),
 						   numpy.log(1 - priors[i]))
-			# return -lsum
 			return 1/lsum
 
-		# result = optimize.minimize(f_llk, initial_lambdas, method='L-BFGS-B')
-		bounds_list = [(-30, 30) for i in range(p_cluster.annotations.shape[0])]
-		result = optimize.minimize(
+		bounds_list = [(-30, 30) for i in range(cluster.annotations.shape[0])]
+		result = scipy.optimize.minimize(
 			f_llk, initial_lambdas, method='L-BFGS-B', bounds=bounds_list)
 		if result.success:
-			# lambdas = 1 / (1 + numpy.exp(-result.x))
 			lambdas = 1.0 / (1.0 + numpy.exp(-result.x))
 		else:
 			lambdas = initial_lambdas
 
-	return GWAS_Cluster_with_lambdas(p_cluster.gwas_snps,
-									 p_cluster.ld_snps,
-									 p_cluster.ld_matrix,
-									 z_scores,
-									 p_cluster.betas,
-									 MAFs,
-									 p_cluster.annotations,
-									 None,
-									 lambdas)
+	return GWAS_Cluster(cluster.gwas_snps,
+			 cluster.ld_snps,
+			 cluster.ld_matrix,
+			 cluster.z_scores,
+			 cluster.betas,
+			 MAFs,
+			 cluster.annotations,
+			 None,
+			 lambdas)
 
 
-def calc_config_loglogis_prior(annotations, lambdas, configurations, pi_EM=0.001):
+def calc_config_loglogis_priors(annotations, lambdas, configurations, pi_EM=0.001):
 	'''
 		compute log logistic prior at config
 		Arg1: numpy.array (2D), functional annotations
 		Arg2: numpy.array (1D), annotation effect sizes
 		Arg3: array of arrays
 		Arg pi_EM: predefined parameter for setting intercept in logistic prior during EM calculation
+		Returntype: Numpy.array
 	'''
-	config_logprior = []
-	for configuration in configurations:
-		logprior = 0
-		for snp in range(annotations.shape[1]):
-			set_prior_out = set_prior_prob(pi_EM, annotations[:, snp], lambdas)
-			if snp in configuration:
-				# logprior = logprior + \
-				#	 numpy.log(set_prior(pi_EM, annotations[:, snp], lambdas))
-				if set_prior_out < 1e-301:
-					logprior = logprior + numpy.log(1e-301)
-				else:
-					logprior = logprior + numpy.log(set_prior_out)
+	return numpy.array([calc_config_loglogis_prior(annotations, lambdas, configuration, pi_EM) for configuration in configurations])
+
+def calc_config_loglogis_prior(annotations, lambdas, configuration, pi_EM=0.001):
+	'''
+		compute log logistic prior at config
+		Arg1: numpy.array (2D), functional annotations
+		Arg2: numpy.array (1D), annotation effect sizes
+		Arg3: array 
+		Arg pi_EM: predefined parameter for setting intercept in logistic prior during EM calculation
+		Returntype: Numpy.array
+	'''
+	logprior = 0
+	for snp in range(annotations.shape[1]):
+		set_prior_out = set_prior_prob(pi_EM, annotations[:, snp], lambdas)
+		if snp in configuration:
+			if set_prior_out < 1e-301:
+				logprior = logprior + numpy.log(1e-301)
 			else:
-				# logprior = logprior + \
-				#	 numpy.log(
-				#		 1 - set_prior(pi_EM, annotations[:, snp], lambdas))
-				if set_prior_out > (1-1e-16):
-					logprior = logprior + numpy.log(1 - (1-1e-16))
-				else:
-					logprior = logprior + numpy.log(1 - set_prior_out)
-		config_logprior.append(logprior)
-	config_logprior[config_logprior < -700.] = - 700.
-	return config_logprior
+				logprior = logprior + numpy.log(set_prior_out)
+		else:
+			if set_prior_out > (1-1e-16):
+				logprior = logprior + numpy.log(1 - (1-1e-16))
+			else:
+				logprior = logprior + numpy.log(1 - set_prior_out)
+	
+	if logprior < -700:
+		return -700
+	else:
+		return logprior

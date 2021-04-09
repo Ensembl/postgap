@@ -172,19 +172,7 @@ def gwas_snps_to_genes(gwas_snps, population):
 		infile = open(cluster_fn, 'rb')
 		cluster = pickle.load(infile)
 		infile.close()
-
-		# Perform GWAS finemapping of the clusters
-		if postgap.Globals.PERFORM_BAYESIAN:
-			logging.info("\tperform GWAS finemapping for cluster %s" % (cluster_fn))
-		
-			try:
-				cluster = postgap.FinemapIntegration.finemap_gwas_cluster(cluster, population)
-			except:
-				logging.info("\tcluster %s failed finemapping" % (cluster_fn))
-				sys.exit(0) # should quit here??? Reference Integration.py - L242-246
-
-		res = cluster_to_genes(cluster, tissue_weights, population)
-
+		res = cluster_to_genes(cluster, population)
 		logging.info("\tFound %i genes associated to cluster %s" % (len(res), cluster_fn))
 	elif gwas_snps is not None:
 		clusters = cluster_gwas_snps(gwas_snps, population)
@@ -199,102 +187,17 @@ def gwas_snps_to_genes(gwas_snps, population):
 
 				# create pickle files in directory cluster_dir		
 				cluster_fn = 'GWAS_Cluster_%s:%i-%i' % (chrom, start, end)
-				outfile = open(postgap.Globals.CLUSTER_DIR + cluster_fn, 'wb')
+				outfile = open(os.path.join(postgap.Globals.CLUSTER_DIR, cluster_fn), 'wb')
 				pickle.dump(cluster, outfile)
 				outfile.close()
-			logging.info("save cluster info into a file and quit")
+			logging.info("Saved cluster info into a file and quit")
 			sys.exit(0)
 
-		# Perform GWAS finemapping of the clusters
-		if postgap.Globals.PERFORM_BAYESIAN:
-			logging.info("\tperform GWAS finemapping for all clusters")
-		
-			finemap_clusters = []
-			for cluster in clusters:
-				try:
-					finemap_clusters.append(postgap.FinemapIntegration.finemap_gwas_cluster(cluster, population))
-				except:
-					continue
-				
-			if not finemap_clusters:
-				logging.info("all the clusters failed finemapping")
-				sys.exit(0) # should quit here??? or 'finemap_clusters = clusters'
-		
-			for cluster in finemap_clusters:
-				for gwas_snp in cluster.gwas_snps:
-					assert gwas_snp.snp.rsID in [ld_snp.rsID for ld_snp in cluster.ld_snps]
-		
-			clusters = finemap_clusters
-
-		res = concatenate(cluster_to_genes(cluster, tissue_weights, population) for cluster in clusters)
+		res = concatenate(cluster_to_genes(cluster, population) for cluster in clusters)
 
 		logging.info("\tFound %i genes associated to all clusters" % (len(res)))
 
-	if len(res) == 0:
-		return []
-	else:
-		return sorted(res, key=lambda X: X.score)
-
-def clusters_to_genes(clusters, population, tissue_weights):
-	"""
-
-			Associates genes to a set of clusters 
-			Args:
-			* [ Cluster ]
-			* string (population name)
-			* {tissue_name: scalar (weight) }
-			Returntype: [ string ]
-
-	"""
-	# Collect regulatory and cis-regulatory evidence across clusters
-	cluster_associations = [(cluster, ld_snps_to_genes(
-		cluster.ld_snps, tissue_weights)) for cluster in clusters]
-	with open('cluster_association.pkl', 'w') as f:
-		pickle.dump(cluster_associations, f)
-	# with open('cluster_association.pkl') as f:
-	#		cluster_associations= pickle.load(f)
-	# If required, perform genome-wide GWAS finemapping
-
-	# Extract the GWAS and eQTL F.A parameters (lambdas)
-	# TODO: Remove magic filepaths
-	# with open('GWAS_lambdas_'+os.path.basename(postgap.Globals.GWAS_SUMMARY_STATS_FILE), 'w') as fw1:
-	#	 fw1.write('cluster\tsource\tlambdas\n')
-	# with open('eQTL_lambdas_'+os.path.basename(postgap.Globals.GWAS_SUMMARY_STATS_FILE), 'w') as fw2:
-	#	 fw2.write('cluster\ttissue\tgene\tlambdas\n')
-	with open(postgap.Globals.OUTPUT+'_GWAS_lambdas.txt', 'w') as fw1:
-		fw1.write('source\tlambdas\n')
-	with open(postgap.Globals.OUTPUT+'_eQTL_lambdas.txt', 'w') as fw2:
-		fw2.write('cluster\ttissue\tgene\tlambdas\n')
-	# ===
-
-	if postgap.Globals.PERFORM_BAYESIAN:
-		cluster_associations = postgap.FinemapIntegration.compute_gwas_posteriors(
-			cluster_associations, population)
-	# print cluster_associations[0][0].ld_matrix
-
-	# Perform cluster by cluster finemapping
-	res = concatenate(cluster_to_genes(cluster, associations, tissue_weights, population)
-					  for cluster, associations in cluster_associations)
-
-	logging.info("\tFound %i genes associated to all clusters" % (len(res)))
-
-	if len(res) == 0:
-		return []
-	else:
-		return sorted(res, key=lambda X: X.score)
-
-
-def gwas_snps_to_tissue_weights(gwas_snps):
-	"""
-
-			Associates list of tissues to list of gwas_snps
-			Args:
-			* [ GWAS_SNP ]
-			Returntype: [ string ]
-
-	"""
-	return ['Whole_Blood']  # See FORGE??
-
+	return res
 
 def cluster_gwas_snps(gwas_snps, population):
 	"""
@@ -332,6 +235,28 @@ def cluster_gwas_snps(gwas_snps, population):
 	logging.info("Found %i clusters from %i GWAS SNP locations" % (len(raw_clusters), len(gwas_snp_locations)))
 
 	return raw_clusters
+
+def gwas_snp_to_precluster(gwas_snp, population):
+    """
+        Extract neighbourhood of GWAS snp
+        Args:
+        * [ GWAS_SNP ]
+	* string (population name)
+        Returntype: GWAS_Cluster
+    """
+    mapped_ld_snps = postgap.LD.calculate_window(gwas_snp.snp, population=population)
+    logging.info("Found %i SNPs in the vicinity of %s" % (len(mapped_ld_snps), gwas_snp.snp.rsID))
+    return GWAS_Cluster(
+		gwas_snps = [ gwas_snp ],
+		ld_snps = mapped_ld_snps,
+		ld_matrix = None,
+		z_scores = None,
+		betas = None,
+		mafs = None,
+		annotations = None,
+		gwas_configuration_posteriors = None,
+		lambdas = None
+	)
 
 def get_gwas_snp_locations(gwas_snps):
 	"""
@@ -559,18 +484,21 @@ def cluster_to_genes(cluster, population):
 		Returntype: [ GeneCluster_Association ]
 	"""
 	if postgap.Globals.PERFORM_BAYESIAN:
-		assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
-		assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
 		# Obtain interaction data from LD snps
-		associations, eQTL_hash = ld_snps_to_genes([snp for snp in cluster.ld_snps], tissues)
-		gene_tissue_posteriors = postgap.FinemapIntegration.compute_joint_posterior(cluster, eQTL_hash)
+		associations, eQTL_hash = ld_snps_to_genes([snp for snp in cluster.ld_snps])
+
+		# GWAS Finemapping
+		gwas_finemapped_cluster = postgap.FinemapIntegration.compute_gwas_posteriors(cluster, associations, population)
+
+		# eQTL Finemapping
+		gene_tissue_posteriors = postgap.FinemapIntegration.compute_joint_posterior(gwas_finemapped_cluster, eQTL_hash)
 
 		res = [
 			GeneCluster_Association(
 				gene = gene,
 				score = None,
 				collocation_posterior = gene_tissue_posteriors[gene],
-				cluster = cluster,
+				cluster = gwas_finemapped_cluster,
 				evidence = filter(lambda X: X.gene == gene, associations), # This is a [ GeneSNP_Association ]
 				eQTL_hash = eQTL_hash,
 				r2 = None
@@ -598,9 +526,6 @@ def cluster_to_genes(cluster, population):
 
 		# OMIM exception
 		max_score = max(X[1] for X in gene_scores.values())
-		for gene, snp in gene_scores:
-			if len(gene_to_phenotypes(gene)):
-				gene_scores[(gene, snp)][1] = max_score
 
 		# PICS score precomputed and normalised
 		pics = PICS(ld, top_gwas_hit.pvalue)
@@ -897,24 +822,6 @@ def regulatory_evidence(snps):
 		hash[hit.snp].append(hit)
 
 	return hash
-
-
-def gene_to_phenotypes(gene):
-	"""
-
-			Look up phenotype annotations for gene
-			Args:
-			* ENSG stable ID
-			Return type: [ OMIM Phenotype ]
-
-	"""
-	return []  # TODO and remove stopper
-	if gene not in phenotype_cache:
-		phenotype_cache[gene['stable_id']
-						] = postgap.Ensembl_lookup.get_gene_phenotypes(gene)
-
-	return phenotype_cache[gene['stable_id']]
-
 
 def get_all_tissues():
 	server = 'http://rest.ensembl.org'

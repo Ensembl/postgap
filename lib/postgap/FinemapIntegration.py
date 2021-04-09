@@ -34,47 +34,28 @@ import collections
 import postgap.Globals
 import numpy
 import os.path
+import logging
 scipy = None
 
-
-def compute_gwas_posteriors(cluster_associations, populations):
+def compute_gwas_posteriors(cluster, associations, populations):
 	"""
 			Compute posterior of GWAS causality across all clusters
-			Arg1: [(GWAS_Cluster, GeneSNP_Association)]
-			Arg2: dict(string => float)
-			Arg3: binom/ ML/ EM/ ML_EM
-			Returntype: [(GWAS_Cluster, GeneSNP_Associations)]
+			Arg1: GWAS_Cluster
+			Arg2: [GeneSNP_Association]
+			Arg3: dict(string => float)
+			Returntype: GWAS_Cluster
 	"""
-	# prepped_clusters = [(prepare_cluster_for_finemap(cluster, associations, populations), associations) for cluster, associations in cluster_associations]
-	prepped_clusters = []
-	for cluster, associations in cluster_associations:
-		if (len(cluster.ld_snps) < 3):
-			continue
-		prepped_clusters.append((prepare_cluster_for_finemap(
-			cluster, associations, populations), associations))
-		# prepped_cluster = prepare_cluster_for_finemap(
-		#	 cluster, associations, populations)
-		# prepped_cluster_rsIDs = [
-		#	 ld_snp.rsID for ld_snp in prepped_cluster.ld_snps]
-		# filtered_associations = [
-		#	 association for association in associations if association.snp.rsID in prepped_cluster_rsIDs]
-		# prepped_clusters.append((prepped_cluster, filtered_associations))
+	prepped_cluster = compute_cluster_genetic_structure(cluster, associations, populations)
+	weighted_cluster = postgap.Finemap.compute_gwas_lambdas(prepped_cluster)
+	return finemap_gwas_cluster(weighted_cluster)
 
-	# MLE calculation
-	modified_clusters = [(postgap.Finemap.mk_modified_clusters(
-		cluster), associations) for cluster, associations in prepped_clusters]
-	pickle.dump(modified_clusters, open('prepped_clusters_' +
-										os.path.basename(postgap.Globals.GWAS_SUMMARY_STATS_FILE)+'.pkl', "w"))
-	return [(finemap_gwas_cluster(cluster), associations) for cluster, associations in modified_clusters]
-
-
-def prepare_cluster_for_finemap(cluster, associations, population, tissue_weights=['Whole_Blood']):
+def compute_cluster_genetic_structure(cluster, associations, population):
 	'''
 
 			Enriches GWAS clusters with z-scores, betas, MAFs and annotations
 			Arg1: GWAS_Cluster
 			Arg2: [GeneSNP_Association]
-			Arg2: dict(string => float)
+			Arg3: dict(string => float)
 			Returntype: GWAS_Cluster
 
 	'''
@@ -98,7 +79,7 @@ def prepare_cluster_for_finemap(cluster, associations, population, tissue_weight
 
 	assert len(ld_snps) == ld_matrix.shape[0]
 	assert len(ld_snps) == ld_matrix.shape[1]
-	return GWAS_Cluster(cluster.gwas_snps, ld_snps, ld_matrix, z_scores, betas, mafs, annotations, None)
+	return GWAS_Cluster(cluster.gwas_snps, ld_snps, ld_matrix, z_scores, betas, mafs, annotations, None, None)
 	
 def extract_snp_mafs(ld_snps, associations, populations):
 	"""
@@ -309,59 +290,56 @@ def finemap_gwas_cluster(cluster):
 def compute_joint_posterior(cluster, gene_tissue_snp_eQTL_hash):
 	"""
 			Compute collocation posterior of gene expression and GWAS phenotype at the specified cluster and tissue
-			Arg1: GWAS_Cluser
+			Arg1: GWAS_Cluster
 			Arg4: [GeneSNP_Association]
-			Returntype: Hash of hashes: Gene => Tissue => (rsID|CLUSTER) => Float
+			Returntype: Hash of hashes: Gene => Tissue => (rsID|_CLUSTER) => float
 	"""
-	return dict((gene, compute_gene_joint_posterior(cluster, gene, gene_tissue_snp_eQTL_hash[gene], cluster.gwas_configuration_posteriors, cluster.mafs, cluster.annotations)) for gene in gene_tissue_snp_eQTL_hash)
+	return dict((gene, compute_gene_joint_posterior(cluster, gene, gene_tissue_snp_eQTL_hash[gene])) for gene in gene_tissue_snp_eQTL_hash)
 
 
-def compute_gene_joint_posterior(cluster, gene, tissue_snp_eQTL_hash, gwas_configuration_posteriors, mafs, annotations):
+def compute_gene_joint_posterior(cluster, gene, tissue_snp_eQTL_hash):
 	"""
 			Compute collocation posterior of gene expression and GWAS phenotype at the specified cluster and tissue
 			Arg1: GWAS_Cluster
 			Arg2: Gene
 			Arg3: Hash of hashes: Tissue => SNP => (Float, Float)
-			Arg4: Hash of hashes: configuration => posterior
-			Arg5: Numpy Vector
-			Arg6: Numpy 2D Array
-			Returntype: Hash of hashes: Tissue => Float
+			Returntype: Hash of hashes: Tissue => (rsID|_CLUSTER) => float 
 	"""
 	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
 	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
 
-	return dict((tissue, compute_gene_tissue_joint_posterior(cluster, gene, tissue, tissue_snp_eQTL_hash[tissue], gwas_configuration_posteriors, mafs, annotations)) for tissue in tissue_snp_eQTL_hash)
+	return dict((tissue, compute_gene_tissue_joint_posterior(cluster, gene, tissue, tissue_snp_eQTL_hash[tissue])) for tissue in tissue_snp_eQTL_hash)
 
 
-def compute_gene_tissue_joint_posterior(cluster, gene, tissue, eQTL_snp_hash, gwas_configuration_posteriors, mafs, annotations):
+def compute_gene_tissue_joint_posterior(cluster, gene, tissue, eQTL_snp_hash):
 	"""
 			Compute posterior of gene expression regulation at the specified cluster and tissue
 			Arg1: GWAS_Cluster
-			Arg2: Tissue (string)
-			Arg3: Gene
+			Arg2: Gene
+			Arg3: Tissue (string)
 			Arg4: Hash string (rsID) => (Float (z-score), Float (beta))
-			Arg5: Hash of hashes: configuration => posterior
-			Returntype: Numpy Array (GWAS PIP values), Numpy Array (Coloc evidence)
+			Returntype: (rsID|_CLUSTER) => float
 	"""
 	# eQTL posteriors
-	eQTL_configuration_posteriors = compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotations)
+	eQTL_configuration_posteriors = compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash)
 
-	# Joint posterior
-	joint_out = eQTL_configuration_posteriors.joint_posterior(gwas_configuration_posteriors)
+	## Joint posterior
+	sum_posteriors, config_sample = eQTL_configuration_posteriors.joint_posterior(cluster.gwas_configuration_posteriors)
 
-	return joint_out[2], joint_out[3]
+	# Organise information into a hash 
+	res = dict((config, config_sample.posterior[config_sample.configurations[config]]) for config in config_sample.configurations)
+	res['_CLUSTER'] = sum_posteriors
 
+	return res
 
-def compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotations):
+def compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash):
 	"""
 			Compute posterior of gene expression regulation at the specified cluster and tissue
 			Arg1: GWAS_Cluster
 			Arg2: Tissue (string)
 			Arg3: Gene
 			Arg4: Hash string (rsID) => (Float (z-score), Float (beta))
-			Arg5: Numpy Vector
-			Arg6: Numpy 2D Array
-			Returntype: Float
+			Returntype: OneDConfigurationSample
 	"""
 	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
 	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
@@ -431,22 +409,12 @@ def compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash, mafs, annotati
 		labels=[ld_snp.rsID for ld_snp in cluster.ld_snps],
 		sample_label=sample_label,
 		lambdas=lambdas,
-		mafs=mafs,
-		annotations=annotations,
+		mafs=cluster.mafs,
+		annotations=cluster.annotations,
  		kstart       = postgap.Globals.KSTART,
                 kmax         = postgap.Globals.KMAX,
 		isGWAS=False
 	)
-
-	## Joint posterior
-	sum_posteriors, config_sample = eQTL_configuration_posteriors.joint_posterior(cluster.gwas_configuration_posteriors)
-
-	# Organise information into a hash 
-	res = dict((config, config_sample.posterior[config_sample.configurations[config]]) for config in config_sample.configurations)
-	res['_CLUSTER'] = sum_posteriors
-
-	return res
-
 
 def sign(number):
 	"""

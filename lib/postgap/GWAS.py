@@ -785,8 +785,6 @@ class GWAS_File(GWAS_source):
 			callback                      = ld_gwas_associations.add_to_found_list,
 			max_lines_to_return_threshold = len(gwas_cluster.ld_snps)
 		)
-		logging.info("ld_gwas_associations.found_list: " +
-					 pformat(ld_gwas_associations.get_found_list()))
 
 		ld_snps_converted_to_gwas_snps = []
 		
