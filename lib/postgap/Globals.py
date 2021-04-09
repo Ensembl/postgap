@@ -32,8 +32,6 @@ from postgap.DataModel import Region
 TYPE = None
 DATABASES_DIR = None
 SPECIES = None
-kmax_gwas = 1.
-kmax_eqtl = 1.
 
 BLACKLISTED_REGIONS = [
     Region(chrom='6', start=28477797, end=33448354),  # MHC

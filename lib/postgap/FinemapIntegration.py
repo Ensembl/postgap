@@ -46,7 +46,7 @@ def compute_gwas_posteriors(cluster, associations, populations):
 			Returntype: GWAS_Cluster
 	"""
 	prepped_cluster = compute_cluster_genetic_structure(cluster, associations, populations)
-	weighted_cluster = postgap.Finemap.compute_gwas_lambdas(prepped_cluster)
+	weighted_cluster = postgap.Finemap.compute_gwas_lambdas(prepped_cluster, postgap.Globals.KMAX)
 	return finemap_gwas_cluster(weighted_cluster)
 
 def compute_cluster_genetic_structure(cluster, associations, population):
@@ -267,7 +267,7 @@ def finemap_gwas_cluster(cluster):
 			lambdas=cluster.lambdas,
 			mafs=cluster.mafs,
 			annotations=cluster.annotations,
-			kmax=postgap.Globals.kmax_gwas,
+			kmax=postgap.Globals.KMAX,
 			isGWAS=True
 		)
 	elif postgap.Globals.TYPE == 'EM' or postgap.Globals.TYPE == 'ML_EM':
@@ -281,7 +281,7 @@ def finemap_gwas_cluster(cluster):
 			lambdas=cluster.lambdas,
 			mafs=cluster.mafs,
 			annotations=cluster.annotations,
-			kmax=postgap.Globals.kmax_gwas,
+			kmax=postgap.Globals.KMAX,
 			isGWAS=True
 		)
 	return GWAS_Cluster(cluster.gwas_snps, cluster.ld_snps, cluster.ld_matrix, cluster.z_scores, cluster.betas, cluster.mafs, cluster.annotations, configuration_posteriors, cluster.lambdas)
@@ -397,7 +397,7 @@ def compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash):
 	sample_label = 'eQTL_Cluster_%s:%i-%i_%s' % (chrom, start, end, gene)
 
 	# Learn F.A parameters in eQTL 
-	lambdas = postgap.Finemap.compute_eqtl_lambdas(cluster, numpy.array(z_scores))
+	lambdas = postgap.Finemap.compute_eqtl_lambdas(cluster, numpy.array(z_scores), postgap.Globals.KMAX)
 
 	# Compute posterior
 	logging.debug("Finemap eQTL Cluster")

@@ -971,7 +971,7 @@ def set_prior_prob(pi, annot, lambdas):
 	logitprior = numpy.log(pi) - numpy.log(1 - pi) + sum(annot * lambdas)
 	return 1.0 / (1.0 + numpy.exp(-logitprior))
 
-def compute_eqtl_lambdas(cluster, z_scores, W=[0.01, 0.1, 0.5], pi=0.01):
+def compute_eqtl_lambdas(cluster, z_scores, kmax, W=[0.01, 0.1, 0.5], pi=0.01):
 	'''
 		The function for leanring F.A parameters in eQTL
 		Arg1 GWAS_Cluster
@@ -982,7 +982,7 @@ def compute_eqtl_lambdas(cluster, z_scores, W=[0.01, 0.1, 0.5], pi=0.01):
 	'''
 	initial_lambdas = [0.0] * cluster.annotations.shape[0]
 	out = calc_logbinom(
-		cluster.ld_matrix.shape[0], postgap.Globals.kmax_eqtl, len(cluster.z_scores))
+		cluster.ld_matrix.shape[0], len(cluster.z_scores))
 	pi = numpy.exp(out)
 	MAFs = map(float, cluster.mafs)
 	if postgap.Globals.TYPE == 'binom' or postgap.Globals.TYPE == 'EM':
@@ -1013,7 +1013,7 @@ def compute_eqtl_lambdas(cluster, z_scores, W=[0.01, 0.1, 0.5], pi=0.01):
 		else:
 			return initial_lambdas
 
-def compute_gwas_lambdas(cluster, W=[0.01, 0.1, 0.5]):
+def compute_gwas_lambdas(cluster, kmax, W=[0.01, 0.1, 0.5]):
 	'''
 		compute MLE(Maximum Likelihood Estimate) of annotation effect size
 		build clusters with this MLE
@@ -1022,7 +1022,7 @@ def compute_gwas_lambdas(cluster, W=[0.01, 0.1, 0.5]):
 		Returntype: GWAS_Cluster
 		'''
 	pi = numpy.exp(calc_logbinom(
-		cluster.ld_matrix.shape[0], postgap.Globals.kmax_gwas, len(cluster.z_scores)))
+		cluster.ld_matrix.shape[0], kmax, len(cluster.z_scores)))
 	initial_lambdas = [0.0] * cluster.annotations.shape[0]
 	MAFs = map(float, cluster.mafs)
 	if postgap.Globals.TYPE == 'binom' or postgap.Globals.TYPE == 'EM':

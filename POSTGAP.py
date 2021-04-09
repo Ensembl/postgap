@@ -329,8 +329,6 @@ def get_options():
 	parser.add_argument('--sqlite', help='Location of eQTL sqlite file')
 	parser.add_argument(
 		'--output2', help='gene-cluster association output file')
-	parser.add_argument('--kmax_gwas', type=int)
-	parser.add_argument('--kmax_eqtl', type=int)
 	parser.add_argument('--eqtl_response_size', type=range_limited_eqtl_size, default=200,
 	help='Number of items returned in one call to EQTL, (min = 20, max = 1000, default = 200')
 	parser.add_argument('--kstart', type=int, default=1, help='how many causal variants to start with in the full exploration of sets')
@@ -343,12 +341,6 @@ def get_options():
 	if len(sys.argv) == 1:
 		logging.error(commandline_description)
 		sys.exit(0)
-
-	if options.kmax_gwas is not None:
-		postgap.Globals.kmax_gwas = options.kmax_gwas
-
-	if options.kmax_eqtl is not None:
-		postgap.Globals.kmax_eqtl = options.kmax_eqtl
 
 	postgap.Globals.DATABASES_DIR = options.databases
 	postgap.Globals.SPECIES = options.species
