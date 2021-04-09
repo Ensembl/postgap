@@ -136,11 +136,11 @@ def main():
  
 		logging.info("Done with diseases_to_genes")
 	elif options.rsID is not None:
-		res = postgap.Integration.rsIDs_to_genes(options.rsID)
+		res, eQTL_hash = postgap.Integration.rsIDs_to_genes(options.rsID)
 	elif options.coords is not None:
 		snp = postgap.DataModel.SNP(
 			rsID=options.coords[0], chrom=options.coords[1], pos=int(options.coords[2]))
-		res = postgap.Integration.ld_snps_to_genes([snp])
+		res, eQTL_hash = postgap.Integration.ld_snps_to_genes([snp])
 
 	if options.output is None:
 		output = sys.stdout
@@ -152,7 +152,7 @@ def main():
 	elif options.rsID is None and options.coords is None:
 		formatted_results = pretty_output(res, options.population)
 	else:
-		formatted_results = pretty_snp_output(res)
+		formatted_results = pretty_snp_output(res, eQTL_hash)
 
 	output.write(formatted_results + "\n")
 
@@ -341,7 +341,7 @@ def get_options():
 	options = parser.parse_args()
 
 	if len(sys.argv) == 1:
-		print commandline_description
+		logging.error(commandline_description)
 		sys.exit(0)
 
 	if options.kmax_gwas is not None:
@@ -427,39 +427,213 @@ def pretty_gene_output(associations):
 		]
 	return '\n'.join('\t'.join(str(elem) for elem in row) for row in rows)
 
-def pretty_snp_output(associations):
+def pretty_snp_output(associations, eQTL_hash):
 	"""
-
-			Prints association stats in roughly the same format as STOPGAP for a cluster of SNPs
-			Args: [ GeneSNP_Association ]
-			Returntype: String
-
+		Prints association stats in roughly the same format as STOPGAP for a cluster of SNPs
+		Args: [ GeneSNP_Association ]
+		Arg2: Hash of hashes: Gene => Tissue => SNP => Float
+		Returntype: String
 	"""
-	header = "\t".join(['snp_rsID', 'chrom', 'pos', 'gene_symbol', 'gene_id', 'score'] +
-					   [obj.display_name for obj in postgap.Cisreg.sources + postgap.Reg.sources])
-	content = map(pretty_snp_association, associations)
-	return "\n".join([header] + content) + "\n"
+	column_names = ['snp_rsID', 'chrom', 'pos', 'GRCh38_chrom', 'GRCh38_pos', 'afr', 'amr', 'eas', 'eur', 'sas', 'gnomad', 'gnomad_sas', 'gnomad_oth', 'gnomad_asj', 'gnomad_nfe', 'gnomad_afr', 'gnomad_amr', 'gnomad_fin', 'gnomad_eas','gene_symbol', 'gene_id', 'gene_chrom', 'gene_tss', 'GRCh38_gene_chrom', 'GRCh38_gene_pos', 'score', 'vep_terms', 'vep_sum', 'vep_mean'] + ["GTEx_" + tissue_name for tissue_name in postgap.Globals.ALL_TISSUES] + [source.display_name for source in postgap.Cisreg.sources + postgap.Reg.sources]
+	rows = [column_names] + [pretty_snp_association(association, eQTL_hash) for association in associations]
+	return "\n".join("\t".join([unicode(element).encode('utf-8') for element in row]) for row in rows if len(row) > 0) + "\n"
 
 
-def pretty_snp_association(association):
+def pretty_snp_association(association, eQTL_hash):
 	"""
-
-			Prints association stats in roughly the same format as STOPGAP for a cluster of SNPs
-			Args: GeneSNP_Association
-			Returntype: String
-
+		Prints association stats in roughly the same format as STOPGAP for a cluster of SNPs
+		Args: GeneSNP_Association
+		Arg2: Hash of hashes: Gene => Tissue => SNP => Float
+		Returntype: [String]
 	"""
-	snp = association.snp
-	gene_name = association.gene.name
-	gene_id = association.gene.id
-	score = association.score
+	results = []
+	
+	GRCh38_gene = postgap.Ensembl_lookup.get_ensembl_gene(association.gene.id, postgap.Ensembl_lookup.GRCH38_ENSEMBL_REST_SERVER)
+	
+	if GRCh38_gene is None:
+		logging.info("%s not mapped onto GRCh38 - skipping" % association.gene.id)
+		return []
+	
+	if GRCh38_gene.chrom not in known_chroms:
+		logging.info(
+			"%s not on the principal GRCh38 assembly - skipping" % GRCh38_gene.chrom)
+		return []
 
-	results = [snp.rsID, snp.chrom, str(
-		snp.pos), gene_name, gene_id, str(score)]
-	results += [str(association.intermediary_scores[functional_source.display_name])
-				for functional_source in postgap.Cisreg.sources]
-	return "\t".join(results)
+	if association.snp.rsID not in GRCh38_snp_locations:
+		for snp in postgap.Ensembl_lookup.get_snp_locations([association.snp.rsID], postgap.Ensembl_lookup.GRCH38_ENSEMBL_REST_SERVER):
+			GRCh38_snp_locations[snp.rsID] = snp
+	
+	if association.snp.rsID not in GRCh38_snp_locations:
+		logging.info("%s not on GRCh38 - skipping" % association.snp.rsID)
+		return []
+	
+	if association.snp.chrom not in known_chroms or GRCh38_snp_locations[association.snp.rsID].chrom not in known_chroms:
+		logging.info("%s not on main GRCh37 (%s) & GRCh38 assembly (%s) - skipping" % (association.snp.rsID, association.snp.chrom, GRCh38_snp_locations[association.snp.rsID].chrom))
+		return []
+	
+	afr = 'N/A'
+	amr = 'N/A'
+	eas = 'N/A'
+	eur = 'N/A'
+	sas = 'N/A'
+	gnomad = 'N/A'
+	gnomad_sas = 'N/A'
+	gnomad_oth = 'N/A'
+	gnomad_asj = 'N/A'
+	gnomad_nfe = 'N/A'
+	gnomad_afr = 'N/A'
+	gnomad_amr = 'N/A'
+	gnomad_fin = 'N/A'
+	gnomad_eas = 'N/A'
 
+	vep_terms = []
+	for evidence in association.cisregulatory_evidence:
+		if evidence.source == "VEP":
+			vep_terms += evidence.info['consequence_terms']
+	
+	if len(vep_terms) > 0:
+		vep_terms = ",".join(list(set(vep_terms)))
+	else:
+		vep_terms = "N/A"
+	
+	for evidence in association.regulatory_evidence:
+		if evidence.source == "VEP_reg":
+			MAFs = evidence.info['MAFs']
+			
+			if MAFs is not None:
+				if 'afr' in MAFs:
+					afr = MAFs['afr']
+				if 'amr' in MAFs:
+					amr = MAFs['amr']
+				if 'eas' in MAFs:
+					eas = MAFs['eas']
+				if 'eur' in MAFs:
+					eur = MAFs['eur']
+				if 'sas' in MAFs:
+					sas = MAFs['sas']
+	
+	if association.snp.rsID not in GRCh38_snp_locations:
+		logging.info("%s not on GRCh38 - skipping" % association.snp.rsID)
+		return []
+	
+	if association.snp.chrom not in known_chroms or GRCh38_snp_locations[association.snp.rsID].chrom not in known_chroms:
+		logging.info("%s not on main GRCh37 (%s) & GRCh38 assembly (%s) - skipping" % (association.snp.rsID, association.snp.chrom, GRCh38_snp_locations[association.snp.rsID].chrom))
+		return []
+	
+	afr = 'N/A'
+	amr = 'N/A'
+	eas = 'N/A'
+	eur = 'N/A'
+	sas = 'N/A'
+	gnomad = 'N/A'
+	gnomad_sas = 'N/A'
+	gnomad_oth = 'N/A'
+	gnomad_asj = 'N/A'
+	gnomad_nfe = 'N/A'
+	gnomad_afr = 'N/A'
+	gnomad_amr = 'N/A'
+	gnomad_fin = 'N/A'
+	gnomad_eas = 'N/A'
+
+	vep_terms = []
+	for evidence in association.cisregulatory_evidence:
+		if evidence.source == "VEP":
+			vep_terms += evidence.info['consequence_terms']
+	
+	if len(vep_terms) > 0:
+		vep_terms = ",".join(list(set(vep_terms)))
+	else:
+		vep_terms = "N/A"
+	
+	for evidence in association.regulatory_evidence:
+		if evidence.source == "VEP_reg":
+			MAFs = evidence.info['MAFs']
+			
+			if MAFs is not None:
+				if 'afr' in MAFs:
+					afr = MAFs['afr']
+				if 'amr' in MAFs:
+					amr = MAFs['amr']
+				if 'eas' in MAFs:
+					eas = MAFs['eas']
+				if 'eur' in MAFs:
+					eur = MAFs['eur']
+				if 'sas' in MAFs:
+					sas = MAFs['sas']
+				if 'gnomad' in MAFs:
+					gnomad = MAFs['gnomad']
+				if 'gnomad_sas' in MAFs:
+					gnomad_sas = MAFs['gnomad_sas']
+				if 'gnomad_oth' in MAFs:
+					gnomad_oth = MAFs['gnomad_oth']
+				if 'gnomad_asj' in MAFs:
+					gnomad_asj = MAFs['gnomad_asj']
+				if 'gnomad_nfe' in MAFs:
+					gnomad_nfe = MAFs['gnomad_nfe']
+				if 'gnomad_afr' in MAFs:
+					gnomad_afr = MAFs['gnomad_afr']
+				if 'gnomad_amr' in MAFs:
+					gnomad_amr = MAFs['gnomad_amr']
+				if 'gnomad_fin' in MAFs:
+					gnomad_fin = MAFs['gnomad_fin']
+				if 'gnomad_eas' in MAFs:
+					gnomad_eas = MAFs['gnomad_eas']
+				break
+	
+	if 'VEP_mean' in association.intermediary_scores:
+		vep_mean = association.intermediary_scores['VEP_mean']
+	else:
+		vep_mean = 0
+	
+	if 'VEP_sum' in association.intermediary_scores:
+		vep_sum = association.intermediary_scores['VEP_sum']
+	else:
+		vep_sum = 0
+	
+	# extract GTEx eQTL p-value from eQTL_hash
+	tissue_eQTL_scores = []
+	for tissue_name in postgap.Globals.ALL_TISSUES:
+		if (tissue_name in eQTL_hash[association.gene].keys()) & (association.snp.rsID in eQTL_hash[association.gene][tissue_name].keys()):
+			tissue_eQTL_scores.append(eQTL_hash[association.gene][tissue_name][association.snp.rsID][1])
+		else:
+			tissue_eQTL_scores.append(0)
+	
+	row = [
+		association.snp.rsID,
+		association.snp.chrom,
+		association.snp.pos,
+		GRCh38_snp_locations[association.snp.rsID].chrom,
+		GRCh38_snp_locations[association.snp.rsID].pos,
+		afr,
+		amr,
+		eas,
+		eur,
+		sas,
+		gnomad,
+		gnomad_sas,
+		gnomad_oth,
+		gnomad_asj,
+		gnomad_nfe,
+		gnomad_afr,
+		gnomad_amr,
+		gnomad_fin,
+		gnomad_eas,
+		association.gene.name,
+		association.gene.id,
+		association.gene.chrom,
+		association.gene.tss,
+		GRCh38_gene.chrom,
+		GRCh38_gene.tss,
+		association.score,
+		vep_terms,
+		vep_sum,
+		vep_mean
+	]
+	
+	row += tissue_eQTL_scores
+	row += [association.intermediary_scores[functional_source.display_name] for functional_source in postgap.Cisreg.sources + postgap.Reg.sources]
+	
+	return row
 
 def pretty_output(associations, population):
 	"""
