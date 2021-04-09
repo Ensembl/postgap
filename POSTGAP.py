@@ -301,7 +301,7 @@ def get_options():
 	parser.add_argument('--coords', nargs=3,
 						help='SNP position in format rsID chrom_name position')
 	parser.add_argument(
-		'--population', choices=(['AFR', 'AMR', 'EAS', 'EUR', 'SAS']), default='EUR')
+		'--population', choices=(['AFR', 'AMR', 'EAS', 'EUR', 'SAS']), required=True)
 	parser.add_argument('--output', help='Name of output file')
 	parser.add_argument('--species', nargs='*',
 						default='Human', help='Name of species')
