@@ -53,7 +53,7 @@ Every time you run POSTGAP, add ```--database_dir /path/to/databases_dir``` to t
 By default, run from the root directory the command: 
 
 ```
-python POSTGAP.py --disease autism  
+python POSTGAP.py --disease autism --population EUR 
 ```
 
 Multiple disease names can be provided.
