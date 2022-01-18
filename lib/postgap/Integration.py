@@ -486,28 +486,28 @@ def cluster_to_genes(cluster, population):
 	if postgap.Globals.PERFORM_BAYESIAN:
 		# Obtain interaction data from LD snps
 		associations, eQTL_hash = ld_snps_to_genes([snp for snp in cluster.ld_snps])
-
 		# GWAS Finemapping
 		gwas_finemapped_cluster = postgap.FinemapIntegration.compute_gwas_posteriors(cluster, associations, population)
 
 		# eQTL Finemapping
 		gene_tissue_posteriors = postgap.FinemapIntegration.compute_joint_posterior(gwas_finemapped_cluster, eQTL_hash)
+		if gene_tissue_posteriors is not None:
+			res = [
+				GeneCluster_Association(
+					gene = gene,
+					score = None,
+					collocation_posterior = gene_tissue_posteriors[gene],
+					cluster = gwas_finemapped_cluster,
+					evidence = filter(lambda X: X.gene == gene, associations), # This is a [ GeneSNP_Association ]
+					eQTL_hash = eQTL_hash,
+					r2 = None
+				)
+				for gene in gene_tissue_posteriors
+			]
 
-		res = [
-			GeneCluster_Association(
-				gene = gene,
-				score = None,
-				collocation_posterior = gene_tissue_posteriors[gene],
-				cluster = gwas_finemapped_cluster,
-				evidence = filter(lambda X: X.gene == gene, associations), # This is a [ GeneSNP_Association ]
-				eQTL_hash = eQTL_hash,
-				r2 = None
-			)
-			for gene in gene_tissue_posteriors
-		]
-
-		logging.info("\tFound %i genes associated" % (len(res)))
-
+			logging.info("\tFound %i genes associated" % (len(res)))
+		else:		
+			logging.info("No associated genes found")
 	else:
 		# Compute LD from top SNP
 		top_gwas_hit = sorted(cluster.gwas_snps, key=lambda X: X.pvalue)[-1]

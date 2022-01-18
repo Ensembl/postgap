@@ -322,6 +322,8 @@ def compute_gene_tissue_joint_posterior(cluster, gene, tissue, eQTL_snp_hash):
 	"""
 	# eQTL posteriors
 	eQTL_configuration_posteriors = compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash)
+	if eQTL_configuration_posteriors is None:
+		return
 
 	## Joint posterior
 	sum_posteriors, config_sample = eQTL_configuration_posteriors.joint_posterior(cluster.gwas_configuration_posteriors)
@@ -347,10 +349,11 @@ def compute_eqtl_posteriors(cluster, tissue, gene, eQTL_snp_hash):
 	missing_indices = numpy.array([index for index, ld_snp in enumerate(cluster.ld_snps) if ld_snp.rsID not in eQTL_snp_hash]).astype(int)
 	known_z_scores = numpy.array([eQTL_snp_hash[ld_snp.rsID][0] for ld_snp in cluster.ld_snps if ld_snp.rsID in eQTL_snp_hash])
 	known_betas = numpy.array([eQTL_snp_hash[ld_snp.rsID][1] for ld_snp in cluster.ld_snps if ld_snp.rsID in eQTL_snp_hash])
-
+	
 	assert all(beta is not None for beta in known_betas)
+	if len(known_z_scores) == 0:
+		return
 
-	assert len(known_z_scores) > 0
 	assert len(missing_indices) != len(cluster.ld_snps), (missing_indices, known_z_scores)
 	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[0], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])
 	assert len(cluster.ld_snps) == cluster.ld_matrix.shape[1], (len(cluster.ld_snps), cluster.ld_matrix.shape[0], cluster.ld_matrix.shape[1])

@@ -120,7 +120,6 @@ def main():
 
 	if options.Reg is not None:
 		postgap.Globals.Reg_adaptors = options.Reg
-
 	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0 or postgap.Globals.GWAS_SUMMARY_STATS_FILE is not None or postgap.Globals.CLUSTER_FILE is not None:
 		if postgap.Globals.CLUSTER_FILE is not None:
 			logging.info("use cluster file, so skip previous steps and jump to cluster_to_genes (in gwas_snps_to_genes)")
@@ -128,12 +127,12 @@ def main():
 		else:
 			logging.info("Starting diseases_to_genes")
 			res = postgap.Integration.diseases_to_genes(options.diseases, expanded_efo_iris, options.population)
-
 		if options.bayesian and options.output2 is not None:
-			output2 = open(options.output2, "w")
-			output2.write(pretty_gene_output(res))
-			output2.close()
- 
+			row_to_write = pretty_gene_output(res)
+			if row_to_write is not None:
+				output2 = open(options.output2, "w")
+				output2.write(row_to_write)
+				output2.close()
 		logging.info("Done with diseases_to_genes")
 	elif options.rsID is not None:
 		res, eQTL_hash = postgap.Integration.rsIDs_to_genes(options.rsID)
@@ -412,12 +411,15 @@ def range_limited_eqtl_size(val):
 	return s
 
 def pretty_gene_output(associations):
-	rows = [[gene_association.gene.id, gene_association.cluster.gwas_configuration_posteriors.sample_label, snp_id, dict_posterior[(i,)], tissue, dict_posterior['_CLUSTER']] 
-			for gene_association in associations 
-			for tissue, dict_posterior in gene_association.collocation_posterior.items() 
-			for i,snp_id in enumerate(gene_association.cluster.gwas_configuration_posteriors.labels)
-		]
-	return '\n'.join('\t'.join(str(elem) for elem in row) for row in rows)
+	try:
+		rows = [[gene_association.gene.id, gene_association.cluster.gwas_configuration_posteriors.sample_label, snp_id, dict_posterior[(i,)], tissue, dict_posterior['_CLUSTER']] 
+				for gene_association in associations 
+				for tissue, dict_posterior in gene_association.collocation_posterior.items() 
+				for i,snp_id in enumerate(gene_association.cluster.gwas_configuration_posteriors.labels)
+			]
+		return '\n'.join('\t'.join(str(elem) for elem in row) for row in rows)
+	except:
+		return
 
 def pretty_snp_output(associations, eQTL_hash):
 	"""
