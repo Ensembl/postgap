@@ -982,7 +982,7 @@ def compute_eqtl_lambdas(cluster, z_scores, kmax, W=[0.01, 0.1, 0.5], pi=0.01):
 	'''
 	initial_lambdas = [0.0] * cluster.annotations.shape[0]
 	out = calc_logbinom(
-		cluster.ld_matrix.shape[0], len(cluster.z_scores))
+		cluster.ld_matrix.shape[0], kmax, len(cluster.z_scores))
 	pi = numpy.exp(out)
 	MAFs = map(float, cluster.mafs)
 	if postgap.Globals.TYPE == 'binom' or postgap.Globals.TYPE == 'EM':
